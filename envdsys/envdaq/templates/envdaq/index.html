@@ -1,0 +1,27 @@
+<!-- envdaq/templates/envdaq/index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>envDAQ</title>
+</head>
+<body>
+    What instrument would you like to monitor?<br/>
+    <input id="inst-name-input" type="text" size="100"/><br/>
+    <input id="inst-name-submit" type="button" value="Enter"/>
+
+    <script>
+        document.querySelector('#inst-name-input').focus();
+        document.querySelector('#inst-name-input').onkeyup = function(e) {
+            if (e.keyCode === 13) {  // enter, return
+                document.querySelector('#inst-name-submit').click();
+            }
+        };
+
+        document.querySelector('#inst-name-submit').onclick = function(e) {
+            var instName = document.querySelector('#inst-name-input').value;
+            window.location.pathname = '/envdaq/' + instName + '/';
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>envDAQ</title>
+</head>
+<body>
+  <h3>Tags</h3>
+
+  {% if tag_list %}
+      <ul>
+      {% for tag in tag_list %}
+          <li><a href="/envtags/{{ tag.id }}/">{{ tag.name }}</a></li>
+      {% endfor %}
+      </ul>
+  {% else %}
+      <p>No tags are available.</p>
+  {% endif %}
+
+<h3>Instrument Types</h3>
+
+{% if inst_type_list %}
+    <ul>
+    {% for tag in inst_type_list %}
+        <li><a href="/envtags/{{ tag.id }}/">{{ tag.name }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No tags are available.</p>
+{% endif %}
+
+
+</body>
+</html>
