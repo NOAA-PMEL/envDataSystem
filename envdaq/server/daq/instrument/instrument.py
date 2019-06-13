@@ -18,16 +18,15 @@ class InstrumentFactory():
         print("class: " + create_cfg['CLASS'])
 
         try:
-            #print('Creating: ' + config['name'])
-            #print('   ClassName: ' + config['class'])
+            # print('Creating: ' + config['name'])
+            # print('   ClassName: ' + config['class'])
             mod_ = importlib.import_module(create_cfg['MODULE'])
             cls_ = getattr(mod_, create_cfg['CLASS'])
-            #inst_class = eval(config['class'])
-            #return inst_class.factory_create()
+            # inst_class = eval(config['class'])
+            # return inst_class.factory_create()
             return cls_(instconfig)
 
-
-        except: # better to catch ImportException?
+        except:  # better to catch ImportException?
             print("Unexpected error:", sys.exc_info()[0])
             raise
 
@@ -37,7 +36,7 @@ class Instrument(DAQ):
     def __init__(self, config):
         super().__init__(config)
         print('init Instrument')
-        #self.config = config
+        # self.config = config
         print(self.config)
 
         self.name = 'Instrument'
