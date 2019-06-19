@@ -109,3 +109,4 @@ venv.bak/
 
 VS Code 
 .vscode/
+envdsys/secret.txt

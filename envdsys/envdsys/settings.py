@@ -20,7 +20,36 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'ji^o9qts3b6*2k47hu25zs!#0@(h$l9)i%ly(ct&0p29e#g!vp'
+# SECRET_KEY = 'ji^o9qts3b6*2k47hu25zs!#0@(h$l9)i%ly(ct&0p29e#g!vp'
+
+
+"""
+Changed to generate/store SECRET_KEY locally following:
+https://gist.github.com/ndarville/3452907
+but has been modified to use newer functionality
+
+This solution creates a file that stores the secret in a local file. If
+your installation does not have persistent storage there is a solution that
+utilizes an environment variable at the above link.
+"""
+
+try:
+    SECRET_KEY
+except NameError:
+    SECRET_FILE = os.path.join(BASE_DIR, 'secret.txt')
+    try:
+        SECRET_KEY = open(SECRET_FILE).read().strip()
+    except IOError:
+        try:
+            from django.core.management.utils import get_random_secret_key
+            SECRET_KEY = get_random_secret_key()
+            secret = open(SECRET_FILE, 'w')
+            secret.write(SECRET_KEY)
+            secret.close()
+        except IOError:
+            Exception('Please create a %s file with random characters \
+            to generate your secret key!' % SECRET_FILE)
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
