@@ -1,10 +1,10 @@
 from daq.daq import DAQ
 import abc
 import random
-from utilities  import util
+from utilities import util
 import asyncio
 from data.message import Message
-#import abc
+# import abc
 
 
 class IFDevice(DAQ):
@@ -83,15 +83,15 @@ class DummyIFDevice(IFDevice):
 
     def handle(self, data):
 
-            out = {'DATA': data}
-            #print(out)
-            #msg = Message(subject='DATA', body=out)
-            msg = Message(
-                sender_id=self.get_id(),
-                type=IFDevice.class_type,
-                subject='DATA',
-                body=out
-            )
-            #print(msg.to_dict())
-            #print(msg.to_json())
-            self.msg_buffer.put_nowait(msg)
+        out = {'DATA': data}
+        # print(out)
+        # msg = Message(subject='DATA', body=out)
+        msg = Message(
+            sender_id=self.get_id(),
+            type=IFDevice.class_type,
+            subject='DATA',
+            body=out
+        )
+        # print(msg.to_dict())
+        # print(msg.to_json())
+        self.msg_buffer.put_nowait(msg)

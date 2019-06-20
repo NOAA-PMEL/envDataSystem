@@ -4,6 +4,7 @@ from envtags.models import Tag
 import uuid
 # Create your models here.
 
+
 class InventoryDef(models.Model):
 
     name = models.CharField(max_length=50)
@@ -72,6 +73,7 @@ class InventoryDef(models.Model):
 #
 #     name = models.CharField(max_length=30)
 
+
 class Inventory(models.Model):
 
     owner = models.ForeignKey(
@@ -131,7 +133,7 @@ class InstrumentDef(InventoryDef):
     class Meta():
         verbose_name = 'Instrument Definition'
         verbose_name_plural = 'Instrument Definitions '
-        
+
     def __str__(self):
         '''String representation of InstrumentDef object. '''
         return (f'{self.name} : {self.model}')
@@ -149,7 +151,8 @@ class Instrument(Inventory):
         # null=True,
         # blank=True
     )
-    uniqueID = models.UUIDField(default=uuid.uuid1, editable=False, null=True, blank=True)
+    uniqueID = models.UUIDField(
+        default=uuid.uuid1, editable=False, null=True, blank=True)
     # inst_list = models.ManyToManyField('Instrument', 'Select insruments to control')
     serial_number = models.CharField(
         max_length=30,

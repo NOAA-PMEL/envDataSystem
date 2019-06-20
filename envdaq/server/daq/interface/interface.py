@@ -29,9 +29,7 @@ class IFDeviceManager():
     def __init__(self):
         self.devmap = {}
 
-
     def create(self, dev_type, config):
-
         if (dev_type == 'DummyIFDevice'):
 
             dev = DummyIFDevice(config)
@@ -57,17 +55,17 @@ class InterfaceFactory():
         create_cfg = config['INTERFACE']
         ifconfig = config['IFCONFIG']
 
-        #inst_config = config['instrument']
+        # inst_config = config['instrument']
         print("module: " + create_cfg['MODULE'])
         print("class: " + create_cfg['CLASS'])
 
         try:
-            #print('Creating: ' + config['name'])
-            #print('   ClassName: ' + config['class'])
+            # print('Creating: ' + config['name'])
+            # print('   ClassName: ' + config['class'])
             mod_ = importlib.import_module(create_cfg['MODULE'])
-            cls_ = getattr(mod_,create_cfg['CLASS'])
-            #inst_class = eval(config['class'])
-            #return inst_class.factory_create()
+            cls_ = getattr(mod_, create_cfg['CLASS'])
+            # inst_class = eval(config['class'])
+            # return inst_class.factory_create()
             return cls_(ifconfig)
 
         except:
@@ -118,7 +116,7 @@ class Interface(abc.ABC):
         self.label = self.config['LABEL']
         self.msg_buffer = None
         self.ifdev_msg_buffer = None
-        #self.create_msg_buffer()
+        # self.create_msg_buffer()
         # self.read_q = config['IF_READ_Q']
 #        self.write_q = config['IF_WRITE_Q']
 
@@ -196,7 +194,7 @@ class DummyInterface(Interface):
 
         # check header to see if data to be sent to instrument
         #   - if yes, add timestamp
-        #print('type: {}'.format(msg.type))
+        # print('type: {}'.format(msg.type))
         if (msg.type == IFDevice.class_type):
             msg.type = Interface.class_type
             msg.sender_id = self.get_id()
@@ -213,12 +211,12 @@ if __name__ == "__main__":
         'INTERFACE': {
             'MODULE': 'daq.interface',
             'CLASS': 'DummyInterface',
-            },
+        },
         'IFCONFIG': {
             'ADDRESS': 'DummyAddress',
             'SerialNumber': '1234'
-            }
         }
+    }
     # print(config['IFTYPE'])
     # print(config['IFCONFIG'])
 

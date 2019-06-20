@@ -14,7 +14,7 @@ async def send_data(client):
         msg = {'message': body}
         message = Message(type='Test', sender_id='me', subject='test', body=msg)
         # print('send_data: {}'.format(msg))
-        
+       
         print('send_data: {}'.format(message.to_json()))
         # await client.send(json.dumps(msg))
         await client.send_message(message)

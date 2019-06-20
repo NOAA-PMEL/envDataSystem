@@ -45,6 +45,8 @@ class Message():
         self.extra = msg['EXTRA']
 
 # this may inherit JSONEncode at some point
+
+
 class MessageBuffer():
 
     def __init__(self, config=None):
