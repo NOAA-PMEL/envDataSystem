@@ -21,11 +21,9 @@ class ControllerFactory():
             cls_ = getattr(mod_, create_cfg['CLASS'])
             return cls_(instconfig)
 
-
-        except: # better to catch ImportException?
+        except:  # better to catch ImportException?
             print("Unexpected error:", sys.exc_info()[0])
             raise
-
 
 
 class Controller(abc.ABC):
@@ -72,7 +70,6 @@ class Controller(abc.ABC):
         asyncio.ensure_future(self.read_gui_data())
         asyncio.ensure_future(self.send_data())
 
-
     # TODO: How do we want to id instruments? Need to clean this up
     def add_instrument(self, instrument):
         self.inst_map[instrument.get_signature()] = instrument
@@ -106,7 +103,6 @@ class Controller(abc.ABC):
         pass
 
 
-
 class BasicController(Controller):
 
     def __init__(self):
@@ -114,10 +110,13 @@ class BasicController(Controller):
 
     async def handle(self, msg):
         pass
+
     def start(self):
         pass
+
     def stop(self):
         pass
+
 
 class DummyController(Controller):
 

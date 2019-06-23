@@ -14,11 +14,12 @@ async def send_data(client):
         msg = {'message': body}
         message = Message(type='Test', sender_id='me', subject='test', body=msg)
         # print('send_data: {}'.format(msg))
-       
+      
         print('send_data: {}'.format(message.to_json()))
         # await client.send(json.dumps(msg))
         await client.send_message(message)
         await asyncio.sleep(1)
+
 
 async def read_data(client):
 
@@ -27,12 +28,14 @@ async def read_data(client):
         msg = json.loads(json_msg)
         print('read_loop: {}'.format(msg))
 
+
 def shutdown(task_list):
 
     for t in task_list:
         t.cancel()
 
     asyncio.get_event_loop().stop()
+
 
 async def heartbeat():
 

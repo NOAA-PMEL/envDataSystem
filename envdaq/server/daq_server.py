@@ -170,16 +170,19 @@ class DAQServer():
         #     FEServer,
         #     sendq=self.sendq,
         # )
-        # ws_factory = WebSocketClientFactory('ws://localhost:8000/ws/data/lobby/')
+        # ws_factory =
+        #   WebSocketClientFactory('ws://localhost:8000/ws/data/lobby/')
         # ws_factory.protocol = WSClientProtocol
         # WSSERVER_ADDRESS = ('127.0.0.1', 8000)
         # client_args = functools.partial(
         #     WSClientProtocol,
         #     sendq=self.sendq,
         # )
-        # self.server = asyncio.get_event_loop().create_server(server_factory, *SERVER_ADDRESS)
+        # self.server =
+        #   asyncio.get_event_loop().create_server(server_factory, *SERVER_ADDRESS)
         # asyncio.ensure_future(self.server)
-        # self.ws_client = asyncio.get_event_loop().create_connection(client_args, *WSSERVER_ADDRESS)
+        # self.ws_client =
+        #   asyncio.get_event_loop().create_connection(client_args, *WSSERVER_ADDRESS)
         # self.ws_client = websockets.connect(
         #     'ws://localhost:8000/ws/data/lobby/',
         #     create_protocol=WSClientProtocol,
@@ -198,8 +201,10 @@ class DAQServer():
             #     data = controller.get_last()
             #     # parse data
             #     print('data: {}'.format(data))
+            ts = datetime.utcnow().isoformat(timespec='seconds')
+            msgstr = 'This is a test {}'.format(ts)
             data = {
-                'message': 'This is a test {}'.format(datetime.utcnow().isoformat(timespec='seconds')),
+                'message': msgstr,
             }
             print('data msg: {}'.format(data))
             await self.sendq.put(json.dumps(data))
@@ -224,7 +229,7 @@ class DAQServer():
         # asyncio.get_event_loop().stop()
 
         # self.server.close()
- 
+
 # def time_to_next(sec):
 #     now = time.time()
 #     delta = sec - (math.fmod(now, sec))
