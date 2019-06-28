@@ -11,71 +11,6 @@ import functools
 import json
 
 
-# class WSClientProtocol(websockets.WebSocketClientProtocol):
-
-#     def __init__(self):
-#         self.sendq = asyncio.Queue(loop=asyncio.get_event_loop())
-#         print('init: ')
-#         print(self.sendq)
-
-#         # self.clients = {}
-#         self.task_list = []
-
-#         # self.task_list.append(
-#         #     asyncio.ensure_future(self.read_loop())
-#         # )
-#         # self.task_list.append(
-#         #     asyncio.ensure_future(self.fake_data)
-#         # )
-
-#     async def fake_data(self):
-#         while True:
-#             await self.sendq.put(
-#                 'fake data'.encode()
-#             )
-#             await asyncio.sleep(1)
-
-#     async def read_loop(self):
-
-#         while True:
-
-#             msg = await self.sendq.get()
-#             print('sendq: {}'.format(msg))
-#             self.transport.write(msg.encode())
-#             # self.send_to_clients(msg)
-#             # self.transport.write(msg)
-#             await asyncio.sleep(.1)
-
-#     def connection_made(self, transport):
-#         print('WSConnection made!')
-#         self.transport = transport
-#         # self.address = transport.get_extra_info('peername')
-#         # FEServer.clients[self.address] = transport
-
-#         # print(FEServer.clients, len(FEServer.clients))
-
-#     def data_received(self, data):
-#         # self.transport.write(data)
-#         # print('msg = {}'.format(msg))
-#         # self.send_to_clients(data.decode())
-#         print('data received: {}'.format(data.decode()))
-#         # self.broadcast(data)
-
-#     def eof_received(self):
-#         if self.transport.can_write_eof():
-#             self.transport.write_eof()
-
-#     def connection_lost(self, error):
-#         # if error:
-#         #     self.log.error('ERROR: {}'.format(error))
-#         # else:
-#         #     self.log.debug('closing')
-
-#         del self.clients[self.address]
-#         print(self.clients)
-#         super().connection_lost(error)
-
-
 class FEServer(asyncio.Protocol):
 
     clients = {}
@@ -267,6 +202,19 @@ def shutdown(server):
 
 
 if __name__ == "__main__":
+
+    iface_config = {
+        'INTERFACE': {
+            'MODULE': 'daq.interface',
+            'CLASS': 'DummyInterface',
+        },
+        'IFCONFIG': {
+            'ADDRESS': 'DummyAddress',
+            'SerialNumber': '1234'
+        }
+    }
+
+
 
     server = DAQServer()
 

@@ -13,7 +13,6 @@ class InstrumentFactory():
     def create(config):
         create_cfg = config['INSTRUMENT']
         instconfig = config['INSTCONFIG']
-
         print("module: " + create_cfg['MODULE'])
         print("class: " + create_cfg['CLASS'])
 
@@ -27,7 +26,8 @@ class InstrumentFactory():
             return cls_(instconfig)
 
         # TODO: create custom exception class for our app 
-        except ImportError:  
+        # except ImportError:  
+        except:  
             print("Unexpected error:", sys.exc_info()[0])
             raise ImportError
 

@@ -4,6 +4,7 @@ import asyncio
 import sys
 import json
 from client.client import WSClient
+from instrument.instrument import InstrumentFactory, Instrument
 
 
 class ControllerFactory():
@@ -28,6 +29,7 @@ class ControllerFactory():
 
 class Controller(abc.ABC):
 
+    # TODO: add way to pass gui hints/defines to front end
     gui_def = {
         'CONTROLS': {
             'RUN': {
@@ -70,12 +72,20 @@ class Controller(abc.ABC):
         asyncio.ensure_future(self.read_gui_data())
         asyncio.ensure_future(self.send_data())
 
-    # TODO: How do we want to id instruments? Need to clean this up
-    def add_instrument(self, instrument):
-        self.inst_map[instrument.get_signature()] = instrument
+    # # TODO: How do we want to id instruments? Need to clean this up
+    # def add_instrument(self, instrument):
+    #     self.inst_map[instrument.get_signature()] = instrument
 
-    # TODO: Do I need queues? Message and string methods?
+    def add_instruments(self):
+        for k, icfg in self.config['INST_LIST'].items():
+            # self.iface_map[iface.name] = iface
+            # print(ifcfg['IFACE_CONFIG'])
+            inst = InstrumentFactory().create(icfg['INST_CONFIG'])
+            inst.msg_buffer = self.inst_msg_buffer
+            self.inst_map[inst.get_id()] = inst
+    
     async def send_message(self, message):
+        # TODO: Do I need queues? Message and string methods?
         await self.sendq.put(message.to_json())
 
     async def send_gui_data(self):
