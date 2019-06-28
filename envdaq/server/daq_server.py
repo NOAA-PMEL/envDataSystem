@@ -3,6 +3,7 @@ import time
 import math
 from daq.interface.interface import InterfaceFactory, Interface
 from daq.instrument.instrument import InstrumentFactory, Instrument
+from daq.controller.controller import ControllerFactory, Controller
 from client.client import WSClient
 # import websockets
 import utilities.util as util
@@ -82,11 +83,21 @@ class FEServer(asyncio.Protocol):
 
 class DAQServer():
 
-    def __init__(self):
+    def __init__(self, config):
         self.controller_list = []
+        self.controller_map = dict()
         self.task_list = []
         self.last_data = {}
         self.run_flag = False
+
+        print(config)
+
+        self.loop = asyncio.get_event_loop()
+
+        # TODO: Add id - hostname, label, ?
+
+        self.create_msg_buffer(config=None)
+        self.add_controllers(config)
 
         # import config.dummy_cfg
         # testcfg = config.dummy_cfg.dummycpc_inst_cfg
@@ -127,6 +138,23 @@ class DAQServer():
         self.server = self.ws_client
         # asyncio.get_event_loop().run_forever(self.server)
         # server = event_loop.run_until_complete(factory)
+
+    def create_msg_buffer(self, config):
+        # self.read_buffer = MessageBuffer(config=config)
+        self.controller_msg_buffer = asyncio.Queue(loop=self.loop)
+
+    def add_controllers(self, config):
+        print(config['CONT_LIST'])
+        for k, icfg in config['CONT_LIST'].items():
+            # for ctr in config['CONT_LIST']:
+            print(f'key: {k}')
+            # print(F'key = {k}')
+            # self.iface_map[iface.name] = iface
+            # print(ifcfg['IFACE_CONFIG'])
+            # controller = ControllerFactory().create(icfg['CONT_CONFIG'])
+            controller = ControllerFactory().create(icfg)
+            controller.msg_buffer = self.controller_msg_buffer
+            self.controller_map[controller.get_id()] = controller
 
     async def output_to_screen(self):
         while True:
@@ -204,24 +232,59 @@ def shutdown(server):
 if __name__ == "__main__":
 
     iface_config = {
-        'INTERFACE': {
-            'MODULE': 'daq.interface',
-            'CLASS': 'DummyInterface',
+        'test_interface': {
+            'INTERFACE': {
+                'MODULE': 'daq.interface.interface',
+                'CLASS': 'DummyInterface',
+            },
+            'IFCONFIG': {
+                'LABEL': 'test_interface',
+                'ADDRESS': 'DummyAddress',
+                'SerialNumber': '1234'
+            },
         },
-        'IFCONFIG': {
-            'ADDRESS': 'DummyAddress',
-            'SerialNumber': '1234'
+    }
+
+    inst_config = {
+        'test_dummy': {
+            'INSTRUMENT': {
+                'MODULE': 'daq.instrument.instrument',
+                'CLASS': 'DummyInstrument',
+            },
+            'INSTCONFIG': {
+                'DESCRIPTION': {
+                    'LABEL': 'test_dummy',
+                    'SERIAL_NUMBER': '1234',
+                    'PROPERTY_NUMBER': 'CD0001234',
+                },
+                'IFACE_LIST': iface_config,
+            }
         }
     }
 
+    cont_config = {
+        'test_controller': {
+            'CONTROLLER': {
+                'MODULE': 'daq.controller.controller',
+                'CLASS': 'DummyController',
+            },
+            'CONTCONFIG': {
+                'LABEL': 'test_controller',
+                'INST_LIST': inst_config, 
+            }
+        },
+    }
 
+    server_config = {
+        'CONT_LIST': cont_config,
+    }
 
-    server = DAQServer()
+    server = DAQServer(server_config)
 
     event_loop = asyncio.get_event_loop()
 
     task = asyncio.ensure_future(heartbeat())
-    task = asyncio.ensure_future(output_to_screen())
+    # task = asyncio.ensure_future(output_to_screen())
     task_list = asyncio.Task.all_tasks()
 #
     try:

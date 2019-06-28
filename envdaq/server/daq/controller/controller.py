@@ -1,10 +1,10 @@
 import abc
+import sys
 import importlib
 import asyncio
-import sys
-import json
+from daq.daq import DAQ
 from client.client import WSClient
-from instrument.instrument import InstrumentFactory, Instrument
+from daq.instrument.instrument import InstrumentFactory
 
 
 class ControllerFactory():
@@ -12,22 +12,21 @@ class ControllerFactory():
     @staticmethod
     def create(config):
         create_cfg = config['CONTROLLER']
-        instconfig = config['CONTCONFIG']
-
+        contconfig = config['CONTCONFIG']
         print("module: " + create_cfg['MODULE'])
         print("class: " + create_cfg['CLASS'])
 
         try:
             mod_ = importlib.import_module(create_cfg['MODULE'])
             cls_ = getattr(mod_, create_cfg['CLASS'])
-            return cls_(instconfig)
+            return cls_(contconfig)
 
         except:  # better to catch ImportException?
             print("Unexpected error:", sys.exc_info()[0])
             raise
 
 
-class Controller(abc.ABC):
+class Controller(DAQ):
 
     # TODO: add way to pass gui hints/defines to front end
     gui_def = {
@@ -58,32 +57,33 @@ class Controller(abc.ABC):
 
     }
 
-    def __init__(self):
+    def __init__(self, config):
+        super().__init__(config)
+        print('init Controller')
+        print(self.config)
+
+        self.name = 'Controller'
+
         self.instrument_list = []
         self.inst_map = {}
 
-        self.event_loop = asyncio.get_event_loop()
+        # signals/measurements from dataManager/aggregator
+        self.signal_list = []
+        self.signal_map = {}
 
-        self.sendq = asyncio.Queue(loop=self.event_loop)
+        # self.self.loop = asyncio.get_event_loop()
+
+        self.sendq = asyncio.Queue(loop=self.loop)
         # self.readq = asyncio.Queue(loop=self.event_loop)
 
         # TODO: eventuallly this will be from factory and in config
         self.gui_client = WSClient(uri='ws://localhost:8000/ws/data/lobby/')
-        asyncio.ensure_future(self.read_gui_data())
-        asyncio.ensure_future(self.send_data())
+        # asyncio.ensure_future(self.read_gui_data())
+        # asyncio.ensure_future(self.send_data())
 
-    # # TODO: How do we want to id instruments? Need to clean this up
-    # def add_instrument(self, instrument):
-    #     self.inst_map[instrument.get_signature()] = instrument
+        self.create_msg_buffer(config=None)
+        self.add_instruments()
 
-    def add_instruments(self):
-        for k, icfg in self.config['INST_LIST'].items():
-            # self.iface_map[iface.name] = iface
-            # print(ifcfg['IFACE_CONFIG'])
-            inst = InstrumentFactory().create(icfg['INST_CONFIG'])
-            inst.msg_buffer = self.inst_msg_buffer
-            self.inst_map[inst.get_id()] = inst
-    
     async def send_message(self, message):
         # TODO: Do I need queues? Message and string methods?
         await self.sendq.put(message.to_json())
@@ -108,15 +108,54 @@ class Controller(abc.ABC):
             await self.handle(msg)
             # print('read_loop: {}'.format(msg))
 
+    def start(self, cmd=None):
+
+        task = asyncio.ensure_future(self.read_loop())
+        self.task_list.append(task)
+
+        for k, v in self.inst_map.items():
+            self.inst_map[k].start()
+
+    def stop(self, cmd=None):
+        pass
+
+    async def read_loop(self=None):
+        while True:
+            msg = await self.inst_msg_buffer.get()
+            self.handle(msg)
+            await asyncio.sleep(.1)
+
     @abc.abstractmethod
     async def handle(self, msg):
         pass
 
+    # def get_signature(self):
+    #     # This will combine instrument metadata to generate
+    #     #   a unique # ID
+    #     return self.name+":"+self.label+":"
+    #     +self.serial_number+":"+self.property_number
+
+    def create_msg_buffer(self, config):
+        # self.read_buffer = MessageBuffer(config=config)
+        self.inst_msg_buffer = asyncio.Queue(loop=self.loop)
+
+    # # TODO: How do we want to id instruments? Need to clean this up
+    # def add_instrument(self, instrument):
+    #     self.inst_map[instrument.get_signature()] = instrument
+
+    def add_instruments(self):
+        for k, icfg in self.config['INST_LIST'].items():
+            # for instr in self.config['INST_LIST']:
+            # inst = InstrumentFactory().create(icfg['INST_CONFIG'])
+            inst = InstrumentFactory().create(icfg)
+            inst.msg_buffer = self.inst_msg_buffer
+            self.inst_map[inst.get_id()] = inst
+
 
 class BasicController(Controller):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, config):
+        super().__init__(config)
 
     async def handle(self, msg):
         pass
@@ -130,6 +169,9 @@ class BasicController(Controller):
 
 class DummyController(Controller):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, config):
+        super().__init__(config)
+        pass
+
+    async def handle(self, msg):
         pass

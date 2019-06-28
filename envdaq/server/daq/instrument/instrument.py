@@ -124,7 +124,8 @@ class Instrument(DAQ):
         for k, ifcfg in self.config['IFACE_LIST'].items():
             # self.iface_map[iface.name] = iface
             # print(ifcfg['IFACE_CONFIG'])
-            iface = InterfaceFactory().create(ifcfg['IFACE_CONFIG'])
+            # iface = InterfaceFactory().create(ifcfg['IFACE_CONFIG'])
+            iface = InterfaceFactory().create(ifcfg)
             iface.msg_buffer = self.iface_msg_buffer
             self.iface_map[iface.get_id()] = iface
 

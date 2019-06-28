@@ -5,7 +5,7 @@ import asyncio
 class DAQ(abc.ABC):
 
     def __init__(self, config):
-
+        # TODO: Should DAQ have generic in/out buffers?
         print('init DAQ')
         self.loop = asyncio.get_event_loop()
         self.config = config
