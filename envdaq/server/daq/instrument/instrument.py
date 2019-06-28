@@ -26,9 +26,10 @@ class InstrumentFactory():
             # return inst_class.factory_create()
             return cls_(instconfig)
 
-        except:  # better to catch ImportException?
+        # TODO: create custom exception class for our app 
+        except ImportError:  
             print("Unexpected error:", sys.exc_info()[0])
-            raise
+            raise ImportError
 
 
 class Instrument(DAQ):
