@@ -60,7 +60,7 @@ if __name__ == '__main__':
         # event_loop.run_forever()
     except KeyboardInterrupt:
         print('closing client')
-        event_loop.run_until_complete(ws_client.shutdown())
+        event_loop.run_until_complete(ws_client.close())
         shutdown(task_list)
 
         event_loop.run_forever()

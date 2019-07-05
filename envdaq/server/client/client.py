@@ -3,6 +3,7 @@ import asyncio
 import websockets
 from data.message import Message
 
+
 class ClientConnection(abc.ABC):
 
     def __init__(
@@ -16,7 +17,8 @@ class ClientConnection(abc.ABC):
         self.port = port
         self.address = address
 
-        print('in WebSocket!')
+        print(f'uri={self.uri}, host={self.host}, port={self.port}')
+
         self.loop = loop
         if loop is None:
             self.loop = asyncio.get_event_loop()
@@ -26,13 +28,14 @@ class ClientConnection(abc.ABC):
 
         self.task_list = []
         self.task_list.append(
-            asyncio.ensure_future(self.run())
+            asyncio.ensure_future(self.open())
         )
-        self.run_task_list = []
+
+        print(self.task_list)
         # self.is_running = False
 
     @abc.abstractmethod
-    async def run(self):
+    async def open(self):
         pass
 
     async def read(self):
@@ -55,14 +58,19 @@ class ClientConnection(abc.ABC):
         await self.send(msg)
 
     @abc.abstractmethod
-    async def shutdown_client(self):
+    async def close_client(self):
         pass
 
-    def shutdown(self):
+    def sync_close(self):
+
+        if self.client is not None:
+            self.loop.run_until_complete(self.close())
+       
+    async def close(self):
 
         # await self.shutdown_client()
         if self.client is not None:
-            self.loop.run_until_complete(self.shutdown_client())
+            await self.close_client()
 
         for t in self.run_task_list:
             t.cancel()
@@ -73,9 +81,11 @@ class ClientConnection(abc.ABC):
 
 class WSClient(ClientConnection):
 
-    async def run(self):
+    async def open(self):
 
+        print('WSClient.open')
         self.client = await websockets.client.connect(self.uri)
+        print(self.client)
         self.run_task_list.append(
             asyncio.ensure_future(self.send_loop(self.client))
         )
@@ -106,6 +116,6 @@ class WSClient(ClientConnection):
             if (self.is_shutdown):
                 return
 
-    async def shutdown_client(self):
+    async def close_client(self):
 
         await self.client.close()
