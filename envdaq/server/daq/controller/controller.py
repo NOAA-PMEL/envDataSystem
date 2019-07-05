@@ -77,12 +77,15 @@ class Controller(DAQ):
         # self.readq = asyncio.Queue(loop=self.event_loop)
 
         # TODO: eventuallly this will be from factory and in config
-        self.gui_client = WSClient(uri='ws://localhost:8000/ws/data/lobby/')
+        # TODO: properly instantiate and close WSClient in controller
+        # self.gui_client = WSClient(uri='ws://localhost:8000/ws/data/lobby/')
         # asyncio.ensure_future(self.read_gui_data())
         # asyncio.ensure_future(self.send_data())
 
         self.create_msg_buffer(config=None)
         self.add_instruments()
+        if (self.config['AUTO_START']):
+            self.start()
 
     async def send_message(self, message):
         # TODO: Do I need queues? Message and string methods?
@@ -117,11 +120,20 @@ class Controller(DAQ):
             self.inst_map[k].start()
 
     def stop(self, cmd=None):
-        pass
+        # TODO: stop should clean up tasks
+        for instrument in self.inst_map:
+            # print(sensor)
+            instrument.stop()
 
+        # tasks = asyncio.Task.all_tasks()
+        for t in self.task_list:
+            # print(t)
+            t.cancel()
+ 
     async def read_loop(self=None):
         while True:
             msg = await self.inst_msg_buffer.get()
+            # TODO: should handle be a async? If not, could block
             self.handle(msg)
             await asyncio.sleep(.1)
 

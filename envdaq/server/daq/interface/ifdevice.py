@@ -77,7 +77,7 @@ class DummyIFDevice(IFDevice):
                 round(random.random()*5.0, 4),
                 round(random.random()*20.0, 4)
             )
-            print('data = {}'.format(data))
+            # print('ifdevice: data = {}'.format(data))
             self.handle(data)
             await asyncio.sleep(util.time_to_next(1))
 

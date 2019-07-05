@@ -213,6 +213,9 @@ class DummyInstrument(Instrument):
         data['DATETIME'] = msg.body['DATETIME']
         measurements = dict()
 
+        # TODO: data format issue: metadata in data or in its own field
+        #       e.g., units in data or measurement metadata?
+        # TODO: allow for "dimensions"
         values = msg.body['DATA'].split(',')
         for meas_name in self.meas_map['LIST']:
             meas_def = self.meas_map['DEFINITION'][meas_name]

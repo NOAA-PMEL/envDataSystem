@@ -9,7 +9,8 @@ import sys
 
 class Managers():
     __managers = dict()
-
+    # TODO: need a way to stop/shutdown gracefully
+    
     @staticmethod
     def start():
         print('starting IFDeviceManager')
@@ -30,10 +31,12 @@ class IFDeviceManager():
         self.devmap = {}
 
     def create(self, dev_type, config):
+        # TODO: use config values to find module,class for type like factory?
         if (dev_type == 'DummyIFDevice'):
 
             dev = DummyIFDevice(config)
             id = dev.get_id()
+            # TODO: why am I del dev here?
             if id in self.devmap:
                 del dev
                 dev = self.devmap[id]
@@ -149,8 +152,16 @@ class Interface(abc.ABC):
     def write(self, cmd):
         pass
 
+    # TODO: howto clean up managers?
     def stop(self, cmd=None):
-        pass
+        # for instrument in self.inst_map:
+        #     # print(sensor)
+        #     instrument.stop()
+
+        # tasks = asyncio.Task.all_tasks()
+        for t in self.task_list:
+            # print(t)
+            t.cancel()
 
     def disconnect(self, cmd=None):
         pass
@@ -159,11 +170,11 @@ class Interface(abc.ABC):
 
         while True:
             msg = await self.ifdev_msg_buffer.get()
-            self.handle(msg)
-            await asyncio.sleep(.1)
+            await self.handle(msg)
+            # await asyncio.sleep(.1)
 
     @abc.abstractmethod
-    def handle(self, msg):
+    async def handle(self, msg):
         pass
 
     def create_msg_buffer(self, config=None):
@@ -188,7 +199,7 @@ class DummyInterface(Interface):
         self.create_msg_buffer()
         self.ifdevice.msg_buffer = self.ifdev_msg_buffer
 
-    def handle(self, msg):
+    async def handle(self, msg):
 
         # interface will know if msg is json or object
 
@@ -200,7 +211,9 @@ class DummyInterface(Interface):
             msg.sender_id = self.get_id()
             if (msg.subject == 'DATA'):
                 msg.body['DATETIME'] = util.dt_to_string()
-                self.msg_buffer.put_nowait(msg)
+                print(f'DummyInterface: {msg}')
+                # self.msg_buffer.put_nowait(msg)
+                await self.msg_buffer.put(msg)
         else:
             print('Unknown Message type: {}'.format(msg.type))
 

@@ -9,11 +9,14 @@ class ClientConnection(abc.ABC):
         self, *, uri=None, host=None, port=None, address=None, loop=None
     ):
 
+        self.client = None
+
         self.uri = uri
         self.host = host
         self.port = port
         self.address = address
 
+        print('in WebSocket!')
         self.loop = loop
         if loop is None:
             self.loop = asyncio.get_event_loop()
@@ -55,9 +58,11 @@ class ClientConnection(abc.ABC):
     async def shutdown_client(self):
         pass
 
-    async def shutdown(self):
+    def shutdown(self):
 
-        await self.shutdown_client()
+        # await self.shutdown_client()
+        if self.client is not None:
+            self.loop.run_until_complete(self.shutdown_client())
 
         for t in self.run_task_list:
             t.cancel()

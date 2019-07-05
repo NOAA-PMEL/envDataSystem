@@ -133,9 +133,13 @@ class DAQServer():
         #     'ws://localhost:8000/ws/data/lobby/',
         #     create_protocol=WSClientProtocol,
         #     )
+
+        # GOOD CONNECTION ****
         self.ws_client = WSClient(uri='ws://localhost:8001/ws/data/lobby/')
-        # asyncio.ensure_future(self.ws_client)
         self.server = self.ws_client
+        self.ws_client.run()
+        # ********************
+
         # asyncio.get_event_loop().run_forever(self.server)
         # server = event_loop.run_until_complete(factory)
 
@@ -159,6 +163,7 @@ class DAQServer():
     async def output_to_screen(self):
         while True:
 
+            # TODO: use controller_msg_buffer here
             # for controller in self.controller_list:
             #
             #     data = controller.get_last()
@@ -178,7 +183,8 @@ class DAQServer():
     def shutdown(self):
         print('shutdown:')
 
-        asyncio.get_event_loop().run_until_complete(self.server.shutdown())
+        # asyncio.get_event_loop().run_until_complete(self.ws_client.shutdown())
+        self.ws_client.shutdown()
 
         for controller in self.controller_list:
             # print(sensor)
@@ -271,6 +277,7 @@ if __name__ == "__main__":
             'CONTCONFIG': {
                 'LABEL': 'test_controller',
                 'INST_LIST': inst_config, 
+                'AUTO_START': True,
             }
         },
     }
