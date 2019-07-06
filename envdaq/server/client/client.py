@@ -26,6 +26,7 @@ class ClientConnection(abc.ABC):
         self.sendq = asyncio.Queue(loop=asyncio.get_event_loop())
         self.readq = asyncio.Queue(loop=asyncio.get_event_loop())
 
+        self.run_task_list = []
         self.task_list = []
         self.task_list.append(
             asyncio.ensure_future(self.open())
@@ -54,7 +55,9 @@ class ClientConnection(abc.ABC):
         # await self.sendq.put(msg)
 
     async def send_message(self, message):
+        print(f'send_message: {message}')
         msg = message.to_json()
+        print(f'send_message: {msg}')
         await self.send(msg)
 
     @abc.abstractmethod

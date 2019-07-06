@@ -78,7 +78,8 @@ class Controller(DAQ):
 
         # TODO: eventuallly this will be from factory and in config
         # TODO: properly instantiate and close WSClient in controller
-        # self.gui_client = WSClient(uri='ws://localhost:8000/ws/data/lobby/')
+        self.gui_client = WSClient(uri='ws://localhost:8001/ws/envdaq/data_test/')
+        asyncio.ensure_future(self.send_gui_data())
         # asyncio.ensure_future(self.read_gui_data())
         # asyncio.ensure_future(self.send_data())
 
@@ -89,7 +90,8 @@ class Controller(DAQ):
 
     async def send_message(self, message):
         # TODO: Do I need queues? Message and string methods?
-        await self.sendq.put(message.to_json())
+        # await self.sendq.put(message.to_json())
+        await self.sendq.put(message)
 
     async def send_gui_data(self):
 
@@ -100,8 +102,9 @@ class Controller(DAQ):
             # # print('send_data: {}'.format(msg))
             # print('send_data: {}'.format(message.to_json))
             # # await client.send(json.dumps(msg))
-            msg = await self.sendq.get()
-            await self.gui_client.send_message(msg)
+            message = await self.sendq.get()
+            print('send gui message')
+            await self.gui_client.send_message(message)
             # await asyncio.sleep(1)
 
     async def read_gui_data(self, client):
@@ -120,6 +123,8 @@ class Controller(DAQ):
             self.inst_map[k].start()
 
     def stop(self, cmd=None):
+
+        self.gui_client.sync_close()
         # TODO: stop should clean up tasks
         for instrument in self.inst_map:
             # print(sensor)
@@ -129,17 +134,18 @@ class Controller(DAQ):
         for t in self.task_list:
             # print(t)
             t.cancel()
- 
+
     async def read_loop(self=None):
         while True:
             msg = await self.inst_msg_buffer.get()
             # TODO: should handle be a async? If not, could block
-            self.handle(msg)
-            await asyncio.sleep(.1)
+            await self.handle(msg)
+            # await asyncio.sleep(.1)
 
     @abc.abstractmethod
     async def handle(self, msg):
-        pass
+        print(msg.to_json())
+        await asyncio.sleep(0.01)
 
     # def get_signature(self):
     #     # This will combine instrument metadata to generate
@@ -186,4 +192,6 @@ class DummyController(Controller):
         pass
 
     async def handle(self, msg):
-        pass
+        print(f'controller.handle: {msg.to_json()}')
+        await self.send_message(msg)
+        # await asyncio.sleep(0.01)

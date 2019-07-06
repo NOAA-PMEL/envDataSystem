@@ -135,8 +135,8 @@ class DAQServer():
         #     )
 
         # GOOD CONNECTION ****
-        self.ws_client = WSClient(uri='ws://localhost:8001/ws/envdaq/data_test/')
-        self.server = self.ws_client
+        # self.ws_client = WSClient(uri='ws://localhost:8001/ws/envdaq/data_test/')
+        # self.server = self.ws_client
         # self.ws_client.open()
         # ********************
 
@@ -184,7 +184,7 @@ class DAQServer():
         print('shutdown:')
 
         # asyncio.get_event_loop().run_until_complete(self.ws_client.shutdown())
-        self.ws_client.sync_close()
+        # self.ws_client.sync_close()
 
         for controller in self.controller_list:
             # print(sensor)

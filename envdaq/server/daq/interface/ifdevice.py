@@ -88,7 +88,7 @@ class DummyIFDevice(IFDevice):
         # msg = Message(subject='DATA', body=out)
         msg = Message(
             sender_id=self.get_id(),
-            type=IFDevice.class_type,
+            msgtype=IFDevice.class_type,
             subject='DATA',
             body=out
         )

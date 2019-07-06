@@ -12,7 +12,7 @@ async def send_data(client):
     while True:
         body = 'fake message - {}'.format(datetime.utcnow().isoformat(timespec='seconds'))
         msg = {'message': body}
-        message = Message(type='Test', sender_id='me', subject='test', body=msg)
+        message = Message(msgtype='Test', sender_id='me', subject='test', body=msg)
         # print('send_data: {}'.format(msg))
       
         print('send_data: {}'.format(message.to_json()))
@@ -60,7 +60,8 @@ if __name__ == '__main__':
         # event_loop.run_forever()
     except KeyboardInterrupt:
         print('closing client')
-        event_loop.run_until_complete(ws_client.close())
+        ws_client.sync_close()
+        # event_loop.run_until_complete(ws_client.close())
         shutdown(task_list)
 
         event_loop.run_forever()

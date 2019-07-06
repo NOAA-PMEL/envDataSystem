@@ -25,14 +25,16 @@ class InstrumentFactory():
             # return inst_class.factory_create()
             return cls_(instconfig)
 
-        # TODO: create custom exception class for our app 
-        # except ImportError:  
-        except:  
+        # TODO: create custom exception class for our app
+        # except ImportError:
+        except:
             print("Unexpected error:", sys.exc_info()[0])
             raise ImportError
 
 
 class Instrument(DAQ):
+
+    class_type = 'INSTRUMENT'
 
     def __init__(self, config):
         super().__init__(config)
@@ -74,7 +76,6 @@ class Instrument(DAQ):
         pass
 
     def start(self, cmd=None):
-
         task = asyncio.ensure_future(self.read_loop())
         self.task_list.append(task)
 
@@ -91,8 +92,8 @@ class Instrument(DAQ):
 
         while True:
             msg = await self.iface_msg_buffer.get()
-            self.handle(msg)
-            await asyncio.sleep(.1)
+            await self.handle(msg)
+            # await asyncio.sleep(.1)
 
     def write(self, msg):
         pass
@@ -104,7 +105,7 @@ class Instrument(DAQ):
         pass
 
     @abc.abstractmethod
-    def handle(self, msg):
+    async def handle(self, msg):
         pass
 
     def get_signature(self):
@@ -192,17 +193,29 @@ class DummyInstrument(Instrument):
 
         self.iface_meas_map = None
 
-    def handle(self, msg):
+    async def handle(self, msg):
 
         # handle messages from multiple sources. What ID to use?
         if (msg.type == Interface.class_type):
             id = msg.sender_id
-            print(msg.body)
             entry = self.parse(msg)
             self.last_entry = entry
-            print('entry = \n{}'.format(entry))
+            # print('entry = \n{}'.format(entry))
 
+            data = Message(
+                sender_id=self.get_id(),
+                msgtype=Instrument.class_type,
+            )
+            # send data to next step(s)
+            # to controller
+            # data.update(subject='DATA', body=entry['DATA'])
+            data.update(subject='DATA', body=entry)
+            await self.msg_buffer.put(data)
+            # print(f'data_json: {data.to_json()}\n')
+            # await asyncio.sleep(0.01)
         # print("DummyInstrument:msg: {}".format(msg.body))
+        # else:
+        #     await asyncio.sleep(0.01)
 
     def parse(self, msg):
 

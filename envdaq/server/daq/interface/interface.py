@@ -10,7 +10,7 @@ import sys
 class Managers():
     __managers = dict()
     # TODO: need a way to stop/shutdown gracefully
-    
+
     @staticmethod
     def start():
         print('starting IFDeviceManager')
@@ -210,8 +210,10 @@ class DummyInterface(Interface):
             msg.type = Interface.class_type
             msg.sender_id = self.get_id()
             if (msg.subject == 'DATA'):
+                # update could be done in base class
+                msg.update(msgtype=Interface.class_type)
                 msg.body['DATETIME'] = util.dt_to_string()
-                print(f'DummyInterface: {msg}')
+                # print(f'DummyInterface: {msg.to_json()}')
                 # self.msg_buffer.put_nowait(msg)
                 await self.msg_buffer.put(msg)
         else:

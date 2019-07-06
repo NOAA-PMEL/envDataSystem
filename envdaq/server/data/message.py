@@ -6,11 +6,11 @@ import utilities.util
 
 class Message():
 
-    def __init__(self, type=None, sender_id=None, subject=None,
+    def __init__(self, msgtype=None, sender_id=None, subject=None,
                  body=None, extra=None):
         self.prefix = 'MSG'
         self.signature = 'daq.data.message.Message'
-        self.type = type
+        self.type = msgtype
         # self.id = None # why was this missing? do we want it?
         self.timestamp = utilities.util.dt_to_string()
         self.sender_id = sender_id
@@ -18,8 +18,23 @@ class Message():
         self.body = body
         self.extra = extra
 
+    def update(self, msgtype=None, sender_id=None, subject=None,
+               body=None, extra=None):
+        if msgtype is not None:
+            self.type = msgtype
+        if sender_id is not None:
+            self.sender_id = sender_id
+        if subject is not None:
+            self.subject = subject
+        if body is not None:
+            self.body = body
+        if extra is not None:
+            self.extra = extra
+
+        self.timestamp = utilities.util.dt_to_string()
+
     def to_json(self):
-        print(self.body)
+        # print(self.body)
         return json.dumps(self.to_dict())
 
     def to_dict(self):
