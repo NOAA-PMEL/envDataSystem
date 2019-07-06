@@ -135,7 +135,7 @@ class DAQServer():
         #     )
 
         # GOOD CONNECTION ****
-        self.ws_client = WSClient(uri='ws://localhost:8001/ws/data/lobby/')
+        self.ws_client = WSClient(uri='ws://localhost:8001/ws/envdaq/data_test/')
         self.server = self.ws_client
         # self.ws_client.open()
         # ********************

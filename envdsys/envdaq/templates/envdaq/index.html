@@ -6,12 +6,26 @@
     <title>envDAQ</title>
 </head>
 <body>
-    What instrument would you like to monitor?<br/>
-    <input id="inst-name-input" type="text" size="100"/><br/>
-    <input id="inst-name-submit" type="button" value="Enter"/>
+    Message from server:<br/>
+    <textarea id="msg-window" cols="100" rows="20"></textarea><br/>
+    {% comment %} <input id="inst-name-input" type="text" size="100"/><br/> {% endcomment %}
+    {% comment %} <input id="inst-name-submit" type="button" value="Enter"/> {% endcomment %}
 
     <script>
-        document.querySelector('#inst-name-input').focus();
+ 
+ 
+        var chatSocket = new WebSocket(
+            'ws://' + window.location.host +
+            '/ws/envdaq/data_test/');
+
+        chatSocket.onmessage = function(e) {
+            var data = JSON.parse(e.data);
+            var message = data['message'];
+            document.querySelector('#msg-window').value = (message + '\n');
+        };
+
+ 
+        {% comment %} document.querySelector('#inst-name-input').focus();
         document.querySelector('#inst-name-input').onkeyup = function(e) {
             if (e.keyCode === 13) {  // enter, return
                 document.querySelector('#inst-name-submit').click();
@@ -21,7 +35,7 @@
         document.querySelector('#inst-name-submit').onclick = function(e) {
             var instName = document.querySelector('#inst-name-input').value;
             window.location.pathname = '/envdaq/' + instName + '/';
-        };
+        }; {% endcomment %}
     </script>
 </body>
 </html>
