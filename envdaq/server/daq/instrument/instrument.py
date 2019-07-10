@@ -181,7 +181,7 @@ class DummyInstrument(Instrument):
             },
             'inlet_flow': {
                 'index': 2,
-                'units': 'm/s',
+                'units': 'l/min',
                 'uncertainty': 0.2,
             },
             'inlet_pressure': {

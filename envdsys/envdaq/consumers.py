@@ -19,7 +19,7 @@ class DataConsumer(AsyncWebsocketConsumer):
 
         await self.accept()
 
-        await self.data_message({'message': 'hi'})
+        # await self.data_message({'message': 'hi'})
         # await self.channel_layer.group_send(
         #     self.data_win_group_name,
         #     {

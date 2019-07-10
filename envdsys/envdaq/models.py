@@ -1,6 +1,8 @@
 from django.db import models
 from django.urls import reverse
 import uuid
+from django.apps import apps
+
 
 # Create your models here.
 
@@ -35,7 +37,7 @@ class Controller(models.Model):
     )
 
     uniqueID = models.UUIDField(default=uuid.uuid1, editable=False)
-    # inst_list = models.ManyToManyField('InstrumentEntry', help_text='Select insruments to control')
+    # inst_list = models.ManyToManyField('InstrumentEntry', help_text='Select instruments to control')
 
     # inst_class = ManyToManyField(InstrumentClass)
 
@@ -65,6 +67,12 @@ class InstrumentMask(models.Model):
     controller = models.ForeignKey(
         'Controller',
         on_delete=models.CASCADE,
+        related_name='controllers',
+    )
+    instrument = models.ForeignKey(
+        'envinventory.Instrument',
+        on_delete=models.CASCADE,
+        null=True,
         related_name='instruments',
     )
     # instrument = models.ForeignKey('Instrument', on_delete=models.CASCADE)

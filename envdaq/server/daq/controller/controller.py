@@ -124,7 +124,9 @@ class Controller(DAQ):
 
     def stop(self, cmd=None):
 
-        self.gui_client.sync_close()
+        # self.gui_client.sync_close()
+        self.loop.run_until_complete(self.gui_client.close())
+
         # TODO: stop should clean up tasks
         for instrument in self.inst_map:
             # print(sensor)

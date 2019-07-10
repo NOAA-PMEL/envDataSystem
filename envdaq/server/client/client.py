@@ -71,6 +71,7 @@ class ClientConnection(abc.ABC):
        
     async def close(self):
 
+        print('closing client')
         # await self.shutdown_client()
         if self.client is not None:
             await self.close_client()

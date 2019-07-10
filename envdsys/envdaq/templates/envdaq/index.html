@@ -11,17 +11,73 @@
     {% comment %} <input id="inst-name-input" type="text" size="100"/><br/> {% endcomment %}
     {% comment %} <input id="inst-name-submit" type="button" value="Enter"/> {% endcomment %}
 
+    <p id="time-stamp"></p><br/>
+    {% comment %} <textarea>{{ cellvalue }}</textarea> {% endcomment %}
+    {% comment %} <table id="data-table">
+
+    </table> {% endcomment %}
     <script>
- 
- 
+        
+        window.onload=init;
+
+        var cellvalue = '1234.5';
+
+        function init() {
+            {% comment %} alert("loaded"); {% endcomment %}
+
+            {% comment %} build_table() {% endcomment %}
+
+        }
+
+        function build_table() {
+
+            {% comment %} alert("loaded"); {% endcomment %}
+            
+            var body = document.getElementsByTagName('body')[0];
+
+            var table = document.createElement('table');
+            table.setAttribute('id', 'data-table');
+            {% comment %} table.id = 'data-table'; {% endcomment %}
+
+            {% comment %} var table = document.querySelector('#data-table'); {% endcomment %}
+            var header = table.createTHead();
+            var row = header.insertRow(0);
+            var cell = row.insertCell(0);
+            cell.innerHTML = "Name";
+            cell = row.insertCell(1);
+            cell.innerHTML = "Value";
+
+            row = table.insertRow(1);
+            cell = row.insertCell(0);
+            cell.setAttribute('id', 'cell0');
+            cell.innerHTML = "Concentration";
+            cell = row.insertCell(1);
+            cell.setAttribute('id', 'cell1');
+            cell.innerHTML = '';
+
+            body.appendChild(table);
+        };
+
         var chatSocket = new WebSocket(
             'ws://' + window.location.host +
             '/ws/envdaq/data_test/');
 
         chatSocket.onmessage = function(e) {
+
+            {% comment %} if (document.querySelector('#data-table') == null) { {% endcomment %}
+            if (document.getElementById('data-table') == null) {
+                build_table();
+            };
+
             var data = JSON.parse(e.data);
             var message = data['message']['DATA'];
-            document.querySelector('#msg-window').value = (message + '\n');
+
+            document.getElementById('time-stamp').innerHTML =  message['DATETIME'];
+            cell2 = 'cell1';
+            cell_id = '#'+cell2;
+            document.querySelector(cell_id).innerHTML = message['MEASUREMENTS']['concentration']['VALUE'];
+
+            document.querySelector('#msg-window').value = (e.data + '\n');
         };
 
  

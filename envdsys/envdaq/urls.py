@@ -4,6 +4,8 @@ from . import views
 
 urlpatterns = [
     path('', views.index, name='index'),
+    # this needs to have a parameter for controller name
+    path('controller/', views.controller, name='controller'),
 ]
 
 # urlpatterns = [

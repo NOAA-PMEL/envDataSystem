@@ -220,7 +220,7 @@ async def output_to_screen():
 
 def shutdown(server):
     print('shutdown:')
-    # for controller in controller_list:
+    # for k, controller in controller_map:
     #     # print(sensor)
     #     controller.stop()
 
