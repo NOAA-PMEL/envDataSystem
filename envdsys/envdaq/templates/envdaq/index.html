@@ -5,7 +5,24 @@
     <meta charset="utf-8"/>
     <title>envDAQ</title>
 </head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <body>
+    <style>
+    #data-table {
+        {% comment %} width: 100%; {% endcomment %}
+         -webkit-overflow-scrolling: touch;
+        overflow-x: auto;
+        display: block;
+        {% comment %} table-layout: fixed; {% endcomment %}
+    }
+     {% comment %} #data-table-namecol {
+        width=200px;
+    }
+     #data-table-valuecol {
+        width=200px;
+    } {% endcomment %}
+    </style>                                                                                                                                                                     </style>
+
     Message from server:<br/>
     <textarea id="msg-window" cols="100" rows="20"></textarea><br/>
     {% comment %} <input id="inst-name-input" type="text" size="100"/><br/> {% endcomment %}
@@ -37,24 +54,37 @@
 
             var table = document.createElement('table');
             table.setAttribute('id', 'data-table');
+            table.setAttribute('style', 'border-collapse: collapse;')
             {% comment %} table.id = 'data-table'; {% endcomment %}
 
             {% comment %} var table = document.querySelector('#data-table'); {% endcomment %}
             var header = table.createTHead();
             var row = header.insertRow(0);
+            row.setAttribute('style', 'border: 1px solid black')
             var cell = row.insertCell(0);
-            cell.innerHTML = "Name";
+            cell.setAttribute('id', 'data-table-namecol');
+            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
+            cell.innerHTML = "<b>Name</b>";
             cell = row.insertCell(1);
-            cell.innerHTML = "Value";
+            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
+            cell.innerHTML = "<b>Value</b>";
+            cell.setAttribute('id', 'data-table-valuecol');
 
             row = table.insertRow(1);
             cell = row.insertCell(0);
             cell.setAttribute('id', 'cell0');
+            cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center')
             cell.innerHTML = "Concentration";
             cell = row.insertCell(1);
             cell.setAttribute('id', 'cell1');
+            cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
             cell.innerHTML = '';
 
+            var td = table.rows[0].cells[0];
+            td.width = '200px';
+            td = table.rows[0].cells[1];
+            td.width = '200px';
+           
             body.appendChild(table);
         };
 
@@ -72,12 +102,13 @@
             var data = JSON.parse(e.data);
             var message = data['message']['DATA'];
 
-            document.getElementById('time-stamp').innerHTML =  message['DATETIME'];
+            document.querySelector('#time-stamp').innerHTML =  (message['DATETIME']);
             cell2 = 'cell1';
             cell_id = '#'+cell2;
             document.querySelector(cell_id).innerHTML = message['MEASUREMENTS']['concentration']['VALUE'];
 
-            document.querySelector('#msg-window').value = (e.data + '\n');
+            document.querySelector('#msg-window').value = (JSON.stringify(data['message']) + '\n');
+            {% comment %} document.querySelector('#msg-window').value = (e.data + '\n'); {% endcomment %}
         };
 
  
