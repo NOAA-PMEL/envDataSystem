@@ -40,22 +40,30 @@ class ClientConnection(abc.ABC):
         pass
 
     async def read(self):
+        # read from client: msg can have more than just a Message
         msg = await self.readq.get()
-        # print('read: {}'.format(msg))
+        print('read: {}'.format(msg))
         return msg
         # return await self.readq.get()
 
     async def read_message(self):
+        # helper function to easily reade a Message
         msg_json = await self.read()
-        return Message().from_json(msg_json)
+        print(f'read_mesage: {msg_json}')
+        message = Message().from_json(msg_json)
+        # print(f'after convert: {message.to_json()}')
+        return message
+        # return Message().from_json(msg_json)
 
     async def send(self, msg):
-        print('send: {}'.format(msg))
+        # send to client: msg can have more than just a Message
+        # print('send: {}'.format(msg))
         await self.sendq.put(msg)
         # await self.sendq.put(msg)
 
     async def send_message(self, message):
-        print(f'send_message: {message}')
+        # helper function to easily send a Message
+        # print(f'send_message: {message}')
         msg = message.to_json()
         print(f'send_message: {msg}')
         await self.send(msg)
@@ -104,7 +112,7 @@ class WSClient(ClientConnection):
 
         while True:
             msg = await websocket.recv()
-            # print('read loop: {}'.format(msg))
+            print('read loop: {}'.format(msg))
             await self.readq.put(msg)
 
     async def send_loop(self, websocket):

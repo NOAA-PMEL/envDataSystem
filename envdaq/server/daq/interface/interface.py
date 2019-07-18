@@ -68,7 +68,7 @@ class InterfaceFactory():
             mod_ = importlib.import_module(create_cfg['MODULE'])
             cls_ = getattr(mod_, create_cfg['CLASS'])
             # inst_class = eval(config['class'])
-            # return inst_class.factory_create()
+                                                                                                                        # return inst_class.factory_create()
             return cls_(ifconfig)
 
         except:

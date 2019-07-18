@@ -80,7 +80,7 @@ class Controller(DAQ):
         # TODO: properly instantiate and close WSClient in controller
         self.gui_client = WSClient(uri='ws://localhost:8001/ws/envdaq/data_test/')
         asyncio.ensure_future(self.send_gui_data())
-        # asyncio.ensure_future(self.read_gui_data())
+        asyncio.ensure_future(self.read_gui_data())
         # asyncio.ensure_future(self.send_data())
 
         self.create_msg_buffer(config=None)
@@ -103,16 +103,18 @@ class Controller(DAQ):
             # print('send_data: {}'.format(message.to_json))
             # # await client.send(json.dumps(msg))
             message = await self.sendq.get()
-            print('send gui message')
+            # print('send gui message')
             await self.gui_client.send_message(message)
             # await asyncio.sleep(1)
 
-    async def read_gui_data(self, client):
+    async def read_gui_data(self):
 
         while True:
             msg = await self.gui_client.read_message()
-            await self.handle(msg)
-            # print('read_loop: {}'.format(msg))
+            #msg = await self.gui_client.read()
+            # await self.handle(msg)
+            await asyncio.sleep(0.01)
+            print('read_loop: {}'.format(msg))
 
     def start(self, cmd=None):
 
@@ -146,7 +148,7 @@ class Controller(DAQ):
 
     @abc.abstractmethod
     async def handle(self, msg):
-        print(msg.to_json())
+        print(f'controller handle: {msg}')
         await asyncio.sleep(0.01)
 
     # def get_signature(self):
@@ -194,6 +196,6 @@ class DummyController(Controller):
         pass
 
     async def handle(self, msg):
-        print(f'controller.handle: {msg.to_json()}')
+        # print(f'controller.handle: {msg.to_json()}')
         await self.send_message(msg)
         # await asyncio.sleep(0.01)

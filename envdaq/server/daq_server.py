@@ -90,6 +90,8 @@ class DAQServer():
         self.last_data = {}
         self.run_flag = False
 
+        self.config = config
+
         print(config)
 
         self.loop = asyncio.get_event_loop()
@@ -135,7 +137,13 @@ class DAQServer():
         #     )
 
         # GOOD CONNECTION ****
-        # self.ws_client = WSClient(uri='ws://localhost:8001/ws/envdaq/data_test/')
+        # self.gui_client = WSClient(uri='ws://localhost:8001/ws/envdaq/data_test/')
+        # asyncio.ensure_future(self.send_gui_data())
+
+        # self.gui_client = WSClient(uri='ws://localhost:8001/ws/envdaq/server/')
+        # asyncio.ensure_future(self.send_gui_data())
+        # asyncio.ensure_future(self.send_gui_data())
+        # # asyncio.ensure_future(self.ws_client())
         # self.server = self.ws_client
         # self.ws_client.open()
         # ********************
@@ -159,6 +167,28 @@ class DAQServer():
             controller = ControllerFactory().create(icfg)
             controller.msg_buffer = self.controller_msg_buffer
             self.controller_map[controller.get_id()] = controller
+
+    async def send_gui_data(self):
+
+        while True:
+            # body = 'fake message - {}'.format(datetime.utcnow().isoformat(timespec='seconds'))
+            # msg = {'message': body}
+            # message = Message(type='Test', sender_id='me', subject='test', body=msg)
+            # # print('send_data: {}'.format(msg))
+            # print('send_data: {}'.format(message.to_json))
+            # # await client.send(json.dumps(msg))
+            message = await self.sendq.get()
+            print('send server message')
+            await self.gui_client.send_message(message)
+            # await asyncio.sleep(1)
+
+    async def read_gui_data(self, client):
+
+        while True:
+            msg = await self.gui_client.read_message()
+            await self.handle(msg)
+            print(msg)
+            # print('read_loop: {}'.format(msg))
 
     async def output_to_screen(self):
         while True:
@@ -259,7 +289,7 @@ if __name__ == "__main__":
             },
             'INSTCONFIG': {
                 'DESCRIPTION': {
-                    'LABEL': 'test_dummy',
+                    'LABEL': 'Test Dummy',
                     'SERIAL_NUMBER': '1234',
                     'PROPERTY_NUMBER': 'CD0001234',
                 },
@@ -275,8 +305,8 @@ if __name__ == "__main__":
                 'CLASS': 'DummyController',
             },
             'CONTCONFIG': {
-                'LABEL': 'test_controller',
-                'INST_LIST': inst_config, 
+                'LABEL': 'Test Controller',
+                'INST_LIST': inst_config,
                 'AUTO_START': True,
             }
         },
@@ -286,6 +316,9 @@ if __name__ == "__main__":
         'CONT_LIST': cont_config,
     }
 
+    # print(json.dumps(server_config))
+    with open('data.json', 'w') as f:
+        json.dump(server_config, f)
     server = DAQServer(server_config)
 
     event_loop = asyncio.get_event_loop()

@@ -8,8 +8,8 @@ class Message():
 
     def __init__(self, msgtype=None, sender_id=None, subject=None,
                  body=None, extra=None):
-        self.prefix = 'MSG'
-        self.signature = 'daq.data.message.Message'
+        self.prefix = 'message'
+        # self.signature = 'daq.data.message.Message'
         self.type = msgtype
         # self.id = None # why was this missing? do we want it?
         self.timestamp = utilities.util.dt_to_string()
@@ -39,25 +39,39 @@ class Message():
 
     def to_dict(self):
         d = dict()
-        d['SIGNATURE'] = self.signature
+        # d['SIGNATURE'] = self.signature
         d['TYPE'] = self.type
         d['TIMESTAMP'] = self.timestamp
         d['SENDER_ID'] = self.sender_id
         d['SUBJECT'] = self.subject
         d['BODY'] = self.body
         d['EXTRA'] = self.extra
-        return d
+
+        # added prefix to label the message for websockets
+        return {self.prefix: d}
 
     def from_json(self, json_msg):
-        msg = json.loads(json_msg)
-
-        self.signature = msg['SIGNATURE']
-        self.type = msg['TYPE']
-        self.timestamp = msg['TIMESTAMP']
-        self.sender_id = msg['SENDER_ID']
-        self.subject = msg['SUBJECT']
-        self.body = msg['BODY']
-        self.extra = msg['EXTRA']
+        print(f'json_msg: {json_msg}')
+        pkg = json.loads(json_msg)
+        
+        if self.prefix in pkg:
+            msg = pkg[self.prefix]     
+            # if 'SIGNATURE' in msg:
+            #     self.signature = msg['SIGNATURE']
+            if 'TYPE' in msg:
+                self.type = msg['TYPE']
+            if 'TIMESTAMP' in msg:
+                self.timestamp = msg['TIMESTAMP']
+            if 'SENDER_ID' in msg:
+                self.sender_id = msg['SENDER_ID']
+            if 'SUBJECT' in msg:
+                self.subject = msg['SUBJECT']
+            if 'BODY' in msg:
+                self.body = msg['BODY']
+            if 'EXTRA' in msg:
+                self.extra = msg['EXTRA']
+        
+        print(f'from_json: {self.to_json()}')
 
 # this may inherit JSONEncode at some point
 

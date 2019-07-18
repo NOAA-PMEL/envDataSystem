@@ -1,9 +1,9 @@
-<!-- envdaq/templates/envdaq/index.html -->
+<!-- envdaq/templates/envdaq/daq.html -->
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8"/>
-    <title>envDAQ</title>
+    <title>envDAQ:daq_server</title>
 </head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <body>
@@ -23,17 +23,15 @@
     } {% endcomment %}
     </style>                                                                                                                                                                     </style>
 
-    Metadata from server:<br/>
-    <textarea id="metadata-window" cols="100" rows="20"></textarea><br/>
-
-    Data from server:<br/>
+    Message Buffer (msg):<br/>
+    <textarea id="msg-window" cols="100" rows="20"></textarea><br/>
+    <br/>
+    Data Buffer (data):
     <textarea id="data-window" cols="100" rows="20"></textarea><br/>
-
     {% comment %} <input id="inst-name-input" type="text" size="100"/><br/> {% endcomment %}
     {% comment %} <input id="inst-name-submit" type="button" value="Enter"/> {% endcomment %}
-    <input id="req-meta-button" type="button" value="Get Meta"/>
 
-    <p id="time-stamp"></p><br/>
+    {% comment %} <p id="time-stamp"></p><br/> {% endcomment %}
     {% comment %} <textarea>{{ cellvalue }}</textarea> {% endcomment %}
     {% comment %} <table id="data-table">
 
@@ -42,12 +40,12 @@
         
         window.onload=init;
 
-        var cellvalue = '1234.5';
 
         function init() {
-            {% comment %} alert("loaded"); {% endcomment %}
 
             {% comment %} build_table() {% endcomment %}
+
+            
 
         }
 
@@ -93,37 +91,28 @@
             body.appendChild(table);
         };
 
-        var chatSocket = new WebSocket(
+        var msgSocket = new WebSocket(
             'ws://' + window.location.host +
-            '/ws/envdaq/data_test/');
+            '/ws/envdaq/server/msg');
 
-        chatSocket.onmessage = function(e) {
+        {% comment %} var dataSocket = new WebSocket(
+            'ws://' + window.location.host +
+            '/ws/envdaq/server/data'); {% endcomment %}
 
-            {% comment %} if (document.querySelector('#data-table') == null) { {% endcomment %}
-            if (document.getElementById('data-table') == null) {
-                build_table();
-            };
+        msgSocket.onmessage = function(e) {
 
             var data = JSON.parse(e.data);
-            if (data['message']['SUBJECT'] == 'DATA') {
 
-                if ("METADATA" in data['message']['BODY']) {
-                    var message = data['message']['BODY']['METADATA'];
-                    document.querySelector('#metadata-window').value = (JSON.stringify(data['message']) + '\n');
-                };
-                if ('DATA' in data['message']['BODY']) {
-                    var message = data['message']['BODY']['DATA'];
-                    document.querySelector('#data-window').value = (JSON.stringify(data['message']) + '\n');
 
-                    document.querySelector('#time-stamp').innerHTML =  (message['DATETIME']);
-                    cell2 = 'cell1';
-                    cell_id = '#'+cell2;
-                    document.querySelector(cell_id).innerHTML = message['MEASUREMENTS']['concentration']['VALUE'];
-                };
+            var message = data['message']['DATA'];
 
-                {% comment %} document.querySelector('#msg-window').value = (JSON.stringify(data['message']) + '\n'); {% endcomment %}
-                {% comment %} document.querySelector('#msg-window').value = (e.data + '\n'); {% endcomment %}
-            };
+            document.querySelector('#time-stamp').innerHTML =  (message['DATETIME']);
+            cell2 = 'cell1';
+            cell_id = '#'+cell2;
+            document.querySelector(cell_id).innerHTML = message['MEASUREMENTS']['concentration']['VALUE'];
+
+            document.querySelector('#msg-window').value = (JSON.stringify(data['message']) + '\n');
+            {% comment %} document.querySelector('#msg-window').value = (e.data + '\n'); {% endcomment %}
         };
 
  
@@ -138,21 +127,6 @@
             var instName = document.querySelector('#inst-name-input').value;
             window.location.pathname = '/envdaq/' + instName + '/';
         }; {% endcomment %}
-
-        document.querySelector('#req-meta-button').onclick = function(e) {
-            {% comment %} var instName = document.querySelector('#inst-name-input').value; {% endcomment %}
-            var message = {
-                'TYPE': 'DISPLAY',
-                'SUBJECT': 'REQUEST',
-                'BODY': 'SEND_METATDATA'
-                };
-            {% comment %} window.location.pathname = '/envdaq/' + instName + '/'; {% endcomment %}
-            chatSocket.send(JSON.stringify({
-            'message': message
-            }));
-
-        };
-
     </script>
 </body>
 </html>
