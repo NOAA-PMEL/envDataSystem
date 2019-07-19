@@ -4,7 +4,7 @@ from . import views
 
 urlpatterns = [
     path('', views.index, name='index'),
-    path('server/', views.server, name='server'),
+    path('daqserver/', views.daqserver, name='daqserver'),
     # this needs to have a parameter for controller name
     # path('controller/', views.controller, name='controller'),
     path('controller/<controller_name>/', views.controller, name='controller'),

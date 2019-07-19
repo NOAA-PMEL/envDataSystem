@@ -8,6 +8,7 @@ from data.message import Message
 
 
 class IFDevice(DAQ):
+# class IFDevice():
 
     # channel_map = {'default': 'default'}
     class_type = 'IFDEVICE'
@@ -18,20 +19,16 @@ class IFDevice(DAQ):
         self.config = config
         self.task_list = []
 
-        self.msg_buffer = None
+        # Message buffers
+        #   to/from parent
+        self.msg_send_buffer = None
+        self.msg_rcv_buffer = None
 
     # @abc.abstractmethod
     def get_id(self):
         id = super().get_id()
+        # id = 'tmp'
         return id
-
-    # @property
-    # def msg_buffer(self):
-    #     return self.msg_buffer
-    #
-    # @msg_buffer.setter
-    # def msg_buffer(self, buf):
-    #     self.msg_buffer = buf
 
     def connect(self, msg=None):
         pass
@@ -45,8 +42,10 @@ class IFDevice(DAQ):
     def disconnect(self, msg=None):
         pass
 
-    @abc.abstractmethod
-    def handle(self, data):
+    def handle(self, data, type=None):
+        pass
+
+    def handle2(self, data):
         pass
 
     # def get_channel_map():
@@ -78,10 +77,10 @@ class DummyIFDevice(IFDevice):
                 round(random.random()*20.0, 4)
             )
             # print('ifdevice: data = {}'.format(data))
-            self.handle(data)
+            self.handle2(data)
             await asyncio.sleep(util.time_to_next(1))
 
-    def handle(self, data):
+    def handle2(self, data):
 
         out = {'DATA': data}
         # print(out)
@@ -94,4 +93,4 @@ class DummyIFDevice(IFDevice):
         )
         # print(msg.to_dict())
         # print(msg.to_json())
-        self.msg_buffer.put_nowait(msg)
+        self.msg_send_buffer.put_nowait(msg)

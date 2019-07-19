@@ -51,7 +51,8 @@ class Instrument(DAQ):
         self.serial_number = self.config['DESCRIPTION']['SERIAL_NUMBER']
         self.property_number = self.config['DESCRIPTION']['PROPERTY_NUMBER']
 
-        self.iface_msg_buffer = None
+        # self.iface_send_buffer = None
+        # self.iface_rcv_buffer = None
         self.iface_map = {}
 
         self.meas_map = {}
@@ -62,7 +63,7 @@ class Instrument(DAQ):
         self.last_entry = {}
 
         # create read buffer and interfaces
-        self.create_msg_buffer(config=None)
+        # self.create_msg_buffers(config=None)
         self.add_interfaces()
         # add queues - these are not serializable so might
         #   need a helper function to dump configurable items
@@ -76,7 +77,9 @@ class Instrument(DAQ):
         pass
 
     def start(self, cmd=None):
-        task = asyncio.ensure_future(self.read_loop())
+        # task = asyncio.ensure_future(self.read_loop())
+        print('Starting Instrument')
+        task = asyncio.ensure_future(self.from_child_loop())
         self.task_list.append(task)
 
         for k, v in self.iface_map.items():
@@ -88,12 +91,12 @@ class Instrument(DAQ):
     def disconnect(self, cmd=None):
         pass
 
-    async def read_loop(self=None):
+    # async def read_loop(self):
 
-        while True:
-            msg = await self.iface_msg_buffer.get()
-            await self.handle(msg)
-            # await asyncio.sleep(.1)
+    #     while True:
+    #         msg = await self.iface_rcv_buffer.get()
+    #         await self.handle(msg)
+    #         # await asyncio.sleep(.1)
 
     def write(self, msg):
         pass
@@ -104,8 +107,7 @@ class Instrument(DAQ):
     def send_to_datamanager(self):
         pass
 
-    @abc.abstractmethod
-    async def handle(self, msg):
+    async def handle(self, msg, type=None):
         pass
 
     def get_signature(self):
@@ -114,9 +116,10 @@ class Instrument(DAQ):
         return self.name+":"+self.label+":"
         +self.serial_number+":"+self.property_number
 
-    def create_msg_buffer(self, config):
-        # self.read_buffer = MessageBuffer(config=config)
-        self.iface_msg_buffer = asyncio.Queue(loop=self.loop)
+    # def create_msg_buffers(self, config):
+    #     # self.read_buffer = MessageBuffer(config=config)
+    #     self.iface_send_buffer = asyncio.Queue(loop=self.loop)
+    #     self.iface_rcv_buffer = asyncio.Queue(loop=self.loop)
 
     def add_interfaces(self):
         # for now, single interface but eventually loop
@@ -127,7 +130,8 @@ class Instrument(DAQ):
             # print(ifcfg['IFACE_CONFIG'])
             # iface = InterfaceFactory().create(ifcfg['IFACE_CONFIG'])
             iface = InterfaceFactory().create(ifcfg)
-            iface.msg_buffer = self.iface_msg_buffer
+            # iface.msg_buffer = self.iface_rcv_buffer
+            iface.msg_send_buffer = self.from_child_buf
             self.iface_map[iface.get_id()] = iface
 
     def get_metadata(self):
@@ -193,14 +197,14 @@ class DummyInstrument(Instrument):
 
         self.iface_meas_map = None
 
-    async def handle(self, msg):
+    async def handle(self, msg, type=None):
 
         # handle messages from multiple sources. What ID to use?
         if (msg.type == Interface.class_type):
             id = msg.sender_id
             entry = self.parse(msg)
             self.last_entry = entry
-            # print('entry = \n{}'.format(entry))
+            print('entry = \n{}'.format(entry))
 
             data = Message(
                 sender_id=self.get_id(),
@@ -210,7 +214,8 @@ class DummyInstrument(Instrument):
             # to controller
             # data.update(subject='DATA', body=entry['DATA'])
             data.update(subject='DATA', body=entry)
-            await self.msg_buffer.put(data)
+            # await self.msg_buffer.put(data)
+            await self.to_parent_buf.put(data)
             # print(f'data_json: {data.to_json()}\n')
             # await asyncio.sleep(0.01)
         # print("DummyInstrument:msg: {}".format(msg.body))

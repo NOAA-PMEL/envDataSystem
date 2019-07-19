@@ -142,7 +142,7 @@ class Configuration(models.Model):
 #         return (f'{self.name}.{self.uniqueID}')  
 
 
-class DAQ(models.Model):
+class DAQServer(models.Model):
 
     name = models.CharField(max_length=50)
     uniqueID = models.UUIDField(default=uuid.uuid1, editable=False)

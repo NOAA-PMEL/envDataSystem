@@ -75,37 +75,6 @@ class InterfaceFactory():
             print("Unexpected error:", sys.exc_info()[0])
             raise
 
-    # def create(config):
-    #
-    #     iftype = config['IFTYPE']
-    #     ifconfig = config['IFCONFIG']
-    #
-    #     if (iftype == 'DummyInterface'):
-    #
-    #         iface = DummyInterface(ifconfig)
-    #
-    #     elif (iftype == 'TCPInterface'):
-    #
-    #         iface = None
-    #
-    #     elif (iftype == 'SerialInterface'):
-    #
-    #         iface = None
-    #
-    #     elif (iftype == 'WorkhorseInterface'):
-    #
-    #         iface = None
-    #
-    #     elif (iftype == 'LabJackInterface'):
-    #
-    #         iface = None
-    #
-    #     else:
-    #
-    #         iface = None
-    #
-    #     return iface
-
 
 class Interface(abc.ABC):
 
@@ -117,8 +86,16 @@ class Interface(abc.ABC):
         self.config = config
         # if no NAME given, create one with address
         self.label = self.config['LABEL']
-        self.msg_buffer = None
-        self.ifdev_msg_buffer = None
+
+        #  Message buffers (Queues)
+        self.msg_send_buffer = None
+        self.msg_rcv_buffer = None
+
+        self.ifdev_send_buffer = None
+        self.ifdev_rcv_buffer = None
+
+        self.gui_send_buffer = None
+
         # self.create_msg_buffer()
         # self.read_q = config['IF_READ_Q']
 #        self.write_q = config['IF_WRITE_Q']
@@ -128,14 +105,6 @@ class Interface(abc.ABC):
         self.dev_mananger = Managers().get('IFDeviceManager')
         self.ifdevice = None
 #        print(self.dev_mananger)
-
-    # @property
-    # def msg_buffer(self):
-    #     return self.msg_buffer
-    #
-    # @msg_buffer.setter
-    # def msg_buffer(self, buf):
-    #     self.msg_buffer = buf
 
     def connect(self, cmd=None):
         pass
@@ -169,7 +138,7 @@ class Interface(abc.ABC):
     async def read_loop(self):
 
         while True:
-            msg = await self.ifdev_msg_buffer.get()
+            msg = await self.ifdev_rcv_buffer.get()
             await self.handle(msg)
             # await asyncio.sleep(.1)
 
@@ -177,9 +146,10 @@ class Interface(abc.ABC):
     async def handle(self, msg):
         pass
 
-    def create_msg_buffer(self, config=None):
+    def create_msg_buffers(self, config=None):
         # self.read_buffer = MessageBuffer(config=config)
-        self.ifdev_msg_buffer = asyncio.Queue(loop=self.loop)
+        self.ifdev_send_buffer = asyncio.Queue(loop=self.loop)
+        self.ifdev_rcv_buffer = asyncio.Queue(loop=self.loop)
 
     def get_id(self):
         id = self.__class__.__name__
@@ -196,8 +166,9 @@ class DummyInterface(Interface):
 
         # self.dev_mananger
         self.ifdevice = self.dev_mananger.create('DummyIFDevice', config)
-        self.create_msg_buffer()
-        self.ifdevice.msg_buffer = self.ifdev_msg_buffer
+        self.create_msg_buffers()
+        # in order to make sense, child:send == parent:rcv
+        self.ifdevice.msg_send_buffer = self.ifdev_rcv_buffer
 
     async def handle(self, msg):
 
@@ -215,7 +186,7 @@ class DummyInterface(Interface):
                 msg.body['DATETIME'] = util.dt_to_string()
                 # print(f'DummyInterface: {msg.to_json()}')
                 # self.msg_buffer.put_nowait(msg)
-                await self.msg_buffer.put(msg)
+                await self.msg_send_buffer.put(msg)
         else:
             print('Unknown Message type: {}'.format(msg.type))
 

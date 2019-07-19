@@ -1,9 +1,9 @@
-<!-- envdaq/templates/envdaq/daq.html -->
+<!-- envdaq/templates/envdaq/daqserver.html -->
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8"/>
-    <title>envDAQ:daq_server</title>
+    <title>envDAQ:DAQServer</title>
 </head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <body>
@@ -93,7 +93,7 @@
 
         var msgSocket = new WebSocket(
             'ws://' + window.location.host +
-            '/ws/envdaq/server/msg');
+            '/ws/envdaq/daqserver/');
 
         {% comment %} var dataSocket = new WebSocket(
             'ws://' + window.location.host +
@@ -104,15 +104,15 @@
             var data = JSON.parse(e.data);
 
 
-            var message = data['message']['DATA'];
+            {% comment %} var message = data['message']['DATA'];
 
             document.querySelector('#time-stamp').innerHTML =  (message['DATETIME']);
             cell2 = 'cell1';
             cell_id = '#'+cell2;
-            document.querySelector(cell_id).innerHTML = message['MEASUREMENTS']['concentration']['VALUE'];
+            document.querySelector(cell_id).innerHTML = message['MEASUREMENTS']['concentration']['VALUE']; {% endcomment %}
 
-            document.querySelector('#msg-window').value = (JSON.stringify(data['message']) + '\n');
-            {% comment %} document.querySelector('#msg-window').value = (e.data + '\n'); {% endcomment %}
+            {% comment %} document.querySelector('#msg-window').value = (JSON.stringify(data['message']) + '\n'); {% endcomment %}
+            document.querySelector('#msg-window').value = (e.data + '\n');
         };
 
  

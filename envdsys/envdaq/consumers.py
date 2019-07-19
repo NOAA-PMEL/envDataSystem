@@ -3,7 +3,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 import channels.db
 import json
 import asyncio
-import envdaq.util.daq
+from envdaq.util.daq import ConfigurationUtility
 
 
 
@@ -169,14 +169,14 @@ class ControllerConsumer(AsyncWebsocketConsumer):
         }))
 
 
-class DAQConsumer(AsyncWebsocketConsumer):
+class DAQServerConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
-        self.daq_group_name = 'daq_messages'
+        self.daqserver_group_name = 'daq_messages'
 
         # Join room group
         await self.channel_layer.group_add(
-            self.daq_group_name,
+            self.daqserver_group_name,
             self.channel_name
         )
 
@@ -185,8 +185,8 @@ class DAQConsumer(AsyncWebsocketConsumer):
         # get current daq
         # TODO: add ability to key this with name, tags, project, etc
         # daq = envdaq.util.daq.get_daq()
-        cfg = envdaq.util.daq.get_config()
-        print(f'consumer:cfg = {cfg}')
+        # cfg = ConfigurationUtility().get_config()
+        # print(f'consumer:cfg = {cfg}')
 
 
         # await self.data_message({'message': 'hi'})
@@ -201,23 +201,48 @@ class DAQConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         # Leave room group
         await self.channel_layer.group_discard(
-            self.daq_group_name,
+            self.daqserver_group_name,
             self.channel_name
         )
 
     # Receive message from WebSocket
     async def receive(self, text_data):
         # print(text_data)
-        text_data_json = json.loads(text_data)
-        message = text_data_json['BODY']
+        # text_data_json = json.loads(text_data)
+        data = json.loads(text_data)
+        message = data['message']
+        print(f'message: {message}')
 
-        await self.channel_layer.group_send(
-            self.data_group_name,
-            {
-                'type': 'data_message',
-                'message': message
-            }
-        )
+        if (message['SUBJECT'] == 'CONFIG'):
+            body = message['BODY']
+            if (body['purpose'] == 'REQUEST'):
+                if (body['type'] == 'ENVDAQ_CONFIG'):
+                    cfg = await ConfigurationUtility().get_config()
+
+                    reply = {
+                        'TYPE': 'GUI',
+                        'SENDER_ID': 'DAQServerConsumer',
+                        'TIMESTAMP': '2019-07-17T12:13:14Z',
+                        'SUBJECT': 'CONFIG',
+                        'BODY': {
+                            'purpose': 'REPLY',
+                            'type': 'ENVDAQ_CONFIG',
+                            'config': cfg,
+                        }
+                    }
+                print(f'reply: {reply}')
+                await self.data_message({'message': reply})
+
+
+        # message = text_data_json['BODY']
+
+        # await self.channel_layer.group_send(
+        #     self.data_group_name,
+        #     {
+        #         'type': 'data_message',
+        #         'message': message
+        #     }
+        # )
 
     # Receive message from room group
     async def data_message(self, event):

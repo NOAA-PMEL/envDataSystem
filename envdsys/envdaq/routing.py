@@ -13,7 +13,7 @@ from . import consumers
 # ]
 
 websocket_urlpatterns = [
-    path('ws/envdaq/daq/', consumers.DAQConsumer),
+    path('ws/envdaq/daqserver/', consumers.DAQServerConsumer),
     path('ws/envdaq/data_test/', consumers.DataConsumer),
     path(
         'ws/envdaq/controller/<controller_name>/',

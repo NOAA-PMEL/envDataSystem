@@ -18,7 +18,9 @@ import json
 def index(request):
     return render(request, 'envdaq/index.html', {})
 
-def server(request):
+def daqserver(request):
+    # TODO: This will be based on current "Project"
+    
     # list needs to be filtered based on controller
     # instrument_list = InstrumentMask.objects.all()
     # print(instrument_list)
@@ -27,7 +29,7 @@ def server(request):
     # context = {
     #     'controller_name_json': mark_safe(json.dumps(controller_name))
     # }
-    return render(request, 'envdaq/server.html')
+    return render(request, 'envdaq/daqserver.html')
 
 def controller(request, controller_name):
     # list needs to be filtered based on controller

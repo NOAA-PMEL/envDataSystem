@@ -79,11 +79,14 @@ class Controller(DAQ):
         # TODO: eventuallly this will be from factory and in config
         # TODO: properly instantiate and close WSClient in controller
         self.gui_client = WSClient(uri='ws://localhost:8001/ws/envdaq/data_test/')
+
         asyncio.ensure_future(self.send_gui_data())
         asyncio.ensure_future(self.read_gui_data())
+        # asyncio.ensure_future(self.message_to_gui())
+        # asyncio.ensure_future(self.from_gui_loop())
         # asyncio.ensure_future(self.send_data())
 
-        self.create_msg_buffer(config=None)
+        # self.create_msg_buffers(config=None)
         self.add_instruments()
         if (self.config['AUTO_START']):
             self.start()
@@ -92,6 +95,7 @@ class Controller(DAQ):
         # TODO: Do I need queues? Message and string methods?
         # await self.sendq.put(message.to_json())
         await self.sendq.put(message)
+        # await self.to_gui_buf.put(message)
 
     async def send_gui_data(self):
 
@@ -114,11 +118,13 @@ class Controller(DAQ):
             #msg = await self.gui_client.read()
             # await self.handle(msg)
             await asyncio.sleep(0.01)
-            print('read_loop: {}'.format(msg))
+            print('read_gui_data: {}'.format(msg))
 
     def start(self, cmd=None):
-
-        task = asyncio.ensure_future(self.read_loop())
+        print('Starting Controller')
+        # task = asyncio.ensure_future(self.read_loop())
+        task = asyncio.ensure_future(self.from_child_loop())
+        # task = asyncio.ensure_future(self.from_gui_loop())
         self.task_list.append(task)
 
         for k, v in self.inst_map.items():
@@ -139,15 +145,14 @@ class Controller(DAQ):
             # print(t)
             t.cancel()
 
-    async def read_loop(self=None):
-        while True:
-            msg = await self.inst_msg_buffer.get()
-            # TODO: should handle be a async? If not, could block
-            await self.handle(msg)
-            # await asyncio.sleep(.1)
+    # async def read_loop(self):
+    #     while True:
+    #         msg = await self.inst_msg_buffer.get()
+    #         # TODO: should handle be a async? If not, could block
+    #         await self.handle(msg)
+    #         # await asyncio.sleep(.1)
 
-    @abc.abstractmethod
-    async def handle(self, msg):
+    async def handle(self, msg, type=None):
         print(f'controller handle: {msg}')
         await asyncio.sleep(0.01)
 
@@ -157,9 +162,9 @@ class Controller(DAQ):
     #     return self.name+":"+self.label+":"
     #     +self.serial_number+":"+self.property_number
 
-    def create_msg_buffer(self, config):
-        # self.read_buffer = MessageBuffer(config=config)
-        self.inst_msg_buffer = asyncio.Queue(loop=self.loop)
+    # def create_msg_buffer(self, config):
+    #     # self.read_buffer = MessageBuffer(config=config)
+    #     self.inst_msg_buffer = asyncio.Queue(loop=self.loop)
 
     # # TODO: How do we want to id instruments? Need to clean this up
     # def add_instrument(self, instrument):
@@ -170,7 +175,8 @@ class Controller(DAQ):
             # for instr in self.config['INST_LIST']:
             # inst = InstrumentFactory().create(icfg['INST_CONFIG'])
             inst = InstrumentFactory().create(icfg)
-            inst.msg_buffer = self.inst_msg_buffer
+            # inst.msg_buffer = self.inst_msg_buffer
+            inst.to_parent_buf = self.from_child_buf
             self.inst_map[inst.get_id()] = inst
 
 
@@ -195,7 +201,8 @@ class DummyController(Controller):
         super().__init__(config)
         pass
 
-    async def handle(self, msg):
+    async def handle(self, msg, type=None):
         # print(f'controller.handle: {msg.to_json()}')
         await self.send_message(msg)
+        # await self.message_to_gui(msg)
         # await asyncio.sleep(0.01)

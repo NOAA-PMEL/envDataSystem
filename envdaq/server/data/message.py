@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime
+# from datetime import datetime
 import json
 import utilities.util
 
@@ -17,6 +17,8 @@ class Message():
         self.subject = subject
         self.body = body
         self.extra = extra
+
+        print('Message.init()')
 
     def update(self, msgtype=None, sender_id=None, subject=None,
                body=None, extra=None):
@@ -51,11 +53,12 @@ class Message():
         return {self.prefix: d}
 
     def from_json(self, json_msg):
-        print(f'json_msg: {json_msg}')
+        # print(f'json_msg: {json_msg}')
         pkg = json.loads(json_msg)
-        
+        # print(pkg['message'])
         if self.prefix in pkg:
-            msg = pkg[self.prefix]     
+            msg = pkg[self.prefix]
+            # print(f'from_json: {msg}')
             # if 'SIGNATURE' in msg:
             #     self.signature = msg['SIGNATURE']
             if 'TYPE' in msg:
@@ -68,10 +71,13 @@ class Message():
                 self.subject = msg['SUBJECT']
             if 'BODY' in msg:
                 self.body = msg['BODY']
+                # print(f'****from_json:body = {self.body}')
             if 'EXTRA' in msg:
                 self.extra = msg['EXTRA']
-        
-        print(f'from_json: {self.to_json()}')
+
+            print('****done with from_json')
+            print(self.to_json())
+        # print(f'from_json: {self.to_json()}')
 
 # this may inherit JSONEncode at some point
 
