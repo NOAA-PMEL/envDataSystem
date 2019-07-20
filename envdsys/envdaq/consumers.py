@@ -23,8 +23,8 @@ class DataConsumer(AsyncWebsocketConsumer):
 
         await self.accept()
 
-        cfg = await channels.db.database_sync_to_async(envdaq.util.daq.get_config)()
-        print(f'consumer:cfg = {cfg}')
+        # cfg = await channels.db.database_sync_to_async(envdaq.util.daq.get_config)()
+        # print(f'consumer:cfg = {cfg}')
 
         # await self.data_message({'message': 'hi'})
         # await self.channel_layer.group_send(

@@ -3,7 +3,7 @@ import asyncio
 # import math
 # from daq.interface.interface import InterfaceFactory, Interface
 # from daq.instrument.instrument import InstrumentFactory, Instrument
-# from daq.controller.controller import ControllerFactory, Controller
+from daq.controller.controller import ControllerFactory, Controller
 from client.client import WSClient
 from data.message import Message
 # import websockets
@@ -118,7 +118,7 @@ class DAQServer():
         # )
 
         # Begin startup
-        asyncio.ensure_future(self.start())
+        asyncio.ensure_future(self.open())
 
         # if config is None:
         #     # get config from gui
@@ -201,9 +201,11 @@ class DAQServer():
         self.from_child_buf = asyncio.Queue(loop=self.loop)
 
     def add_controllers(self):
+        print('add_controllers()')
         config = self.config
-        print(config['CONT_LIST'])
-        for k, icfg in config['CONT_LIST'].items():
+        print(config)
+        print(config['ENVDAQ_CONFIG']['CONT_LIST'])
+        for k, icfg in config['ENVDAQ_CONFIG']['CONT_LIST'].items():
             # for ctr in config['CONT_LIST']:
             print(f'key: {k}')
             # print(F'key = {k}')
@@ -264,7 +266,7 @@ class DAQServer():
 
             await asyncio.sleep(util.time_to_next(1))
 
-    async def start(self):
+    async def open(self):
         # task = asyncio.ensure_future(self.read_loop())
         # self.task_list.append(task)
 
@@ -297,16 +299,20 @@ class DAQServer():
                 }
             )
             await self.to_gui_buf.put(req)
-            await asyncio.sleep(1)
+            await asyncio.sleep(5)
 
-        print('Waiting for config...')
-        while self.config is None:
-            pass
+        # print('Waiting for config...')
+        # while self.config is None:
+        #     pass
 
-        print(self.config)
-
+        # print(self.config)
+        print('Create message buffers...')
         self.create_msg_buffer()
-        # self.add_controllers()
+        print('Add controllers...')
+        self.add_controllers()
+
+    def start(self):
+        pass
 
     def stop(self):
         # self.gui_client.sync_close()
@@ -351,7 +357,7 @@ class DAQServer():
                 content = d['message']
                 print(f'content = {content}')
                 if (content['SUBJECT'] == 'CONFIG'):
-                    if (content['BODY']['purpose'] == 'RESPONSE'):
+                    if (content['BODY']['purpose'] == 'REPLY'):
                         config = content['BODY']['config']
                         print(f'reponse from gui: {config}')
                         self.config = config
