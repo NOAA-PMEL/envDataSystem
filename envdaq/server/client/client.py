@@ -42,14 +42,14 @@ class ClientConnection(abc.ABC):
     async def read(self):
         # read from client: msg can have more than just a Message
         msg = await self.readq.get()
-        print('read: {}'.format(msg))
+        # print('read: {}'.format(msg))
         return msg
         # return await self.readq.get()
 
     async def read_message(self):
         # helper function to easily read a Message
         msg_json = await self.read()
-        print(f'read_message: {msg_json}')
+        # print(f'read_message: {msg_json}')
         msg = Message()
         msg.from_json(msg_json)
         # msg = Message().from_json(msg_json)
@@ -68,7 +68,7 @@ class ClientConnection(abc.ABC):
         # helper function to easily send a Message
         # print(f'send_message: {message}')
         msg = message.to_json()
-        print(f'send_message: {msg}')
+        # print(f'send_message: {msg}')
         await self.send(msg)
 
     @abc.abstractmethod
@@ -115,7 +115,7 @@ class WSClient(ClientConnection):
 
         while True:
             msg = await websocket.recv()
-            print('read loop: {}'.format(msg))
+            # print('read loop: {}'.format(msg))
             await self.readq.put(msg)
             # print('after readq.put')
 

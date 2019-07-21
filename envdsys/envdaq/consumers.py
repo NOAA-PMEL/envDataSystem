@@ -211,7 +211,7 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
         # text_data_json = json.loads(text_data)
         data = json.loads(text_data)
         message = data['message']
-        print(f'message: {message}')
+        # print(f'message: {message}')
 
         if (message['SUBJECT'] == 'CONFIG'):
             body = message['BODY']
@@ -230,9 +230,8 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
                             'config': cfg,
                         }
                     }
-                print(f'reply: {reply}')
+                # print(f'reply: {reply}')
                 await self.data_message({'message': reply})
-
 
         # message = text_data_json['BODY']
 

@@ -75,8 +75,8 @@ class Message():
             if 'EXTRA' in msg:
                 self.extra = msg['EXTRA']
 
-            print('****done with from_json')
-            print(self.to_json())
+            # print('****done with from_json')
+            # print(self.to_json())
         # print(f'from_json: {self.to_json()}')
 
 # this may inherit JSONEncode at some point

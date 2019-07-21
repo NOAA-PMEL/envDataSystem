@@ -24,12 +24,17 @@
     </style>                                                                                                                                                                     </style>
 
     Message Buffer (msg):<br/>
-    <textarea id="msg-window" cols="100" rows="20"></textarea><br/>
+    <textarea id="msg-window" cols="100" rows="5"></textarea><br/>
     <br/>
-    Data Buffer (data):
-    <textarea id="data-window" cols="100" rows="20"></textarea><br/>
+    Data Buffer (data):<br/>
+    <textarea id="data-window" cols="100" rows="5"></textarea><br/>
     {% comment %} <input id="inst-name-input" type="text" size="100"/><br/> {% endcomment %}
     {% comment %} <input id="inst-name-submit" type="button" value="Enter"/> {% endcomment %}
+
+    <br/>
+    <input id="daqserver-start-button" type="button" value="Start"/>
+    <input id="daqserver-stop-button" type="button" value="Stop"/>
+    
 
     {% comment %} <p id="time-stamp"></p><br/> {% endcomment %}
     {% comment %} <textarea>{{ cellvalue }}</textarea> {% endcomment %}
@@ -121,12 +126,21 @@
             if (e.keyCode === 13) {  // enter, return
                 document.querySelector('#inst-name-submit').click();
             }
-        };
-
-        document.querySelector('#inst-name-submit').onclick = function(e) {
-            var instName = document.querySelector('#inst-name-input').value;
-            window.location.pathname = '/envdaq/' + instName + '/';
         }; {% endcomment %}
+
+        document.querySelector('#daqserver_start_button').onclick = function(e) {
+            {% comment %} var instName = document.querySelector('#inst-name-input').value; {% endcomment %}
+            window.location.pathname = '/envdaq/' + instName + '/';
+
+            var message = {
+                    
+                };
+            
+            chatSocket.send(JSON.stringify({
+            'message': message
+            }));
+
+        };
     </script>
 </body>
 </html>

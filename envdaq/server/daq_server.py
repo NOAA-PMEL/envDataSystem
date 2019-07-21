@@ -203,8 +203,8 @@ class DAQServer():
     def add_controllers(self):
         print('add_controllers()')
         config = self.config
-        print(config)
-        print(config['ENVDAQ_CONFIG']['CONT_LIST'])
+        # print(config)
+        # print(config['ENVDAQ_CONFIG']['CONT_LIST'])
         for k, icfg in config['ENVDAQ_CONFIG']['CONT_LIST'].items():
             # for ctr in config['CONT_LIST']:
             print(f'key: {k}')
@@ -232,7 +232,7 @@ class DAQServer():
             # print('send_data: {}'.format(message.to_json))
             # # await client.send(json.dumps(msg))
             message = await self.to_gui_buf.get()
-            print('send server message')
+            # print('send server message')
             await self.gui_client.send_message(message)
             # await asyncio.sleep(1)
 
@@ -241,7 +241,7 @@ class DAQServer():
         # print('read_gui_loop init')
         while True:
             msg = await self.gui_client.read_message()
-            print(f'msg = {msg.to_json()}')
+            # print(f'msg = {msg.to_json()}')
             await self.handle(msg, src='FromGUI')
             # print(msg)
             # print('read_loop: {}'.format(msg))
@@ -315,10 +315,13 @@ class DAQServer():
         pass
 
     def stop(self):
-        # self.gui_client.sync_close()
-        if self.gui_client is not None:
-            self.loop.run_until_complete(self.gui_client.close())
+        # TODO: check if stopped already
 
+        # self.gui_client.sync_close()
+
+        for k, controller in self.controller_map.items():
+            print(controller)
+            controller.stop()
         # for instrument in self.inst_map:
         #     # print(sensor)
         #     instrument.stop()
@@ -347,19 +350,15 @@ class DAQServer():
             await asyncio.sleep(.1)
 
     async def handle(self, msg, src=None):
-        print(f'****controller handle: {src} - {msg.to_json()}')
+        # print(f'****controller handle: {src} - {msg.to_json()}')
 
         if (src == 'FromGUI'):
             d = msg.to_dict()
-            print(f'here1: {msg.subject}')
             if 'message' in d:
-                print('here2')
                 content = d['message']
-                print(f'content = {content}')
                 if (content['SUBJECT'] == 'CONFIG'):
                     if (content['BODY']['purpose'] == 'REPLY'):
                         config = content['BODY']['config']
-                        print(f'reponse from gui: {config}')
                         self.config = config
             elif (src == 'FromChild'):
                 print(f'fromChild: {content}')
@@ -367,15 +366,22 @@ class DAQServer():
         await asyncio.sleep(0.01)
 
     def shutdown(self):
-        print('shutdown:')
+        print('daq_server:shutdown:')
+
+        self.stop()
 
         # asyncio.get_event_loop().run_until_complete(self.ws_client.shutdown())
         # if self.ws_client is not None:
         #     self.ws_client.sync_close()
 
-        for controller in self.controller_list:
-            # print(sensor)
-            controller.stop()
+        if self.gui_client is not None:
+            self.loop.run_until_complete(self.gui_client.close())
+
+        for k, controller in self.controller_map.items():
+            controller.shutdown()
+        # for controller in self.controller_list:
+        #     # print(sensor)
+        #     controller.stop()
 
         # tasks = asyncio.Task.all_tasks()
         for t in self.task_list:
@@ -384,7 +390,6 @@ class DAQServer():
         # print("Tasks canceled")
         # asyncio.get_event_loop().stop()
 
-        self.stop()
         # self.server.close()
 
 # def time_to_next(sec):

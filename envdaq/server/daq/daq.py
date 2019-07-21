@@ -26,7 +26,7 @@ class DAQ(abc.ABC):
         self.from_gui_buf = None
 
         self.create_msg_buffers()
-        
+
     def get_id(self):
         id = self.__class__.__name__
         if self.label is not None:
@@ -88,7 +88,7 @@ class DAQ(abc.ABC):
 
     async def message_from_parent(self, msg):
         '''
-        This is to be used by parent to send messages to 
+        This is to be used by parent to send messages to
         children
         '''
         # while True:
