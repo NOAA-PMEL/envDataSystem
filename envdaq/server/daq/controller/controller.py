@@ -3,14 +3,14 @@ import sys
 import importlib
 import asyncio
 from daq.daq import DAQ
-from client.client import WSClient
+from client.wsclient import WSClient
 from daq.instrument.instrument import InstrumentFactory
 
 
 class ControllerFactory():
 
     @staticmethod
-    def create(config):
+    def create(config, **kwargs):
         create_cfg = config['CONTROLLER']
         contconfig = config['CONTCONFIG']
         print("module: " + create_cfg['MODULE'])
@@ -18,8 +18,10 @@ class ControllerFactory():
 
         try:
             mod_ = importlib.import_module(create_cfg['MODULE'])
+            print(mod_)
             cls_ = getattr(mod_, create_cfg['CLASS'])
-            return cls_(contconfig)
+            print(cls_)
+            return cls_(contconfig, **kwargs)
 
         except:  # better to catch ImportException?
             print("Unexpected error:", sys.exc_info()[0])
@@ -57,8 +59,20 @@ class Controller(DAQ):
 
     }
 
-    def __init__(self, config):
-        super().__init__(config)
+    # def __init__(self, config):
+    def __init__(self, config, **kwargs):
+        # def __init__(
+        #     self,
+        #     config,
+        #     ui_config=None,
+        #     auto_connect_ui=True
+        # ):
+        super(DAQ, self).__init__(config, **kwargs)
+            # super().__init__(
+            #    config,
+            #    ui_config=ui_config,
+            #    auto_connect_ui=auto_connect_ui
+            # )
         print('init Controller')
         print(self.config)
 
@@ -78,21 +92,28 @@ class Controller(DAQ):
 
         # TODO: eventuallly this will be from factory and in config
         # TODO: properly instantiate and close WSClient in controller
-        self.gui_client = WSClient(
-            uri='ws://localhost:8001/ws/envdaq/data_test/')
+        # self.gui_client = WSClient(
+        #     uri='ws://localhost:8001/ws/envdaq/data_test/')
 
-        self.task_list.append(asyncio.ensure_future(self.send_gui_data()))
-        self.task_list.append(asyncio.ensure_future(self.read_gui_data()))
+        # self.task_list.append(asyncio.ensure_future(self.send_gui_data()))
+        # self.task_list.append(asyncio.ensure_future(self.read_gui_data()))
         # asyncio.ensure_future(self.message_to_gui())
         # asyncio.ensure_future(self.from_gui_loop())
         # asyncio.ensure_future(self.send_data())
 
         # self.create_msg_buffers(config=None)
 
-        self.add_instruments()
+        # self.add_instruments()
+        # self.add_signals()
 
         if (self.config['AUTO_START']):
             self.start()
+
+    def get_ui_address(self):
+        print(self.label)
+        address = 'envdaq/contoller/'+self.label+'/'
+        print(f'get_ui_address: {address}')
+        return address
 
     async def send_message(self, message):
         # TODO: Do I need queues? Message and string methods?
@@ -125,16 +146,21 @@ class Controller(DAQ):
 
     def start(self, cmd=None):
         print('Starting Controller')
-        # task = asyncio.ensure_future(self.read_loop())
-        task = asyncio.ensure_future(self.from_child_loop())
-        # task = asyncio.ensure_future(self.from_gui_loop())
-        self.task_list.append(task)
+        super().start(cmd)
 
+        # task = asyncio.ensure_future(self.read_loop())
+        # task = asyncio.ensure_future(self.from_child_loop())
+        # task = asyncio.ensure_future(self.from_gui_loop())
+        # self.task_list.append(task)
+
+        # start instruments
         for k, v in self.instrument_map.items():
             self.instrument_map[k].start()
 
     def stop(self, cmd=None):
         print('Controller.stop()')
+        super().stop(cmd)
+
         # if self.gui_client is not None:
         #     self.loop.run_until_complete(self.gui_client.close())
 
@@ -150,13 +176,15 @@ class Controller(DAQ):
 
     def shutdown(self):
         print('controller:shutdown')
+        super().shutdown()
+
         # TODO: need to add a check in stop() to see if
         #       instrument is already stopped.
         # self.stop()
 
-        if self.gui_client is not None:
-            # self.loop.run_until_complete(self.gui_client.close())
-            self.gui_client.sync_close()
+        # if self.gui_client is not None:
+        #     # self.loop.run_until_complete(self.gui_client.close())
+        #     self.gui_client.sync_close()
 
         for k, instrument in self.instrument_map.items():
             # print(sensor)
@@ -203,25 +231,37 @@ class Controller(DAQ):
             self.instrument_map[inst.get_id()] = inst
 
 
-class BasicController(Controller):
+# class BasicController(Controller):
 
-    def __init__(self, config):
-        super().__init__(config)
+#     def __init__(self, config):
+#         super().__init__(config)
 
-    async def handle(self, msg):
-        pass
+#     async def handle(self, msg):
+#         pass
 
-    def start(self):
-        pass
+#     def start(self):
+#         pass
 
-    def stop(self):
-        pass
+#     def stop(self):
+#         pass
 
 
 class DummyController(Controller):
 
-    def __init__(self, config):
-        super().__init__(config)
+    # def __init__(self, config):
+    def __init__(self, config, **kwargs):
+        # def __init__(
+        #     self,
+        #     config,
+        #     ui_config=None,
+        #     auto_connect_ui=True
+        # ):
+        super(Controller, self).__init__(config, **kwargs)
+        # super().__init__(
+        #     config,
+        #     ui_config=ui_config,
+        #     auto_connect_ui=auto_connect_ui
+        # )
         pass
 
     async def handle(self, msg, type=None):

@@ -36,8 +36,17 @@ class Instrument(DAQ):
 
     class_type = 'INSTRUMENT'
 
-    def __init__(self, config):
-        super().__init__(config)
+    def __init__(
+        self,
+        config,
+        ui_config=None,
+        auto_connect_ui=True
+    ):
+        super().__init__(
+            config,
+            ui_config=ui_config,
+            auto_connect_ui=auto_connect_ui
+        )
         print('init Instrument')
         # self.config = config
         print(self.config)
@@ -153,9 +162,18 @@ class Instrument(DAQ):
 
 class DummyInstrument(Instrument):
 
-    def __init__(self, config):
+    def __init__(
+        self,
+        config,
+        ui_config=None,
+        auto_connect_ui=True
+    ):
+        super().__init__(
+            config,
+            ui_config=ui_config,
+            auto_connect_ui=auto_connect_ui
+        )
 
-        super().__init__(config)
         print('init DummyInstrument')
 
         self.name = 'DummyInstrument'

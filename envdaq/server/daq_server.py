@@ -4,7 +4,7 @@ import asyncio
 # from daq.interface.interface import InterfaceFactory, Interface
 # from daq.instrument.instrument import InstrumentFactory, Instrument
 from daq.controller.controller import ControllerFactory, Controller
-from client.client import WSClient
+from client.wsclient import WSClient
 from data.message import Message
 # import websockets
 import utilities.util as util
@@ -84,7 +84,7 @@ import json
 
 class DAQServer():
 
-    def __init__(self, config=None, gui_config=None):
+    def __init__(self, config=None, ui_config=None):
         self.controller_list = []
         self.controller_map = dict()
         self.task_list = []
@@ -93,16 +93,16 @@ class DAQServer():
 
         self.loop = asyncio.get_event_loop()
 
-        if gui_config is None:
-            gui_config = {
+        if ui_config is None:
+            ui_config = {
                 'host': 'localhost',
                 'port': 8001,
             }
-        self.gui_config = gui_config
+        self.ui_config = ui_config
 
         self.config = config
 
-        self.gui_client = None
+        self.ui_client = None
 
         # gui_ws_address = f'ws://{gui_config["host"]}:{gui_config["port"]}/'
         # gui_ws_address += 'ws/envdaq/daqserver/'
@@ -212,7 +212,8 @@ class DAQServer():
             # self.iface_map[iface.name] = iface
             # print(ifcfg['IFACE_CONFIG'])
             # controller = ControllerFactory().create(icfg['CONT_CONFIG'])
-            controller = ControllerFactory().create(icfg)
+            controller = ControllerFactory().create(icfg, ui_config=self.ui_config)
+            print(controller)
             controller.to_parent_buf = self.from_child_buf
             self.controller_map[controller.get_id()] = controller
 
@@ -233,14 +234,14 @@ class DAQServer():
             # # await client.send(json.dumps(msg))
             message = await self.to_gui_buf.get()
             # print('send server message')
-            await self.gui_client.send_message(message)
+            await self.ui_client.send_message(message)
             # await asyncio.sleep(1)
 
     async def read_gui_loop(self):
 
         # print('read_gui_loop init')
         while True:
-            msg = await self.gui_client.read_message()
+            msg = await self.ui_client.read_message()
             # print(f'msg = {msg.to_json()}')
             await self.handle(msg, src='FromGUI')
             # print(msg)
@@ -266,19 +267,29 @@ class DAQServer():
 
             await asyncio.sleep(util.time_to_next(1))
 
+    # TODO: add run() to check for broken connections
+
     async def open(self):
         # task = asyncio.ensure_future(self.read_loop())
         # self.task_list.append(task)
 
         # for k, v in self.inst_map.items():
         #     self.inst_map[k].start()
-        gui_config = self.gui_config
+        gui_config = self.ui_config
         gui_ws_address = f'ws://{gui_config["host"]}:{gui_config["port"]}/'
         gui_ws_address += 'ws/envdaq/daqserver/'
         # create gui client
         print(f'Starting gui client: {gui_ws_address}')
 
-        self.gui_client = WSClient(uri=gui_ws_address)
+        self.ui_client = WSClient(uri=gui_ws_address)
+        # print(f'self.ui_client = {self.ui_client}, {self.ui_client.isConnected()}')
+        while self.ui_client.isConnected() is not True:
+            # print(f'waiting for is_conncted {self.ui_client.isConnected()}')
+            # self.gui_client = WSClient(uri=gui_ws_address)
+            # print(f"gui client: {self.gui_client.isConnected()}")
+            await asyncio.sleep(1)
+
+        print(f'gui client is connected: {self.ui_client.isConnected()}')
 
         print(f'Creating message loops')
         self.to_gui_buf = asyncio.Queue(loop=self.loop)
@@ -299,7 +310,7 @@ class DAQServer():
                 }
             )
             await self.to_gui_buf.put(req)
-            await asyncio.sleep(5)
+            await asyncio.sleep(2)
 
         # print('Waiting for config...')
         # while self.config is None:
@@ -350,7 +361,7 @@ class DAQServer():
             await asyncio.sleep(.1)
 
     async def handle(self, msg, src=None):
-        # print(f'****controller handle: {src} - {msg.to_json()}')
+        print(f'****controller handle: {src} - {msg.to_json()}')
 
         if (src == 'FromGUI'):
             d = msg.to_dict()
@@ -374,8 +385,8 @@ class DAQServer():
         # if self.ws_client is not None:
         #     self.ws_client.sync_close()
 
-        if self.gui_client is not None:
-            self.loop.run_until_complete(self.gui_client.close())
+        if self.ui_client is not None:
+            self.loop.run_until_complete(self.ui_client.close())
 
         for k, controller in self.controller_map.items():
             controller.shutdown()

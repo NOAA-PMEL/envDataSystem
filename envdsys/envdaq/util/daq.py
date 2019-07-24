@@ -44,7 +44,6 @@ class ConfigurationUtility():
         # print(f'daq.config = {daq.configuration.config}')
         return daq.configuration.get_config()
 
-
     async def get_daq(pk=None, name=None, tags=None):
         # TODO: add ability to choose wanted daq
 
