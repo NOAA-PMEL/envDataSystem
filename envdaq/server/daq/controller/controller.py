@@ -67,7 +67,7 @@ class Controller(DAQ):
         #     ui_config=None,
         #     auto_connect_ui=True
         # ):
-        super(DAQ, self).__init__(config, **kwargs)
+        super(Controller, self).__init__(config, **kwargs)
             # super().__init__(
             #    config,
             #    ui_config=ui_config,
@@ -111,7 +111,7 @@ class Controller(DAQ):
 
     def get_ui_address(self):
         print(self.label)
-        address = 'envdaq/contoller/'+self.label+'/'
+        address = 'envdaq/controller/'+self.label+'/'
         print(f'get_ui_address: {address}')
         return address
 
@@ -159,8 +159,7 @@ class Controller(DAQ):
 
     def stop(self, cmd=None):
         print('Controller.stop()')
-        super().stop(cmd)
-
+ 
         # if self.gui_client is not None:
         #     self.loop.run_until_complete(self.gui_client.close())
 
@@ -174,9 +173,12 @@ class Controller(DAQ):
             # print(instrument)
             instrument.stop()
 
+        # Do super last to finish clean up
+        super().stop(cmd)
+
+ 
     def shutdown(self):
         print('controller:shutdown')
-        super().shutdown()
 
         # TODO: need to add a check in stop() to see if
         #       instrument is already stopped.
@@ -188,13 +190,13 @@ class Controller(DAQ):
 
         for k, instrument in self.instrument_map.items():
             # print(sensor)
-            # instrument.shutdown()
+            instrument.shutdown()
             pass
 
         # tasks = asyncio.Task.all_tasks()
-        for t in self.task_list:
-            # print(t)
-            t.cancel()
+        # for t in self.task_list:
+        #     # print(t)
+        #     t.cancel()
 
     # async def read_loop(self):
     #     while True:
@@ -202,6 +204,8 @@ class Controller(DAQ):
     #         # TODO: should handle be a async? If not, could block
     #         await self.handle(msg)
     #         # await asyncio.sleep(.1)
+
+        super().shutdown()
 
     async def handle(self, msg, type=None):
         print(f'controller handle: {msg}')
@@ -256,7 +260,7 @@ class DummyController(Controller):
         #     ui_config=None,
         #     auto_connect_ui=True
         # ):
-        super(Controller, self).__init__(config, **kwargs)
+        super(DummyController, self).__init__(config, **kwargs)
         # super().__init__(
         #     config,
         #     ui_config=ui_config,

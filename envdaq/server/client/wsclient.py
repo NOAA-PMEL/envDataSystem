@@ -8,6 +8,7 @@ class WSClient(ClientConnection):
     async def connect(self):
 
         try:
+            print(f'WSClient.connect.uri: {self.uri}')
             self.client = await websockets.client.connect(self.uri)
             self.is_connected = True
             print(f'WSClient.connect(): {self.client}')

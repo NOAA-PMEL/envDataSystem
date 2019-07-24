@@ -66,12 +66,16 @@ class DAQ(abc.ABC):
         pass
 
     async def connect_to_ui(self):
-        # build ui_address
-        ui_address = 'ws://localhost:8001/ws/'+self.get_ui_address()
-        print(f'ui_address: {ui_address}')
-        print(quote(ui_address))
 
-        self.ui_client = WSClient(uri=quote(ui_address))
+        # build ui_address
+        # ui_address = 'ws://localhost:8001/ws/'+quote(self.get_ui_address())
+        ui_address = 'ws://localhost:8001/ws/'+self.get_ui_address().replace(" ", "")
+        # ui_address.replace(" ", "")
+        print(f'ui_address: {ui_address}')
+        # ui_address = 'ws://localhost:8001/ws/envdaq/data_test/'
+
+        # self.ui_client = WSClient(uri=quote(ui_address))
+        self.ui_client = WSClient(uri=ui_address)
         while self.ui_client.isConnected() is not True:
             # self.gui_client = WSClient(uri=gui_ws_address)
             # print(f"gui client: {self.gui_client.isConnected()}")
