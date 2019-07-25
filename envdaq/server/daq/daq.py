@@ -1,7 +1,8 @@
 import abc
 import asyncio
 from client.wsclient import WSClient
-from urllib.parse import quote 
+# from urllib.parse import quote
+
 
 class DAQ(abc.ABC):
 
@@ -46,7 +47,6 @@ class DAQ(abc.ABC):
         # ui client
         self.ui_client = None
 
-        print('before start_ui')
         # start loop to maintain ui
         # if (
         #     'do_ui_connection' in self.ui_config and
@@ -58,7 +58,6 @@ class DAQ(abc.ABC):
         self.task_list.append(
             asyncio.ensure_future(self.run_ui_connection())
         )
-        print('after start_ui')
         # # make ui connection
         # self.ui_task_list.append(
         #     asyncio.ensure_future(self.open_ui_connection())
@@ -105,11 +104,10 @@ class DAQ(abc.ABC):
                     t.cancel()
 
                 # make connection
-                print('connect to ui')
+                # print('connect to ui')
                 await self.connect_to_ui()
 
                 # start ui queues
-                self.to_ui_buf = asyncio.Queue(loop=self.loop)
                 self.ui_task_list.append(
                     asyncio.ensure_future(self.to_ui_loop())
                 )
@@ -155,6 +153,7 @@ class DAQ(abc.ABC):
 
         self.from_parent_buf = asyncio.Queue(loop=self.loop)
         self.from_child_buf = asyncio.Queue(loop=self.loop)
+        self.to_ui_buf = asyncio.Queue(loop=self.loop)
 
         # I don't think we need a from_ui_buf
         # self.from_ui_buf = asyncio.Queue(loop=self.loop)
@@ -170,20 +169,20 @@ class DAQ(abc.ABC):
             # await asyncio.sleep(.1)
 
     async def from_child_loop(self):
-        print(f'started from_child_loop: {self.name} {self.from_child_buf}')
+        # print(f'started from_child_loop: {self.name} {self.from_child_buf}')
         # while self.from_child_buf is None:
         #     pass
 
         while True:
             msg = await self.from_child_buf.get()
-            print(f'****from_child_loop: {msg.to_json()}')
+            # print(f'****from_child_loop: {msg.to_json()}')
             await self.handle(msg, type="FromChild")
             # await asyncio.sleep(.1)
 
     async def to_ui_loop(self):
         while True:
-            message = await self.to_gui_buf.get()
-            # print('send server message')
+            message = await self.to_ui_buf.get()
+            # print(f'&&&&&&&&&&&&&&&send server message: {message.to_json()}')
             await self.ui_client.send_message(message)
 
     async def from_ui_loop(self):
@@ -194,11 +193,13 @@ class DAQ(abc.ABC):
 
     async def message_to_parent(self, msg):
         # while True:
-        print(f'message_to_parent: {msg.to_json()}')
+        # print(f'message_to_parent: {msg.to_json()}')
         await self.to_parent_buf.put(msg)
 
     async def message_to_ui(self, msg):
         # while True:
+        # print('******message_to_ui')
+        # print(f'message_to_ui: {msg.to_json()}')
         await self.to_ui_buf.put(msg)
 
     async def message_from_parent(self, msg):

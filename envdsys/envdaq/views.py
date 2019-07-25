@@ -18,9 +18,10 @@ import json
 def index(request):
     return render(request, 'envdaq/index.html', {})
 
+
 def daqserver(request):
     # TODO: This will be based on current "Project"
-    
+
     # list needs to be filtered based on controller
     # instrument_list = InstrumentMask.objects.all()
     # print(instrument_list)
@@ -31,6 +32,7 @@ def daqserver(request):
     # }
     return render(request, 'envdaq/daqserver.html')
 
+
 def controller(request, controller_name):
     # list needs to be filtered based on controller
     # instrument_list = InstrumentMask.objects.all()
@@ -39,9 +41,25 @@ def controller(request, controller_name):
 
     # TODO: lookup controller name in Models pass config/def in context
     #       what to do if not in db?
-        
+
     print(f'controller_name: {mark_safe(json.dumps(controller_name))}')
     context = {
         'controller_name_json': mark_safe(json.dumps(controller_name))
     }
     return render(request, 'envdaq/controller.html', context=context)
+
+
+def instrument(request, instrument_name):
+    # list needs to be filtered based on controller
+    # instrument_list = InstrumentMask.objects.all()
+    # print(instrument_list)
+    # context = {'instrument_list': instrument_list}
+
+    # TODO: lookup controller name in Models pass config/def in context
+    #       what to do if not in db?
+
+    print(f'instrument_name: {mark_safe(json.dumps(instrument_name))}')
+    context = {
+        'instrument_name_json': mark_safe(json.dumps(instrument_name))
+    }
+    return render(request, 'envdaq/instrument.html', context=context)

@@ -411,7 +411,7 @@ class DAQServer():
 
 async def heartbeat():
     while True:
-        print('lub-dub')
+        # print('lub-dub')
         await asyncio.sleep(util.time_to_next(10))
 
 

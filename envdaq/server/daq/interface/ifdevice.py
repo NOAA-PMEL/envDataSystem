@@ -187,7 +187,7 @@ class DummyIFDevice(IFDevice):
         # print(msg.to_dict())
         # print(msg.to_json())
         # self.msg_send_buffer.put_nowait(msg)
-        print(f'to parent: {msg.to_json()}')
+        # print(f'to parent: {msg.to_json()}')
         await self.message_to_parent(msg)
 
 

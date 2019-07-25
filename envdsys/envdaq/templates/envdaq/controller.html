@@ -4,11 +4,17 @@
 <head>
     <meta charset="utf-8"/>
     <title>envDAQ:controller</title>
-    {{ controller_name_json }}
 </head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <body>
+<h2>{{ controller_name_json|slice:"1:-1" }}</h2>
+{% comment %} <h2>{{ controller_name_json|cut:'"' }}</h2> {% endcomment %}
 {%for instrument in instrument_list %}
 {{ instrument.name }}</br>
 {% endfor %}
+<div name="instruments">
+{% comment %} <iframe src="http://localhost:8001/envdaq/instrument/TestDummy" onload="this.width=window.innerWidth;this.height=window.innerHeight;"></iframe> {% endcomment %}
+<iframe src="http://localhost:8001/envdaq/instrument/TestDummy" style="position: absolute; height: 60%; width: 60%"></iframe>
+</div>
 </body>
 </html>

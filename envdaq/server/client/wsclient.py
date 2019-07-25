@@ -11,7 +11,7 @@ class WSClient(ClientConnection):
             print(f'WSClient.connect.uri: {self.uri}')
             self.client = await websockets.client.connect(self.uri)
             self.is_connected = True
-            print(f'WSClient.connect(): {self.client}')
+            # print(f'WSClient.connect(): {self.client}')
         except ConnectionError:
             print("not connected")
             self.client = None
@@ -19,7 +19,7 @@ class WSClient(ClientConnection):
 
     async def open(self):
 
-        print('WSClient.open')
+        # print('WSClient.open')
         # timeout = 10
         try:
             self.client = await websockets.client.connect(self.uri)
@@ -30,8 +30,6 @@ class WSClient(ClientConnection):
             self.is_connected = False
 
         # self.is_connected = True
-        print('here')
-        print(self.client)
         self.run_task_list.append(
             asyncio.ensure_future(self.send_loop(self.client))
         )
@@ -44,9 +42,9 @@ class WSClient(ClientConnection):
 
     async def read_loop(self, websocket):
 
-        print('starting read loop')
+        # print('starting read loop')
         while True:
-            print(f'read_loop: {websocket}')
+            # print(f'read_loop: {websocket}')
             msg = await websocket.recv()
             # print('read loop: {}'.format(msg))
             await self.readq.put(msg)
@@ -54,12 +52,12 @@ class WSClient(ClientConnection):
 
     async def send_loop(self, websocket):
         # TODO: add try except loop to catch invalid state
-        print('starting send loop')
+        # print('starting send loop')
         while True:
-            print(f'sendq: {self.sendq}')
+            # print(f'sendq: {self.sendq}')
             msg = await self.sendq.get()
-            print('send loop: {}'.format(msg))
-            print(f'websocket: {websocket}')
+            # print('send loop: {}'.format(msg))
+            # print(f'websocket: {websocket}')
             await websocket.send(msg)
 
     async def shutdown_complete(self):

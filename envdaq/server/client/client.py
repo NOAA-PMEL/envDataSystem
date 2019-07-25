@@ -56,22 +56,20 @@ class ClientConnection(abc.ABC):
 
         timeout = 1  # seconds
 
-        print('run...')
+        # print('run...')
 
         while True:
 
             while self.keep_connected:
                 # print('keep connected')
                 if self.is_connected is not True:
-                    print('connecting to server')
+                    # print('connecting to server')
                     for t in self.run_task_list:
-                        print(f'killing run task: {t}')
+                        # print(f'killing run task: {t}')
                         t.cancel()
 
-                    print('before connect')
                     await self.connect()
-                    print('after connect')
-                    print(f'after connect: {self.client}')
+                    # print(f'after connect: {self.client}')
                     if self.is_connected is True:
                         self.run_task_list.append(
                             asyncio.ensure_future(self.send_loop(self.client))
@@ -116,16 +114,16 @@ class ClientConnection(abc.ABC):
 
     async def send(self, msg):
         # send to client: msg can have more than just a Message
-        print('send: {}'.format(msg))
+        # print('send: {}'.format(msg))
         await self.sendq.put(msg)
-        print('msg sent')
+        # print('msg sent')
         # await self.sendq.put(msg)
 
     async def send_message(self, message):
         # helper function to easily send a Message
-        print(f'send_message: {message}')
+        # print(f'send_message: {message}')
         msg = message.to_json()
-        print(f'send_message: {msg}')
+        # print(f'send_message: {msg}')
         await self.send(msg)
 
     @abc.abstractmethod
@@ -148,11 +146,11 @@ class ClientConnection(abc.ABC):
         print('client closed')
         self.is_connected = False
 
-        print('killing run_tasks')
+        # print('killing run_tasks')
         for t in self.run_task_list:
             t.cancel()
 
-        print('killing tasks')
+        # print('killing tasks')
         for t in self.task_list:
             t.cancel()
 

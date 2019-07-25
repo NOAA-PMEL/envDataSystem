@@ -18,7 +18,7 @@ class Message():
         self.body = body
         self.extra = extra
 
-        print('Message.init()')
+        # print('Message.init()')
 
     def update(self, msgtype=None, sender_id=None, subject=None,
                body=None, extra=None):

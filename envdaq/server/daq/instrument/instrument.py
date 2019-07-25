@@ -1,3 +1,4 @@
+import abc
 import importlib
 import sys
 from daq.daq import DAQ
@@ -141,6 +142,7 @@ class Instrument(DAQ):
     def send_to_datamanager(self):
         pass
 
+    @abc.abstractmethod
     async def handle(self, msg, type=None):
         pass
 
@@ -249,12 +251,13 @@ class DummyInstrument(Instrument):
 
     async def handle(self, msg, type=None):
 
+        # print(f'%%%%%Instrument.handle: {msg.to_json()}')
         # handle messages from multiple sources. What ID to use?
         if (type == 'FromChild' and msg.type == Interface.class_type):
             id = msg.sender_id
             entry = self.parse(msg)
             self.last_entry = entry
-            print('entry = \n{}'.format(entry))
+            # print('entry = \n{}'.format(entry))
 
             data = Message(
                 sender_id=self.get_id(),
@@ -274,7 +277,7 @@ class DummyInstrument(Instrument):
         #     await asyncio.sleep(0.01)
 
     def parse(self, msg):
-
+        # print(f'parse: {msg.to_json()}')
         entry = dict()
         entry['METADATA'] = self.get_metadata()
 

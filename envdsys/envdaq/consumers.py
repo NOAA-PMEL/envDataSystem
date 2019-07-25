@@ -208,12 +208,13 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
 
         # if status, pass to socket
 
-        # print(text_data)
+        # print(f'^^^^^ {text_data}')
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
+        # print(f'InstrumentConsumer.receive: {message}')
 
         await self.channel_layer.group_send(
-            self.data_group_name,
+            self.instrument_group_name,
             {
                 'type': 'instrument_message',
                 'message': message
@@ -223,11 +224,12 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
     # Receive message from room group
     async def instrument_message(self, event):
         message = event['message']
-        print(f'instrument_message: {json.dumps(message)}')
+        # print(f'instrument_message: {json.dumps(message)}')
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
             'message': message
         }))
+
 
 class InterfaceConsumer(AsyncWebsocketConsumer):
 
