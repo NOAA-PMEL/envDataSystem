@@ -266,7 +266,7 @@ class DummyController(Controller):
         #     ui_config=ui_config,
         #     auto_connect_ui=auto_connect_ui
         # )
-        pass
+        self.name = 'DummyController'
 
     async def handle(self, msg, type=None):
         # print(f'controller.handle: {msg.to_json()}')

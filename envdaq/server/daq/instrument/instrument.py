@@ -169,7 +169,8 @@ class Instrument(DAQ):
             iface = InterfaceFactory().create(ifcfg)
             print(f'iface: {iface}')
             # iface.msg_buffer = self.iface_rcv_buffer
-            iface.msg_send_buffer = self.from_child_buf
+            # iface.msg_send_buffer = self.from_child_buf
+            iface.to_parent_buf = self.from_child_buf
             self.iface_map[iface.get_id()] = iface
 
     def get_metadata(self):

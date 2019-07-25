@@ -209,24 +209,8 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
         # if status, pass to socket
 
         # print(text_data)
-        # await self.data_message({'message': 'hi again'})
         text_data_json = json.loads(text_data)
-        # message = text_data_json['BODY']
         message = text_data_json['message']
-        # message = text_data_json
-        # message = "hi again"
-        # message = text_data_json
-        # print(message)
-        # message = 'hi again'
-        # await self.data_message({'message': message})
-        # message = (
-        #     self.room_name +
-        #     ' - ' +
-        #     self.chatroom_group_name +
-        #     ' - ' +
-        #     self.channel_name
-        # )
-        # Send message to room group
 
         await self.channel_layer.group_send(
             self.data_group_name,
@@ -239,7 +223,132 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
     # Receive message from room group
     async def instrument_message(self, event):
         message = event['message']
-        print(f'data_message: {json.dumps(message)}')
+        print(f'instrument_message: {json.dumps(message)}')
+        # Send message to WebSocket
+        await self.send(text_data=json.dumps({
+            'message': message
+        }))
+
+class InterfaceConsumer(AsyncWebsocketConsumer):
+
+    async def connect(self):
+        self.interface_name = (
+            self.scope['url_route']['kwargs']['interface_name']
+        )
+        self.interface_group_name = (
+            'interface_{}'.format(self.interface_name)
+        )
+        print(f'name = {self.interface_name}')
+        # Join room group
+        await self.channel_layer.group_add(
+            self.interface_group_name,
+            self.channel_name
+        )
+
+        await self.accept()
+
+        # TODO: request config from controller?
+
+    async def disconnect(self, close_code):
+        # Leave room group
+        await self.channel_layer.group_discard(
+            self.interface_group_name,
+            self.channel_name
+        )
+
+    # Receive message from WebSocket
+    async def receive(self, text_data):
+
+        # TODO: parse incoming message
+
+        # if data, pass along to socket
+
+        # if server request (e.g., send config) send
+        #   message to server. Do I need to send
+        #   to whole group? Does this break down
+        #   as controller_req, instrument_req, etc?
+
+        # if status, pass to socket
+
+        # print(text_data)
+        text_data_json = json.loads(text_data)
+        message = text_data_json['message']
+
+        # Send message to room group
+        await self.channel_layer.group_send(
+            self.data_group_name,
+            {
+                'type': 'interface_message',
+                'message': message
+            }
+        )
+
+    # Receive message from room group
+    async def interface_message(self, event):
+        message = event['message']
+        print(f'interface_message: {json.dumps(message)}')
+        # Send message to WebSocket
+        await self.send(text_data=json.dumps({
+            'message': message
+        }))
+
+
+class IFDeviceConsumer(AsyncWebsocketConsumer):
+
+    async def connect(self):
+        self.ifdevice_name = (
+            self.scope['url_route']['kwargs']['ifdevice_name']
+        )
+        self.ifdevice_group_name = (
+            'ifdevice_{}'.format(self.ifdevice_name)
+        )
+        print(f'name = {self.ifdevice_name}')
+        # Join room group
+        await self.channel_layer.group_add(
+            self.ifdevice_group_name,
+            self.channel_name
+        )
+
+        await self.accept()
+
+        # TODO: request config from controller?
+
+    async def disconnect(self, close_code):
+        # Leave room group
+        await self.channel_layer.group_discard(
+            self.ifdevice_group_name,
+            self.channel_name
+        )
+
+    # Receive message from WebSocket
+    async def receive(self, text_data):
+
+        # TODO: parse incoming message
+
+        # if data, pass along to socket
+
+        # if server request (e.g., send config) send
+        #   message to server. Do I need to send
+        #   to whole group? Does this break down
+        #   as controller_req, instrument_req, etc?
+
+        # if status, pass to socket
+
+        text_data_json = json.loads(text_data)
+        message = text_data_json['message']
+
+        await self.channel_layer.group_send(
+            self.data_group_name,
+            {
+                'type': 'ifdevice_message',
+                'message': message
+            }
+        )
+
+    # Receive message from room group
+    async def ifdevice_message(self, event):
+        message = event['message']
+        print(f'ifdevice_message: {json.dumps(message)}')
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
             'message': message

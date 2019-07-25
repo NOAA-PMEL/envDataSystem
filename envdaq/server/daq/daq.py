@@ -46,17 +46,19 @@ class DAQ(abc.ABC):
         # ui client
         self.ui_client = None
 
+        print('before start_ui')
         # start loop to maintain ui
-        if (
-            'do_ui_connection' in self.ui_config and
-            self.ui_config['do_ui_connection'] is False
-        ):
-            print('no ui connection')
-            pass
-        else:
-            self.task_list.append(
-                asyncio.ensure_future(self.run_ui_connection())
-            )
+        # if (
+        #     'do_ui_connection' in self.ui_config and
+        #     self.ui_config['do_ui_connection'] is False
+        # ):
+        #     print('no ui connection')
+        #     pass
+        # else:
+        self.task_list.append(
+            asyncio.ensure_future(self.run_ui_connection())
+        )
+        print('after start_ui')
         # # make ui connection
         # self.ui_task_list.append(
         #     asyncio.ensure_future(self.open_ui_connection())

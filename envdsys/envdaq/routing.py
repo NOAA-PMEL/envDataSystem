@@ -23,5 +23,13 @@ websocket_urlpatterns = [
         'ws/envdaq/instrument/<instrument_name>/',
         consumers.InstrumentConsumer
         ),
+    path(
+        'ws/envdaq/interface/<interface_name>/',
+        consumers.InterfaceConsumer
+        ),
+    path(
+        'ws/envdaq/ifdevice/<ifdevice_name>/',
+        consumers.IFDeviceConsumer
+        ),
     
 ]
