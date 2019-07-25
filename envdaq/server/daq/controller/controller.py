@@ -24,7 +24,7 @@ class ControllerFactory():
             return cls_(contconfig, **kwargs)
 
         except:  # better to catch ImportException?
-            print("Unexpected error:", sys.exc_info()[0])
+            print("Controller: Unexpected error:", sys.exc_info()[0])
             raise
 
 
@@ -103,7 +103,7 @@ class Controller(DAQ):
 
         # self.create_msg_buffers(config=None)
 
-        # self.add_instruments()
+        self.add_instruments()
         # self.add_signals()
 
         if (self.config['AUTO_START']):
@@ -191,7 +191,6 @@ class Controller(DAQ):
         for k, instrument in self.instrument_map.items():
             # print(sensor)
             instrument.shutdown()
-            pass
 
         # tasks = asyncio.Task.all_tasks()
         # for t in self.task_list:
@@ -226,10 +225,11 @@ class Controller(DAQ):
     #     self.inst_map[instrument.get_signature()] = instrument
 
     def add_instruments(self):
+        print('Add instruments')
         for k, icfg in self.config['INST_LIST'].items():
             # for instr in self.config['INST_LIST']:
             # inst = InstrumentFactory().create(icfg['INST_CONFIG'])
-            inst = InstrumentFactory().create(icfg)
+            inst = InstrumentFactory().create(icfg, ui_config=self.ui_config)
             # inst.msg_buffer = self.inst_msg_buffer
             inst.to_parent_buf = self.from_child_buf
             self.instrument_map[inst.get_id()] = inst
@@ -270,6 +270,7 @@ class DummyController(Controller):
 
     async def handle(self, msg, type=None):
         # print(f'controller.handle: {msg.to_json()}')
-        await self.send_message(msg)
+        # await self.send_message(msg)
+        await self.message_to_ui(msg)
         # await self.message_to_gui(msg)
         # await asyncio.sleep(0.01)

@@ -1,49 +1,130 @@
 from daq.daq import DAQ
-import abc
+# import abc
 import random
 from utilities import util
 import asyncio
 from data.message import Message
+import importlib
 # import abc
 
 
+class IFDeviceFactory():
+
+    @staticmethod
+    def create(config, **kwargs):
+        print(config)
+        create_cfg = config['IFDEVICE']
+        ifdevconfig = config['IFDEVCONFIG']
+        print("module: " + create_cfg['MODULE'])
+        print("class: " + create_cfg['CLASS'])
+
+        try:
+            # print('Creating: ' + config['name'])
+            # print('   ClassName: ' + config['class'])
+            mod_ = importlib.import_module(create_cfg['MODULE'])
+            cls_ = getattr(mod_, create_cfg['CLASS'])
+            # inst_class = eval(config['class'])
+            # return inst_class.factory_create()
+            return cls_(ifdevconfig, **kwargs)
+
+        # TODO: create custom exception class for our app
+        # except ImportError:
+        except:
+            print("IFDevice: Unexpected error:", sys.exc_info()[0])
+            raise ImportError
+
+
 class IFDevice(DAQ):
-# class IFDevice():
+    # class IFDevice():
 
     # channel_map = {'default': 'default'}
     class_type = 'IFDEVICE'
 
-    def __init__(self, config):
-        super().__init__(config)
+    def __init__(self, config, **kwargs):
+        # def __init__(self, config):
+        print('IFDevice init')
+        super(IFDevice, self).__init__(config, **kwargs)
+        # super().__init__(config)
 
-        self.config = config
-        self.task_list = []
+        # self.config = config
+        # self.task_list = []
 
-        # Message buffers
-        #   to/from parent
-        self.msg_send_buffer = None
-        self.msg_rcv_buffer = None
+        # # Message buffers
+        # #   to/from parent
+        # self.msg_send_buffer = None
+        # self.msg_rcv_buffer = None
 
-    # @abc.abstractmethod
-    def get_id(self):
-        id = super().get_id()
-        # id = 'tmp'
-        return id
+        self.name = 'IFDevice'
+        self.type = 'Generic'
+        self.label = self.config['DESCRIPTION']['LABEL']
+        self.mfg = None
+        self.model = None
 
-    def connect(self, msg=None):
-        pass
+        # self.serial_number = self.config['DESCRIPTION']['SERIAL_NUMBER']
+        # self.property_number = self.config['DESCRIPTION']['PROPERTY_NUMBER']
 
-    def start(self, msg=None):
-        pass
+        self.iface_map = dict()
+        # self.add_interfaces()
 
-    def stop(self, msg=None):
-        pass
 
-    def disconnect(self, msg=None):
-        pass
+    # # @abc.abstractmethod
+    # def get_id(self):
+    #     id = super().get_id()
+    #     # id = 'tmp'
+    #     return id
 
-    def handle(self, data, type=None):
-        pass
+    def get_ui_address(self):
+        print(self.label)
+        address = 'envdaq/ifdevice/'+self.label+'/'
+        print(f'get_ui_address: {address}')
+        return address
+
+    # def connect(self, msg=None):
+    #     pass
+
+    def start(self, cmd=None):
+        super().start(cmd)
+
+        for k, iface in self.iface_map.items():
+            iface.start()
+
+    def stop(self, cmd=None):
+
+        for k, iface in self.iface_map.items():
+            iface.stop()
+
+        super().stop(cmd) 
+
+    # def disconnect(self, msg=None):
+    #     pass
+
+    def shutdown(self):
+
+        for k, iface in self.iface_map.items():
+            iface.shutdown()
+
+        super().shutdown() 
+
+    # def add_interfaces(self):
+    #     print('Add interfaces')
+    #     # for now, single interface but eventually loop
+    #     # through configured interfaces
+    #     # list = self.config['IFACE_LIST']
+    #     print(f'config = {self.config["IFACE_LIST"]}')
+    #     for k, ifcfg in self.config['IFACE_LIST'].items():
+    #         # self.iface_map[iface.name] = iface
+    #         # print(ifcfg['IFACE_CONFIG'])
+    #         # print(ifcfg['INTERFACE'])
+    #         # iface = InterfaceFactory().create(ifcfg['IFACE_CONFIG'])
+    #         iface = InterfaceFactory().create(ifcfg)
+    #         print(f'iface: {iface}')
+    #         # iface.msg_buffer = self.iface_rcv_buffer
+    #         iface.msg_send_buffer = self.from_child_buf
+    #         self.iface_map[iface.get_id()] = iface
+
+    async def handle(self, msg, type=None):
+        await asyncio.sleep(1)
+        # pass
 
     def handle2(self, data):
         pass
@@ -56,15 +137,26 @@ class DummyIFDevice(IFDevice):
 
     # IFDevice.channel_map['test'] = 'test'
 
-    def __init__(self, config):
-        super().__init__(config)
+    def __init__(self, config, **kwargs):
+        # def __init__(self, config):
+        print(config)
+        print('DummyIFDevice init')
+        super(DummyIFDevice, self).__init__(config, **kwargs)
+        # super().__init__(config)
 
-        # start dummy data loop
-        task = asyncio.ensure_future(self.data_loop())
-        self.task_list.append(task)
+        # TODO: fix label
+        self.label = "DummyIFDevice"
+        self.name = "DummyIFDevice"
 
     # def get_id(self):
     #     return ('DummyIFDevice')
+
+    def start(self, cmd=None):
+        super().start(cmd)
+        print('Starting IFDevice')
+        # start dummy data loop
+        task = asyncio.ensure_future(self.data_loop())
+        self.task_list.append(task)
 
     async def data_loop(self):
 
@@ -77,10 +169,11 @@ class DummyIFDevice(IFDevice):
                 round(random.random()*20.0, 4)
             )
             # print('ifdevice: data = {}'.format(data))
-            self.handle2(data)
+            await self.handle2(data)
             await asyncio.sleep(util.time_to_next(1))
 
-    def handle2(self, data):
+    async def handle2(self, data):
+        # def handle2(self, data):
 
         out = {'DATA': data}
         # print(out)
@@ -93,4 +186,61 @@ class DummyIFDevice(IFDevice):
         )
         # print(msg.to_dict())
         # print(msg.to_json())
-        self.msg_send_buffer.put_nowait(msg)
+        # self.msg_send_buffer.put_nowait(msg)
+        print(f'to parent: {msg.to_json()}')
+        await self.message_to_parent(msg)
+
+
+# class IFDeviceOLD(DAQ):
+#     # class IFDevice():
+
+#     # channel_map = {'default': 'default'}
+#     class_type = 'IFDEVICE'
+
+#     def __init__(self, config, **kwargs):
+#         # def __init__(self, config):
+#         print('IFDevice init')
+#         super(IFDevice, self).__init__(config, **kwargs)
+#         # super().__init__(config)
+
+#         self.config = config
+#         self.task_list = []
+
+#         # Message buffers
+#         #   to/from parent
+#         self.msg_send_buffer = None
+#         self.msg_rcv_buffer = None
+
+#     # @abc.abstractmethod
+#     def get_id(self):
+#         id = super().get_id()
+#         # id = 'tmp'
+#         return id
+
+#     def get_ui_address(self):
+#         print(self.label)
+#         address = 'envdaq/ifdevice/'+self.label+'/'
+#         print(f'get_ui_address: {address}')
+#         return address
+
+#     def connect(self, msg=None):
+#         pass
+
+#     def start(self, msg=None):
+#         pass
+
+#     def stop(self, msg=None):
+#         pass
+
+#     def disconnect(self, msg=None):
+#         pass
+
+#     async def handle(self, data, type=None):
+#         await asyncio.sleep(1)
+#         # pass
+
+#     def handle2(self, data):
+#         pass
+
+#     # def get_channel_map():
+#     #    return IFDevice.channel_map

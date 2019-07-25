@@ -41,14 +41,22 @@ class DAQ(abc.ABC):
         #   to/from gui
         self.to_ui_buf = None
         self.from_ui_buf = None
+        self.create_msg_buffers()
 
         # ui client
         self.ui_client = None
 
         # start loop to maintain ui
-        self.task_list.append(
-            asyncio.ensure_future(self.run_ui_connection())
-        )
+        if (
+            'do_ui_connection' in self.ui_config and
+            self.ui_config['do_ui_connection'] is False
+        ):
+            print('no ui connection')
+            pass
+        else:
+            self.task_list.append(
+                asyncio.ensure_future(self.run_ui_connection())
+            )
         # # make ui connection
         # self.ui_task_list.append(
         #     asyncio.ensure_future(self.open_ui_connection())
@@ -115,8 +123,7 @@ class DAQ(abc.ABC):
     #         self.ui_client = self.connect_to_ui()
 
     def start(self, cmd=None):
-
-        self.create_msg_buffers()
+        # self.create_msg_buffers()
         self.task_list.append(
             asyncio.ensure_future(self.from_parent_loop())
         )
@@ -150,7 +157,6 @@ class DAQ(abc.ABC):
         # I don't think we need a from_ui_buf
         # self.from_ui_buf = asyncio.Queue(loop=self.loop)
 
-
     @abc.abstractmethod
     async def handle(self, msg, type=None):
         pass
@@ -168,7 +174,7 @@ class DAQ(abc.ABC):
 
         while True:
             msg = await self.from_child_buf.get()
-            print(f'from_child_loop: {msg}')
+            print(f'****from_child_loop: {msg.to_json()}')
             await self.handle(msg, type="FromChild")
             # await asyncio.sleep(.1)
 
@@ -186,6 +192,7 @@ class DAQ(abc.ABC):
 
     async def message_to_parent(self, msg):
         # while True:
+        print(f'message_to_parent: {msg.to_json()}')
         await self.to_parent_buf.put(msg)
 
     async def message_to_ui(self, msg):

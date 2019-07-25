@@ -19,4 +19,9 @@ websocket_urlpatterns = [
         'ws/envdaq/controller/<controller_name>/',
         consumers.ControllerConsumer
         ),
+    path(
+        'ws/envdaq/instrument/<instrument_name>/',
+        consumers.InstrumentConsumer
+        ),
+    
 ]

@@ -256,8 +256,6 @@ class InstrumentMask(models.Model):
         return self.name
 
 
-
-
 class Measurement(models.Model):
 
     name = models.CharField(max_length=20)

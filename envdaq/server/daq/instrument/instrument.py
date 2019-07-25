@@ -2,15 +2,14 @@ import importlib
 import sys
 from daq.daq import DAQ
 import asyncio
-import abc
-from data.message import MessageBuffer, Message
+from data.message import Message
 from daq.interface.interface import Interface, InterfaceFactory
 
 
 class InstrumentFactory():
 
     @staticmethod
-    def create(config):
+    def create(config, **kwargs):
         create_cfg = config['INSTRUMENT']
         instconfig = config['INSTCONFIG']
         print("module: " + create_cfg['MODULE'])
@@ -23,12 +22,12 @@ class InstrumentFactory():
             cls_ = getattr(mod_, create_cfg['CLASS'])
             # inst_class = eval(config['class'])
             # return inst_class.factory_create()
-            return cls_(instconfig)
+            return cls_(instconfig, **kwargs)
 
         # TODO: create custom exception class for our app
         # except ImportError:
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            print("Instrument:Unexpected error:", sys.exc_info()[0])
             raise ImportError
 
 
@@ -36,17 +35,19 @@ class Instrument(DAQ):
 
     class_type = 'INSTRUMENT'
 
-    def __init__(
-        self,
-        config,
-        ui_config=None,
-        auto_connect_ui=True
-    ):
-        super().__init__(
-            config,
-            ui_config=ui_config,
-            auto_connect_ui=auto_connect_ui
-        )
+    def __init__(self, config, **kwargs):
+        # def __init__(
+        #     self,
+        #     config,
+        #     ui_config=None,
+        #     auto_connect_ui=True
+        # ):
+        super(Instrument, self).__init__(config, **kwargs)
+        # super().__init__(
+        #     config,
+        #     ui_config=ui_config,
+        #     auto_connect_ui=auto_connect_ui
+        # )
         print('init Instrument')
         # self.config = config
         print(self.config)
@@ -73,7 +74,11 @@ class Instrument(DAQ):
 
         # create read buffer and interfaces
         # self.create_msg_buffers(config=None)
+
+        # *****
         self.add_interfaces()
+        # *****
+
         # add queues - these are not serializable so might
         #   need a helper function to dump configurable items
 
@@ -82,23 +87,43 @@ class Instrument(DAQ):
 #            'IF_WRITE_Q': asyncio.Queue(loop=self.loop),
 #        }
 
-    def connect(self, cmd=None):
-        pass
+    def get_ui_address(self):
+        print(self.label)
+        address = 'envdaq/instrument/'+self.label+'/'
+        print(f'get_ui_address: {address}')
+        return address
+
+    # def connect(self, cmd=None):
+    #     pass
 
     def start(self, cmd=None):
         # task = asyncio.ensure_future(self.read_loop())
         print('Starting Instrument')
-        task = asyncio.ensure_future(self.from_child_loop())
-        self.task_list.append(task)
+        super().start(cmd)
 
-        for k, v in self.iface_map.items():
-            self.iface_map[k].start()
+        # task = asyncio.ensure_future(self.from_child_loop())
+        # self.task_list.append(task)
+
+        for k, iface in self.iface_map.items():
+            iface.start()
 
     def stop(self, cmd=None):
-        pass
+        print('Instrument.stop()')
 
-    def disconnect(self, cmd=None):
-        pass
+        for k, iface in self.iface_map.items():
+            iface.stop()
+
+        super().stop(cmd)
+
+    def shutdown(self):
+
+        for k, iface in self.iface_map.items():
+            iface.shutdown()
+
+        super().shutdown()
+
+    # def disconnect(self, cmd=None):
+    #     pass
 
     # async def read_loop(self):
 
@@ -131,14 +156,18 @@ class Instrument(DAQ):
     #     self.iface_rcv_buffer = asyncio.Queue(loop=self.loop)
 
     def add_interfaces(self):
+        print('Add interfaces')
         # for now, single interface but eventually loop
         # through configured interfaces
         # list = self.config['IFACE_LIST']
+        print(f'config = {self.config["IFACE_LIST"]}')
         for k, ifcfg in self.config['IFACE_LIST'].items():
             # self.iface_map[iface.name] = iface
             # print(ifcfg['IFACE_CONFIG'])
+            # print(ifcfg['INTERFACE'])
             # iface = InterfaceFactory().create(ifcfg['IFACE_CONFIG'])
             iface = InterfaceFactory().create(ifcfg)
+            print(f'iface: {iface}')
             # iface.msg_buffer = self.iface_rcv_buffer
             iface.msg_send_buffer = self.from_child_buf
             self.iface_map[iface.get_id()] = iface
@@ -162,19 +191,21 @@ class Instrument(DAQ):
 
 class DummyInstrument(Instrument):
 
-    def __init__(
-        self,
-        config,
-        ui_config=None,
-        auto_connect_ui=True
-    ):
-        super().__init__(
-            config,
-            ui_config=ui_config,
-            auto_connect_ui=auto_connect_ui
-        )
+    def __init__(self, config, **kwargs):
+        # def __init__(
+        #     self,
+        #     config,
+        #     ui_config=None,
+        #     auto_connect_ui=True
+        # ):
 
-        print('init DummyInstrument')
+        super(DummyInstrument, self).__init__(config, **kwargs)
+        # super().__init__(
+        #     config,
+        #     ui_config=ui_config,
+        #     auto_connect_ui=auto_connect_ui
+        # )
+        # print('init DummyInstrument')
 
         self.name = 'DummyInstrument'
         self.type = 'DummyType'
@@ -218,7 +249,7 @@ class DummyInstrument(Instrument):
     async def handle(self, msg, type=None):
 
         # handle messages from multiple sources. What ID to use?
-        if (msg.type == Interface.class_type):
+        if (type == 'FromChild' and msg.type == Interface.class_type):
             id = msg.sender_id
             entry = self.parse(msg)
             self.last_entry = entry
@@ -233,7 +264,8 @@ class DummyInstrument(Instrument):
             # data.update(subject='DATA', body=entry['DATA'])
             data.update(subject='DATA', body=entry)
             # await self.msg_buffer.put(data)
-            await self.to_parent_buf.put(data)
+            # await self.to_parent_buf.put(data)
+            await self.message_to_ui(data)
             # print(f'data_json: {data.to_json()}\n')
             # await asyncio.sleep(0.01)
         # print("DummyInstrument:msg: {}".format(msg.body))
