@@ -3,8 +3,9 @@ import sys
 import importlib
 import asyncio
 from daq.daq import DAQ
-from client.wsclient import WSClient
+# from client.wsclient import WSClient
 from daq.instrument.instrument import InstrumentFactory
+# from daq.manager.manager import DAQManager
 
 
 class ControllerFactory():
@@ -68,11 +69,11 @@ class Controller(DAQ):
         #     auto_connect_ui=True
         # ):
         super(Controller, self).__init__(config, **kwargs)
-            # super().__init__(
-            #    config,
-            #    ui_config=ui_config,
-            #    auto_connect_ui=auto_connect_ui
-            # )
+        # super().__init__(
+        #    config,
+        #    ui_config=ui_config,
+        #    auto_connect_ui=auto_connect_ui
+        # )
         print('init Controller')
         print(self.config)
 
@@ -159,7 +160,7 @@ class Controller(DAQ):
 
     def stop(self, cmd=None):
         print('Controller.stop()')
- 
+
         # if self.gui_client is not None:
         #     self.loop.run_until_complete(self.gui_client.close())
 
@@ -176,7 +177,6 @@ class Controller(DAQ):
         # Do super last to finish clean up
         super().stop(cmd)
 
- 
     def shutdown(self):
         print('controller:shutdown')
 
@@ -251,7 +251,7 @@ class Controller(DAQ):
 
 
 class DummyController(Controller):
-
+    INSTANTIABLE = True
     # def __init__(self, config):
     def __init__(self, config, **kwargs):
         # def __init__(
@@ -268,9 +268,28 @@ class DummyController(Controller):
         # )
         self.name = 'DummyController'
 
+        # self.INSTANTIABLE = True
+
+        # DummyController.set_instantiable(True)
+        # DummyController.INSTANTIABLE = True
+        # DAQ.INSTANTIABLE = True
+
     async def handle(self, msg, type=None):
         # print(f'controller.handle: {msg.to_json()}')
         # await self.send_message(msg)
         await self.message_to_ui(msg)
         # await self.message_to_gui(msg)
         # await asyncio.sleep(0.01)
+
+    # def _create_definition(self):
+    #     self.daq_definition['module'] = self.__module__
+    #     self.daq_definition['class'] = self.__name__
+        
+    def get_definition():
+        definition = dict()
+        definition['module'] = DummyController.__module__
+        definition['name'] = DummyController.__name__
+        DAQ.daq_definition['DEFINITION'] = definition
+        return DAQ.daq_definition
+
+

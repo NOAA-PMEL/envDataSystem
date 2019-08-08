@@ -3,7 +3,8 @@ import asyncio
 # import math
 # from daq.interface.interface import InterfaceFactory, Interface
 # from daq.instrument.instrument import InstrumentFactory, Instrument
-from daq.controller.controller import ControllerFactory, Controller
+from daq.manager.sys_manager import SysManager
+from daq.controller.controller import ControllerFactory  # , Controller
 from client.wsclient import WSClient
 from data.message import Message
 # import websockets
@@ -116,6 +117,9 @@ class DAQServer():
         # task_list.append(
         #     asyncio.ensure_future(self.send_gui_loop())
         # )
+
+        # start managers
+        SysManager.start()
 
         # Begin startup
         asyncio.ensure_future(self.open())
@@ -295,6 +299,22 @@ class DAQServer():
         self.to_gui_buf = asyncio.Queue(loop=self.loop)
         self.task_list.append(asyncio.ensure_future(self.send_gui_loop()))
         self.task_list.append(asyncio.ensure_future(self.read_gui_loop()))
+
+        print('sync DAQ')
+        # system_def = SysManager.get_definitions_all()
+        # print(f'system_def: {system_def}')
+        sys_def = Message(
+            sender_id='daqserver',
+            msgtype='DAQServer',
+            subject='CONFIG',
+            body={
+                'purpose': 'SYNC',
+                'type': 'SYSTEM_DEFINITION',
+                'data': SysManager.get_definitions_all()
+
+            }       
+        )
+        await self.to_gui_buf.put(sys_def)
 
         print('set self.config')
         while self.config is None:

@@ -1,4 +1,13 @@
+import abc
+import pkgutil
+import sys
+import importlib
+import inspect
+# from daq.controller.controller import Controller#, ControllerFactory
+# from daq.controller.controller import ControllerFactory, Controller
+# from daq.controller.controller import Controller
 from daq.interface.ifdevice import IFDeviceFactory
+# from daq.controller.controller import Controller
 
 
 class Managers():
@@ -7,25 +16,28 @@ class Managers():
 
     @staticmethod
     def start():
-        print('starting IFDeviceManager')
+        # print('starting IFDeviceManager')
         Managers().__managers['IFDeviceManager'] = IFDeviceManager()
-        print(f'start: {Managers().__managers["IFDeviceManager"]}')
+        # Managers.__managers['ControllerMananger'] = ControllerManager()
+        # print(f'start: {Managers().__managers["IFDeviceManager"]}')
 
     @staticmethod
     def get(mgr_type):
-        print(f'mgr_type = {mgr_type}')
+        # print(f'mgr_type = {mgr_type}')
         if (len(Managers().__managers) == 0):
             Managers().start()
-            print(len(Managers().__managers))
-        print(f'get: {Managers().__managers["IFDeviceManager"]}')
-        for k in Managers().__managers.keys():
-            print(k)
-        for k, v in Managers().__managers.items():
-            print(f'k = {k}')
-        print('get manager: {}'.format(mgr_type))
-        print(Managers().__managers)
-        print(Managers().__managers[mgr_type])
+            # print(len(Managers().__managers))
+        # print(f'get: {Managers().__managers["IFDeviceManager"]}')
+        # for k in Managers().__managers.keys():
+        #     print(k)
+        # for k, v in Managers().__managers.items():
+        #     print(f'k = {k}')
+        # print('get manager: {}'.format(mgr_type))
+        # print(Managers().__managers)
+        # print(Managers().__managers[mgr_type])
         return Managers().__managers[mgr_type]
+
+
 
 
 class IFDeviceManager():

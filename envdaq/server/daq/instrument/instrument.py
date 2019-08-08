@@ -304,3 +304,10 @@ class DummyInstrument(Instrument):
         data['MEASUREMENTS'] = measurements
         entry['DATA'] = data
         return entry
+
+    def get_definition():
+        definition = dict()
+        definition['module'] = DummyInstrument.__module__
+        definition['name'] = DummyInstrument.__name__
+        DAQ.daq_definition['DEFINITION'] = definition
+        return DAQ.daq_definition

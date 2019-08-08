@@ -6,6 +6,10 @@ from client.wsclient import WSClient
 
 class DAQ(abc.ABC):
 
+    # TODO: how to do this more elegantly?
+    INSTANTIABLE = False
+    daq_definition = {'DEFINITION': {}}
+
     def __init__(
         self,
         config,
@@ -13,6 +17,10 @@ class DAQ(abc.ABC):
         auto_connect_ui=True,
         **kwargs
     ):
+        # non-abstract DAQ children need to set this to True
+        #   in order for system to recognize as valid
+        # TODO: make an abstract method to retrieve value
+        #       to force children to deal with it?
 
         # TODO: Should DAQ have generic in/out buffers?
         print('init DAQ')
@@ -22,6 +30,11 @@ class DAQ(abc.ABC):
         self.auto_connect_ui = auto_connect_ui
         self.task_list = []
         self.ui_task_list = []
+
+        # self.daq_definition = dict()
+        # self.daq_definition['DEFINITION'] = dict()
+
+        # self.INSTANTIABLE = False
 
         self.name = None        
         self.label = None
@@ -69,6 +82,26 @@ class DAQ(abc.ABC):
             id += ":"+self.label
 
         return id
+
+    # TODO: add this abstract method to all daq
+    # @abc.abstractclassmethod
+    def get_definition():
+        pass
+
+    # @classmethod
+    # def can_instantiate():
+    #     return object.__class__().INSTANTIATE
+
+    # @classmethod
+    # def get_instantiable():
+    #     return DAQ.INSTANTIABLE
+
+    # @classmethod
+    # def set_instantiable(val):
+    #     if val:
+    #         DAQ.INSTANTIABLE = True
+    #     else:
+    #         DAQ.INSTANTIABLE = False
 
     @abc.abstractmethod
     def get_ui_address(self):
