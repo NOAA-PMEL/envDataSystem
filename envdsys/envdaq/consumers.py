@@ -4,6 +4,8 @@ import channels.db
 import json
 import asyncio
 from envdaq.util.daq import ConfigurationUtility
+import envdaq.util.util as time_util
+from envdaq.util.sync_manager import SyncManager
 
 
 class DataConsumer(AsyncWebsocketConsumer):
@@ -394,7 +396,7 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
 
     # Receive message from WebSocket
     async def receive(self, text_data):
-        # print(text_data)
+        print(text_data)
         # text_data_json = json.loads(text_data)
         data = json.loads(text_data)
         message = data['message']
@@ -409,7 +411,7 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
                     reply = {
                         'TYPE': 'GUI',
                         'SENDER_ID': 'DAQServerConsumer',
-                        'TIMESTAMP': '2019-07-17T12:13:14Z',
+                        'TIMESTAMP': time_util.dt_to_string(),
                         'SUBJECT': 'CONFIG',
                         'BODY': {
                             'purpose': 'REPLY',
@@ -419,6 +421,11 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
                     }
                 # print(f'reply: {reply}')
                 await self.data_message({'message': reply})
+            elif (body['purpose'] == 'SYNC'):
+                if (body['type'] == 'SYSTEM_DEFINITION'):
+                    # TODO: add field to force sync option
+                    # send config data to syncmanager
+                    await SyncManager.sync_data(body['data'])
 
         # message = text_data_json['BODY']
 

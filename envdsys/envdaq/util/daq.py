@@ -49,7 +49,7 @@ class ConfigurationUtility():
 
         # for now, hardcoded
         try:
-            daq = channels.db.database_sync_to_async(DAQServer.objects.get(pk=1))
+            daq = database_sync_to_async(DAQServer.objects.get(pk=1))
         except ObjectDoesNotExist:
             daq = None
 

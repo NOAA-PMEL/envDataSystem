@@ -35,7 +35,7 @@ class Configuration(models.Model):
         self.save()
 
     def set_config_json(self, json_config):
-        
+
         if json_config is None:
             return ''
 
@@ -43,7 +43,7 @@ class Configuration(models.Model):
             config = json.loads()
         except ValueError:
             return ''
-        
+
         self.set_config(config)
 
     def get_config(self):
@@ -64,7 +64,7 @@ class Configuration(models.Model):
         return self.name
 
     def __repr__(self):
-        return (f'{self.name}.{self.uniqueID}')  
+        return (f'{self.name}.{self.uniqueID}')
 
 
 # class Configurable(models.Model):
@@ -100,7 +100,7 @@ class Configuration(models.Model):
 
 #     def get_config(self):
 #         '''
-#         Get JSON config information from a configurable model. Stored value 
+#         Get JSON config information from a configurable model. Stored value
 #         will be decoded and returned as json
 #         '''
 
@@ -111,7 +111,7 @@ class Configuration(models.Model):
 #             json_config = ''
 
 #         return json_config
- 
+
 #     def add_name_details(self):
 #         pass
 
@@ -139,7 +139,7 @@ class Configuration(models.Model):
 #         return self.name
 
 #     def __repr__(self):
-#         return (f'{self.name}.{self.uniqueID}')  
+#         return (f'{self.name}.{self.uniqueID}')
 
 
 class DAQServer(models.Model):
@@ -169,11 +169,13 @@ class DAQServer(models.Model):
         return self.name
 
     def __repr__(self):
-        return (f'{self.name}.{self.uniqueID}')  
+        return (f'{self.name}.{self.uniqueID}')
+
 
 class ControllerDef(models.Model):
 
-    name = models.CharField(max_length=30, help_text='Enter Controller type name')
+    name = models.CharField(
+        max_length=30, help_text='Enter Controller type name')
     _class = models.CharField(max_length=30, help_text='Enter class name')
     _module = models.CharField(max_length=50, help_text='Enter module name')
 
@@ -190,6 +192,13 @@ class ControllerDef(models.Model):
 
     def get_absolute_url(self):
         return reverse('model-detail-view', args=[str(self.id)])
+
+    def update(self, definition):
+        print(f'definition: {definition}')
+        if definition and 'DEFINITION' in definition:
+            self._module = definition['DEFINITION']['module']
+            self._class = definition['DEFINITION']['name']
+            self.save()
 
 
 class Controller(models.Model):
@@ -260,7 +269,7 @@ class Measurement(models.Model):
 
     name = models.CharField(max_length=20)
     long_name = models.CharField(max_length=100, null=True, blank=True)
-    description = models.CharField(max_length=100,null=True, blank=True)
+    description = models.CharField(max_length=100, null=True, blank=True)
 
     units = models.CharField(
         max_length=20,
@@ -281,9 +290,9 @@ class DataCollection(models.Model):
     type = None
 
     # start_time =
-    # stop_time = 
+    # stop_time =
 
-    # controller_list = 
+    # controller_list =
 
     class Meta:
         abstract = True
@@ -294,12 +303,13 @@ class DataCollection(models.Model):
     def create_tag():
         pass
 
+
 class FieldProject(DataCollection):
     type = 'FIELD_PROJECT'
 
-    # sub_projects = 
+    # sub_projects =
 
-    # platforms = 
+    # platforms =
 
 
 class Station(DataCollection):
@@ -307,4 +317,3 @@ class Station(DataCollection):
 
     # location =
     # platform =
-
