@@ -8,6 +8,7 @@ import inspect
 # from daq.controller.controller import Controller
 # from daq.interface.ifdevice import IFDeviceFactory
 from daq.controller.controller import Controller
+from daq.instrument.instrument import Instrument
 
 
 class SysManager():
@@ -19,6 +20,7 @@ class SysManager():
         # print('starting IFDeviceManager')
         # Managers().__managers['IFDeviceManager'] = IFDeviceManager()
         SysManager._managers['ControllerManager'] = ControllerManager()
+        SysManager._managers['InstrumentManager'] = InstrumentManager()
         # print(f'start: {Managers().__managers["IFDeviceManager"]}')
 
     @staticmethod
@@ -48,8 +50,9 @@ class SysManager():
             for def_name, def_value in definition.items():
                 # print(f'def_name, def_value: {def_name}, {def_value}')
                 sys_def['SYSTEM_DEFINITIONS'][def_name] = def_value
-            
+
         return sys_def
+
 
 class DAQManager(abc.ABC):
 
@@ -166,4 +169,35 @@ class ControllerManager(DAQManager):
 
         return definitions
 
-            
+
+class InstrumentManager(DAQManager):
+
+    def __init__(self):
+        # print('@@@@@@@@@@@2InstrumentManager init')
+        super().__init__()
+
+    def update(self, force_new=False):
+        # get all available controllers in system
+        # print('******update')
+        instrument_list = []
+        instrument_list = self.collect_classes(['daq.instrument'], Instrument)
+        # self._explore_package('daq.controller', 'Controller', controller_list)
+        # print(f'instrument list: {instrument_list}')
+        # pass
+
+        for instrument in instrument_list:
+            self.daq_map[instrument.__name__] = instrument
+
+        print(f'instrument_map: {self.daq_map}')
+
+    def get_sys_definitions(self, update=True):
+        if update:
+            self.update()
+        # print(f'get_sys_def: {self.daq_map}')
+        definitions = dict()
+        definitions['INSTRUMENT_SYS_DEFS'] = dict()
+        for k, instrument in self.daq_map.items():
+            # print(f'instrument is {instrument}')
+            definitions['INSTRUMENT_SYS_DEFS'][k] = instrument.get_definition()
+
+        return definitions

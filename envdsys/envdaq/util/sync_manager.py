@@ -1,4 +1,5 @@
 from envdaq.models import ControllerDef
+from envinventory.models import InstrumentDef
 from  channels.db import database_sync_to_async
 import asyncio
 
@@ -27,3 +28,12 @@ class SyncManager():
                         except ControllerDef.DoesNotExist:
                             controller = ControllerDef(name=name)
                             controller.update(cont_def)
+                elif def_type == 'INSTRUMENT_SYS_DEFS':
+                    for name, inst_def in sys_def['INSTRUMENT_SYS_DEFS'].items():
+                        try:
+                            instrument = InstrumentDef.objects.get(name=name)
+                            # if force update, update current
+                        except InstrumentDef.DoesNotExist:
+                            instrument = InstrumentDef(name=name)
+                            instrument.update(inst_def)
+        

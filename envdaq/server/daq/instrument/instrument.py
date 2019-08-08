@@ -194,6 +194,8 @@ class Instrument(DAQ):
 
 class DummyInstrument(Instrument):
 
+    INSTANTIABLE = True
+
     def __init__(self, config, **kwargs):
         # def __init__(
         #     self,
@@ -214,6 +216,11 @@ class DummyInstrument(Instrument):
         self.type = 'DummyType'
         self.mfg = 'DumbMfg'
         self.model = 'DumbModelSX'
+        self.tag_list = [
+            'dummy',
+            'testing',
+            'development',
+        ]
 
         # need to allow for datasets...how?
 
@@ -306,8 +313,18 @@ class DummyInstrument(Instrument):
         return entry
 
     def get_definition():
+        # TODO: come up with static definition method
         definition = dict()
         definition['module'] = DummyInstrument.__module__
         definition['name'] = DummyInstrument.__name__
+        definition['mfg'] = 'DummyMfg'
+        definition['model'] = 'DumbModelSX'
+        definition['type'] = 'DummyType'
+        definition['tags'] = [
+            'dummy',
+            'testing',
+            'development',
+        ]
+
         DAQ.daq_definition['DEFINITION'] = definition
         return DAQ.daq_definition

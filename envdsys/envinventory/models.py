@@ -141,6 +141,33 @@ class InstrumentDef(InventoryDef):
     # def __repr__(self):
     #     return (f'{self.manufacturer} : {self.model}')
 
+    def update(self, definition):
+        print(f'InstrumentDef.definition: {definition}')
+        if definition and 'DEFINITION' in definition:
+            self._module = definition['DEFINITION']['module']
+            self._class = definition['DEFINITION']['name']
+            # self.mfg = definition['DEFINITION']['mfg']
+            self.model = definition['DEFINITION']['model']
+            self.save()
+            if 'tags' in definition['DEFINITION']:
+                self.update_tags(definition['DEFINITION']['tags'])
+            # self.save()
+
+    def update_tags(self, tag_names):
+
+        for tag_name in tag_names:
+            print(f'tag_name: {tag_name}')
+            try:
+                tag = Tag.objects.get(name=tag_name)
+            except Tag.DoesNotExist:
+                tag = Tag(name=tag_name)
+                tag.save()
+            print(tag)
+            self.tags.add(tag)
+
+        self.save()
+        print(f'instrumentdef: {self}')
+
 
 class Instrument(Inventory):
     # name = models.CharField(max_length=30, help_text="Enter name for this instrument")
