@@ -1,6 +1,6 @@
 import asyncio
 from asyncio.queues import Queue
-from plot_server import PlotServer
+from .plot_server import PlotServer
 
 
 class PlotManager():
@@ -36,16 +36,29 @@ class PlotManager():
             server.start()
 
     @staticmethod
-    def add_server(config=None, server_id=None, app_list=None):
+    def add_server(config=None, server_id=None, app_list=None, update=False):
+        print(f'server_id: {server_id}')
+        PlotManager.update_server(
+            config=config,
+            server_id=server_id,
+            app_list=app_list,
+            force=True
+        )
 
-        server_id = ''
+    @staticmethod
+    def update_server(config=None, server_id=None, app_list=None, force=False):
+
+        print(f'update_server: {config}, {server_id}')
         # use config to create PlotApps
         if (config):
+            server_id = ''
             pass
         elif not server_id:
             server_id = PlotManager.DEFAULT_ID
-
-        PlotManager.server_map[server_id] = PlotServer(server_id, app_list)
+        print(f'server_id = {server_id}, {PlotManager.server_map}')
+        if (server_id in PlotManager.server_map) or force:
+            PlotManager.server_map[server_id] = PlotServer(server_id, app_list)
+        print(f'server_id = {server_id}, {PlotManager.server_map}')
 
     @staticmethod
     def get_server(server_id=None):

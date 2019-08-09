@@ -8,8 +8,8 @@ class PlotServer():
     def __init__(self, server_id, app_list=[]):
 
         self.id = server_id
-        self.address = self.server_id[0]
-        self.port = self.server_id[1]
+        self.address = self.id[0]
+        self.port = self.id[1]
 
         self.app_list = app_list
 

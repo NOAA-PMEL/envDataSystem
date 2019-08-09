@@ -165,3 +165,12 @@ CHANNEL_LAYERS = {
         },
     },
 }
+
+# Plot Server settings..use this?
+PLOT_SERVER = {
+    'default': {
+        'CONFIG': {
+            "hosts": [('localhost', 18001)]
+        }
+    }
+}

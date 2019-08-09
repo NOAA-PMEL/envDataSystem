@@ -69,6 +69,38 @@ class InventoryDef(models.Model):
     class Meta():
         abstract = True
 
+    def update_mfg(self, mfg_name):
+        print(f'mfg: {mfg_name}')
+        try:
+            mfg = Organization.objects.get(name=mfg_name)
+            print(f'org(mfg): {mfg}')
+            self.mfg = mfg
+            self.save()
+        except Organization.DoesNotExist:
+            mfg = Organization(name=mfg_name)
+            mfg.save()
+            print(f'org(new mfg): {mfg}')
+            self.mfg = mfg
+            self.save()
+    
+    def update_tags(self, tag_names):
+        print(f'tag_names: {tag_names}')
+        for tag_name in tag_names:
+            # print(f'tag_name: {tag_name}')
+            try:
+                tag = Tag.objects.get(name=tag_name)
+                if tag not in self.tags.all():
+                    self.tags.add(tag)
+                    self.save()
+            except Tag.DoesNotExist:
+                tag = Tag(name=tag_name)
+                tag.save()
+                self.tags.add(tag)
+                self.save()
+            print(tag)
+
+        # print(f'^^^^^^^^^InvDef.tags: {self.tags.all()}')
+
 # class InventoryType(models.Model):
 #
 #     name = models.CharField(max_length=30)
@@ -149,25 +181,35 @@ class InstrumentDef(InventoryDef):
             # self.mfg = definition['DEFINITION']['mfg']
             self.model = definition['DEFINITION']['model']
             self.save()
+            if 'mfg' in definition['DEFINITION']:
+                self.update_mfg(definition['DEFINITION']['mfg'])
             if 'tags' in definition['DEFINITION']:
                 self.update_tags(definition['DEFINITION']['tags'])
+            if 'type' in definition['DEFINITION']:
+                self.update_type(definition['DEFINITION']['type'])
+                
             # self.save()
-
-    def update_tags(self, tag_names):
-
-        for tag_name in tag_names:
-            print(f'tag_name: {tag_name}')
-            try:
-                tag = Tag.objects.get(name=tag_name)
-            except Tag.DoesNotExist:
-                tag = Tag(name=tag_name)
-                tag.save()
-            print(tag)
-            self.tags.add(tag)
-
-        self.save()
-        print(f'instrumentdef: {self}')
-
+    
+    def update_type(self, type_name):
+        try:
+            tag = Tag.objects.get(name=type_name)
+            # TODO: tag types as a list of tags to allow multiple types?
+            if tag.type != 'INSTRUMENT_TYPE':
+                print(
+                    f'Type {type_name} refers to an existing '
+                    'tag of the wrong type'
+                )
+                return
+            print(f'type = {tag.name}:{tag.type}')
+            self.type = tag
+            self.save()
+        except Tag.DoesNotExist:
+            tag = Tag(name=type_name, type='INSTRUMENT_TYPE')
+            tag.save()
+            print(f'new type = {tag.name}:{tag.type}')
+            self.type = tag
+            self.save()
+    
 
 class Instrument(Inventory):
     # name = models.CharField(max_length=30, help_text="Enter name for this instrument")
