@@ -326,5 +326,93 @@ class DummyInstrument(Instrument):
             'development',
         ]
 
+        measurement_sets = dict()
+
+        primary_meas = dict()
+        primary_meas['concentration'] = {
+            'dimensions': {
+                'axes': ['TIME'],
+                'unlimited': 'TIME',
+                'units': ['dateTime'],
+            },
+            'units': 'cm-3',  # should be cfunits or udunits
+            'uncertainty': 0.1,
+            'source': 'MEASURED',
+            'data_type': 'NUMERIC',
+            'control': None,
+        }
+
+        process_meas = dict()
+        process_meas['inlet_temperature'] = {
+            'dimensions': {
+                'axes': ['TIME'],
+                'unlimited': 'TIME',
+                'units': ['dateTime'],
+            },
+            'units': 'degC',  # should be cfunits or udunits
+            'uncertainty': 0.2,
+            'source': 'MEASURED',
+            'data_type': 'NUMERIC',
+            'control': 'inlet_temperature_sp',
+        }
+
+        process_meas['inlet_flow'] = {
+            'dimensions': {
+                'axes': ['TIME'],
+                'unlimited': 'TIME',
+                'units': ['dateTime'],
+            },
+            'units': 'liters min-1',  # should be cfunits or udunits
+            'uncertainty': 0.2,
+            'source': 'MEASURED',
+            'data_type': 'NUMERIC',
+            'control': 'inlet_flow_sp',
+        }
+
+        process_meas['inlet_pressure'] = {
+            'dimensions': {
+                'axes': ['TIME'],
+                'unlimited': 'TIME',
+                'units': ['dateTime'],
+            },
+            'units': 'mb',  # should be cfunits or udunits
+            'uncertainty': 0.4,
+            'source': 'MEASURED',
+            'data_type': 'NUMERIC',
+        }
+
+        raw_meas = dict()
+        raw_meas['pump_power'] = {
+            'dimensions': {
+                'axes': ['TIME'],
+                'unlimited': 'TIME',
+                'units': ['dateTime'],
+            },
+            'units': 'counts',  # should be cfunits or udunits
+            'uncertainty': 0.1,
+            'source': 'MEASURED',
+            'data_type': 'NUMERIC',
+            'control': None,
+        }
+
+        controls = dict()
+        controls['inlet_temperature_sp'] = {
+            'data_type': 'NUMERIC',
+            # units are tied to parameter this controls
+            'allowed_range': [10.0, 30.0],
+        }
+        controls['inlet_flow_sp'] = {
+            'data_type': 'NUMERIC',
+            # units are tied to parameter this controls
+            'allowed_range': [0.0, 2.0],
+        }
+
+        measurement_sets['primary'] = primary_meas
+        measurement_sets['process'] = process_meas
+        measurement_sets['raw'] = raw_meas
+        measurement_sets['controls'] = controls
+
+        definition['measurement_config'] = measurement_sets
+
         DAQ.daq_definition['DEFINITION'] = definition
         return DAQ.daq_definition

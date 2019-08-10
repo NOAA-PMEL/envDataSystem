@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     'envcontacts.apps.EnvcontactsConfig',
     'envinventory.apps.EnvinventoryConfig',
     'envtags.apps.EnvtagsConfig',
+    'envdata.apps.EnvdataConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

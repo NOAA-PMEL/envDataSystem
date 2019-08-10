@@ -1,5 +1,6 @@
 from django.db import models
 from envcontacts.models import Person, Organization
+from envdaq.models import Configuration
 from envtags.models import Tag
 import uuid
 # Create your models here.
@@ -159,6 +160,11 @@ class InstrumentDef(InventoryDef):
         limit_choices_to={'type': 'INSTRUMENT_TYPE'},
         related_name='inst_type'
     )
+    measurement_config = models.OneToOneField(
+        Configuration,
+        null=True,
+        on_delete=models.CASCADE,
+    )
     # meas_list = models.ManyToManyField('Measurement', on_delete=models.SET_NULL)
     # measurements = models.ManyToManyField('Measurement')
 
@@ -168,7 +174,10 @@ class InstrumentDef(InventoryDef):
 
     def __str__(self):
         '''String representation of InstrumentDef object. '''
-        return (f'{self.name} : {self.model}')
+        if self.mfg:
+            return (f'{self.mfg.name}_{self.model}')
+        else:
+            return (f'{self.name}_{self.model}')
 
     # def __repr__(self):
     #     return (f'{self.manufacturer} : {self.model}')
@@ -187,7 +196,11 @@ class InstrumentDef(InventoryDef):
                 self.update_tags(definition['DEFINITION']['tags'])
             if 'type' in definition['DEFINITION']:
                 self.update_type(definition['DEFINITION']['type'])
-                
+            if 'measurement_config' in definition['DEFINITION']:
+                self.update_measurement_config(
+                    definition['DEFINITION']['measurement_config']
+                )
+                    
             # self.save()
     
     def update_type(self, type_name):
@@ -210,6 +223,24 @@ class InstrumentDef(InventoryDef):
             self.type = tag
             self.save()
     
+    def update_measurement_config(self, config):
+        if config:
+            try:
+                cfg = Configuration.objects.get(
+                    name=(f'{self}_measurement_sets')
+                )
+                cfg.config = config
+                cfg.save()
+            except Configuration.DoesNotExist:
+                cfg = Configuration(
+                    name=(f'{self}_measurement_sets'),
+                    config=config,
+                )
+                cfg.save()
+                print(f'cfg: {cfg}')
+                self.measurement_config = cfg
+                self.save()
+
 
 class Instrument(Inventory):
     # name = models.CharField(max_length=30, help_text="Enter name for this instrument")
