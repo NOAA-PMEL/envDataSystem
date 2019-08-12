@@ -99,7 +99,7 @@ class ControllerConsumer(AsyncWebsocketConsumer):
         self.controller_group_name = (
             'controller_{}'.format(self.controller_name)
         )
-        print(f'name = {self.controller_name}')
+        # print(f'name = {self.controller_name}')
         # Join room group
         await self.channel_layer.group_add(
             self.controller_group_name,
@@ -151,13 +151,48 @@ class ControllerConsumer(AsyncWebsocketConsumer):
         # )
         # Send message to room group
 
-        await self.channel_layer.group_send(
-            self.data_group_name,
-            {
-                'type': 'controller_message',
-                'message': message
-            }
-        )
+        # await self.channel_layer.group_send(
+        #     self.data_group_name,
+        #     {
+        #         'type': 'controller_message',
+        #         'message': message
+        #     }
+        # )
+
+        if (message['SUBJECT'] == 'DATA'):
+            print(f'controller data message')
+            await self.channel_layer.group_send(
+                self.instrument_group_name,
+                {
+                    'type': 'instrument_message',
+                    'message': message
+                }
+            )
+
+        elif (message['SUBJECT'] == 'CONFIG'):
+            body = message['BODY']
+            if (body['purpose'] == 'REQUEST'):
+                if (body['type'] == 'ENVDAQ_CONFIG'):
+                    cfg = await ConfigurationUtility().get_config()
+
+                    reply = {
+                        'TYPE': 'GUI',
+                        'SENDER_ID': 'DAQServerConsumer',
+                        'TIMESTAMP': time_util.dt_to_string(),
+                        'SUBJECT': 'CONFIG',
+                        'BODY': {
+                            'purpose': 'REPLY',
+                            'type': 'ENVDAQ_CONFIG',
+                            'config': cfg,
+                        }
+                    }
+                # print(f'reply: {reply}')
+                await self.data_message({'message': reply})
+            elif (body['purpose'] == 'SYNC'):
+                if (body['type'] == 'CONTROLLER_INSTANCE'):
+                    # TODO: add field to force sync option
+                    # send config data to syncmanager
+                    await SyncManager.sync_controller_instance(body['data'])
 
     # Receive message from room group
     async def controller_message(self, event):
@@ -178,7 +213,7 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
         self.instrument_group_name = (
             'instrument_{}'.format(self.instrument_name)
         )
-        print(f'name = {self.instrument_name}')
+        # print(f'name = {self.instrument_name}')
         # Join room group
         await self.channel_layer.group_add(
             self.instrument_group_name,
@@ -211,17 +246,57 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
         # if status, pass to socket
 
         # print(f'^^^^^ {text_data}')
-        text_data_json = json.loads(text_data)
-        message = text_data_json['message']
-        # print(f'InstrumentConsumer.receive: {message}')
+        # text_data_json = json.loads(text_data)
+        # message = text_data_json['message']
+        # # print(f'InstrumentConsumer.receive: {message}')
 
-        await self.channel_layer.group_send(
-            self.instrument_group_name,
-            {
-                'type': 'instrument_message',
-                'message': message
-            }
-        )
+        # await self.channel_layer.group_send(
+        #     self.instrument_group_name,
+        #     {
+        #         'type': 'instrument_message',
+        #         'message': message
+        #     }
+        # )
+
+        # print(text_data)
+        # text_data_json = json.loads(text_data)
+        data = json.loads(text_data)
+        message = data['message']
+        # print(f'message: {message}')
+        if (message['SUBJECT'] == 'DATA'):
+            # print(f'data message')
+            await self.channel_layer.group_send(
+                self.instrument_group_name,
+                {
+                    'type': 'instrument_message',
+                    'message': message
+                }
+            )
+
+        elif (message['SUBJECT'] == 'CONFIG'):
+            body = message['BODY']
+            if (body['purpose'] == 'REQUEST'):
+                if (body['type'] == 'ENVDAQ_CONFIG'):
+                    cfg = await ConfigurationUtility().get_config()
+
+                    reply = {
+                        'TYPE': 'GUI',
+                        'SENDER_ID': 'DAQServerConsumer',
+                        'TIMESTAMP': time_util.dt_to_string(),
+                        'SUBJECT': 'CONFIG',
+                        'BODY': {
+                            'purpose': 'REPLY',
+                            'type': 'ENVDAQ_CONFIG',
+                            'config': cfg,
+                        }
+                    }
+                # print(f'reply: {reply}')
+                await self.data_message({'message': reply})
+            elif (body['purpose'] == 'SYNC'):
+                if (body['type'] == 'INSTRUMENT_INSTANCE'):
+                    # TODO: add field to force sync option
+                    # send config data to syncmanager
+                    await SyncManager.sync_instrument_instance(body['data'])
 
     # Receive message from room group
     async def instrument_message(self, event):

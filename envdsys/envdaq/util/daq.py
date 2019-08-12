@@ -1,4 +1,6 @@
-from envdaq.models import Configuration, DAQServer
+# from envdaq.models import Configuration, DAQServer
+from envdaq.models import DAQServer
+from envtags.models import Configuration
 from django.core.exceptions import ObjectDoesNotExist
 import asyncio
 from  channels.db import database_sync_to_async

@@ -323,6 +323,11 @@ class DummyInterface(Interface):
         else:
             print('Unknown Message type: {}'.format(msg.type))
 
+    def get_definition_instance(self):
+        return DummyInterface.get_definition()
+
+    def get_definition():
+        pass
 # class DummyInterface(Interface):
 
 #     def __init__(self, config):

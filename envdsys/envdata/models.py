@@ -36,14 +36,14 @@ class VariableDef(models.Model):
     # TODO: Make units a class using cf/udunits
     units = models.CharField(max_length=20, null=True)
     source_type = models.CharField(max_length=30, null=True)
-    
+  
     data_type_choices = [('NUMERIC', 'NUMERIC'), ('TEXT', 'TEXT')]
     data_type = models.CharField(
         max_length=7,
         choices=data_type_choices,
         default='NUMERIC'
     )
-    
+
     tags = models.ManyToManyField(
         Tag,
         blank=True,
@@ -56,4 +56,3 @@ class VariableDef(models.Model):
 
     # def __repr__(self):
     #     return (f'{self.manufacturer} : {self.model}')
-

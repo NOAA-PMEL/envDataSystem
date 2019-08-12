@@ -67,6 +67,9 @@ class Instrument(DAQ):
         self.iface_map = {}
 
         self.meas_map = {}
+        self.measurements = dict()
+        self.measurements['meta'] = dict()
+        self.measurements['measurement_sets'] = dict()
 
         self.iface_test = None
 
@@ -77,8 +80,14 @@ class Instrument(DAQ):
         # self.create_msg_buffers(config=None)
 
         # *****
-        self.add_interfaces()
+        # self.add_interfaces()
         # *****
+
+        # self.setup()
+
+        # self.add_measurements()
+
+        # TODO: send meta to ui to "build" instrument there
 
         # add queues - these are not serializable so might
         #   need a helper function to dump configurable items
@@ -87,6 +96,27 @@ class Instrument(DAQ):
 #            'IF_READ_Q': asyncio.Queue(loop=self.loop),
 #            'IF_WRITE_Q': asyncio.Queue(loop=self.loop),
 #        }
+
+    def setup(self):
+
+        self.add_interfaces()
+
+        # add measurements
+        self.add_measurements()
+
+        # tell ui to build instrument
+        msg = Message(
+            sender_id=self.get_id(),
+            msgtype='Instrument',
+            subject='CONFIG',
+            body={
+                'purpose': 'SYNC',
+                'type': 'INSTRUMENT_INSTANCE',
+                'data': self.get_metadata()
+            }
+        )
+        self.message_to_ui_nowait(msg)
+        print(f'setup: {msg.body}')
 
     def get_ui_address(self):
         print(self.label)
@@ -97,9 +127,9 @@ class Instrument(DAQ):
     # def connect(self, cmd=None):
     #     pass
 
-    def start(self, cmd=None):
+    def start(self, cmd = None):
         # task = asyncio.ensure_future(self.read_loop())
-        print('Starting Instrument')
+        print(f'Starting Instrument {self}')
         super().start(cmd)
 
         # task = asyncio.ensure_future(self.from_child_loop())
@@ -143,14 +173,14 @@ class Instrument(DAQ):
         pass
 
     @abc.abstractmethod
-    async def handle(self, msg, type=None):
+    async def handle(self, msg, type = None):
         pass
 
     def get_signature(self):
         # This will combine instrument metadata to generate
         #   a unique # ID
         return self.name+":"+self.label+":"
-        +self.serial_number+":"+self.property_number
+        + self.serial_number+":"+self.property_number
 
     # def create_msg_buffers(self, config):
     #     # self.read_buffer = MessageBuffer(config=config)
@@ -168,14 +198,16 @@ class Instrument(DAQ):
             # print(ifcfg['IFACE_CONFIG'])
             # print(ifcfg['INTERFACE'])
             # iface = InterfaceFactory().create(ifcfg['IFACE_CONFIG'])
-            iface = InterfaceFactory().create(ifcfg)
+            iface=InterfaceFactory().create(ifcfg)
             print(f'iface: {iface}')
             # iface.msg_buffer = self.iface_rcv_buffer
             # iface.msg_send_buffer = self.from_child_buf
-            iface.to_parent_buf = self.from_child_buf
-            self.iface_map[iface.get_id()] = iface
+            iface.to_parent_buf=self.from_child_buf
+            self.iface_map[iface.get_id()]=iface
 
     def get_metadata(self):
+
+        # print(f'**** get_metadata: {self}')
 
         meta = {
             'NAME': self.name,
@@ -184,12 +216,31 @@ class Instrument(DAQ):
             'MFG': self.mfg,
             'MODEL': self.model,
             'SERIAL_NUMBER': self.serial_number,
-            'property_number': self.property_number
+            'property_number': self.property_number,
+            'measurement_meta': self.measurements['meta']
         }
         return meta
 
     def get_last(self):
         return self.last_entry
+    
+    def add_measurements(self):
+        # print('******add measurements')
+        definition = self.get_definition_instance()
+        # print('definition')
+        if 'measurement_config' in definition['DEFINITION']:
+            config = definition['DEFINITION']['measurement_config']
+            self.measurements['meta'] = config
+            for set_name, meas_set in config.items():
+                # print(f'set_name: {set_name}')
+                self.measurements['measurement_sets'][set_name] = dict()
+                mset = self.measurements['measurement_sets'][set_name]
+                for name, meas_cfg in meas_set.items():
+                    # print(f'name: {name}')
+                    mset[name] = dict()
+                    mset[name]['value'] = None
+
+        # print(f'add_measurement: {self.measurements}')
 
 
 class DummyInstrument(Instrument):
@@ -224,6 +275,8 @@ class DummyInstrument(Instrument):
 
         # need to allow for datasets...how?
 
+        # definition = DummyInstrument.get_definition()
+
         self.meas_map = dict()
         self.meas_map['LIST'] = [
             'concentration',
@@ -255,6 +308,13 @@ class DummyInstrument(Instrument):
         }
 
         self.iface_meas_map = None
+
+        self.setup()
+
+    def setup(self):
+        super().setup()
+
+        # add instance specific setup here
 
     async def handle(self, msg, type=None):
 
@@ -296,21 +356,42 @@ class DummyInstrument(Instrument):
         #       e.g., units in data or measurement metadata?
         # TODO: allow for "dimensions"
         values = msg.body['DATA'].split(',')
-        for meas_name in self.meas_map['LIST']:
-            meas_def = self.meas_map['DEFINITION'][meas_name]
+        # print(f'values: {values}')
+        meas_list = [
+            'concentration',
+            'inlet_temperature',
+            'inlet_flow',
+            'inlet_pressure',
+            'pump_power'
+        ]
+        for i, name in enumerate(meas_list):
+            # TODO: use meta to convert to float, int
             try:
-                val = float(values[meas_def['index']])
+                val = float(values[i])
             except ValueError:
                 val = -999
-            measurements[meas_name] = {
+            measurements[name] = {
                 'VALUE': val,
-                'UNITS': meas_def['units'],
-                'UNCERTAINTY': meas_def['uncertainty']
             }
+
+        # for meas_name in self.meas_map['LIST']:
+        #     meas_def = self.meas_map['DEFINITION'][meas_name]
+        #     try:
+        #         val = float(values[meas_def['index']])
+        #     except ValueError:
+        #         val = -999
+        #     measurements[meas_name] = {
+        #         'VALUE': val,
+        #         'UNITS': meas_def['units'],
+        #         'UNCERTAINTY': meas_def['uncertainty']
+        #     }
 
         data['MEASUREMENTS'] = measurements
         entry['DATA'] = data
         return entry
+
+    def get_definition_instance(self):
+        return DummyInstrument.get_definition()
 
     def get_definition():
         # TODO: come up with static definition method
@@ -326,7 +407,7 @@ class DummyInstrument(Instrument):
             'development',
         ]
 
-        measurement_sets = dict()
+        measurement_config = dict()
 
         primary_meas = dict()
         primary_meas['concentration'] = {
@@ -407,12 +488,12 @@ class DummyInstrument(Instrument):
             'allowed_range': [0.0, 2.0],
         }
 
-        measurement_sets['primary'] = primary_meas
-        measurement_sets['process'] = process_meas
-        measurement_sets['raw'] = raw_meas
-        measurement_sets['controls'] = controls
+        measurement_config['primary'] = primary_meas
+        measurement_config['process'] = process_meas
+        measurement_config['raw'] = raw_meas
+        measurement_config['controls'] = controls
 
-        definition['measurement_config'] = measurement_sets
+        definition['measurement_config'] = measurement_config
 
         DAQ.daq_definition['DEFINITION'] = definition
         return DAQ.daq_definition

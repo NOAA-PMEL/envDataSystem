@@ -5,6 +5,7 @@ import asyncio
 from daq.daq import DAQ
 # from client.wsclient import WSClient
 from daq.instrument.instrument import InstrumentFactory
+from data.message import Message
 # from daq.manager.manager import DAQManager
 
 
@@ -104,8 +105,29 @@ class Controller(DAQ):
 
         # self.create_msg_buffers(config=None)
 
+        # self.add_instruments()
+        # self.add_signals()
+
+    def setup(self):
+
         self.add_instruments()
         # self.add_signals()
+        # print(f'id = {self.get_id()}')
+
+        # tell ui to build instrument
+        msg = Message(
+            sender_id=self.get_id(),
+            msgtype='Controller',
+            subject='CONFIG',
+            body={
+                'purpose': 'SYNC',
+                'type': 'CONTROLLER_INSTANCE',
+                # TODO: controller needs metadata
+                'data': self.get_metadata()
+            }
+        )
+        self.message_to_ui_nowait(msg)
+        # print(f'setup: {msg.body}')
 
         if (self.config['AUTO_START']):
             self.start()
@@ -234,6 +256,24 @@ class Controller(DAQ):
             inst.to_parent_buf = self.from_child_buf
             self.instrument_map[inst.get_id()] = inst
 
+    def get_metadata(self):
+
+        # print(f'**** get_metadata: {self}')
+
+        instrument_meta = dict()
+        instrument_meta['instrument_meta'] = dict()
+        inst_meta = instrument_meta['instrument_meta']
+        for name, inst in self.instrument_map.items():
+            inst_meta[name] = inst.get_metadata()
+
+        print(f'name: {self.name}')
+        print(f'label: {self.label}')
+        meta = {
+            'NAME': self.name,
+            'LABEL': self.label,
+            'instrument_meta': instrument_meta
+        }
+        return meta
 
 # class BasicController(Controller):
 
@@ -253,6 +293,7 @@ class Controller(DAQ):
 class DummyController(Controller):
     INSTANTIABLE = True
     # def __init__(self, config):
+
     def __init__(self, config, **kwargs):
         # def __init__(
         #     self,
@@ -273,6 +314,11 @@ class DummyController(Controller):
         # DummyController.set_instantiable(True)
         # DummyController.INSTANTIABLE = True
         # DAQ.INSTANTIABLE = True
+        self.setup()
+
+    def setup(self):
+        super().setup()
+        # add extra here    
 
     async def handle(self, msg, type=None):
         # print(f'controller.handle: {msg.to_json()}')
@@ -284,12 +330,13 @@ class DummyController(Controller):
     # def _create_definition(self):
     #     self.daq_definition['module'] = self.__module__
     #     self.daq_definition['class'] = self.__name__
-        
+
+    def get_definition_instance(self):
+        return DummyController.get_definition()
+
     def get_definition():
         definition = dict()
         definition['module'] = DummyController.__module__
         definition['name'] = DummyController.__name__
         DAQ.daq_definition['DEFINITION'] = definition
         return DAQ.daq_definition
-
-

@@ -117,3 +117,4 @@ envdsys/envdaq/static/envdaq/css/style.css
 envdsys/envdaq/static/envdaq/images/header-backgound.jpg
 envdsys/envdaq/static/envdaq/js/main.js
 envdsys/envdaq/templates/envdaq/index_bs.html
+envdsys/envtags/config_data.txt

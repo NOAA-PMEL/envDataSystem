@@ -162,11 +162,12 @@ class DummyIFDevice(IFDevice):
 
         while True:
 
-            data = '{},{},{},{}'.format(
-                round(random.random()*2.0, 4),
+            data = '{},{},{},{},{}'.format(
+                round(random.random()*1000.0, 4),
                 round(random.random()*10.0, 4),
                 round(random.random()*5.0, 4),
-                round(random.random()*20.0, 4)
+                round(random.random()*20.0, 4),
+                int(round(random.random()*2000.0, 4))
             )
             # print('ifdevice: data = {}'.format(data))
             await self.handle2(data)
@@ -190,6 +191,11 @@ class DummyIFDevice(IFDevice):
         # print(f'to parent: {msg.to_json()}')
         await self.message_to_parent(msg)
 
+    def get_definition_instance(self):
+        return IFDevice.get_definition()
+
+    def get_definition():
+        pass
 
 # class IFDeviceOLD(DAQ):
 #     # class IFDevice():

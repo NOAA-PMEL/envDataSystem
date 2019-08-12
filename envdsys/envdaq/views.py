@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import InstrumentMask, Controller
+from .models import InstrumentAlias, Controller
 from django.utils.safestring import mark_safe
 import json
 

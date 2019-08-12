@@ -3,68 +3,70 @@ from django.urls import reverse
 import uuid
 from django.apps import apps
 import json
+from envtags.models import Tag, Configuration
+from envinventory.models import Instrument
 
 
 # Create your models here.
-class Configuration(models.Model):
-    name = models.CharField(max_length=50)
-    uniqueID = models.UUIDField(default=uuid.uuid1, editable=False)
-    config = models.TextField(editable=True, null=True)
+# class Configuration(models.Model):
+#     name = models.CharField(max_length=50)
+#     uniqueID = models.UUIDField(default=uuid.uuid1, editable=False)
+#     config = models.TextField(editable=True, null=True)
 
-    def set_config(self, config):
-        '''
-        set config using dictionary
-        '''
-        if config is None:
-            return ''
+#     def set_config(self, config):
+#         '''
+#         set config using dictionary
+#         '''
+#         if config is None:
+#             return ''
 
-        entry = dict()
-        entry['NAME'] = self.name
+#         entry = dict()
+#         entry['NAME'] = self.name
 
-        try:
-            entry['ENVDAQ'] = json.dumps(config)
-            # json_config = json.dumps(config)
-            # config = json.dumps(d)
-        except ValueError:
-            print('Error decoding config')
-            entry['NAME'] = ''
-        # entry = dict()
-        # entry["NAME"] = self.name
-        # entry["ENVDAQ"] = d
-        self.config = json.dumps(entry)
-        self.save()
+#         try:
+#             entry['ENVDAQ'] = json.dumps(config)
+#             # json_config = json.dumps(config)
+#             # config = json.dumps(d)
+#         except ValueError:
+#             print('Error decoding config')
+#             entry['NAME'] = ''
+#         # entry = dict()
+#         # entry["NAME"] = self.name
+#         # entry["ENVDAQ"] = d
+#         self.config = json.dumps(entry)
+#         self.save()
 
-    def set_config_json(self, json_config):
+#     def set_config_json(self, json_config):
 
-        if json_config is None:
-            return ''
+#         if json_config is None:
+#             return ''
 
-        try:
-            config = json.loads()
-        except ValueError:
-            return ''
+#         try:
+#             config = json.loads()
+#         except ValueError:
+#             return ''
 
-        self.set_config(config)
+#         self.set_config(config)
 
-    def get_config(self):
+#     def get_config(self):
 
-        try:
-            config = json.loads(self.config)
-        except ValueError:
-            print('Error decoding json config')
-            config = ''
-        # print(json_config)
-        return config
+#         try:
+#             config = json.loads(self.config)
+#         except ValueError:
+#             print('Error decoding json config')
+#             config = ''
+#         # print(json_config)
+#         return config
 
-    def get_config_json(self):
-        return json.dumps(self.get_config())
+#     def get_config_json(self):
+#         return json.dumps(self.get_config())
 
-    def __str__(self):
-        '''String representation of Controller object. '''
-        return self.name
+#     def __str__(self):
+#         '''String representation of Controller object. '''
+#         return self.name
 
-    def __repr__(self):
-        return (f'{self.name}.{self.uniqueID}')
+#     def __repr__(self):
+#         return (f'{self.name}.{self.uniqueID}')
 
 
 # class Configurable(models.Model):
@@ -156,10 +158,16 @@ class DAQServer(models.Model):
     port = models.IntegerField(null=True)
 
     configuration = models.ForeignKey(
-        'Configuration',
+        'envtags.Configuration',
         on_delete=models.CASCADE,
         related_name='configurations',
         null=True
+    )
+
+    tags = models.ManyToManyField(
+        Tag,
+        blank=True,
+        related_name='daqserver_tags',
     )
 
     # controller list : this will be on the controller side
@@ -178,6 +186,12 @@ class ControllerDef(models.Model):
         max_length=30, help_text='Enter Controller type name')
     _class = models.CharField(max_length=30, help_text='Enter class name')
     _module = models.CharField(max_length=50, help_text='Enter module name')
+
+    tags = models.ManyToManyField(
+        Tag,
+        blank=True,
+        related_name='controllerdef_tags',
+    )
 
     class Meta:
         verbose_name = 'Controller Definition'
@@ -217,6 +231,22 @@ class Controller(models.Model):
     )
 
     uniqueID = models.UUIDField(default=uuid.uuid1, editable=False)
+
+    tags = models.ManyToManyField(
+        Tag,
+        blank=True,
+        related_name='controller_tags',
+    )
+
+    # instrument_list = get_instruments()
+
+    def get_instruments(self):
+
+        aliases = InstrumentAlias.objects.filter(
+            controller=self
+        )
+        return aliases
+
     # inst_list = models.ManyToManyField(
     #     'InstrumentEntry',
     #     help_text='Select instruments to control'
@@ -231,13 +261,45 @@ class Controller(models.Model):
     def __repr__(self):
         return (f'{self.name}.{self.uniqueID}')
 
+    def update_instruments(self, config):
+        # print(f'update_instruments: {config}')
+        if config and ('instrument_meta' in config):
+            for name, meta in config['instrument_meta'].items():
+                try:
+                    inst = Instrument.objects.get(
+                        definition__name=meta['NAME'],
+                        serial_number=meta['SERIAL_NUMBER']
+                    )
+                    print(f'update_inst: {inst}')
+                    try:
+                        alias = InstrumentAlias.objects.get(
+                            name=meta['LABEL'],
+                            controller=self,
+                        )
+                        alias.instrument = inst
+                        print(f'alias: {alias}')
+                        # alias.prefix = meta_prefix
+                        alias.save()
+                    except InstrumentAlias.DoesNotExist:
+                        alias = InstrumentAlias(
+                            name=meta['LABEL'],
+                            controller=self,
+                            instrument=inst,
+                            # prefix=
+                        )
+                        alias.save()
+                except Instrument.DoesNotExist:
+                    print(f"Instrument {name} does not exist. "
+                          "Can't create alias")
+                # pass
+
 
 # InstrumentRepresentation?
 # class InstrumentEntry(models.Model):
-class InstrumentMask(models.Model):
+class InstrumentAlias(models.Model):
     '''
     Abstracted representation of an instrument object in Controller.
-    InstrumentEntry belongs to Controller and is associated with an
+    InstrumentMask belongs to Controller and is associated with an
     Instrument. The abstraction allows different types of a given
     class/type to be used and changed without changing the data stream for
     the user.
@@ -245,7 +307,8 @@ class InstrumentMask(models.Model):
 
     name = models.CharField(
         max_length=30,
-        help_text='Enter the name that describes what the instrument represents'
+        help_text='Enter the name that describes '
+        'what the instrument represents'
     )
     controller = models.ForeignKey(
         'Controller',
@@ -258,6 +321,20 @@ class InstrumentMask(models.Model):
         null=True,
         related_name='instruments',
     )
+    prefix = models.CharField(
+        max_length=30,
+        help_text='Short prefix to add to all '
+        'measurements and signals. If blank, will '
+        'use <name>',
+        null=True,
+    )
+
+    tags = models.ManyToManyField(
+        Tag,
+        blank=True,
+        related_name='instrumentalias_tags',
+    )
+
     # instrument = models.ForeignKey('Instrument', on_delete=models.CASCADE)
 
     def __str__(self):

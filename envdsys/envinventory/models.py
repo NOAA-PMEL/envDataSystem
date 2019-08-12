@@ -1,7 +1,7 @@
 from django.db import models
 from envcontacts.models import Person, Organization
-from envdaq.models import Configuration
-from envtags.models import Tag
+# from envdaq.models import Configuration
+from envtags.models import Tag, Configuration
 import uuid
 # Create your models here.
 
@@ -83,7 +83,7 @@ class InventoryDef(models.Model):
             print(f'org(new mfg): {mfg}')
             self.mfg = mfg
             self.save()
-    
+
     def update_tags(self, tag_names):
         print(f'tag_names: {tag_names}')
         for tag_name in tag_names:
@@ -163,6 +163,7 @@ class InstrumentDef(InventoryDef):
     measurement_config = models.OneToOneField(
         Configuration,
         null=True,
+        blank=True,
         on_delete=models.CASCADE,
     )
     # meas_list = models.ManyToManyField('Measurement', on_delete=models.SET_NULL)
@@ -200,9 +201,9 @@ class InstrumentDef(InventoryDef):
                 self.update_measurement_config(
                     definition['DEFINITION']['measurement_config']
                 )
-                    
+
             # self.save()
-    
+
     def update_type(self, type_name):
         try:
             tag = Tag.objects.get(name=type_name)
@@ -222,7 +223,7 @@ class InstrumentDef(InventoryDef):
             print(f'new type = {tag.name}:{tag.type}')
             self.type = tag
             self.save()
-    
+
     def update_measurement_config(self, config):
         if config:
             try:
@@ -231,6 +232,9 @@ class InstrumentDef(InventoryDef):
                 )
                 cfg.config = config
                 cfg.save()
+                self.measurement_config = cfg
+                self.save()
+
             except Configuration.DoesNotExist:
                 cfg = Configuration(
                     name=(f'{self}_measurement_sets'),
@@ -271,7 +275,7 @@ class Instrument(Inventory):
     status = models.CharField(
         max_length=20,
         choices=AVAILIBILITY_CHOICES,
-        default='MAINTENANCE'
+        default='AVAILABLE'
     )
     # inst_status = choices(MAINTENANCE, ON_LOAN, AVAILABLE, IN_USE)
 

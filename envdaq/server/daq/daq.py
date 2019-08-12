@@ -36,7 +36,7 @@ class DAQ(abc.ABC):
 
         # self.INSTANTIABLE = False
 
-        self.name = None        
+        self.name = None
         self.label = None
         if 'LABEL' in config:
             self.label = config['LABEL']
@@ -79,13 +79,17 @@ class DAQ(abc.ABC):
     def get_id(self):
         id = self.__class__.__name__
         if self.label is not None:
-            id += ":"+self.label
+            id += "_"+self.label
 
         return id
 
     # TODO: add this abstract method to all daq
     # @abc.abstractclassmethod
     def get_definition():
+        pass
+
+    @abc.abstractclassmethod
+    def get_definition_instance():
         pass
 
     # @classmethod
@@ -228,6 +232,9 @@ class DAQ(abc.ABC):
         # while True:
         # print(f'message_to_parent: {msg.to_json()}')
         await self.to_parent_buf.put(msg)
+
+    def message_to_ui_nowait(self, msg):
+        asyncio.ensure_future(self.message_to_ui(msg))
 
     async def message_to_ui(self, msg):
         # while True:
