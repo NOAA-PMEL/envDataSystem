@@ -184,24 +184,28 @@ class InstrumentDef(InventoryDef):
     #     return (f'{self.manufacturer} : {self.model}')
 
     def update(self, definition):
-        print(f'InstrumentDef.definition: {definition}')
+        # print(f'InstrumentDef.definition: {definition}')
         if definition and 'DEFINITION' in definition:
             self._module = definition['DEFINITION']['module']
             self._class = definition['DEFINITION']['name']
             # self.mfg = definition['DEFINITION']['mfg']
             self.model = definition['DEFINITION']['model']
             self.save()
-            if 'mfg' in definition['DEFINITION']:
-                self.update_mfg(definition['DEFINITION']['mfg'])
+            # print(f'instrument.update(): {self}.{self.model}')
             if 'tags' in definition['DEFINITION']:
                 self.update_tags(definition['DEFINITION']['tags'])
+                # print(f'instrument.update(): {self}.{self.definition.name}')
+            if 'mfg' in definition['DEFINITION']:
+                self.update_mfg(definition['DEFINITION']['mfg'])
+                # print(f'instrument.update(): {self}.{self.mfg.name}')
             if 'type' in definition['DEFINITION']:
                 self.update_type(definition['DEFINITION']['type'])
             if 'measurement_config' in definition['DEFINITION']:
                 self.update_measurement_config(
                     definition['DEFINITION']['measurement_config']
                 )
-
+            
+            # print(f'instrument.update(): {self}.{}')
             # self.save()
 
     def update_type(self, type_name):

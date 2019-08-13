@@ -83,7 +83,7 @@ class DataConsumer(AsyncWebsocketConsumer):
     # Receive message from room group
     async def data_message(self, event):
         message = event['message']
-        print(f'data_message: {json.dumps(message)}')
+        # print(f'data_message: {json.dumps(message)}')
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
             'message': message
@@ -471,7 +471,7 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
 
     # Receive message from WebSocket
     async def receive(self, text_data):
-        print(text_data)
+        # print(text_data)
         # text_data_json = json.loads(text_data)
         data = json.loads(text_data)
         message = data['message']

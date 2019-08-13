@@ -55,7 +55,7 @@ class SyncManager():
     def sync_instrument_instance_nowait(config):
         # pass
         if config:
-            # print(f'instance: {config["NAME"]}, {config["MODEL"]},')
+            print(f'instance: {config["NAME"]}, {config["MODEL"]},')
             try:
                 inst_def = InstrumentDef.objects.get(
                     name=config['NAME'],
@@ -68,8 +68,9 @@ class SyncManager():
                         definition=inst_def,
                         serial_number=config['SERIAL_NUMBER']
                     )
+                    print(f'existing inst: {inst}')
                 except Instrument.DoesNotExist:
-                    # print(f'^^^^^create new: {inst_def}, {config["SERIAL_NUMBER"]}')
+                    print(f'^^^^^create new: {inst_def}, {config["SERIAL_NUMBER"]}')
                     inst = Instrument(
                         definition=inst_def,
                         serial_number=config['SERIAL_NUMBER'],

@@ -13,6 +13,9 @@ class InstrumentFactory():
     def create(config, **kwargs):
         create_cfg = config['INSTRUMENT']
         instconfig = config['INSTCONFIG']
+        alias = None
+        if 'ALIAS' in config:
+            alias = config['ALIAS']
         print("module: " + create_cfg['MODULE'])
         print("class: " + create_cfg['CLASS'])
 
@@ -23,7 +26,7 @@ class InstrumentFactory():
             cls_ = getattr(mod_, create_cfg['CLASS'])
             # inst_class = eval(config['class'])
             # return inst_class.factory_create()
-            return cls_(instconfig, **kwargs)
+            return cls_(instconfig, alias=alias, **kwargs)
 
         # TODO: create custom exception class for our app
         # except ImportError:
@@ -36,7 +39,7 @@ class Instrument(DAQ):
 
     class_type = 'INSTRUMENT'
 
-    def __init__(self, config, **kwargs):
+    def __init__(self, config, alias=None, **kwargs):
         # def __init__(
         #     self,
         #     config,
@@ -58,6 +61,10 @@ class Instrument(DAQ):
         self.label = self.config['DESCRIPTION']['LABEL']
         self.mfg = None
         self.model = None
+
+        self.alias = dict()
+        if alias:
+            self.alias = alias
 
         self.serial_number = self.config['DESCRIPTION']['SERIAL_NUMBER']
         self.property_number = self.config['DESCRIPTION']['PROPERTY_NUMBER']
@@ -209,6 +216,11 @@ class Instrument(DAQ):
 
         # print(f'**** get_metadata: {self}')
 
+        # TODO: force alias or do a better job of defaults
+        if len(self.alias) == 0:
+            self.alias['name'] = self.label,
+            self.alias['prefix'] = self.label
+
         meta = {
             'NAME': self.name,
             'TYPE': self.type,
@@ -217,7 +229,8 @@ class Instrument(DAQ):
             'MODEL': self.model,
             'SERIAL_NUMBER': self.serial_number,
             'property_number': self.property_number,
-            'measurement_meta': self.measurements['meta']
+            'measurement_meta': self.measurements['meta'],
+            'alias': self.alias
         }
         return meta
 

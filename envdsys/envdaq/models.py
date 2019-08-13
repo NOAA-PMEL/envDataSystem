@@ -3,6 +3,7 @@ from django.urls import reverse
 import uuid
 from django.apps import apps
 import json
+import time
 from envtags.models import Tag, Configuration
 from envinventory.models import Instrument
 
@@ -208,7 +209,7 @@ class ControllerDef(models.Model):
         return reverse('model-detail-view', args=[str(self.id)])
 
     def update(self, definition):
-        print(f'definition: {definition}')
+        # print(f'definition: {definition}')
         if definition and 'DEFINITION' in definition:
             self._module = definition['DEFINITION']['module']
             self._class = definition['DEFINITION']['name']
@@ -262,35 +263,55 @@ class Controller(models.Model):
         return (f'{self.name}.{self.uniqueID}')
 
     def update_instruments(self, config):
-        # print(f'update_instruments: {config}')
+        max_tries = 5
+        tries = 0
+        # print(f'***********update_instruments: {config}')
         if config and ('instrument_meta' in config):
             for name, meta in config['instrument_meta'].items():
-                try:
-                    inst = Instrument.objects.get(
-                        definition__name=meta['NAME'],
-                        serial_number=meta['SERIAL_NUMBER']
-                    )
-                    print(f'update_inst: {inst}')
+                if 'alias' not in meta:
+                    print(f'alias not defined in {name}...skipping')
+                    continue
+                alias_cfg = meta['alias']
+                # TODO: make this more elegant with some sort of state variable
+                #       that tracks while instruments are being configured
+                while tries < max_tries:
                     try:
-                        alias = InstrumentAlias.objects.get(
-                            name=meta['LABEL'],
-                            controller=self,
+                        # print(Instrument.objects.all())
+                        inst = Instrument.objects.get(
+                            definition__name=meta['NAME'],
+                            serial_number=meta['SERIAL_NUMBER']
                         )
-                        alias.instrument = inst
-                        print(f'alias: {alias}')
-                        # alias.prefix = meta_prefix
-                        alias.save()
-                    except InstrumentAlias.DoesNotExist:
-                        alias = InstrumentAlias(
-                            name=meta['LABEL'],
-                            controller=self,
-                            instrument=inst,
-                            # prefix=
-                        )
-                        alias.save()
-                except Instrument.DoesNotExist:
-                    print(f"Instrument {name} does not exist. "
-                          "Can't create alias")
+                        # print(f'update_inst: {inst}')
+                        try:
+                            alias = InstrumentAlias.objects.get(
+                                name=alias_cfg['name'],
+                                # label=meta['LABEL'],
+                                controller=self,
+                            )
+                            alias.instrument = inst
+                            # print(f'alias: {alias}->{inst}')
+                            # alias.prefix = meta_prefix
+                            alias.save()
+                            tries = max_tries
+                        except InstrumentAlias.DoesNotExist:
+                            alias = InstrumentAlias(
+                                name=alias_cfg['name'],
+                                label=meta['LABEL'],
+                                instrument=inst,
+                                controller=self,
+                                prefix=alias_cfg['prefix'],
+                            )
+                            # print(f'alias: {alias}->{inst}')
+                            alias.save()
+                            tries = max_tries
+                    except Instrument.DoesNotExist:
+                        tries += 1
+                        if (tries == max_tries):
+                            print(f"Instrument {name} does not exist. "
+                                  "Can't create alias")
+                        else:
+                            print(f'Waiting for instrument db to populate')
+                            time.sleep(0.5)
                 # pass
 
 
@@ -308,7 +329,16 @@ class InstrumentAlias(models.Model):
     name = models.CharField(
         max_length=30,
         help_text='Enter the name that describes '
-        'what the instrument represents'
+        'what the instrument represents '
+        'and can be used as header text (i.e., no spaces)'
+    )
+
+    label = models.CharField(
+        max_length=30,
+        null=True,
+        help_text='Label for plots, tables, etc. '
+        'A more pleasing version of name. '
+        'Defaults to name if left blank'
     )
     controller = models.ForeignKey(
         'Controller',
@@ -334,6 +364,10 @@ class InstrumentAlias(models.Model):
         blank=True,
         related_name='instrumentalias_tags',
     )
+
+    class Meta:
+        verbose_name = 'Instrument Alias'
+        verbose_name_plural = 'Instrument Aliases'
 
     # instrument = models.ForeignKey('Instrument', on_delete=models.CASCADE)
 
