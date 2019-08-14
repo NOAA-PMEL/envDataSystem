@@ -58,8 +58,31 @@ def instrument(request, instrument_name):
     # TODO: lookup controller name in Models pass config/def in context
     #       what to do if not in db?
 
-    print(f'instrument_name: {mark_safe(json.dumps(instrument_name))}')
+    try:
+        alias = InstrumentAlias.objects.get(name=instrument_name)
+    except InstrumentAlias.DoesNotExist:
+        # TODO: return 404 ... lookup how
+        pass
+
+    # print(f'def = {alias.instrument.definition.__str__()}')
+    # print(f'instrument_name: {mark_safe(json.dumps(instrument_name))}')
+    # print(
+    #     f'measurements: {alias.instrument.definition.measurement_config.config}')
+    # measurements = str(alias.instrument.definition.measurement_config.config)
+    # print(f'meas: {json.dumps(measurements)}')
+    measurements = json.loads(alias.instrument.definition.measurement_config.config)
+
     context = {
-        'instrument_name_json': mark_safe(json.dumps(instrument_name))
+        'instrument_instance': mark_safe(
+            json.dumps(alias.instrument.definition.__str__())
+        ),
+        'instrument_name': mark_safe(json.dumps(instrument_name)),
+        'instrument_label': mark_safe(json.dumps(alias.label)),
+        'instrument_prefix': mark_safe(json.dumps(alias.prefix)),
+        'instrument_measurements': mark_safe(
+            json.dumps(measurements)
+        )
     }
+    # print(f'context: {context}')
+
     return render(request, 'envdaq/instrument.html', context=context)

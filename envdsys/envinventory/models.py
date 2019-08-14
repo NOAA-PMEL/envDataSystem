@@ -3,6 +3,7 @@ from envcontacts.models import Person, Organization
 # from envdaq.models import Configuration
 from envtags.models import Tag, Configuration
 import uuid
+import json
 # Create your models here.
 
 
@@ -234,15 +235,17 @@ class InstrumentDef(InventoryDef):
                 cfg = Configuration.objects.get(
                     name=(f'{self}_measurement_sets')
                 )
-                cfg.config = config
+                cfg.config = json.dumps(config)
                 cfg.save()
                 self.measurement_config = cfg
                 self.save()
 
             except Configuration.DoesNotExist:
+                # c = config.loads(config)
+                # c_json = config.dumps(c)
                 cfg = Configuration(
                     name=(f'{self}_measurement_sets'),
-                    config=config,
+                    config=json.dumps(config),
                 )
                 cfg.save()
                 print(f'cfg: {cfg}')

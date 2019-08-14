@@ -1,13 +1,42 @@
-<!-- envdaq/templates/envdaq/index.html -->
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8"/>
-    <title>envDAQ:Instrument</title>
-</head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<body>
-    <h2>{{ instrument_name_json }}</h2>
+{% extends 'envdaq/base.html' %}
+
+    {% block header %}
+        <h1>envDSys : Instrument : {{ instrument_label|cut:'"' }}</h1>
+        <h2>({{ instrument_instance|cut:'"' }})</h2>
+    {% endblock %}
+
+
+    {% comment %} <div class="status"></div> {% endcomment %}
+
+    {% block data %}
+        <div class="card">
+        <b><p id="time-stamp"></p></b><br/>
+        <div id="meas-table">
+
+            {% comment %} <script>build_data_table()</script> {% endcomment %}
+        </div>
+        </div>
+    {% endblock %}
+
+
+    <div class="plots"></div>
+
+    <div class="controls"></div>
+
+    {% block rawdata %}
+        <button class="accordion"><em>Raw data from server</em></button>
+        <div class="panel">
+            <textarea id="metadata-window" cols="100" rows="5"></textarea>
+            <textarea id="data-window" cols="100" rows="10"></textarea>
+        </div>
+    {% endblock %}
+
+    <div class="children"></div>
+
+{% block content %}
+
+
+    {% comment %} <h2>Instrument:{{ instrument_name_json|cut:'"' }}:{{ instrument_label_json|cut:'"' }}</h2> {% endcomment %}
     <style>
     #data-table {
         {% comment %} width: 100%; {% endcomment %}
@@ -22,19 +51,31 @@
      #data-table-valuecol {
         width=200px;
     } {% endcomment %}
-    </style>                                                                                                                                                                     </style>
 
-    Metadata from server:<br/>
-    <textarea id="metadata-window" cols="100" rows="5"></textarea><br/>
+    </style>                                                                                                                                                                     
+    
+ 
+    {% comment %} <button class="accordion"><em>Raw data from server</em></button>
+    <div class="panel">
+        <textarea id="metadata-window" cols="100" rows="5"></textarea>
+        <textarea id="data-window" cols="100" rows="10"></textarea>
+    </div> {% endcomment %}
+    {% comment %} <button class="accordion">Data from server</button>
+    <div class="panel">
+        <textarea id="data-window" cols="100" rows="10"></textarea>
+   </div> {% endcomment %}
 
-    Data from server:<br/>
-    <textarea id="data-window" cols="100" rows="10"></textarea><br/>
+    {% comment %} Metadata from server:<br/>
+    <textarea id="metadata-window" cols="100" rows="5"></textarea><br/> {% endcomment %}
+
+    {% comment %} Data from server:<br/>
+    <textarea id="data-window" cols="100" rows="10"></textarea><br/> {% endcomment %}
 
     {% comment %} <input id="inst-name-input" type="text" size="100"/><br/> {% endcomment %}
     {% comment %} <input id="inst-name-submit" type="button" value="Enter"/> {% endcomment %}
-    <input id="req-meta-button" type="button" value="Get Meta"/>
+    {% comment %} <input id="req-meta-button" type="button" value="Get Meta"/> {% endcomment %}
 
-    <p id="time-stamp"></p><br/>
+    {% comment %} <b><p id="time-stamp"></p></b><br/> {% endcomment %}
     {% comment %} <textarea>{{ cellvalue }}</textarea> {% endcomment %}
     {% comment %} <table id="data-table">
 
@@ -44,26 +85,106 @@
         window.onload=init;
 
         var cellvalue = '1234.5';
+        var meas_prefix = {{ instrument_prefix }}
+        var measurements_json = {{ instrument_measurements }}
+        var measurements = JSON.parse("{{ instrument_measurements | escapejs }}")
+        
+
+        {% comment %} define accordions {% endcomment %}
+        {% comment %} var acc = document.getElementsByClassName("accordion");
+        var i;
+
+        for (i = 0; i < acc.length; i++) {
+            acc[i].addEventListener("click", function() {
+                this.classList.toggle("active");
+                var panel = this.nextElementSibling;
+                if (panel.style.maxHeight){
+                    panel.style.maxHeight = null;
+                } else {
+                    panel.style.maxHeight = panel.scrollHeight + "px";
+                } 
+            });
+        } {% endcomment %}
+        
 
         function init() {
             {% comment %} alert("loaded"); {% endcomment %}
 
             {% comment %} build_table() {% endcomment %}
 
+            {% comment %} {{ instrument_label_json }} {% endcomment %}
+            setup_accordions()
+            build_data_table()
+
         }
 
-        function build_table() {
+        function build_data_table() {
+            {% comment %} var measurements = JSON.parse('{{ instrument_measurements | escapejs }}') {% endcomment %}
+            {% comment %} var tablediv = document.getElementById('meas-table')[0]; {% endcomment %}
+            var tablediv = document.getElementById('meas-table');
+            
+            var table = document.createElement('table');
+            table.setAttribute('id', 'data-table');
+            table.setAttribute('style', 'border-collapse: collapse;')
 
-            {% comment %} alert("loaded"); {% endcomment %}
+            var header = table.createTHead();
+            var row = header.insertRow(0);
+            row.setAttribute('style', 'border: 1px solid black')
+            var cell = row.insertCell(0);
+            cell.setAttribute('id', 'data-table-namecol');
+            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
+            cell.innerHTML = "<b>Name</b>";
+            cell = row.insertCell(1);
+            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
+            cell.innerHTML = "<b>Value</b>";
+            cell.setAttribute('id', 'data-table-valuecol');
+            cell.innerHTML = "Value"
+            cell = row.insertCell(2);
+            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
+            cell.innerHTML = "<b>Units</b>";
+            cell.setAttribute('id', 'data-table-unitcol');
+
+            for (var meastype in measurements) {
+                if (meastype != "controls") {
+                    mtype = measurements[meastype]
+                    for (var meas in mtype) {
+                        row = table.insertRow(-1);
+                        cell = row.insertCell(0);
+                        cell.setAttribute('id', (meas+'-name'));
+                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center')
+                        cell.innerHTML = meas
+                        cell = row.insertCell(1);
+                        cell.setAttribute('id', (meas+'-value'));
+                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
+                        cell.innerHTML = '';         
+                        cell = row.insertCell(2);           
+                        cell.setAttribute('id', (meas+'-units'));
+                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
+                        cell.innerHTML = mtype[meas]['units']                    
+                    }
+                }
+            }
+            var td = table.rows[0].cells[0];
+            td.width = '200px';
+            td = table.rows[0].cells[1];
+            td.width = '200px';
+            td = table.rows[0].cells[2];
+            td.width = '100px';
+           
+            tablediv.appendChild(table);
+            
+
+        }
+
+
+        {% comment %} function build_table() {
+
             
             var body = document.getElementsByTagName('body')[0];
 
             var table = document.createElement('table');
             table.setAttribute('id', 'data-table');
             table.setAttribute('style', 'border-collapse: collapse;')
-            {% comment %} table.id = 'data-table'; {% endcomment %}
-
-            {% comment %} var table = document.querySelector('#data-table'); {% endcomment %}
             var header = table.createTHead();
             var row = header.insertRow(0);
             row.setAttribute('style', 'border: 1px solid black')
@@ -92,9 +213,9 @@
             td.width = '200px';
            
             body.appendChild(table);
-        };
+        }; {% endcomment %}
 
-        var instrument_name = {{ instrument_name_json }}
+        var instrument_name = {{ instrument_name }}
         var chatSocket = new WebSocket(
             'ws://' + window.location.host +
             '/ws/envdaq/instrument/'+instrument_name+'/');
@@ -102,9 +223,9 @@
         chatSocket.onmessage = function(e) {
 
             {% comment %} if (document.querySelector('#data-table') == null) { {% endcomment %}
-            if (document.getElementById('data-table') == null) {
-                build_table();
-            };
+            {% comment %} if (document.getElementById('data-data-table') == null) {
+                build_data_table();
+            }; {% endcomment %}
 
             var data = JSON.parse(e.data);
             if (data['message']['SUBJECT'] == 'DATA') {
@@ -118,9 +239,13 @@
                     document.querySelector('#data-window').value = (JSON.stringify(data['message']['BODY']['DATA']) + '\n');
 
                     document.querySelector('#time-stamp').innerHTML =  (message['DATETIME']);
-                    cell2 = 'cell1';
+                    for (var meas in message['MEASUREMENTS']) {
+                        cell_id = "#"+meas+"-value"
+                        document.querySelector(cell_id).innerHTML = message['MEASUREMENTS'][meas]['VALUE'];
+                    }
+                    {% comment %} cell2 = 'cell1';
                     cell_id = '#'+cell2;
-                    document.querySelector(cell_id).innerHTML = message['MEASUREMENTS']['concentration']['VALUE'];
+                    document.querySelector(cell_id).innerHTML = message['MEASUREMENTS']['concentration']['VALUE']; {% endcomment %}
                 };
 
                 {% comment %} document.querySelector('#msg-window').value = (JSON.stringify(data['message']) + '\n'); {% endcomment %}
@@ -141,20 +266,18 @@
             window.location.pathname = '/envdaq/' + instName + '/';
         }; {% endcomment %}
 
-        document.querySelector('#req-meta-button').onclick = function(e) {
-            {% comment %} var instName = document.querySelector('#inst-name-input').value; {% endcomment %}
+        {% comment %} document.querySelector('#req-meta-button').onclick = function(e) {
             var message = {
                 'TYPE': 'DISPLAY',
                 'SUBJECT': 'REQUEST',
                 'BODY': 'SEND_METATDATA'
                 };
-            {% comment %} window.location.pathname = '/envdaq/' + instName + '/'; {% endcomment %}
             chatSocket.send(JSON.stringify({
             'message': message
             }));
 
-        };
+        }; {% endcomment %}
 
     </script>
-</body>
-</html>
+
+{% endblock %}

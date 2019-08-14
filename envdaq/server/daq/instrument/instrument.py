@@ -5,6 +5,7 @@ from daq.daq import DAQ
 import asyncio
 from data.message import Message
 from daq.interface.interface import Interface, InterfaceFactory
+import json
 
 
 class InstrumentFactory():
@@ -105,7 +106,8 @@ class Instrument(DAQ):
 #        }
 
     def setup(self):
-
+        super().setup()
+        # print(f'*******instrument.setup')
         self.add_interfaces()
 
         # add measurements
@@ -126,15 +128,20 @@ class Instrument(DAQ):
         print(f'setup: {msg.body}')
 
     def get_ui_address(self):
-        print(self.label)
-        address = 'envdaq/instrument/'+self.label+'/'
-        print(f'get_ui_address: {address}')
+        # print(self.label)
+        # print(f'instrument.get_ui_address: {self}')
+        if self.alias and ('name' in self.alias):
+            # print(f'self.alias: {self.alias}')
+            address = 'envdaq/instrument/'+self.alias['name']+'/'
+        else:
+            address = 'envdaq/instrument/'+self.label+'/'
+        # print(f'@@@@@@@@@ instrument.get_ui_address: {address}')
         return address
 
     # def connect(self, cmd=None):
     #     pass
 
-    def start(self, cmd = None):
+    def start(self, cmd=None):
         # task = asyncio.ensure_future(self.read_loop())
         print(f'Starting Instrument {self}')
         super().start(cmd)
@@ -326,7 +333,7 @@ class DummyInstrument(Instrument):
 
     def setup(self):
         super().setup()
-
+        print(f'(((((((((((((((((( dummyinstrument.setup')
         # add instance specific setup here
 
     async def handle(self, msg, type=None):
@@ -404,6 +411,10 @@ class DummyInstrument(Instrument):
         return entry
 
     def get_definition_instance(self):
+        # make sure it's good for json
+        # def_json = json.dumps(DummyInstrument.get_definition())
+        # print(f'def_json: {def_json}')
+        # return json.loads(def_json)
         return DummyInstrument.get_definition()
 
     def get_definition():
@@ -509,4 +520,5 @@ class DummyInstrument(Instrument):
         definition['measurement_config'] = measurement_config
 
         DAQ.daq_definition['DEFINITION'] = definition
+
         return DAQ.daq_definition

@@ -109,6 +109,8 @@ class Controller(DAQ):
         # self.add_signals()
 
     def setup(self):
+        print(f'Controller setup')
+        super().setup()
 
         self.add_instruments()
         # self.add_signals()

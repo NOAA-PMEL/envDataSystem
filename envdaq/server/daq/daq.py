@@ -68,14 +68,29 @@ class DAQ(abc.ABC):
         #     print('no ui connection')
         #     pass
         # else:
-        self.task_list.append(
-            asyncio.ensure_future(self.run_ui_connection())
-        )
+        # self.task_list.append(
+        #     asyncio.ensure_future(self.run_ui_connection())
+        # )
         # # make ui connection
         # self.ui_task_list.append(
         #     asyncio.ensure_future(self.open_ui_connection())
         # )
 
+    @abc.abstractmethod
+    def setup(self):
+        print(f'daq.setup')
+        self.start_connections()
+
+    def start_connections(self):
+        print(f'start_connections')
+        self.start_ui_connection()
+
+    def start_ui_connection(self):
+        print(f'start_ui_connection')
+        self.task_list.append(
+            asyncio.ensure_future(self.run_ui_connection())
+        )
+    
     def get_id(self):
         id = self.__class__.__name__
         if self.label is not None:
@@ -112,7 +127,7 @@ class DAQ(abc.ABC):
         pass
 
     async def connect_to_ui(self):
-
+        # print(f'connecting to ui: {self}')
         # build ui_address
         # ui_address = 'ws://localhost:8001/ws/'+quote(self.get_ui_address())
         ui_address = 'ws://localhost:8001/ws/'+self.get_ui_address().replace(" ", "")
@@ -130,7 +145,7 @@ class DAQ(abc.ABC):
     async def run_ui_connection(self):
 
         while True:
-
+            # print(f'1111111111 run_connect: {self.auto_connect_ui}, {self.ui_client}')
             if (
                 self.auto_connect_ui and (
                     self.ui_client is None or not self.ui_client.isConnected()

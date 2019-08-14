@@ -75,6 +75,9 @@ class Interface(DAQ):
 #        print(self.dev_mananger)
         self.add_ifdevice()
 
+    def setup(self):
+        super().setup()
+
     def add_ifdevice(self):
         print('Add ifdevice')
         # print(f'config = {self.config["IFACE_LIST"]}')
@@ -301,7 +304,11 @@ class DummyInterface(Interface):
         # print(self.ifdevice.to_parent_buf)
 
         self.name = 'DummyInterface'
+        self.setup()
 
+    def setup(self):
+        super().setup()
+        
     async def handle(self, msg, type=None):
 
         # interface will know if msg is json or object

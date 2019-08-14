@@ -1,0 +1,70 @@
+<!-- envdaq/templates/envdaq/index.html -->
+<!DOCTYPE html>
+
+{% load static %}
+
+<html>
+<head>
+    <meta charset="utf-8"/>
+
+    <title>envDAQ : ((Title))</title>
+
+    {% comment %} <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css"> {% endcomment %}
+    {% comment %} <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous">
+    </script><link href='//fonts.googleapis.com/css?family=Lobster&subset=latin,latin-ext' rel='stylesheet' type='text/css'> {% endcomment %}
+   
+    <link rel="stylesheet" href="{% static 'envdaq/css/envdaq.css' %}">
+    <script src="{% static 'envdaq/js/envdaq.js' %}"></script>
+</head>
+
+<body>
+    <div class="header">
+        {% block header %}
+        {% endblock %}
+    </div>
+
+    <div class="topnav">
+        <a href="#">File</a>
+        <a href="#">About</a>
+        <a href="#" style="float:right">LoginFn</a>
+    </div>
+
+    <div class="status">
+        {% block status %}
+        {% endblock %}
+    </div>
+
+    <div class="data">
+        {% block data %}
+        {% endblock %}
+    </div>
+
+    <div class="controls">
+        {% block controls %}
+        {% endblock %}
+    </div>
+
+    <div class="plots">
+        {% block plots %}
+        {% endblock %}
+    </div>
+
+    <div class="rawdata">
+        {% block rawdata %}
+        {% endblock %}
+    </div>
+
+    {% comment %} <div class="header">
+        <h1>envDataSystem</h1>
+    </div> {% endcomment %}
+    {% comment %} <div class="content container"> {% endcomment %}
+        {% comment %} <div class="row">
+            <div class="col-md-8"> {% endcomment %}
+            {% block content %}
+            {% endblock %}
+            {% comment %} </div>
+        </div> {% endcomment %}
+    </div>
+</body>

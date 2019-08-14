@@ -151,6 +151,11 @@ class DummyIFDevice(IFDevice):
     # def get_id(self):
     #     return ('DummyIFDevice')
 
+        self.setup()
+
+    def setup(self):
+        super().setup()
+
     def start(self, cmd=None):
         super().start(cmd)
         print('Starting IFDevice')
