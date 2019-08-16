@@ -282,6 +282,7 @@ class Controller(models.Model):
                             serial_number=meta['SERIAL_NUMBER']
                         )
                         # print(f'update_inst: {inst}')
+
                         try:
                             alias = InstrumentAlias.objects.get(
                                 name=alias_cfg['name'],

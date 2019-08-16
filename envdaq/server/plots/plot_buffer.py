@@ -8,11 +8,15 @@ class PlotBufferManager():
 
     @staticmethod
     def add_buffer(plot_buffer):
+        # print(f'plot_buffer: {plot_buffer}')
         if plot_buffer:
+            # print(f'plot_buffer: {plot_buffer.server_id}, {plot_buffer.id}')
             if plot_buffer.server_id not in PlotBufferManager.plot_buffer_map:
+                print('1')
                 PlotBufferManager.plot_buffer_map[plot_buffer.id] = dict()
-            PlotBufferManager.plot_buffer_map[plot_buffer.server_id][plot_buffer.id] = plot_buffer
-            print(f'add_buffer: {PlotBufferManager.plot_buffer_map}')
+            print(f'{PlotBufferManager.plot_buffer_map[plot_buffer.id]}')
+            PlotBufferManager.plot_buffer_map[plot_buffer.server_id] = {plot_buffer.id: plot_buffer}
+            # print(f'add_buffer: {PlotBufferManager.plot_buffer_map}')
 
     @staticmethod
     def remove_buffer(server_id, id):

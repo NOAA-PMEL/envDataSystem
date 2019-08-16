@@ -1,6 +1,7 @@
 import abc
 import asyncio
 from client.wsclient import WSClient
+from plots.apps.plot_app import PlotApp
 # from urllib.parse import quote
 
 
@@ -30,6 +31,8 @@ class DAQ(abc.ABC):
         self.auto_connect_ui = auto_connect_ui
         self.task_list = []
         self.ui_task_list = []
+
+        self.plot_app = None
 
         # self.daq_definition = dict()
         # self.daq_definition['DEFINITION'] = dict()

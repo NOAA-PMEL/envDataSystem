@@ -6,6 +6,8 @@ import asyncio
 from data.message import Message
 from daq.interface.interface import Interface, InterfaceFactory
 import json
+from plots.plots import PlotManager
+from plots.apps.plot_app import TimeSeries1D
 
 
 class InstrumentFactory():
@@ -66,6 +68,8 @@ class Instrument(DAQ):
         self.alias = dict()
         if alias:
             self.alias = alias
+        
+        self.plot_name = '/default_plot'
 
         self.serial_number = self.config['DESCRIPTION']['SERIAL_NUMBER']
         self.property_number = self.config['DESCRIPTION']['PROPERTY_NUMBER']
@@ -112,8 +116,34 @@ class Instrument(DAQ):
 
         # add measurements
         self.add_measurements()
-
+        meta = self.get_metadata()
         # tell ui to build instrument
+
+        # TODO: how to pass config and data to PlotApp: custom meta or
+        #       what we are using now? How do we specify defaults
+        # plot_config = dict()
+        # plot_config['name'] = '/instrument_'+meta['alias']['name']
+        # plot_data = dict()
+
+        # use current meta
+        
+        # add dictionary specifying which measurements go with which plot
+        # if there are more than one.
+        
+        # plot_config['data'] = plot_data
+
+        # add plots to PlotServer
+        PlotManager.add_app(
+            TimeSeries1D(
+                meta,
+                name=('/instrument_'+meta['plot_meta']['name'])
+            ),
+            start_after_add=True
+        )
+        # meta['plot_app'] = {
+        #     'name': ('/instrument_'+meta['alias']['name'])
+        # }
+ 
         msg = Message(
             sender_id=self.get_id(),
             msgtype='Instrument',
@@ -121,11 +151,12 @@ class Instrument(DAQ):
             body={
                 'purpose': 'SYNC',
                 'type': 'INSTRUMENT_INSTANCE',
-                'data': self.get_metadata()
+                'data': meta
             }
         )
         self.message_to_ui_nowait(msg)
         print(f'setup: {msg.body}')
+
 
     def get_ui_address(self):
         # print(self.label)
@@ -187,7 +218,7 @@ class Instrument(DAQ):
         pass
 
     @abc.abstractmethod
-    async def handle(self, msg, type = None):
+    async def handle(self, msg, type=None):
         pass
 
     def get_signature(self):
@@ -212,12 +243,12 @@ class Instrument(DAQ):
             # print(ifcfg['IFACE_CONFIG'])
             # print(ifcfg['INTERFACE'])
             # iface = InterfaceFactory().create(ifcfg['IFACE_CONFIG'])
-            iface=InterfaceFactory().create(ifcfg)
+            iface = InterfaceFactory().create(ifcfg)
             print(f'iface: {iface}')
             # iface.msg_buffer = self.iface_rcv_buffer
             # iface.msg_send_buffer = self.from_child_buf
-            iface.to_parent_buf=self.from_child_buf
-            self.iface_map[iface.get_id()]=iface
+            iface.to_parent_buf = self.from_child_buf
+            self.iface_map[iface.get_id()] = iface
 
     def get_metadata(self):
 
@@ -228,6 +259,7 @@ class Instrument(DAQ):
             self.alias['name'] = self.label,
             self.alias['prefix'] = self.label
 
+    
         meta = {
             'NAME': self.name,
             'TYPE': self.type,
@@ -237,13 +269,26 @@ class Instrument(DAQ):
             'SERIAL_NUMBER': self.serial_number,
             'property_number': self.property_number,
             'measurement_meta': self.measurements['meta'],
+            'plot_meta': self.get_plot_meta(),
             'alias': self.alias
         }
         return meta
 
+    def get_plot_meta(self):
+
+        definition = self.get_definition_instance()
+        if 'plot_config' not in definition['DEFINITION']:
+            return dict()
+
+        plot_config = definition['DEFINITION']['plot_config']
+        self.plot_name = '/instrument_'+self.alias['name']
+        plot_config['name'] = self.plot_name
+
+        return plot_config
+
     def get_last(self):
         return self.last_entry
-    
+
     def add_measurements(self):
         # print('******add measurements')
         definition = self.get_definition_instance()
@@ -356,7 +401,9 @@ class DummyInstrument(Instrument):
             data.update(subject='DATA', body=entry)
             # await self.msg_buffer.put(data)
             # await self.to_parent_buf.put(data)
+            # print(f'instrument data: {data.to_json()}')
             await self.message_to_ui(data)
+            await PlotManager.update_data(self.plot_name, data.to_json())
             # print(f'data_json: {data.to_json()}\n')
             # await asyncio.sleep(0.01)
         # print("DummyInstrument:msg: {}".format(msg.body))
@@ -433,6 +480,9 @@ class DummyInstrument(Instrument):
 
         measurement_config = dict()
 
+        # array for plot conifg
+        y_data = []
+
         primary_meas = dict()
         primary_meas['concentration'] = {
             'dimensions': {
@@ -446,6 +496,7 @@ class DummyInstrument(Instrument):
             'data_type': 'NUMERIC',
             'control': None,
         }
+        y_data.append('concentration')
 
         process_meas = dict()
         process_meas['inlet_temperature'] = {
@@ -460,6 +511,7 @@ class DummyInstrument(Instrument):
             'data_type': 'NUMERIC',
             'control': 'inlet_temperature_sp',
         }
+        y_data.append('inlet_temperature')
 
         process_meas['inlet_flow'] = {
             'dimensions': {
@@ -473,6 +525,7 @@ class DummyInstrument(Instrument):
             'data_type': 'NUMERIC',
             'control': 'inlet_flow_sp',
         }
+        y_data.append('inlet_flow')
 
         process_meas['inlet_pressure'] = {
             'dimensions': {
@@ -485,6 +538,7 @@ class DummyInstrument(Instrument):
             'source': 'MEASURED',
             'data_type': 'NUMERIC',
         }
+        y_data.append('inlet_pressure')
 
         raw_meas = dict()
         raw_meas['pump_power'] = {
@@ -495,10 +549,12 @@ class DummyInstrument(Instrument):
             },
             'units': 'counts',  # should be cfunits or udunits
             'uncertainty': 0.1,
+            'pref_color': 'black',
             'source': 'MEASURED',
             'data_type': 'NUMERIC',
             'control': None,
         }
+        y_data.append('pump_power')
 
         controls = dict()
         controls['inlet_temperature_sp'] = {
@@ -518,6 +574,14 @@ class DummyInstrument(Instrument):
         measurement_config['controls'] = controls
 
         definition['measurement_config'] = measurement_config
+
+        plot_config = dict()
+        time_series1d = dict()
+
+        time_series1d['y_data'] = y_data
+        time_series1d['default_y_data'] = ['concentration']
+        plot_config['TimeSeries1D'] = time_series1d
+        definition['plot_config'] = plot_config
 
         DAQ.daq_definition['DEFINITION'] = definition
 

@@ -1,6 +1,8 @@
 import asyncio
+import json
 from asyncio.queues import Queue
 from .plot_server import PlotServer
+from plots.apps.plot_app import TimeSeries1D
 
 
 class PlotManager():
@@ -15,13 +17,30 @@ class PlotManager():
     DEFAULT_ID = ('localhost', 5001)
 
     @staticmethod
-    def add_app(app, server_id=None, start_after_add=False):
+    # def add_app(
+    #     app_class,
+    #     config,
+    #     name='',
+    #     server_id=None,
+    #     start_after_add=False
+    # ):
+    def add_app(
+        app,
+        server_id=None,
+        start_after_add=False
+    ):
 
+        # # if not in map, create app
+        # print(f'add_app: {name}')
+        # if app_class == 'TimeSeries1D':
+        #     app = TimeSeries1D(config, name=name)    
+
+        print(f'app = {app}')
         if not server_id:
             server_id = PlotManager.DEFAULT_ID
 
         server = PlotManager.get_server(server_id=server_id)
-
+        print(f'server = {server}')
         if server and server.running:
             server.stop()
 
@@ -30,13 +49,14 @@ class PlotManager():
             # if app.name[0] is not '/':
             #     app.name prepend '/'
             # if there is a '/' in the rest of the name, replace with _
+            print(f'server_add: {server}')
             server.add_app(app)
 
         if server and start_after_add:
             server.start()
 
     @staticmethod
-    def add_server(config=None, server_id=None, app_list=None, update=False):
+    def add_server(config=None, server_id=None, app_list=[], update=False):
         print(f'server_id: {server_id}')
         PlotManager.update_server(
             config=config,
@@ -71,7 +91,14 @@ class PlotManager():
         return PlotManager.server_map[server_id]
 
     @staticmethod
-    def update_data(app_name, data, server_id=None):
+    async def update_data(app_name, data_json, server_id=None):
+        try:
+            data = json.loads(data_json)
+        except TypeError:
+            print(f'invalid plot data json')
+            return
+
+        # print(f'update data: {app_name}, {data}')
         app = PlotManager.get_server(server_id=server_id).get_app(app_name)
         if app:
-            app.get_app(app_name).update_data(data)
+            await app.update_data(data)

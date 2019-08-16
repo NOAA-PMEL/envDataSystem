@@ -70,8 +70,8 @@ def instrument(request, instrument_name):
     #     f'measurements: {alias.instrument.definition.measurement_config.config}')
     # measurements = str(alias.instrument.definition.measurement_config.config)
     # print(f'meas: {json.dumps(measurements)}')
-    measurements = json.loads(alias.instrument.definition.measurement_config.config)
-
+    measurements = json.loads(
+        alias.instrument.definition.measurement_config.config)
     context = {
         'instrument_instance': mark_safe(
             json.dumps(alias.instrument.definition.__str__())

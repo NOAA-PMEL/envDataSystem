@@ -262,7 +262,7 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
         # text_data_json = json.loads(text_data)
         data = json.loads(text_data)
         message = data['message']
-        print(f'message: {message}')
+        # print(f'message: {message}')
         if (message['SUBJECT'] == 'DATA'):
             # print(f'data message')
             await self.channel_layer.group_send(

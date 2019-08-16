@@ -78,6 +78,8 @@ class SyncManager():
                     inst.save()
                     # TODO: add tags    
 
+
+
             except InstrumentDef.DoesNotExist:
                 # TODO: deal with missing instrument def
                 print(f'Invalid InstrumentDef: {config["NAME"]}')
