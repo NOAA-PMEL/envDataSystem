@@ -72,6 +72,12 @@ def instrument(request, instrument_name):
     # print(f'meas: {json.dumps(measurements)}')
     measurements = json.loads(
         alias.instrument.definition.measurement_config.config)
+
+    plots = dict()
+    plots["host"] = "localhost"
+    plots["port"] = 5001
+    plots["name"] = "/instrument_test_dummy" 
+
     context = {
         'instrument_instance': mark_safe(
             json.dumps(alias.instrument.definition.__str__())
@@ -81,7 +87,8 @@ def instrument(request, instrument_name):
         'instrument_prefix': mark_safe(json.dumps(alias.prefix)),
         'instrument_measurements': mark_safe(
             json.dumps(measurements)
-        )
+        ),
+        'plot_app': mark_safe(json.dumps(plots))
     }
     # print(f'context: {context}')
 

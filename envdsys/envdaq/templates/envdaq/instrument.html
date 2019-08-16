@@ -19,8 +19,16 @@
     {% endblock %}
 
 
-    <div class="plots"></div>
-
+    {% block plots %}
+        {% comment %} <div class=card> {% endcomment %}
+            <div class="iframe-container">
+                <div id=plot_container>    
+                    {% comment %} <iframe src='http://localhost:5001/instrument_test_dummy' allowfullscreen></iframe> {% endcomment %}
+                </div>
+            </div>
+        {% comment %} </div> {% endcomment %}
+    {% endblock %}
+    
     <div class="controls"></div>
 
     {% block rawdata %}
@@ -34,6 +42,7 @@
     <div class="children"></div>
 
 {% block content %}
+
 
 
     {% comment %} <h2>Instrument:{{ instrument_name_json|cut:'"' }}:{{ instrument_label_json|cut:'"' }}</h2> {% endcomment %}
@@ -88,6 +97,16 @@
         var meas_prefix = {{ instrument_prefix }}
         var measurements_json = {{ instrument_measurements }}
         var measurements = JSON.parse("{{ instrument_measurements | escapejs }}")
+
+        var plot_app = JSON.parse("{{ plot_app | escapejs }}")
+        var name = plot_app['name']
+        var plots = document.getElementById('plot_container')
+        url = "http://"+plot_app['host']+":"+plot_app['port']+plot_app['name']
+        {% comment %} url = "http://test_this_out" {% endcomment %}
+        {% comment %} url = plot_app['name'] {% endcomment %}
+        {% comment %} plots.innerHTML = '<p>'+url+'</p>' {% endcomment %}
+        {% comment %} url = 'http://localhost:5001/instrument_test_dummy' {% endcomment %}
+        plots.innerHTML = '<iframe src='+url+' allowfullscreen></iframe>' 
         
 
         {% comment %} define accordions {% endcomment %}

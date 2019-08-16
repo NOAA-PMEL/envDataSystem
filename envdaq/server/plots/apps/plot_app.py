@@ -152,7 +152,7 @@ class TimeSeries1D(PlotApp):
             return dict()
 
     def get_source_data(self):
-        print(f'source data: {self.source.data}')
+        # print(f'source data: {self.source.data}')
         # return json.loads(json.dumps(self.source.data))
         return self.source.data
 
@@ -260,10 +260,19 @@ class TimeSeries1D(PlotApp):
             #     print(f'stream: {self.source}')
             #     self.source.stream(data, rollover=10)
 
+        TOOLTIPS = [
+            ("index", "$index"),
+            ("(x,y)", "($x, $y)"),
+            ("desc", "@desc"),
+        ]
+
         fig = figure(
             title=self.title,
             x_axis_label="DateTime",
             x_axis_type="datetime",
+            plot_width=600,
+            plot_height=400,
+            # tooltips=TOOLTIPS,
             # , sizing_mode='scale_width',
             # x_range=[0, 1],
             # y_range=[0, 1]
@@ -271,9 +280,14 @@ class TimeSeries1D(PlotApp):
         # for trace in current_data:
         #     add_line(trace)
 
-        fig.line(source=source, x='datetime', y='concentration')  # , color='color', size=10)
+        fig.line(
+            source=source,
+            x='datetime',
+            y='concentration',
+            # legend='concentration'
+        )  # , color='color', size=10)
         # fig.circle(source=source, x='datetime', y='concentration')
-        
+
         fig.xaxis.formatter = DatetimeTickFormatter(
             days="%F",
             hours="%F %H:%M",
