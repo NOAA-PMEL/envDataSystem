@@ -5,10 +5,11 @@ import abc
 
 import utilities.util
 
+from bokeh.models import Line, Circle, Legend
 from bokeh.plotting import figure, ColumnDataSource
 from bokeh.models.widgets import TextInput, MultiSelect
-from bokeh.layouts import layout
-from bokeh.models import LinearAxis, Range1d
+from bokeh.layouts import layout, column
+from bokeh.models import LinearAxis, Range1d, DataRange1d
 from bokeh.models import DatetimeTickFormatter
 import json
 
@@ -25,6 +26,7 @@ class PlotApp(abc.ABC):
         self.server_id = None
         self.message_buffer = None
         self.msg_buffer = Queue()
+        self.prefix = ''
 
         # init to 60 minutes of data
         self.rollover = 3600
@@ -41,7 +43,9 @@ class PlotApp(abc.ABC):
 
     @abc.abstractmethod
     def setup(self):
-        pass
+        if self.config:
+            if 'alias' in self.config:
+                self.prefix = self.config['alias']['prefix']
 
     @abc.abstractmethod
     def make_document(self, doc):
@@ -85,6 +89,8 @@ class PlotApp(abc.ABC):
             )
             # print(data['datetime'])
             for name, meas in body['DATA']['MEASUREMENTS'].items():
+                if len(self.prefix) > 0:
+                    name = self.prefix + '_' + name
                 if name in self.source.data:
                     data[name] = []
                     data[name].append(meas['VALUE'])
@@ -110,12 +116,20 @@ class TimeSeries1D(PlotApp):
                 data = dict()
                 data['datetime'] = []
                 for y in ts1d_config['y_data']:
-                    data[y] = []
+                    name = y
+                    if len(self.prefix) > 0:
+                        name = self.prefix + '_' + y
+                    data[name] = []
                 self.source = ColumnDataSource(data=data)
 
                 default_data = ts1d_config['default_y_data']
                 self.current_data['TimeSeries1D'] = dict()
-                self.current_data['TimeSeries1D']['y_data'] = default_data
+                new_default_data = []
+                for y in default_data:
+                    if len(self.prefix) > 0:
+                        y = self.prefix + '_' + y
+                        new_default_data.append(y)
+                self.current_data['TimeSeries1D']['y_data'] = new_default_data
 
                 # build map
                 ts1d_map = dict()
@@ -129,6 +143,8 @@ class TimeSeries1D(PlotApp):
                     if 'pref_color' in meas_config:
                         color = meas_config['pref_color']
 
+                    if len(self.prefix) > 0:
+                        y = self.prefix + '_' + y
                     ts1d_map[y] = {
                         'units': units,
                         'color': color,
@@ -151,6 +167,9 @@ class TimeSeries1D(PlotApp):
         else:
             return dict()
 
+    def get_prefix(self):
+        return self.prefix
+
     def get_source_data(self):
         # print(f'source data: {self.source.data}')
         # return json.loads(json.dumps(self.source.data))
@@ -170,6 +189,8 @@ class TimeSeries1D(PlotApp):
         )
         current_data, source_map = self.get_source_meta()
         # print(f'plot init: {source.data}')
+
+        prefix = self.get_prefix()
 
         def update_source():
             # print('update_test')
@@ -205,6 +226,8 @@ class TimeSeries1D(PlotApp):
                 )
                 # print(data['datetime'])
                 for name, meas in body['DATA']['MEASUREMENTS'].items():
+                    if len(prefix) > 0:
+                        name = prefix + '_' + name
                     if name in source.data:
                         data[name] = []
                         data[name].append(meas['VALUE'])
@@ -230,14 +253,108 @@ class TimeSeries1D(PlotApp):
         #     ])
         #     doc.add_root(l)
 
-        # def update_traces(attrname, old, new):
-        #     trace_list = traces.value
-        #     print(f'update_traces: {trace_list}')
-        #     if 'two' in trace_list:
-        #         print('two axes')
-        #         update_axes(2)
-        #     else:
-        #         update_axes(1)
+        def build_plot():
+            # doc.clear()
+
+            fig = figure(
+                # title=self.title,
+                x_axis_label="DateTime",
+                x_axis_type="datetime",
+                plot_width=600,
+                plot_height=300,
+                toolbar_location='above',
+                # tooltips=TOOLTIPS,
+                # , sizing_mode='scale_width',
+                # x_range=[0, 1],
+                # y_range=[0, 1]
+            )
+
+            axes_map = dict()
+            for trace in current_data['TimeSeries1D']['y_data']:
+                if trace in source_map['TimeSeries1D']:
+                    units = source_map['TimeSeries1D'][trace]['units']
+                    if units not in axes_map:
+                        axes_map[units] = []
+                    axes_map[units].append(trace)
+
+            first = True
+            legend_items = []
+            for axis, data in axes_map.items():
+                if first:
+                    for y_data in data:
+                        new_line = fig.line(
+                            source=source,
+                            x='datetime',
+                            y=y_data,
+                            # legend=y_data,
+                        )
+                        legend_items.append((y_data, [new_line]))
+                    fig.yaxis.axis_label = axis
+                    fig.xaxis.formatter = DatetimeTickFormatter(
+                        days="%F",
+                        hours="%F %H:%M",
+                        minutes="%F %H:%M",
+                        minsec="%T",
+                        seconds="%T"
+                    )
+                else:
+                    # renders = []
+                    for y_data in data:
+                        fig.extra_y_ranges[axis] = DataRange1d()
+                        # axis: Range1d()}
+                        new_line = Line(
+                            x='datetime',
+                            y=y_data,
+                        )
+                        render = fig.add_glyph(
+                            source,
+                            new_line,
+                            y_range_name=axis
+                        )
+                        fig.extra_y_ranges[axis].renderers.append(render)
+                        legend_items.append((y_data, [render]))
+                        
+                        # line = fig.line(
+                        #     source=source,
+                        #     x='datetime',
+                        #     y=y_data,
+                        #     # legend=y_data,
+                        #     y_range_name=axis
+                        # )
+                        # renders.append(line)
+                    # fig.xaxis.axis_label = axis
+                    fig.add_layout(LinearAxis(
+                        y_range_name=axis, axis_label=axis), 'left')
+
+                first = False
+            legend = Legend(
+                items=legend_items,
+                location='center',
+                # location=(0, -30)
+            )
+            fig.add_layout(legend, 'right')
+            return fig
+
+        def update_traces(attrname, old, new):
+            trace_list = traces.value
+            print(f'update_traces: {trace_list}')
+
+            current_data['TimeSeries1D']['y_data'] = traces.value
+            fig = build_plot()
+            doc.title = self.title
+            doc.add_periodic_callback(update_source, 1000)
+            doc_layout.children[1] = fig
+            # doc_layout= layout([
+            #     [traces],
+            #     [fig],
+            # ])
+            # doc.add_root(l)
+
+            # if 'two' in trace_list:
+            #     print('two axes')
+            #     update_axes(2)
+            # else:
+            #     update_axes(1)
 
             # doc.clear()
             # ll = layout(
@@ -251,7 +368,7 @@ class TimeSeries1D(PlotApp):
             #     'y': [random.random()],
             #     'color': [random.choice(['red', 'blue', 'green'])]}
             # source.stream(new, rollover=10)
-           # try:
+            # try:
             #     with pull_session(url='http://localhost:5001/') as mysession:
             #         print(mysession)
             # finally:
@@ -266,35 +383,35 @@ class TimeSeries1D(PlotApp):
             ("desc", "@desc"),
         ]
 
-        fig = figure(
-            title=self.title,
-            x_axis_label="DateTime",
-            x_axis_type="datetime",
-            plot_width=600,
-            plot_height=400,
-            # tooltips=TOOLTIPS,
-            # , sizing_mode='scale_width',
-            # x_range=[0, 1],
-            # y_range=[0, 1]
-        )
+        # fig = figure(
+        #     title=self.title,
+        #     x_axis_label="DateTime",
+        #     x_axis_type="datetime",
+        #     plot_width=600,
+        #     plot_height=300,
+        #     # tooltips=TOOLTIPS,
+        #     # , sizing_mode='scale_width',
+        #     # x_range=[0, 1],
+        #     # y_range=[0, 1]
+        # )
         # for trace in current_data:
+        fig = build_plot()
+        # fig.line(
+        #     source=source,
+        #     x='datetime',
+        #     y='test_concentration',
+        #     # legend='concentration'
+        # )  # , color='color', size=10)
+        # # fig.circle(source=source, x='datetime', y='concentration')
+
+        # fig.xaxis.formatter = DatetimeTickFormatter(
+        #     days="%F",
+        #     hours="%F %H:%M",
+        #     minutes="%F %H:%M",
+        #     minsec="%T",
+        #     seconds="%T"
+        # )
         #     add_line(trace)
-
-        fig.line(
-            source=source,
-            x='datetime',
-            y='concentration',
-            # legend='concentration'
-        )  # , color='color', size=10)
-        # fig.circle(source=source, x='datetime', y='concentration')
-
-        fig.xaxis.formatter = DatetimeTickFormatter(
-            days="%F",
-            hours="%F %H:%M",
-            minutes="%F %H:%M",
-            minsec="%T",
-            seconds="%T"
-        )
         doc.title = self.title
         doc.add_periodic_callback(update_source, 1000)
         # new_data = TextInput(value='')
@@ -310,10 +427,14 @@ class TimeSeries1D(PlotApp):
             value=traces_current,
             options=traces_options
         )
-        # traces.on_change('value', update_traces)
-        l = layout([
-            [traces],
-            [fig],
-        ])
-        doc.add_root(l)
+        traces.on_change('value', update_traces)
+
+        doc_layout = layout(
+            [
+                [traces],
+                [fig],
+            ],
+            sizing_mode="stretch_width"
+        )
+        doc.add_root(doc_layout)
         # doc.add_root(fig)

@@ -380,6 +380,7 @@ class DummyInstrument(Instrument):
         super().setup()
         print(f'(((((((((((((((((( dummyinstrument.setup')
         # add instance specific setup here
+        
 
     async def handle(self, msg, type=None):
 
@@ -429,7 +430,11 @@ class DummyInstrument(Instrument):
             'inlet_temperature',
             'inlet_flow',
             'inlet_pressure',
-            'pump_power'
+            'pump_power',
+        ]
+        controls_list = [
+            'inlet_temperature_sp',
+            'inlet_flow_sp'
         ]
         for i, name in enumerate(meas_list):
             # TODO: use meta to convert to float, int
@@ -437,6 +442,11 @@ class DummyInstrument(Instrument):
                 val = float(values[i])
             except ValueError:
                 val = -999
+            measurements[name] = {
+                'VALUE': val,
+            }
+
+        for name in controls_list:
             measurements[name] = {
                 'VALUE': val,
             }
@@ -561,11 +571,13 @@ class DummyInstrument(Instrument):
             'data_type': 'NUMERIC',
             # units are tied to parameter this controls
             'allowed_range': [10.0, 30.0],
+            'default_value': 25.0,
         }
         controls['inlet_flow_sp'] = {
             'data_type': 'NUMERIC',
             # units are tied to parameter this controls
             'allowed_range': [0.0, 2.0],
+            'default_value': 1.0,
         }
 
         measurement_config['primary'] = primary_meas

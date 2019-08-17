@@ -20,12 +20,13 @@
 
 
     {% block plots %}
+        {{ plot_script | safe }}
         {% comment %} <div class=card> {% endcomment %}
-            <div class="iframe-container">
+            {% comment %} <div class="iframe-container">
                 <div id=plot_container>    
-                    {% comment %} <iframe src='http://localhost:5001/instrument_test_dummy' allowfullscreen></iframe> {% endcomment %}
+                    
                 </div>
-            </div>
+            </div> {% endcomment %}
         {% comment %} </div> {% endcomment %}
     {% endblock %}
     
@@ -43,7 +44,7 @@
 
 {% block content %}
 
-
+    
 
     {% comment %} <h2>Instrument:{{ instrument_name_json|cut:'"' }}:{{ instrument_label_json|cut:'"' }}</h2> {% endcomment %}
     <style>
@@ -106,7 +107,7 @@
         {% comment %} url = plot_app['name'] {% endcomment %}
         {% comment %} plots.innerHTML = '<p>'+url+'</p>' {% endcomment %}
         {% comment %} url = 'http://localhost:5001/instrument_test_dummy' {% endcomment %}
-        plots.innerHTML = '<iframe src='+url+' allowfullscreen></iframe>' 
+        {% comment %} plots.innerHTML = '<iframe src='+url+' allowfullscreen></iframe>'  {% endcomment %}
         
 
         {% comment %} define accordions {% endcomment %}
@@ -167,11 +168,15 @@
                 if (meastype != "controls") {
                     mtype = measurements[meastype]
                     for (var meas in mtype) {
+                        var name = meas
+                        if (meas_prefix) {
+                            name = meas_prefix + "_" + meas
+                        }
                         row = table.insertRow(-1);
                         cell = row.insertCell(0);
                         cell.setAttribute('id', (meas+'-name'));
                         cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center')
-                        cell.innerHTML = meas
+                        cell.innerHTML = name
                         cell = row.insertCell(1);
                         cell.setAttribute('id', (meas+'-value'));
                         cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
@@ -241,10 +246,10 @@
 
         chatSocket.onmessage = function(e) {
 
-            {% comment %} if (document.querySelector('#data-table') == null) { {% endcomment %}
-            {% comment %} if (document.getElementById('data-data-table') == null) {
-                build_data_table();
-            }; {% endcomment %}
+            // {% comment %} if (document.querySelector('#data-table') == null) { {% endcomment %}
+            // {% comment %} if (document.getElementById('data-data-table') == null) {
+            //    build_data_table();
+            // }; {% endcomment %}
 
             var data = JSON.parse(e.data);
             if (data['message']['SUBJECT'] == 'DATA') {
@@ -259,16 +264,19 @@
 
                     document.querySelector('#time-stamp').innerHTML =  (message['DATETIME']);
                     for (var meas in message['MEASUREMENTS']) {
-                        cell_id = "#"+meas+"-value"
-                        document.querySelector(cell_id).innerHTML = message['MEASUREMENTS'][meas]['VALUE'];
+                        //console.log(meas);
+                        //cell_id = "#"+meas+"-value"
+                        cell_id = meas+"-value"
+                        //document.querySelector(cell_id).innerHTML = message['MEASUREMENTS'][meas]['VALUE'];
+                        document.getElementById(cell_id).innerHTML = message['MEASUREMENTS'][meas]['VALUE'];
                     }
-                    {% comment %} cell2 = 'cell1';
-                    cell_id = '#'+cell2;
-                    document.querySelector(cell_id).innerHTML = message['MEASUREMENTS']['concentration']['VALUE']; {% endcomment %}
+                    // cell2 = 'cell1';
+                    // cell_id = '#'+cell2;
+                    // document.querySelector(cell_id).innerHTML = message['MEASUREMENTS']['concentration']['VALUE']; 
                 };
 
-                {% comment %} document.querySelector('#msg-window').value = (JSON.stringify(data['message']) + '\n'); {% endcomment %}
-                {% comment %} document.querySelector('#msg-window').value = (e.data + '\n'); {% endcomment %}
+                // {% comment %} document.querySelector('#msg-window').value = (JSON.stringify(data['message']) + '\n'); {% endcomment %}
+                // {% comment %} document.querySelector('#msg-window').value = (e.data + '\n'); {% endcomment %}
             };
         };
 

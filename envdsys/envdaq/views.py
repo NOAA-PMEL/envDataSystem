@@ -2,6 +2,7 @@ from django.shortcuts import render
 from .models import InstrumentAlias, Controller
 from django.utils.safestring import mark_safe
 import json
+from bokeh.embed import server_document
 
 
 # # Create your views here.
@@ -77,6 +78,9 @@ def instrument(request, instrument_name):
     plots["host"] = "localhost"
     plots["port"] = 5001
     plots["name"] = "/instrument_test_dummy" 
+    
+    # TODO: get plot name dynamically
+    plot_script = server_document("http://localhost:5001/instrument_test_dummy")
 
     context = {
         'instrument_instance': mark_safe(
@@ -88,7 +92,8 @@ def instrument(request, instrument_name):
         'instrument_measurements': mark_safe(
             json.dumps(measurements)
         ),
-        'plot_app': mark_safe(json.dumps(plots))
+        'plot_app': mark_safe(json.dumps(plots)),
+        'plot_script': plot_script,
     }
     # print(f'context: {context}')
 
