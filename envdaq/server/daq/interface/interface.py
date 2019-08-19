@@ -327,6 +327,8 @@ class DummyInterface(Interface):
                 # self.msg_buffer.put_nowait(msg)
                 # await self.msg_send_buffer.put(msg)
                 await self.message_to_parent(msg)
+        elif type == 'FromParent':
+            print(f'message{msg.subject}, {msg.body}')
         else:
             print('Unknown Message type: {}'.format(msg.type))
 

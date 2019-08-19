@@ -264,7 +264,7 @@ class TimeSeries1D(PlotApp):
                 plot_height=300,
                 toolbar_location='above',
                 # tooltips=TOOLTIPS,
-                # , sizing_mode='scale_width',
+                sizing_mode='stretch_width',
                 # x_range=[0, 1],
                 # y_range=[0, 1]
             )
@@ -341,8 +341,8 @@ class TimeSeries1D(PlotApp):
 
             current_data['TimeSeries1D']['y_data'] = traces.value
             fig = build_plot()
-            doc.title = self.title
-            doc.add_periodic_callback(update_source, 1000)
+            # doc.title = self.title
+            # doc.add_periodic_callback(update_source, 1000)
             doc_layout.children[1] = fig
             # doc_layout= layout([
             #     [traces],

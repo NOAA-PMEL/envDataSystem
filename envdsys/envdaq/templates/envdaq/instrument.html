@@ -7,7 +7,13 @@
 
 
     {% comment %} <div class="status"></div> {% endcomment %}
-
+    {% block status %}
+        <div class="card">
+        <textarea id="status-window" cols="60" rows="5S"></textarea><br/>
+        <button id="refresh-status-button" class="opsbutton" value="Refresh" onclick=reqest_status()>Refresh</button>
+        </div>
+    {% endblock %}
+    
     {% block data %}
         <div class="card">
         <b><p id="time-stamp"></p></b><br/>
@@ -20,17 +26,29 @@
 
 
     {% block plots %}
-        {{ plot_script | safe }}
-        {% comment %} <div class=card> {% endcomment %}
+        <div class="card">
+            {{ plot_script | safe }}
             {% comment %} <div class="iframe-container">
                 <div id=plot_container>    
                     
                 </div>
             </div> {% endcomment %}
-        {% comment %} </div> {% endcomment %}
+        </div>
     {% endblock %}
     
-    <div class="controls"></div>
+    {% block controls %}
+        <div class="card">
+            <div id="controls-table"></div>
+            {% comment %} <label for="input_temperature_sp">Input Temperature SP</label>
+            <input id="input_temperature_sp" type="number" name="input_temperature_sp" min="10.0" max="30.0" value="25.0">
+            <input id"input_temperature_sp_set" type="button" value="Set"> {% endcomment %}
+            {% comment %} <div id="run-control> {% endcomment %}
+                <div class="opsbutton-container">
+                    <input type="button" id="start-stop-button" value="Start" class="opsbutton stopped" onclick=opsButtonRequest(this)>
+                </div>
+            {% comment %} </div> {% endcomment %}
+        </div>
+    {% endblock %}
 
     {% block rawdata %}
         <button class="accordion"><em>Raw data from server</em></button>
@@ -43,12 +61,11 @@
     <div class="children"></div>
 
 {% block content %}
-
     
 
     {% comment %} <h2>Instrument:{{ instrument_name_json|cut:'"' }}:{{ instrument_label_json|cut:'"' }}</h2> {% endcomment %}
     <style>
-    #data-table {
+    #data-table #control-table{
         {% comment %} width: 100%; {% endcomment %}
          -webkit-overflow-scrolling: touch;
         overflow-x: auto;
@@ -135,17 +152,23 @@
             {% comment %} {{ instrument_label_json }} {% endcomment %}
             setup_accordions()
             build_data_table()
+            build_controls_table()
+
+            reqest_status()
 
         }
 
         function build_data_table() {
-            {% comment %} var measurements = JSON.parse('{{ instrument_measurements | escapejs }}') {% endcomment %}
-            {% comment %} var tablediv = document.getElementById('meas-table')[0]; {% endcomment %}
+            // var measurements = JSON.parse('{{ instrument_measurements | escapejs }}')
+            // var tablediv = document.getElementById('meas-table')[0];
             var tablediv = document.getElementById('meas-table');
             
             var table = document.createElement('table');
             table.setAttribute('id', 'data-table');
             table.setAttribute('style', 'border-collapse: collapse;')
+
+            var caption = table.createCaption()
+            caption.innerHTML = "<em>Data</em>"
 
             var header = table.createTHead();
             var row = header.insertRow(0);
@@ -200,49 +223,114 @@
 
         }
 
-
-        {% comment %} function build_table() {
-
+        function build_controls_table() {
+            // var measurements = JSON.parse('{{ instrument_measurements | escapejs }}')
+            // var tablediv = document.getElementById('meas-table')[0];
+            var tablediv = document.getElementById('controls-table');
             
-            var body = document.getElementsByTagName('body')[0];
+            var table = document.createElement('table')
 
-            var table = document.createElement('table');
-            table.setAttribute('id', 'data-table');
+            table.setAttribute('id', 'control-table');
             table.setAttribute('style', 'border-collapse: collapse;')
+ 
+            var caption = table.createCaption()
+            caption.innerHTML = "<em>Settings</em>"
+
             var header = table.createTHead();
             var row = header.insertRow(0);
             row.setAttribute('style', 'border: 1px solid black')
             var cell = row.insertCell(0);
-            cell.setAttribute('id', 'data-table-namecol');
+            cell.setAttribute('id', 'control-table-namecol');
             cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
             cell.innerHTML = "<b>Name</b>";
             cell = row.insertCell(1);
             cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
             cell.innerHTML = "<b>Value</b>";
-            cell.setAttribute('id', 'data-table-valuecol');
+            cell.setAttribute('id', 'control-table-valuecol');
+            cell.innerHTML = "Value"
+            cell = row.insertCell(2);
+            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
+            cell.innerHTML = "<b>Setting</b>";
+            cell.setAttribute('id', 'control-table-settingcol');
+            cell = row.insertCell(3);
+            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
+            cell.innerHTML = "";
+            cell.setAttribute('id', 'control-table-setbuttoncol');
 
-            row = table.insertRow(1);
-            cell = row.insertCell(0);
-            cell.setAttribute('id', 'cell0');
-            cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center')
-            cell.innerHTML = "Concentration";
-            cell = row.insertCell(1);
-            cell.setAttribute('id', 'cell1');
-            cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
-            cell.innerHTML = '';
+                        {% comment %} meas = 'inlet_temperature_sp'
+                        name = 'test_'+meas
+                        row = table.insertRow(-1);
+                        cell = row.insertCell(0);
+                        cell.setAttribute('id', (meas+'-name'));
+                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center')
+                        cell.innerHTML = name
+                        cell = row.insertCell(1);
+                        cell.setAttribute('id', (meas+'-value'));
+                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
+                        cell.innerHTML = '';         
+                        cell = row.insertCell(2);           
+                        cell.setAttribute('id', (meas+'-setting'));
+                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
+                        cell.innerHTML = '<input id="test" type=number min="10" max="30" step="0.5">'                  
+                        cell = row.insertCell(3);           
+                        cell.setAttribute('id', (meas+'-settingbutton'));
+                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
+                        cell.innerHTML = '<input id="testbutton" type=button value="set">'                   {% endcomment %}
+
+            for (var meastype in measurements) {
+                if (meastype == "controls") {
+                    mtype = measurements[meastype]
+                    for (var meas in mtype) {
+                        var name = meas
+                        if (meas_prefix) {
+                            name = meas_prefix + "_" + meas
+                        }
+                        row = table.insertRow(-1);
+                        cell = row.insertCell(0);
+                        cell.setAttribute('id', (meas+'-name'));
+                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center')
+                        cell.innerHTML = name
+                        cell = row.insertCell(1);
+                        cell.setAttribute('id', (meas+'-value'));
+                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
+                        cell.innerHTML = '';         
+                        cell = row.insertCell(2);           
+                        cell.setAttribute('id', (meas+'-input'));
+                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
+                        cell.innerHTML = '<input id='+meas+'-setting-input type=number min="0" max="65000">'                                
+                        cell = row.insertCell(3);           
+                        cell.setAttribute('id', (meas+'-setting-set'));
+                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
+                        cell.innerHTML = 
+                            '<input id='+meas+'-setting-button type=button value="apply" onclick="apply_setting(this)">'                  
+                    }
+                }
+            }
+ 
+
 
             var td = table.rows[0].cells[0];
             td.width = '200px';
             td = table.rows[0].cells[1];
-            td.width = '200px';
-           
-            body.appendChild(table);
-        }; {% endcomment %}
+            td.width = '100px';
+            td = table.rows[0].cells[2];
+            td.width = '100px';
+            td = table.rows[0].cells[3];
+            td.width = '100px'
+           tablediv.appendChild(table);
+
+           //var t = document.getElementById("control-table").createCaption()
+           //t.innerHTML = "Settings"
+        }
+
+        // websocket communication
 
         var instrument_name = {{ instrument_name }}
         var chatSocket = new WebSocket(
             'ws://' + window.location.host +
             '/ws/envdaq/instrument/'+instrument_name+'/');
+
+        var run_status = "UNKNOWN"
 
         chatSocket.onmessage = function(e) {
 
@@ -257,12 +345,13 @@
                 if ("METADATA" in data['message']['BODY']) {
                     var message = data['message']['BODY']['METADATA'];
                     document.querySelector('#metadata-window').value = (JSON.stringify(data['message']['BODY']['METADATA']) + '\n');
-                };
+                }
                 if ('DATA' in data['message']['BODY']) {
                     var message = data['message']['BODY']['DATA'];
                     document.querySelector('#data-window').value = (JSON.stringify(data['message']['BODY']['DATA']) + '\n');
 
-                    document.querySelector('#time-stamp').innerHTML =  (message['DATETIME']);
+                    document.querySelector('#time-stamp').innerHTML =  (message['DATETIME'].replace(/T|Z/g, " "));
+
                     for (var meas in message['MEASUREMENTS']) {
                         //console.log(meas);
                         //cell_id = "#"+meas+"-value"
@@ -273,11 +362,17 @@
                     // cell2 = 'cell1';
                     // cell_id = '#'+cell2;
                     // document.querySelector(cell_id).innerHTML = message['MEASUREMENTS']['concentration']['VALUE']; 
-                };
+                }
 
-                // {% comment %} document.querySelector('#msg-window').value = (JSON.stringify(data['message']) + '\n'); {% endcomment %}
-                // {% comment %} document.querySelector('#msg-window').value = (e.data + '\n'); {% endcomment %}
-            };
+            } else if (data['message']['SUBJECT'] == 'STATUS') {
+
+                {% comment %} if (data['message']['BODY']['purpose'] == 'UPDATE') { {% endcomment %}
+                if (data.message.BODY.purpose == 'UPDATE') {
+                   {% comment %} console.log(JSON.stringify(data.message.BODY.status)) {% endcomment %}
+                    var status = data.message.BODY.status
+                    update_status(status)
+                }
+            }
         };
 
  
@@ -304,6 +399,82 @@
             }));
 
         }; {% endcomment %}
+
+        function apply_setting(control) {
+            var index = control.id.indexOf("-")
+            if (index<0) {
+                return
+            }
+            var control = control.id.substring(0,index)
+            setpoint = document.getElementById(control+'-setting-input').value
+            var message = {}
+            message['SUBJECT'] = 'CONTROLS'
+            message['BODY'] = {
+                'purpose': 'REQUEST',
+                'control': control,
+                'value': setpoint,
+            }
+
+            chatSocket.send(
+                JSON.stringify({'message': message})
+            )
+
+        }
+
+        function reqest_status() {
+
+            var message = {}
+            message['SUBJECT'] = 'STATUS'
+            message['BODY'] = {
+                'purpose': 'REQUEST',
+           }
+
+            chatSocket.send(
+                JSON.stringify({'message': message})
+            )
+
+        }
+
+        function update_status(status) {
+            runstate = status.run_status
+            opsButtonSet(runstate)
+            document.getElementById("status-window").value = JSON.stringify(status)
+        }
+
+        function opsButtonRequest(obj) {
+            button = document.getElementById('start-stop-button')
+            var req = "STOP"
+            if (button.value == "Start") {
+                req = "START"
+            } 
+
+            var message = {}
+            message['SUBJECT'] = 'RUNCONTROLS'
+            message['BODY'] = {
+                'purpose': 'REQUEST',
+                'control': 'start_stop',
+                'value': req,
+            }
+
+            chatSocket.send(
+                JSON.stringify({'message': message})
+            )
+
+        }
+
+        function opsButtonSet(runstate) {
+            button = document.getElementById('start-stop-button')
+
+            var class_val = 'opsbutton started'
+            var value = "Stop"
+
+            if (runstate == "STOPPED") {
+                class_val = 'opsbutton stopped'
+                value = "Start"
+            }
+            button.value = value
+            button.className = class_val
+        }
 
     </script>
 

@@ -2,6 +2,7 @@ import abc
 import asyncio
 from client.wsclient import WSClient
 from plots.apps.plot_app import PlotApp
+from data.message import Message
 # from urllib.parse import quote
 
 
@@ -63,6 +64,13 @@ class DAQ(abc.ABC):
         # ui client
         self.ui_client = None
 
+        # controls
+        self.controls = dict()
+        self.status = {
+            'run_status': 'STOPPED',
+            'conncted_to_ui': False,
+            'health': 'OK'
+        }
         # start loop to maintain ui
         # if (
         #     'do_ui_connection' in self.ui_config and
@@ -100,6 +108,71 @@ class DAQ(abc.ABC):
             id += "_"+self.label
 
         return id
+
+    def get_controls(self):
+        return self.controls
+    
+    def get_control(self, control):
+        if control:
+            controls = self.get_controls()
+            if control in controls:
+                return controls[control]
+        return None
+
+    async def set_controls(self, controls):
+        if controls:
+            for control, value in controls.items():
+                await self.set_control(control, value)
+        # self.controls = controls
+
+    async def set_control(self, control, value):
+        if control and value:
+            await self.handle_control_action(control, value)
+            if (await self.control_action_success(control)):
+                self.set_control_att(control, 'value', value)
+            else:
+                print(f'Setting {control} unsuccessful')
+
+        # TODO: setting control should trigger action
+        print(f'set_control[{control}] = {value}')
+        
+    # TODO: implement this as an abstract method
+    # @abc.abstractmethod
+    async def handle_control_action(self, control, value):
+        pass
+
+    def set_control_att(self, control, att, value):
+        if control not in self.controls:
+            self.controls[control] = dict()
+        try:
+            self.controls[control][att] = value
+            # self.controls[control]['action_state'] = state
+        except Exception as e:
+            print(f'exc: {e}')
+
+    def get_control_att(self, control, att):
+
+        if control in self.controls:
+            try:
+                return self.controls[control][att]
+            except Exception as e:
+                print(f'No attribute {att} in {control}: {e}')
+                return ''
+
+    async def control_action_success(self, control):
+
+        timeout = 50  # seconds * 10 for faster response
+        cnt = 0
+        while cnt < timeout:
+            try:
+                print(f'success; {self.get_control_att(control, "action_state")}')
+                if self.get_control_att(control, 'action_state') == 'OK':
+                    self.set_control_att(control, 'action_state', 'IDLE')
+                    return True
+            except Exception as e:
+                print(f'exception: {e}')
+                await asyncio.sleep(.1)
+        return False
 
     # TODO: add this abstract method to all daq
     # @abc.abstractclassmethod
@@ -177,20 +250,43 @@ class DAQ(abc.ABC):
     #         # if self.ui_client.isConnected() is False:
     #         self.ui_client = self.connect_to_ui()
 
+    def send_status(self, note=''):
+        print(f'send_status: {self.name}, {self.status}')
+        status = Message(
+            sender_id=self.get_id(),
+            msgtype='GENERIC',
+            subject="STATUS",
+            body={
+                'purpose': 'UPDATE',
+                'status': self.status,
+                # 'note': note,
+            }
+        )
+        print(f'send no wait: {self.name}, {self.status}')
+        self.message_to_ui_nowait(status)
+        # self.message_to_ui_nowait(status)
+
     def start(self, cmd=None):
         # self.create_msg_buffers()
-        self.task_list.append(
-            asyncio.ensure_future(self.from_parent_loop())
-        )
+        if self.status['run_status'] != 'STARTED':
+            self.task_list.append(
+                asyncio.ensure_future(self.from_parent_loop())
+            )
 
-        self.task_list.append(
-            asyncio.ensure_future(self.from_child_loop())
-        )
+            self.task_list.append(
+                asyncio.ensure_future(self.from_child_loop())
+            )
+            self.status['run_status'] = 'STARTED'
+
+        self.send_status()
 
     def stop(self, cmd=None):
 
         for t in self.task_list:
             t.cancel()
+
+        self.status['run_status'] = 'STOPPED'
+        self.send_status()
 
     def shutdown(self):
 
@@ -241,10 +337,11 @@ class DAQ(abc.ABC):
             await self.ui_client.send_message(message)
 
     async def from_ui_loop(self):
+        # print(f'starting daq from_ui_loop')
         while True:
             message = await self.ui_client.read_message()
             # print(f'message = {message.to_json()}')
-            await self.handle(message, src='FromUI')
+            await self.handle(message, type='FromUI')
 
     async def message_to_parent(self, msg):
         # while True:
@@ -252,6 +349,7 @@ class DAQ(abc.ABC):
         await self.to_parent_buf.put(msg)
 
     def message_to_ui_nowait(self, msg):
+        print(f'no wait: {msg.to_json()}')
         asyncio.ensure_future(self.message_to_ui(msg))
 
     async def message_to_ui(self, msg):

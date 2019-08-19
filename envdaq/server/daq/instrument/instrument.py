@@ -68,7 +68,7 @@ class Instrument(DAQ):
         self.alias = dict()
         if alias:
             self.alias = alias
-        
+
         self.plot_name = '/default_plot'
 
         self.serial_number = self.config['DESCRIPTION']['SERIAL_NUMBER']
@@ -126,10 +126,24 @@ class Instrument(DAQ):
         # plot_data = dict()
 
         # use current meta
-        
+
+        # TODO: implement last_config
+
+        # for now, set controls to default
+        if 'measurement_meta' in meta:
+            if 'controls' in meta['measurement_meta']:
+                controls = meta['measurement_meta']['controls']
+                for control, config in controls.items():
+                    if 'default_value' in config:
+                        # TODO: on start, have to go through and send all
+                        #       control values to instrument
+                        self.set_control_att(
+                            control, 'value', config['default_value']
+                        )
+
         # add dictionary specifying which measurements go with which plot
         # if there are more than one.
-        
+
         # plot_config['data'] = plot_data
 
         # add plots to PlotServer
@@ -143,7 +157,7 @@ class Instrument(DAQ):
         # meta['plot_app'] = {
         #     'name': ('/instrument_'+meta['alias']['name'])
         # }
- 
+
         msg = Message(
             sender_id=self.get_id(),
             msgtype='Instrument',
@@ -156,7 +170,6 @@ class Instrument(DAQ):
         )
         self.message_to_ui_nowait(msg)
         print(f'setup: {msg.body}')
-
 
     def get_ui_address(self):
         # print(self.label)
@@ -259,7 +272,6 @@ class Instrument(DAQ):
             self.alias['name'] = self.label,
             self.alias['prefix'] = self.label
 
-    
         meta = {
             'NAME': self.name,
             'TYPE': self.type,
@@ -378,9 +390,8 @@ class DummyInstrument(Instrument):
 
     def setup(self):
         super().setup()
-        print(f'(((((((((((((((((( dummyinstrument.setup')
+        # print(f'dummyinstrument.setup')
         # add instance specific setup here
-        
 
     async def handle(self, msg, type=None):
 
@@ -407,9 +418,60 @@ class DummyInstrument(Instrument):
             await PlotManager.update_data(self.plot_name, data.to_json())
             # print(f'data_json: {data.to_json()}\n')
             # await asyncio.sleep(0.01)
+        elif type == 'FromUI':
+            if msg.subject == 'STATUS' and msg.body['purpose'] == 'REQUEST':
+                print(f'msg: {msg.body}')
+                self.send_status()
+
+            elif msg.subject == 'CONTROLS' and msg.body['purpose'] == 'REQUEST':
+                print(f'msg: {msg.body}')
+                await self.set_control(msg.body['control'], msg.body['value'])
+            elif msg.subject == 'RUNCONTROLS' and msg.body['purpose'] == 'REQUEST':
+                print(f'msg: {msg.body}')
+                await self.handle_control_action(msg.body['control'], msg.body['value'])
+                # await self.set_control(msg.body['control'], msg.body['value'])
+
         # print("DummyInstrument:msg: {}".format(msg.body))
         # else:
         #     await asyncio.sleep(0.01)
+
+    async def handle_control_action(self, control, value):
+        if control and value:
+            if control == 'start_stop':
+                if value == 'START':
+                    self.start()
+                elif value == 'STOP':
+                    self.stop()
+
+            elif control == 'inlet_temperature_sp':
+                # check bounds
+                # send command to instrument via interface
+                cmd = Message(
+                    sender_id=self.get_id(),
+                    msgtype=Instrument.class_type,
+                    subject="COMMAND",
+                    body='inlet_temp='+value,
+                )
+
+                # print(f'{self.iface_map}')
+                # await self.to_child_buf.put(cmd)
+                await self.iface_map['DummyInterface:test_interface'].message_from_parent(cmd)
+                self.set_control_att(control, 'action_state', 'OK')
+
+            elif control == 'inlet_flow_sp':
+                # check bounds
+                # send command to instrument via interface
+                cmd = Message(
+                    sender_id=self.get_id(),
+                    msgtype=Instrument.class_type,
+                    subject="COMMAND",
+                    body='inlet_flow='+value,
+                )
+
+                # print(f'{self.iface_map}')
+                # await self.to_child_buf.put(cmd)
+                await self.iface_map['DummyInterface:test_interface'].message_from_parent(cmd)
+                self.set_control_att(control, 'action_state', 'OK')
 
     def parse(self, msg):
         # print(f'parse: {msg.to_json()}')
@@ -448,7 +510,7 @@ class DummyInstrument(Instrument):
 
         for name in controls_list:
             measurements[name] = {
-                'VALUE': val,
+                'VALUE': self.get_control_att(name, 'value'),
             }
 
         # for meas_name in self.meas_map['LIST']:
@@ -493,6 +555,7 @@ class DummyInstrument(Instrument):
         # array for plot conifg
         y_data = []
 
+        # TODO: add interface entry for each measurement
         primary_meas = dict()
         primary_meas['concentration'] = {
             'dimensions': {
@@ -551,6 +614,20 @@ class DummyInstrument(Instrument):
         y_data.append('inlet_pressure')
 
         raw_meas = dict()
+        raw_meas['counts'] = {
+            'dimensions': {
+                'axes': ['TIME'],
+                'unlimited': 'TIME',
+                'units': ['dateTime'],
+            },
+            'units': 'counts',  # should be cfunits or udunits
+            'uncertainty': 0.1,
+            'pref_color': 'black',
+            'source': 'MEASURED',
+            'data_type': 'NUMERIC',
+            'control': None,
+        }
+
         raw_meas['pump_power'] = {
             'dimensions': {
                 'axes': ['TIME'],
@@ -570,15 +647,22 @@ class DummyInstrument(Instrument):
         controls['inlet_temperature_sp'] = {
             'data_type': 'NUMERIC',
             # units are tied to parameter this controls
+            'units': process_meas['inlet_temperature']['units'],
             'allowed_range': [10.0, 30.0],
             'default_value': 25.0,
+            'label': 'Inlet Temperature SP',
+            'control_group': 'Temperatures'
         }
+        y_data.append('inlet_temperature_sp')
+
         controls['inlet_flow_sp'] = {
             'data_type': 'NUMERIC',
             # units are tied to parameter this controls
+            'units': process_meas['inlet_flow']['units'],
             'allowed_range': [0.0, 2.0],
             'default_value': 1.0,
         }
+        y_data.append('inlet_flow_sp')
 
         measurement_config['primary'] = primary_meas
         measurement_config['process'] = process_meas

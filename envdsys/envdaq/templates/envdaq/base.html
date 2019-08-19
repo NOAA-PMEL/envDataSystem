@@ -20,36 +20,44 @@
 </head>
 
 <body>
-    <div class="header">
-        {% block header %}
-        {% endblock %}
-    </div>
-
     <div class="topnav">
         <a href="#">File</a>
         <a href="#">About</a>
         <a href="#" style="float:right">LoginFn</a>
     </div>
 
-    <div class="status">
-        {% block status %}
+    <div class="header">
+        {% block header %}
         {% endblock %}
     </div>
 
-    <div class="data">
-        {% block data %}
-        {% endblock %}
+    <div class="row">
+        <div class="leftcolumn">
+            <div class="data">
+                {% block data %}
+                {% endblock %}
+            </div>
+        </div>
+        <div class="rightcolumn">
+            <div class="status">
+                {% block status %}
+                {% endblock %}
+            </div>
+            <div class="controls">
+                {% block controls %}
+                {% endblock %}
+            </div>
+        </div>
     </div>
+    </div class="row">
+       </div class="leftcolumn">
+            <div class="plots">
+                {% block plots %}
+                {% endblock %}
+            </div>        
+        </div>
+     </div>
 
-    <div class="controls">
-        {% block controls %}
-        {% endblock %}
-    </div>
-
-    <div class="plots">
-        {% block plots %}
-        {% endblock %}
-    </div>
 
     <div class="rawdata">
         {% block rawdata %}

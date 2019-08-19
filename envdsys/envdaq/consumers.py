@@ -298,6 +298,77 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
                     # send config data to syncmanager
                     await SyncManager.sync_instrument_instance(body['data'])
 
+        elif message['SUBJECT'] == 'RUNCONTROLS':
+            print(f'message: {message}')
+            body = message['BODY']
+            if body['purpose'] == 'REQUEST':
+                msg = {
+                    'TYPE': 'UI',
+                    'SENDER_ID': 'InstrumentConsumer',
+                    'TIMESTAMP': time_util.dt_to_string(),
+                    'SUBJECT': 'RUNCONTROLS',
+                    'BODY': body
+                }
+                await self.channel_layer.group_send(
+                    self.instrument_group_name,
+                    {
+                        'type': 'instrument_message',
+                        'message': msg
+                    }
+                )
+
+        elif message['SUBJECT'] == 'CONTROLS':
+            print(f'message: {message}')
+            body = message['BODY']
+            if body['purpose'] == 'REQUEST':
+                msg = {
+                    'TYPE': 'UI',
+                    'SENDER_ID': 'InstrumentConsumer',
+                    'TIMESTAMP': time_util.dt_to_string(),
+                    'SUBJECT': 'CONTROLS',
+                    'BODY': body
+                }
+                await self.channel_layer.group_send(
+                    self.instrument_group_name,
+                    {
+                        'type': 'instrument_message',
+                        'message': msg
+                    }
+                )
+
+        elif message['SUBJECT'] == 'STATUS':
+            if message['BODY']['purpose'] == 'REQUEST':
+                body = message['BODY']
+                msg = {
+                    'TYPE': 'UI',
+                    'SENDER_ID': 'InstrumentConsumer',
+                    'TIMESTAMP': time_util.dt_to_string(),
+                    'SUBJECT': 'STATUS',
+                    'BODY': body
+                }
+                await self.channel_layer.group_send(
+                    self.instrument_group_name,
+                    {
+                        'type': 'instrument_message',
+                        'message': msg
+                    }
+                )
+
+            else:
+                print(f'message: {message}')
+                await self.channel_layer.group_send(
+                    self.instrument_group_name,
+                    {
+                        'type': 'instrument_message',
+                        'message': message
+                    }
+                )
+
+                # await self.instrument_message(
+                #     {'message': msg}
+                # )
+                # print(f'msg: {msg}')
+
     # Receive message from room group
     async def instrument_message(self, event):
         message = event['message']
@@ -337,7 +408,7 @@ class InterfaceConsumer(AsyncWebsocketConsumer):
 
     # Receive message from WebSocket
     async def receive(self, text_data):
-
+        pass
         # TODO: parse incoming message
 
         # if data, pass along to socket
