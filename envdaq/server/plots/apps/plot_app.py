@@ -266,7 +266,8 @@ class TimeSeries1D(PlotApp):
                 # tooltips=TOOLTIPS,
                 sizing_mode='stretch_width',
                 # x_range=[0, 1],
-                # y_range=[0, 1]
+                # y_range=[0, 1],
+
             )
 
             axes_map = dict()
@@ -425,8 +426,9 @@ class TimeSeries1D(PlotApp):
         traces = MultiSelect(
             title='Select data to plot',
             value=traces_current,
-            options=traces_options
+            options=traces_options,
         )
+        
         traces.on_change('value', update_traces)
 
         doc_layout = layout(

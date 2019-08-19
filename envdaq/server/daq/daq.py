@@ -68,7 +68,7 @@ class DAQ(abc.ABC):
         self.controls = dict()
         self.status = {
             'run_status': 'STOPPED',
-            'conncted_to_ui': False,
+            'connected_to_ui': False,
             'health': 'OK'
         }
         # start loop to maintain ui

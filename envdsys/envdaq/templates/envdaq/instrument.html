@@ -9,7 +9,9 @@
     {% comment %} <div class="status"></div> {% endcomment %}
     {% block status %}
         <div class="card">
-        <textarea id="status-window" cols="60" rows="5S"></textarea><br/>
+        <textarea readonly class="status-box" id="status-window" cols="60" rows="5"></textarea><br/>
+        {% comment %} <textarea id="status-window" width="100%" rows="5"></textarea><br/> {% endcomment %}
+        {% comment %} <div id="status-window" class="status-box"></div> {% endcomment %}
         <button id="refresh-status-button" class="opsbutton" value="Refresh" onclick=reqest_status()>Refresh</button>
         </div>
     {% endblock %}
@@ -53,8 +55,8 @@
     {% block rawdata %}
         <button class="accordion"><em>Raw data from server</em></button>
         <div class="panel">
-            <textarea id="metadata-window" cols="100" rows="5"></textarea>
-            <textarea id="data-window" cols="100" rows="10"></textarea>
+            <textarea readonly class="status-box" id="metadata-window" cols="10" rows="10"></textarea>
+            <textarea readonly class="status-box" id="data-window" cols="10" rows="10"></textarea>
         </div>
     {% endblock %}
 
@@ -165,7 +167,8 @@
             
             var table = document.createElement('table');
             table.setAttribute('id', 'data-table');
-            table.setAttribute('style', 'border-collapse: collapse;')
+            table.setAttribute('class', 'daq-table')
+            //table.setAttribute('style', 'border-collapse: collapse; border-radius: 10px; overflow: hidden')
 
             var caption = table.createCaption()
             caption.innerHTML = "<em>Data</em>"
@@ -439,6 +442,7 @@
             runstate = status.run_status
             opsButtonSet(runstate)
             document.getElementById("status-window").value = JSON.stringify(status)
+            //document.getElementById("status-window").innerHTML = JSON.stringify(status)
         }
 
         function opsButtonRequest(obj) {

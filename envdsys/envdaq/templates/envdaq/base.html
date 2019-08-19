@@ -23,9 +23,15 @@
     <div class="topnav">
         <a href="#">File</a>
         <a href="#">About</a>
-        <a href="#" style="float:right">LoginFn</a>
-    </div>
-
+        {% comment %} <a href="#" style="float:right">LoginFn</a> {% endcomment %}
+        {% comment %} <a href="{% url django.contrib.auth.views.login %}?next={{request.path}}" style="float:right">Login</a>    </div> {% endcomment %}
+        {% comment %} <a href="http://{{request.get_host}}/envdsys/login?next={{request.path}}" style="float:right">Login</a>    </div> {% endcomment %}
+        {% if user.is_authenticated %}
+            {% comment %} <p style="float:right">Hello {{ user.username }} <small>(<a href="{% url 'logout' %}">Log out</a>)</small></p> {% endcomment %}
+            <a href="{% url 'logout' %}?next={{request.path}}" style="float:right">Logout</a>    </div>
+        {% else %}
+            <a href="{% url 'login' %}?next={{request.path}}" style="float:right">Login</a>    </div>
+        {% endif %}
     <div class="header">
         {% block header %}
         {% endblock %}
