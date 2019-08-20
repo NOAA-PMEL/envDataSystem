@@ -145,6 +145,7 @@
             });
         } {% endcomment %}
         
+        var wait_for_setup = true;
 
         function init() {
             {% comment %} alert("loaded"); {% endcomment %}
@@ -156,7 +157,8 @@
             build_data_table()
             build_controls_table()
 
-            reqest_status()
+            //reqest_status()
+            wait_for_setup = false
 
         }
 
@@ -329,13 +331,13 @@
         // websocket communication
 
         var instrument_name = {{ instrument_name }}
-        var chatSocket = new WebSocket(
+        var websocket = new WebSocket(
             'ws://' + window.location.host +
             '/ws/envdaq/instrument/'+instrument_name+'/');
 
         var run_status = "UNKNOWN"
 
-        chatSocket.onmessage = function(e) {
+        websocket.onmessage = function(e) {
 
             // {% comment %} if (document.querySelector('#data-table') == null) { {% endcomment %}
             // {% comment %} if (document.getElementById('data-data-table') == null) {
@@ -378,7 +380,14 @@
             }
         };
 
- 
+        websocket.onopen = function(event) {
+            console.log('Connected to: ' + event.currentTarget.url)
+            //while (wait_for_setup) {}
+            console.log('setup done')
+            
+            reqest_status()
+        }
+
         {% comment %} document.querySelector('#inst-name-input').focus();
         document.querySelector('#inst-name-input').onkeyup = function(e) {
             if (e.keyCode === 13) {  // enter, return
@@ -397,7 +406,7 @@
                 'SUBJECT': 'REQUEST',
                 'BODY': 'SEND_METATDATA'
                 };
-            chatSocket.send(JSON.stringify({
+            websocket.send(JSON.stringify({
             'message': message
             }));
 
@@ -418,7 +427,7 @@
                 'value': setpoint,
             }
 
-            chatSocket.send(
+            websocket.send(
                 JSON.stringify({'message': message})
             )
 
@@ -432,7 +441,7 @@
                 'purpose': 'REQUEST',
            }
 
-            chatSocket.send(
+            websocket.send(
                 JSON.stringify({'message': message})
             )
 
@@ -460,7 +469,7 @@
                 'value': req,
             }
 
-            chatSocket.send(
+            websocket.send(
                 JSON.stringify({'message': message})
             )
 

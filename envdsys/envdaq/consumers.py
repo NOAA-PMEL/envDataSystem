@@ -147,25 +147,25 @@ class ControllerConsumer(AsyncWebsocketConsumer):
 
         elif (message['SUBJECT'] == 'CONFIG'):
             body = message['BODY']
-            if (body['purpose'] == 'REQUEST'):
-                if (body['type'] == 'ENVDAQ_CONFIG'):
-                    # do we ever get here?
-                    cfg = await ConfigurationUtility().get_config()
+            # if (body['purpose'] == 'REQUEST'):
+            #     if (body['type'] == 'ENVDAQ_CONFIG'):
+            #         # do we ever get here?
+            #         cfg = await ConfigurationUtility().get_config()
 
-                    reply = {
-                        'TYPE': 'GUI',
-                        'SENDER_ID': 'DAQServerConsumer',
-                        'TIMESTAMP': time_util.dt_to_string(),
-                        'SUBJECT': 'CONFIG',
-                        'BODY': {
-                            'purpose': 'REPLY',
-                            'type': 'ENVDAQ_CONFIG',
-                            'config': cfg,
-                        }
-                    }
-                # print(f'reply: {reply}')
-                await self.data_message({'message': reply})
-            elif (body['purpose'] == 'SYNC'):
+            #         reply = {
+            #             'TYPE': 'GUI',
+            #             'SENDER_ID': 'DAQServerConsumer',
+            #             'TIMESTAMP': time_util.dt_to_string(),
+            #             'SUBJECT': 'CONFIG',
+            #             'BODY': {
+            #                 'purpose': 'REPLY',
+            #                 'type': 'ENVDAQ_CONFIG',
+            #                 'config': cfg,
+            #             }
+            #         }
+            #     # print(f'reply: {reply}')
+            #     await self.data_message({'message': reply})
+            if (body['purpose'] == 'SYNC'):
                 if (body['type'] == 'CONTROLLER_INSTANCE'):
                     # TODO: add field to force sync option
                     # send config data to syncmanager
@@ -318,25 +318,25 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
 
         elif (message['SUBJECT'] == 'CONFIG'):
             body = message['BODY']
-            if (body['purpose'] == 'REQUEST'):
-                if (body['type'] == 'ENVDAQ_CONFIG'):
-                    # do we ever get here?
-                    cfg = await ConfigurationUtility().get_config()
+            # if (body['purpose'] == 'REQUEST'):
+            #     if (body['type'] == 'ENVDAQ_CONFIG'):
+            #         # do we ever get here?
+            #         cfg = await ConfigurationUtility().get_config()
 
-                    reply = {
-                        'TYPE': 'GUI',
-                        'SENDER_ID': 'DAQServerConsumer',
-                        'TIMESTAMP': time_util.dt_to_string(),
-                        'SUBJECT': 'CONFIG',
-                        'BODY': {
-                            'purpose': 'REPLY',
-                            'type': 'ENVDAQ_CONFIG',
-                            'config': cfg,
-                        }
-                    }
-                # print(f'reply: {reply}')
-                await self.data_message({'message': reply})
-            elif (body['purpose'] == 'SYNC'):
+            #         reply = {
+            #             'TYPE': 'GUI',
+            #             'SENDER_ID': 'DAQServerConsumer',
+            #             'TIMESTAMP': time_util.dt_to_string(),
+            #             'SUBJECT': 'CONFIG',
+            #             'BODY': {
+            #                 'purpose': 'REPLY',
+            #                 'type': 'ENVDAQ_CONFIG',
+            #                 'config': cfg,
+            #             }
+            #         }
+            #     # print(f'reply: {reply}')
+            #     await self.data_message({'message': reply})
+            if (body['purpose'] == 'SYNC'):
                 if (body['type'] == 'INSTRUMENT_INSTANCE'):
                     # TODO: add field to force sync option
                     # send config data to syncmanager
@@ -469,13 +469,117 @@ class InterfaceConsumer(AsyncWebsocketConsumer):
         message = text_data_json['message']
 
         # Send message to room group
-        await self.channel_layer.group_send(
-            self.interface_group_name,
-            {
-                'type': 'interface_message',
-                'message': message
-            }
-        )
+        # await self.channel_layer.group_send(
+        #     self.interface_group_name,
+        #     {
+        #         'type': 'interface_message',
+        #         'message': message
+        #     }
+        # )
+
+        if (message['SUBJECT'] == 'DATA'):
+            # print(f'controller data message')
+            await self.channel_layer.group_send(
+                self.interface_group_name,
+                {
+                    'type': 'interface_message',
+                    'message': message
+                }
+            )
+
+        elif (message['SUBJECT'] == 'CONFIG'):
+            body = message['BODY']
+            if (body['purpose'] == 'REQUEST'):
+                pass
+                # if (body['type'] == 'ENVDAQ_CONFIG'):
+                #     # do we ever get here?
+                #     cfg = await ConfigurationUtility().get_config()
+
+                #     reply = {
+                #         'TYPE': 'GUI',
+                #         'SENDER_ID': 'InterfaceConsumer',
+                #         'TIMESTAMP': time_util.dt_to_string(),
+                #         'SUBJECT': 'CONFIG',
+                #         'BODY': {
+                #             'purpose': 'REPLY',
+                #             'type': 'ENVDAQ_CONFIG',
+                #             'config': cfg,
+                #         }
+                #     }
+                # # print(f'reply: {reply}')
+                # await self.interface_message({'message': reply})
+            # if (body['purpose'] == 'SYNC'):
+            #     if (body['type'] == 'CONTROLLER_INSTANCE'):
+            #         # TODO: add field to force sync option
+            #         # send config data to syncmanager
+            #         await SyncManager.sync_interface_instance(body['data'])
+        
+        elif message['SUBJECT'] == 'RUNCONTROLS':
+            print(f'message: {message}')
+            body = message['BODY']
+            if body['purpose'] == 'REQUEST':
+                msg = {
+                    'TYPE': 'UI',
+                    'SENDER_ID': 'InterfaceConsumer',
+                    'TIMESTAMP': time_util.dt_to_string(),
+                    'SUBJECT': 'RUNCONTROLS',
+                    'BODY': body
+                }
+                await self.channel_layer.group_send(
+                    self.interface_group_name,
+                    {
+                        'type': 'interface_message',
+                        'message': msg
+                    }
+                )
+
+        elif message['SUBJECT'] == 'CONTROLS':
+            print(f'message: {message}')
+            body = message['BODY']
+            if body['purpose'] == 'REQUEST':
+                msg = {
+                    'TYPE': 'UI',
+                    'SENDER_ID': 'InterfaceConsumer',
+                    'TIMESTAMP': time_util.dt_to_string(),
+                    'SUBJECT': 'CONTROLS',
+                    'BODY': body
+                }
+                await self.channel_layer.group_send(
+                    self.interface_group_name,
+                    {
+                        'type': 'interface_message',
+                        'message': msg
+                    }
+                )
+        elif message['SUBJECT'] == 'STATUS':
+            if message['BODY']['purpose'] == 'REQUEST':
+                print(f'status request: {message}')
+                body = message['BODY']
+                msg = {
+                    'TYPE': 'UI',
+                    'SENDER_ID': 'InterfaceConsumer',
+                    'TIMESTAMP': time_util.dt_to_string(),
+                    'SUBJECT': 'STATUS',
+                    'BODY': body
+                }
+                await self.channel_layer.group_send(
+                    self.interface_group_name,
+                    {
+                        'type': 'interface_message',
+                        'message': msg
+                    }
+                )
+
+            else:
+                print(f'message: {message}')
+                await self.channel_layer.group_send(
+                    self.interface_group_name,
+                    {
+                        'type': 'interface_message',
+                        'message': message
+                    }
+                )
+
 
     # Receive message from room group
     async def interface_message(self, event):
@@ -531,13 +635,116 @@ class IFDeviceConsumer(AsyncWebsocketConsumer):
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
 
-        await self.channel_layer.group_send(
-            self.data_group_name,
-            {
-                'type': 'ifdevice_message',
-                'message': message
-            }
-        )
+        # await self.channel_layer.group_send(
+        #     self.ifdevice_group_name,
+        #     {
+        #         'type': 'ifdevice_message',
+        #         'message': message
+        #     }
+        # )
+
+        if (message['SUBJECT'] == 'DATA'):
+            # print(f'controller data message')
+            await self.channel_layer.group_send(
+                self.ifdevice_group_name,
+                {
+                    'type': 'ifdevice_message',
+                    'message': message
+                }
+            )
+
+        elif (message['SUBJECT'] == 'CONFIG'):
+            body = message['BODY']
+            if (body['purpose'] == 'REQUEST'):
+                pass
+                # if (body['type'] == 'ENVDAQ_CONFIG'):
+                #     # do we ever get here?
+                #     cfg = await ConfigurationUtility().get_config()
+
+                #     reply = {
+                #         'TYPE': 'GUI',
+                #         'SENDER_ID': 'InterfaceConsumer',
+                #         'TIMESTAMP': time_util.dt_to_string(),
+                #         'SUBJECT': 'CONFIG',
+                #         'BODY': {
+                #             'purpose': 'REPLY',
+                #             'type': 'ENVDAQ_CONFIG',
+                #             'config': cfg,
+                #         }
+                #     }
+                # # print(f'reply: {reply}')
+                # await self.interface_message({'message': reply})
+            # if (body['purpose'] == 'SYNC'):
+            #     if (body['type'] == 'CONTROLLER_INSTANCE'):
+            #         # TODO: add field to force sync option
+            #         # send config data to syncmanager
+            #         await SyncManager.sync_interface_instance(body['data'])
+        
+        elif message['SUBJECT'] == 'RUNCONTROLS':
+            print(f'message: {message}')
+            body = message['BODY']
+            if body['purpose'] == 'REQUEST':
+                msg = {
+                    'TYPE': 'UI',
+                    'SENDER_ID': 'IFDeviceConsumer',
+                    'TIMESTAMP': time_util.dt_to_string(),
+                    'SUBJECT': 'RUNCONTROLS',
+                    'BODY': body
+                }
+                await self.channel_layer.group_send(
+                    self.ifdevice_group_name,
+                    {
+                        'type': 'ifdevice_message',
+                        'message': msg
+                    }
+                )
+
+        elif message['SUBJECT'] == 'CONTROLS':
+            print(f'message: {message}')
+            body = message['BODY']
+            if body['purpose'] == 'REQUEST':
+                msg = {
+                    'TYPE': 'UI',
+                    'SENDER_ID': 'IFDeviceConsumer',
+                    'TIMESTAMP': time_util.dt_to_string(),
+                    'SUBJECT': 'CONTROLS',
+                    'BODY': body
+                }
+                await self.channel_layer.group_send(
+                    self.ifdevice_group_name,
+                    {
+                        'type': 'ifdevice_message',
+                        'message': msg
+                    }
+                )
+        elif message['SUBJECT'] == 'STATUS':
+            if message['BODY']['purpose'] == 'REQUEST':
+                print(f'status request: {message}')
+                body = message['BODY']
+                msg = {
+                    'TYPE': 'UI',
+                    'SENDER_ID': 'IFDeviceConsumer',
+                    'TIMESTAMP': time_util.dt_to_string(),
+                    'SUBJECT': 'STATUS',
+                    'BODY': body
+                }
+                await self.channel_layer.group_send(
+                    self.ifdevice_group_name,
+                    {
+                        'type': 'ifdevice_message',
+                        'message': msg
+                    }
+                )
+
+            else:
+                print(f'message: {message}')
+                await self.channel_layer.group_send(
+                    self.ifdevice_group_name,
+                    {
+                        'type': 'ifdevice_message',
+                        'message': message
+                    }
+                )
 
     # Receive message from room group
     async def ifdevice_message(self, event):

@@ -212,3 +212,7 @@
     /* border-radius: 5px; */
     overflow: hidden;
   }
+
+  tr:nth-child(even) {
+    background-color: #f2f2f2
+  }

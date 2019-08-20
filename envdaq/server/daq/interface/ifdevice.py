@@ -122,9 +122,10 @@ class IFDevice(DAQ):
     #         iface.msg_send_buffer = self.from_child_buf
     #         self.iface_map[iface.get_id()] = iface
 
-    async def handle(self, msg, type=None):
-        await asyncio.sleep(1)
-        # pass
+    # async def handle(self, msg, type=None):
+    #     print(f'ifdevice.handle: {msg}')
+    #     await asyncio.sleep(.1)
+    #     # pass
 
     def handle2(self, data):
         pass
@@ -195,6 +196,10 @@ class DummyIFDevice(IFDevice):
         # self.msg_send_buffer.put_nowait(msg)
         # print(f'to parent: {msg.to_json()}')
         await self.message_to_parent(msg)
+
+    async def handle(self, msg, type=None):
+        print(f'ifdevice.handle: {msg}')
+        await asyncio.sleep(.1)
 
     def get_definition_instance(self):
         return IFDevice.get_definition()

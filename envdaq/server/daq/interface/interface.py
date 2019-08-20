@@ -330,7 +330,7 @@ class DummyInterface(Interface):
         elif type == 'FromParent':
             print(f'message{msg.subject}, {msg.body}')
         else:
-            print('Unknown Message type: {}'.format(msg.type))
+            print(f'Unknown Message type: {msg.type}, {msg.to_json()}')
 
     def get_definition_instance(self):
         return DummyInterface.get_definition()

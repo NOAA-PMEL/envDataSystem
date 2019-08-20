@@ -126,20 +126,20 @@ class Controller(DAQ):
  
         # TODO: move this to actual instrument
         # # add plots to PlotServer
-        PlotManager.add_app(
-            TimeSeries1D(
-                meta,
-                name=('/instrument_'+meta['plot_meta']['name'])
-            ),
-            start_after_add=True
-        )
+        # PlotManager.add_app(
+        #     TimeSeries1D(
+        #         meta,
+        #         name=('/instrument_'+meta['plot_meta']['name'])
+        #     ),
+        #     start_after_add=True
+        # )
 
-        # plot_app_name = ('/instrument_'+meta['plot_meta']['name'])
-        # plot_app_name = self.add_plot_app()
-        # if plot_app_name:
-        meta['plot_app'] = {
-            'name': ('/controller_'+meta['plot_meta']['name'])
-        }
+        # # plot_app_name = ('/instrument_'+meta['plot_meta']['name'])
+        # # plot_app_name = self.add_plot_app()
+        # # if plot_app_name:
+        # meta['plot_app'] = {
+        #     'name': ('/controller_'+meta['plot_meta']['name'])
+        # }
 
 
         # tell ui to build controller
@@ -296,7 +296,7 @@ class Controller(DAQ):
             inst_meta[name] = inst.get_metadata()
         instrument_meta['instrument_meta'] = inst_meta
 
-        print(f'plot_config = {plot_config}')
+        # print(f'plot_config = {plot_config}')
         print(f'name: {self.name}')
         print(f'label: {self.label}')
         meta = {
@@ -373,11 +373,68 @@ class DummyController(Controller):
         # add extra here    
 
     async def handle(self, msg, type=None):
-        # print(f'controller.handle: {msg.to_json()}')
-        # await self.send_message(msg)
-        await self.message_to_ui(msg)
-        # await self.message_to_gui(msg)
-        # await asyncio.sleep(0.01)
+        # print(f'%%%%%Instrument.handle: {msg.to_json()}')
+        # handle messages from multiple sources. What ID to use?
+        if (type == 'FromChild' and msg.type == Interface.class_type):
+            id = msg.sender_id
+            # entry = self.parse(msg)
+            # self.last_entry = entry
+            # print('entry = \n{}'.format(entry))
+
+            data = Message(
+                sender_id=self.get_id(),
+                msgtype=Controller.class_type,
+            )
+            # send data to next step(s)
+            # to controller
+            # data.update(subject='DATA', body=entry['DATA'])
+            data.update(subject='DATA', body=entry)
+            # print(f'instrument data: {data.to_json()}')
+
+            await self.message_to_ui(data)
+            # await PlotManager.update_data(self.plot_name, data.to_json())
+            
+            # print(f'data_json: {data.to_json()}\n')
+        elif type == 'FromUI':
+            if msg.subject == 'STATUS' and msg.body['purpose'] == 'REQUEST':
+                print(f'msg: {msg.body}')
+                self.send_status()
+
+            elif msg.subject == 'CONTROLS' and msg.body['purpose'] == 'REQUEST':
+                print(f'msg: {msg.body}')
+                await self.set_control(msg.body['control'], msg.body['value'])
+            elif msg.subject == 'RUNCONTROLS' and msg.body['purpose'] == 'REQUEST':
+                print(f'msg: {msg.body}')
+                await self.handle_control_action(msg.body['control'], msg.body['value'])
+                # await self.set_control(msg.body['control'], msg.body['value'])
+
+        # print("DummyInstrument:msg: {}".format(msg.body))
+        # else:
+        #     await asyncio.sleep(0.01)
+
+    async def handle_control_action(self, control, value):
+        pass
+        if control and value:
+            if control == 'start_stop':
+                if value == 'START':
+                    self.start()
+                elif value == 'STOP':
+                    self.stop()
+
+        #     elif control == 'inlet_temperature_sp':
+        #         # check bounds
+        #         # send command to instrument via interface
+        #         cmd = Message(
+        #             sender_id=self.get_id(),
+        #             msgtype=Instrument.class_type,
+        #             subject="COMMAND",
+        #             body='inlet_temp='+value,
+        #         )
+
+        #         # print(f'{self.iface_map}')
+        #         # await self.to_child_buf.put(cmd)
+        #         await self.iface_map['DummyInterface:test_interface'].message_from_parent(cmd)
+        #         self.set_control_att(control, 'action_state', 'OK')
 
     # def _create_definition(self):
     #     self.daq_definition['module'] = self.__module__

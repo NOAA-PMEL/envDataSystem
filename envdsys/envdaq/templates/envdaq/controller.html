@@ -34,6 +34,20 @@
     </div>
 {% endblock %}
 
+{% block controls %}
+    <div class="card">
+        <div id="controls-table"></div>
+        {% comment %} <label for="input_temperature_sp">Input Temperature SP</label>
+        <input id="input_temperature_sp" type="number" name="input_temperature_sp" min="10.0" max="30.0" value="25.0">
+        <input id"input_temperature_sp_set" type="button" value="Set"> {% endcomment %}
+        {% comment %} <div id="run-control> {% endcomment %}
+            <div class="opsbutton-container">
+                <input type="button" id="start-stop-button" value="Start" class="opsbutton stopped" onclick=opsButtonRequest(this)>
+            </div>
+        {% comment %} </div> {% endcomment %}
+    </div>
+{% endblock %}
+
 {% block rawdata %}
     <button class="accordion"><em>Raw data from server</em></button>
     <div class="panel">
@@ -48,29 +62,22 @@
     <script>
         
         window.onload=init;
+
+        var wait_for_setup = true;
         
         function init() {
             
             {% comment %} build_table() {% endcomment %}
 
             {% comment %} {{ instrument_label_json }} {% endcomment %}
-            // setup_accordions()
+            setup_accordions()
             build_data_table()
             // build_controls_table()
-            //sleep(2000)
-            reqest_status()
-
+            //reqest_status()
+            wait_for_setup = false
         }
 
-        function sleep(milliseconds) {
-        var start = new Date().getTime();
-        for (var i = 0; i < 1e7; i++) {
-            if ((new Date().getTime() - start) > milliseconds){
-            break;
-            }
-        }
-        }
-        
+       
         function build_data_table() {
             // var measurements = JSON.parse('{{ instrument_measurements | escapejs }}')
             // var tablediv = document.getElementById('meas-table')[0];
@@ -100,6 +107,8 @@
             cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
             cell.innerHTML = "<b>Units</b>";
             cell.setAttribute('id', 'data-table-unitcol');
+
+            tablediv.appendChild(table);
         }
 
 
@@ -108,11 +117,11 @@
         var controller_name = {{ controller_name }}
 
         console.log(controller_name)
-        var chatSocket = new WebSocket(
+        var websocket = new WebSocket(
             'ws://' + window.location.host +
             '/ws/envdaq/controller/'+controller_name+'/');
 
-        chatSocket.onmessage = function(e) {
+        websocket.onmessage = function(e) {
             var data = JSON.parse(e.data)
             console.log(data)
             // document.getElementById('data-window').innerHTML = data
@@ -128,6 +137,13 @@
             }
         }
 
+        websocket.onopen = function(event) {
+            console.log('Connected to: ' + event.currentTarget.url)
+            while (wait_for_setup) {}
+            
+            reqest_status()
+        }
+
 
         function reqest_status() {
 
@@ -137,7 +153,7 @@
                 'purpose': 'REQUEST',
            }
             console.log(JSON.stringify(message))
-            chatSocket.send(
+            websocket.send(
                 JSON.stringify({'message': message})
             )
 
@@ -145,12 +161,46 @@
 
         function update_status(status) {
             console.log(status)
-            //runstate = status.run_status
-            //opsButtonSet(runstate)
-            //document.getElementById("status-window").value = JSON.stringify(status)
-            //document.getElementById("status-window").innerHTML = JSON.stringify(status)
+            runstate = status.run_status
+            opsButtonSet(runstate)
+            document.getElementById("status-window").value = JSON.stringify(status)
+            document.getElementById("status-window").innerHTML = JSON.stringify(status)
         };
 
+        function opsButtonRequest(obj) {
+            button = document.getElementById('start-stop-button')
+            var req = "STOP"
+            if (button.value == "Start") {
+                req = "START"
+            } 
+
+            var message = {}
+            message['SUBJECT'] = 'RUNCONTROLS'
+            message['BODY'] = {
+                'purpose': 'REQUEST',
+                'control': 'start_stop',
+                'value': req,
+            }
+
+            websocket.send(
+                JSON.stringify({'message': message})
+            )
+
+        }
+
+        function opsButtonSet(runstate) {
+            button = document.getElementById('start-stop-button')
+
+            var class_val = 'opsbutton started'
+            var value = "Stop"
+
+            if (runstate == "STOPPED") {
+                class_val = 'opsbutton stopped'
+                value = "Start"
+            }
+            button.value = value
+            button.className = class_val
+        }
 
     </script>
 
