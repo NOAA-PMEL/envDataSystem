@@ -45,7 +45,7 @@ def controller(request, controller_name):
 
     print(f'controller_name: {mark_safe(json.dumps(controller_name))}')
     context = {
-        'controller_name_json': mark_safe(json.dumps(controller_name))
+        'controller_name': mark_safe(json.dumps(controller_name)),
     }
     return render(request, 'envdaq/controller.html', context=context)
 

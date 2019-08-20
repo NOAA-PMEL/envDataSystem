@@ -1,20 +1,157 @@
-<!-- envdaq/templates/envdaq/controller.html -->
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8"/>
-    <title>envDAQ:controller</title>
-</head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<body>
-<h2>{{ controller_name_json|slice:"1:-1" }}</h2>
-{% comment %} <h2>{{ controller_name_json|cut:'"' }}</h2> {% endcomment %}
-{%for instrument in instrument_list %}
-{{ instrument.name }}</br>
-{% endfor %}
-<div name="instruments">
-{% comment %} <iframe src="http://localhost:8001/envdaq/instrument/TestDummy" onload="this.width=window.innerWidth;this.height=window.innerHeight;"></iframe> {% endcomment %}
-<iframe src="http://localhost:8001/envdaq/instrument/test_dummy" style="position: absolute; height: 60%; width: 60%"></iframe>
-</div>
-</body>
-</html>
+{% extends 'envdaq/base.html' %}
+
+{% block header %}
+    <h1>envDSys : Controller : {{ controller_label|cut:'"' }}</h1>
+{% endblock %}
+
+{% block status %}
+    <div class="card">
+        <textarea readonly class="status-box" id="status-window" cols="60" rows="5"></textarea><br/>
+        {% comment %} <textarea id="status-window" width="100%" rows="5"></textarea><br/> {% endcomment %}
+        {% comment %} <div id="status-window" class="status-box"></div> {% endcomment %}
+        <button id="refresh-status-button" class="opsbutton" value="Refresh" onclick=reqest_status()>Refresh</button>
+    </div>
+{% endblock %}
+
+{% block data %}
+    <div class="card">
+    <b><p id="time-stamp"></p></b><br/>
+    <div id="meas-table">
+
+        {% comment %} <script>build_data_table()</script> {% endcomment %}
+    </div>
+    </div>
+{% endblock %}
+
+{% block plots %}
+    <div class="card">
+        {% comment %} {{ plot_script | safe }} {% endcomment %}
+        {% comment %} <div class="iframe-container">
+            <div id=plot_container>    
+                
+            </div>
+        </div> {% endcomment %}
+    </div>
+{% endblock %}
+
+{% block rawdata %}
+    <button class="accordion"><em>Raw data from server</em></button>
+    <div class="panel">
+        <textarea readonly class="status-box" id="metadata-window" cols="10" rows="10"></textarea>
+        <textarea readonly class="status-box" id="data-window" cols="10" rows="10"></textarea>
+    </div>
+{% endblock %}
+
+
+{% block content %}
+
+    <script>
+        
+        window.onload=init;
+        
+        function init() {
+            
+            {% comment %} build_table() {% endcomment %}
+
+            {% comment %} {{ instrument_label_json }} {% endcomment %}
+            // setup_accordions()
+            build_data_table()
+            // build_controls_table()
+            //sleep(2000)
+            reqest_status()
+
+        }
+
+        function sleep(milliseconds) {
+        var start = new Date().getTime();
+        for (var i = 0; i < 1e7; i++) {
+            if ((new Date().getTime() - start) > milliseconds){
+            break;
+            }
+        }
+        }
+        
+        function build_data_table() {
+            // var measurements = JSON.parse('{{ instrument_measurements | escapejs }}')
+            // var tablediv = document.getElementById('meas-table')[0];
+            var tablediv = document.getElementById('meas-table');
+            
+            var table = document.createElement('table');
+            table.setAttribute('id', 'data-table');
+            table.setAttribute('class', 'daq-table')
+            //table.setAttribute('style', 'border-collapse: collapse; border-radius: 10px; overflow: hidden')
+
+            var caption = table.createCaption()
+            caption.innerHTML = "<em>Data</em>"
+
+            var header = table.createTHead();
+            var row = header.insertRow(0);
+            row.setAttribute('style', 'border: 1px solid black')
+            var cell = row.insertCell(0);
+            cell.setAttribute('id', 'data-table-namecol');
+            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
+            cell.innerHTML = "<b>Name</b>";
+            cell = row.insertCell(1);
+            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
+            cell.innerHTML = "<b>Value</b>";
+            cell.setAttribute('id', 'data-table-valuecol');
+            cell.innerHTML = "Value"
+            cell = row.insertCell(2);
+            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
+            cell.innerHTML = "<b>Units</b>";
+            cell.setAttribute('id', 'data-table-unitcol');
+        }
+
+
+        // websocket communication
+
+        var controller_name = {{ controller_name }}
+
+        console.log(controller_name)
+        var chatSocket = new WebSocket(
+            'ws://' + window.location.host +
+            '/ws/envdaq/controller/'+controller_name+'/');
+
+        chatSocket.onmessage = function(e) {
+            var data = JSON.parse(e.data)
+            console.log(data)
+            // document.getElementById('data-window').innerHTML = data
+            if (data['message']['SUBJECT'] == 'DATA') {
+                console.log(data)    
+            } else if (data['message']['SUBJECT'] == 'STATUS') {
+
+                if (data.message.BODY.purpose == 'UPDATE') {
+                   {% comment %} console.log(JSON.stringify(data.message.BODY.status)) {% endcomment %}
+                    var status = data.message.BODY.status
+                    update_status(status)
+                }
+            }
+        }
+
+
+        function reqest_status() {
+
+            var message = {}
+            message['SUBJECT'] = 'STATUS'
+            message['BODY'] = {
+                'purpose': 'REQUEST',
+           }
+            console.log(JSON.stringify(message))
+            chatSocket.send(
+                JSON.stringify({'message': message})
+            )
+
+        };
+
+        function update_status(status) {
+            console.log(status)
+            //runstate = status.run_status
+            //opsButtonSet(runstate)
+            //document.getElementById("status-window").value = JSON.stringify(status)
+            //document.getElementById("status-window").innerHTML = JSON.stringify(status)
+        };
+
+
+    </script>
+
+{% endblock %}

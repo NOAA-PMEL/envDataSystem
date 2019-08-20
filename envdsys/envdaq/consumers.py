@@ -132,39 +132,15 @@ class ControllerConsumer(AsyncWebsocketConsumer):
         # if status, pass to socket
 
         # print(text_data)
-        # await self.data_message({'message': 'hi again'})
         text_data_json = json.loads(text_data)
-        # message = text_data_json['BODY']
         message = text_data_json['message']
-        # message = text_data_json
-        # message = "hi again"
-        # message = text_data_json
-        # print(message)
-        # message = 'hi again'
-        # await self.data_message({'message': message})
-        # message = (
-        #     self.room_name +
-        #     ' - ' +
-        #     self.chatroom_group_name +
-        #     ' - ' +
-        #     self.channel_name
-        # )
-        # Send message to room group
-
-        # await self.channel_layer.group_send(
-        #     self.data_group_name,
-        #     {
-        #         'type': 'controller_message',
-        #         'message': message
-        #     }
-        # )
 
         if (message['SUBJECT'] == 'DATA'):
-            print(f'controller data message')
+            # print(f'controller data message')
             await self.channel_layer.group_send(
-                self.instrument_group_name,
+                self.controller_group_name,
                 {
-                    'type': 'instrument_message',
+                    'type': 'controller_message',
                     'message': message
                 }
             )
@@ -173,6 +149,7 @@ class ControllerConsumer(AsyncWebsocketConsumer):
             body = message['BODY']
             if (body['purpose'] == 'REQUEST'):
                 if (body['type'] == 'ENVDAQ_CONFIG'):
+                    # do we ever get here?
                     cfg = await ConfigurationUtility().get_config()
 
                     reply = {
@@ -193,6 +170,72 @@ class ControllerConsumer(AsyncWebsocketConsumer):
                     # TODO: add field to force sync option
                     # send config data to syncmanager
                     await SyncManager.sync_controller_instance(body['data'])
+        
+        elif message['SUBJECT'] == 'RUNCONTROLS':
+            print(f'message: {message}')
+            body = message['BODY']
+            if body['purpose'] == 'REQUEST':
+                msg = {
+                    'TYPE': 'UI',
+                    'SENDER_ID': 'ControllerConsumer',
+                    'TIMESTAMP': time_util.dt_to_string(),
+                    'SUBJECT': 'RUNCONTROLS',
+                    'BODY': body
+                }
+                await self.channel_layer.group_send(
+                    self.controller_group_name,
+                    {
+                        'type': 'controller_message',
+                        'message': msg
+                    }
+                )
+
+        elif message['SUBJECT'] == 'CONTROLS':
+            print(f'message: {message}')
+            body = message['BODY']
+            if body['purpose'] == 'REQUEST':
+                msg = {
+                    'TYPE': 'UI',
+                    'SENDER_ID': 'ControllerConsumer',
+                    'TIMESTAMP': time_util.dt_to_string(),
+                    'SUBJECT': 'CONTROLS',
+                    'BODY': body
+                }
+                await self.channel_layer.group_send(
+                    self.controller_group_name,
+                    {
+                        'type': 'controller_message',
+                        'message': msg
+                    }
+                )
+        elif message['SUBJECT'] == 'STATUS':
+            if message['BODY']['purpose'] == 'REQUEST':
+                print(f'status request: {message}')
+                body = message['BODY']
+                msg = {
+                    'TYPE': 'UI',
+                    'SENDER_ID': 'ControllerConsumer',
+                    'TIMESTAMP': time_util.dt_to_string(),
+                    'SUBJECT': 'STATUS',
+                    'BODY': body
+                }
+                await self.channel_layer.group_send(
+                    self.controller_group_name,
+                    {
+                        'type': 'controller_message',
+                        'message': msg
+                    }
+                )
+
+            else:
+                print(f'message: {message}')
+                await self.channel_layer.group_send(
+                    self.controller_group_name,
+                    {
+                        'type': 'controller_message',
+                        'message': message
+                    }
+                )
 
     # Receive message from room group
     async def controller_message(self, event):
@@ -277,6 +320,7 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
             body = message['BODY']
             if (body['purpose'] == 'REQUEST'):
                 if (body['type'] == 'ENVDAQ_CONFIG'):
+                    # do we ever get here?
                     cfg = await ConfigurationUtility().get_config()
 
                     reply = {
@@ -426,7 +470,7 @@ class InterfaceConsumer(AsyncWebsocketConsumer):
 
         # Send message to room group
         await self.channel_layer.group_send(
-            self.data_group_name,
+            self.interface_group_name,
             {
                 'type': 'interface_message',
                 'message': message

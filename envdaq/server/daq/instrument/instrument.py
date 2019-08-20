@@ -2,10 +2,10 @@ import abc
 import importlib
 import sys
 from daq.daq import DAQ
-import asyncio
+# import asyncio
 from data.message import Message
 from daq.interface.interface import Interface, InterfaceFactory
-import json
+# import json
 from plots.plots import PlotManager
 from plots.apps.plot_app import TimeSeries1D
 
@@ -33,9 +33,10 @@ class InstrumentFactory():
 
         # TODO: create custom exception class for our app
         # except ImportError:
-        except:
-            print("Instrument:Unexpected error:", sys.exc_info()[0])
-            raise ImportError
+        except Exception as e:  # better to catch ImportException?
+            print(f"Instrument: Unexpected error: {e}")
+            raise e
+            # raise ImportError
 
 
 class Instrument(DAQ):
@@ -146,7 +147,8 @@ class Instrument(DAQ):
 
         # plot_config['data'] = plot_data
 
-        # add plots to PlotServer
+        # TODO: move this to actual instrument
+        # # add plots to PlotServer
         PlotManager.add_app(
             TimeSeries1D(
                 meta,
@@ -154,9 +156,13 @@ class Instrument(DAQ):
             ),
             start_after_add=True
         )
-        # meta['plot_app'] = {
-        #     'name': ('/instrument_'+meta['alias']['name'])
-        # }
+
+        # plot_app_name = ('/instrument_'+meta['plot_meta']['name'])
+        # plot_app_name = self.add_plot_app()
+        # if plot_app_name:
+        meta['plot_app'] = {
+            'name': ('/instrument_'+meta['plot_meta']['name'])
+        }
 
         msg = Message(
             sender_id=self.get_id(),
@@ -392,6 +398,16 @@ class DummyInstrument(Instrument):
         super().setup()
         # print(f'dummyinstrument.setup')
         # add instance specific setup here
+        
+        # meta = self.get_metadata()
+        # PlotManager.add_app(
+        #     TimeSeries1D(
+        #         meta,
+        #         name=('/instrument_'+meta['plot_meta']['name'])
+        #     ),
+        #     start_after_add=True
+        # )
+
 
     async def handle(self, msg, type=None):
 

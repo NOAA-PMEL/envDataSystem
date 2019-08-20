@@ -3,9 +3,10 @@ import sys
 import importlib
 import asyncio
 from daq.daq import DAQ
-# from client.wsclient import WSClient
 from daq.instrument.instrument import InstrumentFactory
 from data.message import Message
+from plots.plots import PlotManager
+from plots.apps.plot_app import TimeSeries1D
 # from daq.manager.manager import DAQManager
 
 
@@ -25,12 +26,14 @@ class ControllerFactory():
             print(cls_)
             return cls_(contconfig, **kwargs)
 
-        except:  # better to catch ImportException?
-            print("Controller: Unexpected error:", sys.exc_info()[0])
-            raise
+        except Exception as e:  # better to catch ImportException?
+            print(f"Controller: Unexpected error: {e}")
+            raise e
 
 
 class Controller(DAQ):
+
+    class_type = 'CONTROLLER'
 
     # TODO: add way to pass gui hints/defines to front end
     gui_def = {
@@ -83,13 +86,16 @@ class Controller(DAQ):
         self.instrument_list = []
         self.instrument_map = {}
 
+        # TODO: flesh out sensor objects as simple instruments
+        self.sensor_list = []
+        self.sensor_map = dict()
         # signals/measurements from dataManager/aggregator
         self.signal_list = []
         self.signal_map = {}
 
         # self.self.loop = asyncio.get_event_loop()
 
-        self.sendq = asyncio.Queue(loop=self.loop)
+        # self.sendq = asyncio.Queue(loop=self.loop)
         # self.readq = asyncio.Queue(loop=self.event_loop)
 
         # TODO: eventuallly this will be from factory and in config
@@ -116,7 +122,27 @@ class Controller(DAQ):
         # self.add_signals()
         # print(f'id = {self.get_id()}')
 
-        # tell ui to build instrument
+        meta = self.get_metadata()
+ 
+        # TODO: move this to actual instrument
+        # # add plots to PlotServer
+        PlotManager.add_app(
+            TimeSeries1D(
+                meta,
+                name=('/instrument_'+meta['plot_meta']['name'])
+            ),
+            start_after_add=True
+        )
+
+        # plot_app_name = ('/instrument_'+meta['plot_meta']['name'])
+        # plot_app_name = self.add_plot_app()
+        # if plot_app_name:
+        meta['plot_app'] = {
+            'name': ('/controller_'+meta['plot_meta']['name'])
+        }
+
+
+        # tell ui to build controller
         msg = Message(
             sender_id=self.get_id(),
             msgtype='Controller',
@@ -140,34 +166,34 @@ class Controller(DAQ):
         print(f'get_ui_address: {address}')
         return address
 
-    async def send_message(self, message):
-        # TODO: Do I need queues? Message and string methods?
-        # await self.sendq.put(message.to_json())
-        await self.sendq.put(message)
-        # await self.to_gui_buf.put(message)
+    # async def send_message(self, message):
+    #     # TODO: Do I need queues? Message and string methods?
+    #     # await self.sendq.put(message.to_json())
+    #     await self.sendq.put(message)
+    #     # await self.to_gui_buf.put(message)
 
-    async def send_gui_data(self):
+    # async def send_gui_data(self):
 
-        while True:
-            # body = 'fake message - {}'.format(datetime.utcnow().isoformat(timespec='seconds'))
-            # msg = {'message': body}
-            # message = Message(type='Test', sender_id='me', subject='test', body=msg)
-            # # print('send_data: {}'.format(msg))
-            # print('send_data: {}'.format(message.to_json))
-            # # await client.send(json.dumps(msg))
-            message = await self.sendq.get()
-            # print('send gui message')
-            await self.gui_client.send_message(message)
-            # await asyncio.sleep(1)
+    #     while True:
+    #         # body = 'fake message - {}'.format(datetime.utcnow().isoformat(timespec='seconds'))
+    #         # msg = {'message': body}
+    #         # message = Message(type='Test', sender_id='me', subject='test', body=msg)
+    #         # # print('send_data: {}'.format(msg))
+    #         # print('send_data: {}'.format(message.to_json))
+    #         # # await client.send(json.dumps(msg))
+    #         message = await self.sendq.get()
+    #         # print('send gui message')
+    #         await self.gui_client.send_message(message)
+    #         # await asyncio.sleep(1)
 
-    async def read_gui_data(self):
+    # async def read_gui_data(self):
 
-        while True:
-            msg = await self.gui_client.read_message()
-            # msg = await self.gui_client.read()
-            # await self.handle(msg)
-            await asyncio.sleep(0.01)
-            print('read_gui_data: {}'.format(msg))
+    #     while True:
+    #         msg = await self.gui_client.read_message()
+    #         # msg = await self.gui_client.read()
+    #         # await self.handle(msg)
+    #         await asyncio.sleep(0.01)
+    #         print('read_gui_data: {}'.format(msg))
 
     def start(self, cmd=None):
         print('Starting Controller')
@@ -263,11 +289,14 @@ class Controller(DAQ):
         # print(f'**** get_metadata: {self}')
 
         instrument_meta = dict()
-        instrument_meta['instrument_meta'] = dict()
-        inst_meta = instrument_meta['instrument_meta']
+        # instrument_meta['instrument_meta'] = dict()
+        # inst_meta = instrument_meta['instrument_meta']
+        inst_meta = dict()
         for name, inst in self.instrument_map.items():
             inst_meta[name] = inst.get_metadata()
+        instrument_meta['instrument_meta'] = inst_meta
 
+        print(f'plot_config = {plot_config}')
         print(f'name: {self.name}')
         print(f'label: {self.label}')
         meta = {
@@ -276,6 +305,27 @@ class Controller(DAQ):
             'instrument_meta': instrument_meta
         }
         return meta
+
+    def get_plot_meta(self):
+
+        y_data = []
+        for name, inst in self.instrument_map.items():
+            if 'plot_meta' in inst:
+                plot_meta = inst['plot_meta']
+                plot_config = plot_meta
+                # print(f'controller: plot_meta {plot_meta]}')
+        #     inst_meta[name] = inst.get_metadata()
+        
+        # definition = self.get_definition_instance()
+        # if 'plot_config' not in definition['DEFINITION']:
+        #     return dict()
+
+        # plot_config = definition['DEFINITION']['plot_config']
+        # self.plot_name = '/instrument_'+self.alias['name']
+        # plot_config['name'] = self.plot_name
+
+        return plot_config
+
 
 # class BasicController(Controller):
 

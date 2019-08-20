@@ -28,7 +28,7 @@
         {% comment %} <a href="http://{{request.get_host}}/envdsys/login?next={{request.path}}" style="float:right">Login</a>    </div> {% endcomment %}
         {% if user.is_authenticated %}
             {% comment %} <p style="float:right">Hello {{ user.username }} <small>(<a href="{% url 'logout' %}">Log out</a>)</small></p> {% endcomment %}
-            <a href="{% url 'logout' %}?next={{request.path}}" style="float:right">Logout</a>    </div>
+           <a href="{% url 'logout' %}?next={{request.path}}" style="float:right">Logout</a>    </div>
         {% else %}
             <a href="{% url 'login' %}?next={{request.path}}" style="float:right">Login</a>    </div>
         {% endif %}
@@ -43,24 +43,24 @@
                 {% block data %}
                 {% endblock %}
             </div>
-        </div>
-        <div class="rightcolumn">
-            <div class="status">
-                {% block status %}
-                {% endblock %}
-            </div>
             <div class="controls">
                 {% block controls %}
+                {% endblock %}
+            </div>
+        </div>
+        <div class="rightcolumn">
+             <div class="plots">
+                {% block plots %}
+                {% endblock %}
+            </div>        
+            <div class="status">
+                {% block status %}
                 {% endblock %}
             </div>
         </div>
     </div>
     </div class="row">
        </div class="leftcolumn">
-            <div class="plots">
-                {% block plots %}
-                {% endblock %}
-            </div>        
         </div>
      </div>
 
