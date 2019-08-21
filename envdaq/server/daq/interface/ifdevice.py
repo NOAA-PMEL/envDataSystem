@@ -207,6 +207,80 @@ class DummyIFDevice(IFDevice):
     def get_definition():
         pass
 
+
+class SerialPortIFDevice(IFDevice):
+
+    # IFDevice.channel_map['test'] = 'test'
+
+    def __init__(self, config, **kwargs):
+        # def __init__(self, config):
+        print(config)
+        print('SerialPortIFDevice init')
+        super(SerialPortIFDevice, self).__init__(config, **kwargs)
+        # super().__init__(config)
+
+        # TODO: fix label
+        self.label = "DummyIFDevice"
+        self.name = "DummyIFDevice"
+
+    # def get_id(self):
+    #     return ('DummyIFDevice')
+
+        self.setup()
+
+    def setup(self):
+        super().setup()
+
+    def start(self, cmd=None):
+        super().start(cmd)
+        print('Starting IFDevice')
+        # start dummy data loop
+        task = asyncio.ensure_future(self.data_loop())
+        self.task_list.append(task)
+
+    async def data_loop(self):
+
+        while True:
+
+            data = '{},{},{},{},{}'.format(
+                round(random.random()*1000.0, 4),
+                round(random.random()*10.0, 4),
+                round(random.random()*5.0, 4),
+                round(random.random()*20.0, 4),
+                int(round(random.random()*2000.0, 4))
+            )
+            # print('ifdevice: data = {}'.format(data))
+            await self.handle2(data)
+            await asyncio.sleep(util.time_to_next(1))
+
+    async def handle2(self, data):
+        # def handle2(self, data):
+
+        out = {'DATA': data}
+        # print(out)
+        # msg = Message(subject='DATA', body=out)
+        msg = Message(
+            sender_id=self.get_id(),
+            msgtype=IFDevice.class_type,
+            subject='DATA',
+            body=out
+        )
+        # print(msg.to_dict())
+        # print(msg.to_json())
+        # self.msg_send_buffer.put_nowait(msg)
+        # print(f'to parent: {msg.to_json()}')
+        await self.message_to_parent(msg)
+
+    async def handle(self, msg, type=None):
+        print(f'ifdevice.handle: {msg}')
+        await asyncio.sleep(.1)
+
+    def get_definition_instance(self):
+        return IFDevice.get_definition()
+
+    def get_definition():
+        pass
+
 # class IFDeviceOLD(DAQ):
 #     # class IFDevice():
 

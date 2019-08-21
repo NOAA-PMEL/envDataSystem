@@ -3,25 +3,36 @@ import asyncio
 from data.message import Message
 
 
+# class ClientConnection(abc.ABC):
+
+#     def __init__(
+#         self,
+#         *,
+#         uri=None,
+#         host=None,
+#         port=None,
+#         address=None,
+#         loop=None,
 class ClientConnection(abc.ABC):
 
     def __init__(
         self,
         *,
         uri=None,
-        host=None,
-        port=None,
-        address=None,
+        # host=None,
+        # port=None,
+        # address=None,
         loop=None,
-        auto_connect=True
+        auto_connect=True,
+        **kwargs
     ):
 
         self.client = None
 
         self.uri = uri
-        self.host = host
-        self.port = port
-        self.address = address
+        # self.host = host
+        # self.port = port
+        # self.address = address
 
         # print(f'uri={self.uri}, host={self.host}, port={self.port}')
 
@@ -31,7 +42,9 @@ class ClientConnection(abc.ABC):
         if auto_connect:
             self.keep_connected = True
 
-        print(f'auto_connect={auto_connect}, keep_connected={self.keep_connected}')
+        print(f'auto_connect={auto_connect}, '
+              'keep_connected={self.keep_connected}'
+              )
         self.loop = loop
         if loop is None:
             self.loop = asyncio.get_event_loop()
@@ -45,7 +58,7 @@ class ClientConnection(abc.ABC):
             # asyncio.ensure_future(self.open())
             asyncio.ensure_future(self.run())
         )
-        print('WSClient: done with init')
+        print('ClientConnection: done with init')
         # print(self.task_list)
         # self.is_running = False
 

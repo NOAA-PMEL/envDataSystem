@@ -5,6 +5,28 @@ from client.client import ClientConnection
 
 class WSClient(ClientConnection):
 
+    def __init__(
+        self,
+        *,
+        uri=None,
+        # host=None,
+        # port=None,
+        # address=None,
+        loop=None,
+        auto_connect=True,
+        **kwargs
+    ):
+        super(WSClient, self).__init__(
+            uri=uri,
+            loop=loop,
+            auto_connect=auto_connect,
+            **kwargs,
+        )
+
+    # self.host = host
+    # self.port = port
+    # self.address = address
+
     async def connect(self):
 
         try:
