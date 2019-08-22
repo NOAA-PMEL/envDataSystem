@@ -34,8 +34,8 @@ class InterfaceFactory():
             # print(test)
             return test
 
-        except:
-            print("Interface: Unexpected error:", sys.exc_info()[0])
+        except Exception as e:
+            print(f"Interface: Unexpected error: {e}")
             raise
 
 
@@ -73,33 +73,36 @@ class Interface(DAQ):
         print(f'device_manager: {self.ifdevice_manager}')
         self.ifdevice = None
 #        print(self.dev_mananger)
-        self.add_ifdevice()
 
     def setup(self):
         super().setup()
+        self.add_ifdevice()
 
+    @abc.abstractmethod
     def add_ifdevice(self):
-        print('Add ifdevice')
-        # print(f'config = {self.config["IFACE_LIST"]}')
-        # for k, ifcfg in self.config['IFACE_LIST'].items():
-        #     # self.iface_map[iface.name] = iface
-        #     # print(ifcfg['IFACE_CONFIG'])
-        #     # print(ifcfg['INTERFACE'])
-        #     # iface = InterfaceFactory().create(ifcfg['IFACE_CONFIG'])
-        #     iface = InterfaceFactory().create(ifcfg)
-        #     print(f'iface: {iface}')
-        #     # iface.msg_buffer = self.iface_rcv_buffer
-        #     iface.msg_send_buffer = self.from_child_buf
-        #     self.iface_map[iface.get_id()] = iface
+        pass
+        # print('Add ifdevice')
+        # # print(f'config = {self.config["IFACE_LIST"]}')
+        # # for k, ifcfg in self.config['IFACE_LIST'].items():
+        # #     # self.iface_map[iface.name] = iface
+        # #     # print(ifcfg['IFACE_CONFIG'])
+        # #     # print(ifcfg['INTERFACE'])
+        # #     # iface = InterfaceFactory().create(ifcfg['IFACE_CONFIG'])
+        # #     iface = InterfaceFactory().create(ifcfg)
+        # #     print(f'iface: {iface}')
+        # #     # iface.msg_buffer = self.iface_rcv_buffer
+        # #     iface.msg_send_buffer = self.from_child_buf
+        # #     self.iface_map[iface.get_id()] = iface
 
-        # TODO: remove hardcode and use config
-        ifdev_config = json.loads(
-            '{"IFDEVICE": {"MODULE": "daq.interface.ifdevice", "CLASS": "DummyIFDevice"}, "IFDEVCONFIG": {"DESCRIPTION": {"LABEL": "Dummy IFDevice", "SERIAL_NUMBER": "1234", "PROPERTY_NUMBER": "CD0001234"}}}')
-        ui_config = dict()
-        # ui_config['do_ui_connection'] = False
-        self.ifdevice = self.ifdevice_manager.create(
-            'DummyIFDevice', ifdev_config, ui_config=ui_config)
-        self.ifdevice.to_parent_buf = self.from_child_buf
+        # # TODO: remove hardcode and use config
+        # ifdev_config = json.loads(
+        #     '{"IFDEVICE": {"MODULE": "daq.interface.ifdevice", "CLASS": "DummyIFDevice"}, "IFDEVCONFIG": {"DESCRIPTION": {"LABEL": "Dummy IFDevice", "SERIAL_NUMBER": "1234", "PROPERTY_NUMBER": "CD0001234"}}}')
+        # ui_config = dict()
+        # # ui_config['do_ui_connection'] = False
+
+        # self.ifdevice = self.ifdevice_manager.create(
+        #     'DummyIFDevice', ifdev_config, ui_config=ui_config)
+        # self.ifdevice.to_parent_buf = self.from_child_buf
 
     def get_ui_address(self):
         print(self.label)
@@ -309,6 +312,32 @@ class DummyInterface(Interface):
     def setup(self):
         super().setup()
         
+    def add_ifdevice(self):
+        print('Add ifdevice')
+        # print(f'config = {self.config["IFACE_LIST"]}')
+        # for k, ifcfg in self.config['IFACE_LIST'].items():
+        #     # self.iface_map[iface.name] = iface
+        #     # print(ifcfg['IFACE_CONFIG'])
+        #     # print(ifcfg['INTERFACE'])
+        #     # iface = InterfaceFactory().create(ifcfg['IFACE_CONFIG'])
+        #     iface = InterfaceFactory().create(ifcfg)
+        #     print(f'iface: {iface}')
+        #     # iface.msg_buffer = self.iface_rcv_buffer
+        #     iface.msg_send_buffer = self.from_child_buf
+        #     self.iface_map[iface.get_id()] = iface
+
+        # TODO: remove hardcode and use config
+        ifdev_config = json.loads(
+            '{"IFDEVICE": {"MODULE": "daq.interface.ifdevice", "CLASS": "DummyIFDevice"},'
+            ' "IFDEVCONFIG": {"DESCRIPTION": {"LABEL": "Dummy IFDevice", "SERIAL_NUMBER": "1234", "PROPERTY_NUMBER": "CD0001234"}}}'
+        )
+        ui_config = dict()
+        # ui_config['do_ui_connection'] = False
+        
+        self.ifdevice = self.ifdevice_manager.create(
+            'DummyIFDevice', ifdev_config, ui_config=ui_config)
+        self.ifdevice.to_parent_buf = self.from_child_buf
+
     async def handle(self, msg, type=None):
 
         # interface will know if msg is json or object
@@ -337,6 +366,110 @@ class DummyInterface(Interface):
 
     def get_definition():
         pass
+
+
+class SerialPortInterface(Interface):
+
+    class_type = 'SERIALPORT_INTERFACE'
+
+    def __init__(self, config, **kwargs):
+        super(SerialPortInterface, self).__init__(config, **kwargs)
+
+        # ifdev_config = json.loads('{"IFDEVICE": {"MODULE": "daq.interface.ifdevice", "CLASS": "DummyIFDevice"}, "IFDEVCONFIG": {"DESCRIPTION": {"LABEL": "Dummy IFDevice", "SERIAL_NUMBER": "1234", "PROPERTY_NUMBER": "CD0001234"}}}')
+        # ui_config = dict()
+        # ui_config['do_ui_connection'] = False
+        # # self.dev_mananger
+        # print('DummyInterface init')
+        # # self.ifdevice = self.dev_mananger.create('DummyIFDevice', config)
+        # # print(self.dev_manager)
+        # self.ifdevice = self.ifdevice_manager.create('DummyIFDevice', ifdev_config, ui_config=ui_config)
+        # # self.idevice = IFDeviceFactory().create(ifdev_config, ui_config=None)
+        # # self.idevice = DummyIFDevice(ifdev_config, ui_config=None)
+        # # print(f'ifdevice: {self.ifdevice}')
+        # self.create_msg_buffers()
+        # # in order to make sense, child:send == parent:rcv
+        # # self.ifdevice.msg_send_buffer = self.ifdev_rcv_buffer
+        # # if self.ifdevice is not None:
+        # self.ifdevice.to_parent_buf = self.ifdev_rcv_buffer
+        # print(self.ifdevice.to_parent_buf)
+
+        self.name = 'SerialPortInterface'
+        self.label = config['LABEL']
+        self.address = config['ADDRESS']
+        self.setup()
+
+    def setup(self):
+        super().setup()
+        
+    def add_ifdevice(self):
+        print('Add ifdevice')
+        # print(f'config = {self.config["IFACE_LIST"]}')
+        # for k, ifcfg in self.config['IFACE_LIST'].items():
+        #     # self.iface_map[iface.name] = iface
+        #     # print(ifcfg['IFACE_CONFIG'])
+        #     # print(ifcfg['INTERFACE'])
+        #     # iface = InterfaceFactory().create(ifcfg['IFACE_CONFIG'])
+        #     iface = InterfaceFactory().create(ifcfg)
+        #     print(f'iface: {iface}')
+        #     # iface.msg_buffer = self.iface_rcv_buffer
+        #     iface.msg_send_buffer = self.from_child_buf
+        #     self.iface_map[iface.get_id()] = iface
+
+        # TODO: remove hardcode and use config
+        # TODO: add baud rate, etc from config
+        ifdev_config = {
+            "IFDEVICE": {
+                "MODULE": "daq.interface.ifdevice",
+                "CLASS": "SerialPortIFDevice"
+            },
+            "IFDEVCONFIG": {
+                "DESCRIPTION": {
+                    "LABEL": self.label,
+                    "DEVPATH": self.address
+
+                }
+            }
+        }
+        # ifdev_config = json.loads(
+        #     '{"IFDEVICE": {"MODULE": "daq.interface.ifdevice", "CLASS": "SerialPortIFDevice"},'
+        #     ' "IFDEVCONFIG": {"DESCRIPTION": {"LABEL": "SerialPort IFDevice", "DEVPATH": "/dev/ttyUSB0"}}}'
+        # )
+        ui_config = dict()
+        # ui_config['do_ui_connection'] = False
+        
+        self.ifdevice = self.ifdevice_manager.create(
+            'SerialPortIFDevice', ifdev_config, ui_config=ui_config)
+        self.ifdevice.to_parent_buf = self.from_child_buf
+
+    async def handle(self, msg, type=None):
+
+        # interface will know if msg is json or object
+
+        # check header to see if data to be sent to instrument
+        #   - if yes, add timestamp
+        # print('type: {}'.format(msg.type))
+        if (type == 'FromChild' and msg.type == IFDevice.class_type):
+            msg.type = Interface.class_type
+            msg.sender_id = self.get_id()
+            if (msg.subject == 'DATA'):
+                # update could be done in base class
+                msg.update(msgtype=Interface.class_type)
+                msg.body['DATETIME'] = util.dt_to_string()
+                print(f'Serial: {msg.to_json()}')
+                # self.msg_buffer.put_nowait(msg)
+                # await self.msg_send_buffer.put(msg)
+                await self.message_to_parent(msg)
+        elif type == 'FromParent':
+            print(f'message{msg.subject}, {msg.body}')
+        else:
+            print(f'Unknown Message type: {msg.type}, {msg.to_json()}')
+
+    def get_definition_instance(self):
+        return DummyInterface.get_definition()
+
+    def get_definition():
+        pass
+
 # class DummyInterface(Interface):
 
 #     def __init__(self, config):

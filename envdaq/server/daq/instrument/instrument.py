@@ -87,7 +87,9 @@ class Instrument(DAQ):
         self.iface_test = None
 
         # temporary
-        self.last_entry = {}
+        self.last_entry = {
+            'DATETIME': '',
+        }
 
         # create read buffer and interfaces
         # self.create_msg_buffers(config=None)
@@ -152,16 +154,19 @@ class Instrument(DAQ):
         PlotManager.add_app(
             TimeSeries1D(
                 meta,
-                name=('/instrument_'+meta['plot_meta']['name'])
+                # name=('/instrument_'+meta['plot_meta']['name'])
+                name=(meta['plot_meta']['name'])
             ),
-            start_after_add=True
+            start_after_add=False
         )
 
+        print(f"app_name: {meta['plot_meta']['name']}")
         # plot_app_name = ('/instrument_'+meta['plot_meta']['name'])
         # plot_app_name = self.add_plot_app()
         # if plot_app_name:
         meta['plot_app'] = {
-            'name': ('/instrument_'+meta['plot_meta']['name'])
+            # 'name': ('/instrument_'+meta['plot_meta']['name'])
+            'name': (meta['plot_meta']['name'])
         }
 
         msg = Message(
@@ -429,7 +434,7 @@ class DummyInstrument(Instrument):
             data.update(subject='DATA', body=entry)
             # await self.msg_buffer.put(data)
             # await self.to_parent_buf.put(data)
-            # print(f'instrument data: {data.to_json()}')
+            print(f'instrument data: {data.to_json()}')
             await self.message_to_ui(data)
             await PlotManager.update_data(self.plot_name, data.to_json())
             # print(f'data_json: {data.to_json()}\n')
@@ -695,6 +700,8 @@ class DummyInstrument(Instrument):
         plot_config['TimeSeries1D'] = time_series1d
         definition['plot_config'] = plot_config
 
-        DAQ.daq_definition['DEFINITION'] = definition
+        # TODO: make definition cleaner so authors don't have to kludge
+        return {'DEFINITION': definition}
+        # DAQ.daq_definition['DEFINITION'] = definition
 
-        return DAQ.daq_definition
+        # return DAQ.daq_definition

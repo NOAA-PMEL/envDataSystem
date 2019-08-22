@@ -9,6 +9,7 @@ import inspect
 # from daq.interface.ifdevice import IFDeviceFactory
 from daq.controller.controller import Controller
 from daq.instrument.instrument import Instrument
+from daq.interface.ifdevice import IFDevice
 
 
 class SysManager():
@@ -22,6 +23,7 @@ class SysManager():
         SysManager._managers['ControllerManager'] = ControllerManager()
         SysManager._managers['InstrumentManager'] = InstrumentManager()
         # print(f'start: {Managers().__managers["IFDeviceManager"]}')
+        print(f'sysmanager {SysManager._managers}')
 
     @staticmethod
     def get(mgr_type):
@@ -199,5 +201,40 @@ class InstrumentManager(DAQManager):
         for k, instrument in self.daq_map.items():
             # print(f'instrument is {instrument}')
             definitions['INSTRUMENT_SYS_DEFS'][k] = instrument.get_definition()
+
+        return definitions
+
+
+class IFDeviceManager(DAQManager):
+
+    def __init__(self):
+        # print('@@@@@@@@@@@2InstrumentManager init')
+        super().__init__()
+
+    def update(self, force_new=False):
+        # get all available controllers in system
+        # print('******update')
+        ifdevice_list = []
+        ifdevice_list = self.collect_classes(
+            ['daq.interface'], IFDevice
+        )
+        # self._explore_package('daq.controller', 'Controller', controller_list)
+        # print(f'instrument list: {instrument_list}')
+        # pass
+
+        for ifdevice in ifdevice_list:
+            self.daq_map[ifdevice.__name__] = ifdevice
+
+        print(f'ifdevice_map: {self.daq_map}')
+
+    def get_sys_definitions(self, update=True):
+        if update:
+            self.update()
+        # print(f'get_sys_def: {self.daq_map}')
+        definitions = dict()
+        definitions['IFDEVICE_SYS_DEFS'] = dict()
+        for k, ifdevice in self.daq_map.items():
+            # print(f'ifdevice is {ifdevice}')
+            definitions['IFDEVICE_SYS_DEFS'][k] = ifdevice.get_definition()
 
         return definitions

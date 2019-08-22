@@ -1,10 +1,10 @@
 from daq.daq import DAQ
-# import abc
+import asyncio
 import random
 from utilities import util
-import asyncio
 from data.message import Message
 import importlib
+from client.serialport import SerialPortClient
 # import abc
 
 
@@ -29,8 +29,8 @@ class IFDeviceFactory():
 
         # TODO: create custom exception class for our app
         # except ImportError:
-        except:
-            print("IFDevice: Unexpected error:", sys.exc_info()[0])
+        except Exception as e:
+            print(f"IFDevice: Unexpected error: {e}")
             raise ImportError
 
 
@@ -66,7 +66,6 @@ class IFDevice(DAQ):
         self.iface_map = dict()
         # self.add_interfaces()
 
-
     # # @abc.abstractmethod
     # def get_id(self):
     #     id = super().get_id()
@@ -93,7 +92,7 @@ class IFDevice(DAQ):
         for k, iface in self.iface_map.items():
             iface.stop()
 
-        super().stop(cmd) 
+        super().stop(cmd)
 
     # def disconnect(self, msg=None):
     #     pass
@@ -103,7 +102,7 @@ class IFDevice(DAQ):
         for k, iface in self.iface_map.items():
             iface.shutdown()
 
-        super().shutdown() 
+        super().shutdown()
 
     # def add_interfaces(self):
     #     print('Add interfaces')
@@ -220,11 +219,13 @@ class SerialPortIFDevice(IFDevice):
         # super().__init__(config)
 
         # TODO: fix label
-        self.label = "DummyIFDevice"
-        self.name = "DummyIFDevice"
+        self.label = config['DESCRIPTION']['LABEL']
+        self.name = "SerialPortIFDevice"
 
-    # def get_id(self):
-    #     return ('DummyIFDevice')
+        self.devpath = config['DESCRIPTION']['DEVPATH']
+
+    def get_id(self):
+        return self.__class__.__name__ + '_' + self.devpath
 
         self.setup()
 
@@ -233,46 +234,45 @@ class SerialPortIFDevice(IFDevice):
 
     def start(self, cmd=None):
         super().start(cmd)
-        print('Starting IFDevice')
-        # start dummy data loop
-        task = asyncio.ensure_future(self.data_loop())
-        self.task_list.append(task)
+        print('Starting SerialPortIFDevice')
 
-    async def data_loop(self):
-
-        while True:
-
-            data = '{},{},{},{},{}'.format(
-                round(random.random()*1000.0, 4),
-                round(random.random()*10.0, 4),
-                round(random.random()*5.0, 4),
-                round(random.random()*20.0, 4),
-                int(round(random.random()*2000.0, 4))
-            )
-            # print('ifdevice: data = {}'.format(data))
-            await self.handle2(data)
-            await asyncio.sleep(util.time_to_next(1))
-
-    async def handle2(self, data):
-        # def handle2(self, data):
-
-        out = {'DATA': data}
-        # print(out)
-        # msg = Message(subject='DATA', body=out)
-        msg = Message(
-            sender_id=self.get_id(),
-            msgtype=IFDevice.class_type,
-            subject='DATA',
-            body=out
+        self.client = SerialPortClient(
+            uri=self.devpath
         )
-        # print(msg.to_dict())
-        # print(msg.to_json())
-        # self.msg_send_buffer.put_nowait(msg)
-        # print(f'to parent: {msg.to_json()}')
-        await self.message_to_parent(msg)
+        print(f'serial port: {self.client}')
+
+        # # start dummy data loop
+        # task = asyncio.ensure_future(self.data_loop())
+        # self.task_list.append(task)
+        self.task_list.append(
+            asyncio.ensure_future(self.read_data())
+        )
+        # self.task_list.append(
+        #     asyncio.ensure_future(self.write_data())
+        # )
+
+    async def read_data(self):
+        while True:
+            data = await self.client.read()
+            msg = Message(
+                sender_id=self.get_id(),
+                msgtype=IFDevice.class_type,
+                subject='DATA',
+                body={
+                    'DATA': data
+                }
+            )
+            # print(f'serialportread: {data}')
+            await self.message_to_parent(msg)
+
+    # async def write_data(self, msg):
+    #     # while True:
+    #     #     msg = await self.message_from_parent()
+    #     await self.client.write(msg.body['COMMAND'])
 
     async def handle(self, msg, type=None):
-        print(f'ifdevice.handle: {msg}')
+        # if (type=="FromParent"):
+        print(f'serialportifdevice.handle: {msg}')
         await asyncio.sleep(.1)
 
     def get_definition_instance(self):

@@ -61,6 +61,8 @@ def instrument(request, instrument_name):
 
     try:
         alias = InstrumentAlias.objects.get(name=instrument_name)
+
+        print(f'alias: {alias}')
     except InstrumentAlias.DoesNotExist:
         # TODO: return 404 ... lookup how
         pass
@@ -77,11 +79,11 @@ def instrument(request, instrument_name):
     plots = dict()
     plots["host"] = "localhost"
     plots["port"] = 5001
-    plots["name"] = "/instrument_test_dummy" 
+    plots["name"] = "/instrument_"+alias.name
     
     # TODO: get plot name dynamically
-    plot_script = server_document("http://localhost:5001/instrument_test_dummy")
-
+    plot_script = server_document("http://localhost:5001"+plots["name"])
+    print(f'plot_script: {plot_script}')
     context = {
         'instrument_instance': mark_safe(
             json.dumps(alias.instrument.definition.__str__())

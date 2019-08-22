@@ -9,6 +9,8 @@ import inspect
 from daq.interface.ifdevice import IFDeviceFactory
 # from daq.controller.controller import Controller
 
+# TODO: fix this to be a real singleton
+
 
 class Managers():
     __managers = dict()
@@ -38,8 +40,6 @@ class Managers():
         return Managers().__managers[mgr_type]
 
 
-
-
 class IFDeviceManager():
 
     def __init__(self):
@@ -49,23 +49,25 @@ class IFDeviceManager():
     def create(self, dev_type, config, **kwargs):
         print('IFDeviceManager.create()')
         # TODO: use config values to find module,class for type like factory?
-        if (dev_type == 'DummyIFDevice'):
-            print('create DummyIFDevice')
-            # TODO: use different way to get id for lookup
-            #       should not have to instantiate and del
-            dev = IFDeviceFactory().create(config, **kwargs)
-            # dev = DummyIFDevice(config, ui_config=None)
-            print(f'dev = {dev}')
-            id = dev.get_id()
-            # TODO: why am I del dev here?
-            if id in self.devmap:
-                del dev
-                dev = self.devmap[id]
-            else:
-                self.devmap[id] = dev
-        else:
+        # if (dev_type == 'DummyIFDevice'):
 
-            dev = None
+        print('create DummyIFDevice')
+        # TODO: use different way to get id for lookup
+        #       should not have to instantiate and del
+        dev = IFDeviceFactory().create(config, **kwargs)
+        # dev = DummyIFDevice(config, ui_config=None)
+        print(f'dev = {dev}')
+        id = dev.get_id()
+        # TODO: why am I del dev here?
+        if id in self.devmap:
+            del dev
+            dev = self.devmap[id]
+        else:
+            self.devmap[id] = dev
+
+        # else:
+
+        #     dev = None
 
         print(f'devmap: {self.devmap}')
         # print(DummyIFDevice.get_channel_map())

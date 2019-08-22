@@ -12,6 +12,7 @@ import utilities.util as util
 from datetime import datetime
 # import functools
 import json
+from plots.plots import PlotManager
 
 
 # class FEServer(asyncio.Protocol):
@@ -117,6 +118,7 @@ class DAQServer():
         # task_list.append(
         #     asyncio.ensure_future(self.send_gui_loop())
         # )
+
 
         # start managers
         SysManager.start()
@@ -341,6 +343,9 @@ class DAQServer():
         self.create_msg_buffer()
         print('Add controllers...')
         self.add_controllers()
+
+        # TODO: Is this the place to start plotmanager?
+        PlotManager.get_server().start()
 
     def start(self):
         pass

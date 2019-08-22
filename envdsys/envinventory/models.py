@@ -185,7 +185,7 @@ class InstrumentDef(InventoryDef):
     #     return (f'{self.manufacturer} : {self.model}')
 
     def update(self, definition):
-        # print(f'InstrumentDef.definition: {definition}')
+        print(f'InstrumentDef.definition: {self}')
         if definition and 'DEFINITION' in definition:
             self._module = definition['DEFINITION']['module']
             self._class = definition['DEFINITION']['name']

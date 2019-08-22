@@ -32,10 +32,13 @@ class SyncManager():
                 elif def_type == 'INSTRUMENT_SYS_DEFS':
                     for name, inst_def in sys_def['INSTRUMENT_SYS_DEFS'].items():
                         try:
+                            print(f'inst_def: {name}')
                             instrument = InstrumentDef.objects.get(name=name)
                             # if force update, update current
                         except InstrumentDef.DoesNotExist:
+                            print(f'new inst def')
                             instrument = InstrumentDef(name=name)
+                            print(f'{instrument}: {inst_def}')
                             instrument.update(inst_def)
                 # elif def_type == 'INSTRUMENT_INSTANCE':
                 #     for name, inst_def in sys_def['INSTRUMENT_'].items():

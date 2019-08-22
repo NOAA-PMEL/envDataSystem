@@ -57,6 +57,8 @@ class PlotApp(abc.ABC):
         PlotBufferManager.add_buffer(
             PlotBuffer(self.server_id, self.name, self.msg_buffer)
         )
+        # print(f'plot_app_buffer: {PlotBufferManager}, {PlotBufferManager.get_buffer(self.name)}')
+        print('here')
 
     async def update_data(self, msg):
         # print(f'update data: {msg}')
@@ -198,15 +200,15 @@ class TimeSeries1D(PlotApp):
                 self.server_id,
                 self.name,
             )
-            # print(f'plot buffer = {plot_buffer}')
+            print(f'plot buffer = {plot_buffer}, {self.server_id}, {self.name}')
             if plot_buffer:
-                # print(f'name: {id}, {self.name}')
+                print(f'name: {id}, {self.name}')
 
                 data_msg = plot_buffer.buffer
 
                 data = handle(data_msg)
                 if data:
-                    # print(f'data: {data}')
+                    print(f'data: {data}')
                     source.stream(data, rollover=self.rollover)
                 # print(f'update_test: {source.data["datetime"]}')
 

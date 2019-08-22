@@ -10,7 +10,7 @@ class DAQ(abc.ABC):
 
     # TODO: how to do this more elegantly?
     INSTANTIABLE = False
-    daq_definition = {'DEFINITION': {}}
+    # daq_definition = {'DEFINITION': {}}
 
     def __init__(
         self,
@@ -44,7 +44,7 @@ class DAQ(abc.ABC):
         self.label = None
         if 'LABEL' in config:
             self.label = config['LABEL']
-        print(f"id: {self.get_id()}")
+        # print(f"id: {self.get_id()}")
 
         # in case we want to add heierarchy
         self.parent = None

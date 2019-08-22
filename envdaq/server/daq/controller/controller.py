@@ -447,5 +447,6 @@ class DummyController(Controller):
         definition = dict()
         definition['module'] = DummyController.__module__
         definition['name'] = DummyController.__name__
-        DAQ.daq_definition['DEFINITION'] = definition
-        return DAQ.daq_definition
+        return {'DEFINITION': definition}
+        # DAQ.daq_definition['DEFINITION'] = definition
+        # return DAQ.daq_definition

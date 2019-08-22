@@ -43,6 +43,7 @@ class ConfigurationUtility():
     @database_sync_to_async
     def get_config_sync(self, input=None):
         daq = DAQServer.objects.get(pk=1)
+        # daq = DAQServer.objects.get(name='envDAQ_config_orig')
         # print(f'daq.config = {daq.configuration.config}')
         return daq.configuration.get_config()
 
