@@ -35,11 +35,11 @@ class PlotBufferManager():
 
         def get_buffer(self, server_id, id):
             if server_id in self.plot_buffer_map:
-                print(f'{server_id}, {id}, {self.plot_buffer_map}')
+                # print(f'{server_id}, {id}, {self.plot_buffer_map}')
                 if id in self.plot_buffer_map[server_id]:
-                    print(
-                        f'{self.plot_buffer_map[server_id]}, {self.plot_buffer_map[server_id][id]}'
-                    )
+                    # print(
+                    #     f'{self.plot_buffer_map[server_id]}, {self.plot_buffer_map[server_id][id]}'
+                    # )
                     return self.plot_buffer_map[server_id][id]
             else:
                 return None

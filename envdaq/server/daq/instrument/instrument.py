@@ -87,9 +87,7 @@ class Instrument(DAQ):
         self.iface_test = None
 
         # temporary
-        self.last_entry = {
-            'DATETIME': '',
-        }
+        self.last_entry = {'DATETIME': ''}
 
         # create read buffer and interfaces
         # self.create_msg_buffers(config=None)

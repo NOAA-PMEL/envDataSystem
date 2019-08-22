@@ -97,7 +97,14 @@ class MagCompass(Instrument):
         if (type == 'FromChild' and msg.type == Interface.class_type):
             id = msg.sender_id
             entry = self.parse(msg)
-            self.last_entry = entry
+            # print(f'last_entry: {self.last_entry}')
+            # if (
+            #     'DATETIME' in self.last_entry and
+            #     self.last_entry['DATETIME'] == entry['DATA']['DATETIME']
+            # ):
+            #     print(f'88888888888 skipped entry')
+            #     return
+            # self.last_entry['DATETIME'] = entry['DATA']['DATETIME']
             # print('entry = \n{}'.format(entry))
 
             data = Message(

@@ -251,7 +251,7 @@ class DAQ(abc.ABC):
     #         self.ui_client = self.connect_to_ui()
 
     def send_status(self, note=''):
-        print(f'send_status: {self.name}, {self.status}')
+        # print(f'send_status: {self.name}, {self.status}')
         status = Message(
             sender_id=self.get_id(),
             msgtype='GENERIC',
@@ -262,7 +262,7 @@ class DAQ(abc.ABC):
                 # 'note': note,
             }
         )
-        print(f'send no wait: {self.name}, {self.status}')
+        # print(f'send no wait: {self.name}, {self.status}')
         self.message_to_ui_nowait(status)
         # self.message_to_ui_nowait(status)
 
