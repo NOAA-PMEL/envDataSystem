@@ -15,6 +15,11 @@ from data.message import Message
 #         loop=None,
 class ClientConnection(abc.ABC):
 
+    CLOSED = 'closed'
+    CONNECTED = 'connected'
+    CONNECTING = 'connecting'
+    RECONNECT = 'reconnect'
+
     def __init__(
         self,
         *,
@@ -35,6 +40,9 @@ class ClientConnection(abc.ABC):
         # self.address = address
 
         # print(f'uri={self.uri}, host={self.host}, port={self.port}')
+
+        # TODO: look at making this a @property
+        self.connect_state = ClientConnection.CLOSED
 
         self.is_connected = False
 
@@ -62,8 +70,8 @@ class ClientConnection(abc.ABC):
         # print(self.task_list)
         # self.is_running = False
 
-    def open_connection(self):
-        self.keep_connected = True
+    # def open_connection(self):
+    #     self.keep_connected = True
 
     async def run(self):
 
@@ -75,15 +83,27 @@ class ClientConnection(abc.ABC):
 
             while self.keep_connected:
                 # print('keep connected')
-                if self.is_connected is not True:
+                # if self.is_connected is not True:
+                # print(self.ConnectionState())
+                if (
+                    self.ConnectionState() == ClientConnection.CLOSED
+                ) or (
+                    self.ConnectionState() == ClientConnection.RECONNECT
+                ):
                     # print('connecting to server')
                     for t in self.run_task_list:
                         # print(f'killing run task: {t}')
                         t.cancel()
 
                     await self.connect()
-                    # print(f'after connect: {self.client}')
-                    if self.is_connected is True:
+                    print(f'after connect: {self.client}')
+                    # if self.is_connected is True:
+                    await asyncio.sleep(.5)
+                    while self.ConnectionState() == ClientConnection.CONNECTING:
+                        # wait for connection to be made
+                        await asyncio.sleep(.5)
+
+                    if self.ConnectionState() == ClientConnection.CONNECTED:
                         self.run_task_list.append(
                             asyncio.ensure_future(self.send_loop(self.client))
                         )
@@ -103,8 +123,12 @@ class ClientConnection(abc.ABC):
     async def open(self):
         pass
 
+    def ConnectionState(self):
+        return self.connect_state
+
     def isConnected(self):
-        return self.is_connected
+        # return self.is_connected
+        return self.connect_state == ClientConnection.CONNECTED
 
     async def read(self):
         # read from client: msg can have more than just a Message
@@ -158,6 +182,7 @@ class ClientConnection(abc.ABC):
             await self.close_client()
         print('client closed')
         self.is_connected = False
+        self.connect_state = ClientConnection.CLOSED
 
         # print('killing run_tasks')
         for t in self.run_task_list:

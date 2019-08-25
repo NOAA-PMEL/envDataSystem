@@ -99,7 +99,7 @@ class ControllerConsumer(AsyncWebsocketConsumer):
         self.controller_group_name = (
             'controller_{}'.format(self.controller_name)
         )
-        # print(f'name = {self.controller_name}')
+        print(f'name = {self.controller_name}')
         # Join room group
         await self.channel_layer.group_add(
             self.controller_group_name,
@@ -219,6 +219,7 @@ class ControllerConsumer(AsyncWebsocketConsumer):
                     'SUBJECT': 'STATUS',
                     'BODY': body
                 }
+                print(f'controller request: status {msg}')
                 await self.channel_layer.group_send(
                     self.controller_group_name,
                     {

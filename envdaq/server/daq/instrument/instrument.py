@@ -1,6 +1,6 @@
 import abc
 import importlib
-import sys
+# import sys
 from daq.daq import DAQ
 # import asyncio
 from data.message import Message
@@ -401,7 +401,7 @@ class DummyInstrument(Instrument):
         super().setup()
         # print(f'dummyinstrument.setup')
         # add instance specific setup here
-        
+
         # meta = self.get_metadata()
         # PlotManager.add_app(
         #     TimeSeries1D(
@@ -411,13 +411,12 @@ class DummyInstrument(Instrument):
         #     start_after_add=True
         # )
 
-
     async def handle(self, msg, type=None):
 
         # print(f'%%%%%Instrument.handle: {msg.to_json()}')
         # handle messages from multiple sources. What ID to use?
         if (type == 'FromChild' and msg.type == Interface.class_type):
-            id = msg.sender_id
+            # id = msg.sender_id
             entry = self.parse(msg)
             self.last_entry = entry
             # print('entry = \n{}'.format(entry))
@@ -443,9 +442,12 @@ class DummyInstrument(Instrument):
                 self.send_status()
 
             elif msg.subject == 'CONTROLS' and msg.body['purpose'] == 'REQUEST':
+
                 print(f'msg: {msg.body}')
                 await self.set_control(msg.body['control'], msg.body['value'])
+
             elif msg.subject == 'RUNCONTROLS' and msg.body['purpose'] == 'REQUEST':
+
                 print(f'msg: {msg.body}')
                 await self.handle_control_action(msg.body['control'], msg.body['value'])
                 # await self.set_control(msg.body['control'], msg.body['value'])

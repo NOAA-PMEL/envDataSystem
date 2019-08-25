@@ -28,16 +28,18 @@ class WSClient(ClientConnection):
     # self.address = address
 
     async def connect(self):
-
+        self.connect_state = ClientConnection.CONNECTING
         try:
             print(f'WSClient.connect.uri: {self.uri}')
             self.client = await websockets.client.connect(self.uri)
             self.is_connected = True
             # print(f'WSClient.connect(): {self.client}')
+            self.connect_state = ClientConnection.CONNECTED
         except ConnectionError:
             print("not connected")
             self.client = None
             self.is_connected = False
+            self.connect_state = ClientConnection.CLOSED
 
     async def open(self):
 
@@ -66,9 +68,9 @@ class WSClient(ClientConnection):
 
         # print('starting read loop')
         while True:
-            # print(f'read_loop: {websocket}')
+            print(f'read_loop: {websocket}')
             msg = await websocket.recv()
-            # print('read loop: {}'.format(msg))
+            print('read loop: {}'.format(msg))
             await self.readq.put(msg)
             # print('after readq.put')
 

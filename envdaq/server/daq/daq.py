@@ -203,7 +203,7 @@ class DAQ(abc.ABC):
         pass
 
     async def connect_to_ui(self):
-        # print(f'connecting to ui: {self}')
+        print(f'connecting to ui: {self}')
         # build ui_address
         # ui_address = 'ws://localhost:8001/ws/'+quote(self.get_ui_address())
         ui_address = 'ws://localhost:8001/ws/'+self.get_ui_address().replace(" ", "")
@@ -232,7 +232,7 @@ class DAQ(abc.ABC):
                     t.cancel()
 
                 # make connection
-                # print('connect to ui')
+                print('connect to ui')
                 await self.connect_to_ui()
 
                 # start ui queues
@@ -262,7 +262,7 @@ class DAQ(abc.ABC):
                 # 'note': note,
             }
         )
-        # print(f'send no wait: {self.name}, {self.status}')
+        print(f'send no wait: {self.name}, {self.status}')
         self.message_to_ui_nowait(status)
         # self.message_to_ui_nowait(status)
 
@@ -340,7 +340,7 @@ class DAQ(abc.ABC):
         # print(f'starting daq from_ui_loop')
         while True:
             message = await self.ui_client.read_message()
-            # print(f'message = {message.to_json()}')
+            print(f'message = {message.to_json()}')
             await self.handle(message, type='FromUI')
 
     async def message_to_parent(self, msg):
