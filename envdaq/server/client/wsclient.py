@@ -68,11 +68,18 @@ class WSClient(ClientConnection):
 
         # print('starting read loop')
         while True:
-            print(f'read_loop: {websocket}')
-            msg = await websocket.recv()
-            print('read loop: {}'.format(msg))
-            await self.readq.put(msg)
-            # print('after readq.put')
+            try:
+                print(f'read_loop: {websocket}')
+                msg = await websocket.recv()
+                print('read loop: {}'.format(msg))
+                await self.readq.put(msg)
+                # print('after readq.put')
+            except websockets.exceptions.ConnectionClosed:
+                print(f'ws connection closed')
+                self.client.close()
+                self.client=None
+                self.connect_state = ClientConnection.CLOSED
+                await asyncio.sleep(.5)
 
     async def send_loop(self, websocket):
         # TODO: add try except loop to catch invalid state
