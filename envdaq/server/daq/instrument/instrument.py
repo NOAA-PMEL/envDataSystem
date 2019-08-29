@@ -1,5 +1,6 @@
 import abc
 import importlib
+import copy
 # import sys
 from daq.daq import DAQ
 # import asyncio
@@ -86,6 +87,12 @@ class Instrument(DAQ):
 
         self.iface_test = None
 
+        # add instrument specific options for iface, ifdev, client
+        self.iface_options = {}
+
+        self.data_record_template = dict()
+        self.data_record = dict()
+
         # temporary
         self.last_entry = {'DATETIME': ''}
 
@@ -147,6 +154,8 @@ class Instrument(DAQ):
 
         # plot_config['data'] = plot_data
 
+        print(f'{meta["plot_meta"]}')
+        print(f'{meta["plot_meta"]["name"]}')
         # TODO: move this to actual instrument
         # # add plots to PlotServer
         PlotManager.add_app(
@@ -180,6 +189,12 @@ class Instrument(DAQ):
         self.message_to_ui_nowait(msg)
         print(f'setup: {msg.body}')
 
+    # def add_plot_app(self, plot_typ):
+
+    #     meta = self.get_metadata()
+
+    #     # if plot_type == 'TimeSeries1D':
+
     def get_ui_address(self):
         # print(self.label)
         # print(f'instrument.get_ui_address: {self}')
@@ -193,6 +208,79 @@ class Instrument(DAQ):
 
     # def connect(self, cmd=None):
     #     pass
+
+    def get_data_entry(self, timestamp, add_meta=True):
+        print(f'timestamp: {timestamp}')
+        entry = {
+            # 'METADATA': self.get_metadata(),
+            'DATA': {
+                'DATETIME': timestamp,
+                'MEASUREMENTS': self.get_data_record(timestamp)
+            },
+        }
+        if add_meta:
+            entry['METADATA'] = self.get_metadata()
+        return entry
+
+    def get_data_record(self, timestamp):
+        if timestamp in self.data_record:
+            return self.data_record.pop(timestamp)
+
+        return None
+
+    def update_data_record(
+        self,
+        timestamp,
+        data,
+        dataset='primary',
+    ):
+        '''
+        Update data records dictionary using timestamp as
+        key value.
+
+        Parameters:
+
+        timestamp(str): string representation of timestamp
+            format: YYYY-MM-DDThh:mm:ssZ
+
+        data(dict): dictionary of measurement(s)
+            format: {meas_name: val, ...}
+
+        dataset(str): dataset to store data in
+
+        Returns:
+
+        nothing
+        '''
+
+        if not self.data_record:
+            self.data_record = dict()
+
+        if timestamp not in self.data_record:
+            # create blank data record
+            self.data_record[timestamp] = (
+                copy.deepcopy(self.data_record_template)
+            )
+            # if dataset not in self.data_record[timestamp]:
+            #     for label, name in self.parse_map.items():
+            #         self.data_record[timestamp][name] = None
+
+        for name, value in data.items():
+            # self.data_record[timestamp][dataset][name] = value
+            self.data_record[timestamp][name] = (
+                {'VALUE': value}
+            )
+
+        while len(self.data_record) > 5:
+            least = '9999-99-99T23:59:59Z'
+            for k, v in self.data_record.items():
+                if k < least:
+                    least = k
+            try:
+                self.data_record.pop(least)
+            except Exception:
+                print(f'update exception')
+                pass
 
     def start(self, cmd=None):
         # task = asyncio.ensure_future(self.read_loop())
@@ -260,12 +348,16 @@ class Instrument(DAQ):
         # through configured interfaces
         # list = self.config['IFACE_LIST']
         print(f'config = {self.config["IFACE_LIST"]}')
+
         for k, ifcfg in self.config['IFACE_LIST'].items():
             # self.iface_map[iface.name] = iface
             # print(ifcfg['IFACE_CONFIG'])
             # print(ifcfg['INTERFACE'])
             # iface = InterfaceFactory().create(ifcfg['IFACE_CONFIG'])
-            iface = InterfaceFactory().create(ifcfg)
+            iface = InterfaceFactory().create(
+                ifcfg,
+                **self.iface_options
+            )
             print(f'iface: {iface}')
             # iface.msg_buffer = self.iface_rcv_buffer
             # iface.msg_send_buffer = self.from_child_buf
@@ -410,16 +502,37 @@ class DummyInstrument(Instrument):
         #     ),
         #     start_after_add=True
         # )
+        definition = self.get_definition_instance()
+        meas_config = definition['DEFINITION']['measurement_config']
+        for msetsname, mset in meas_config.items():
+            # self.data_record_template[msetname] = dict()
+            for name, meas in mset.items():
+                self.data_record_template[name] = {'VALUE': None}
 
     async def handle(self, msg, type=None):
 
         # print(f'%%%%%Instrument.handle: {msg.to_json()}')
         # handle messages from multiple sources. What ID to use?
         if (type == 'FromChild' and msg.type == Interface.class_type):
-            # id = msg.sender_id
-            entry = self.parse(msg)
-            self.last_entry = entry
-            # print('entry = \n{}'.format(entry))
+            # # id = msg.sender_id
+            # entry = self.parse(msg)
+            # self.last_entry = entry
+            # # print('entry = \n{}'.format(entry))
+
+            dt = self.parse(msg)
+            print(f'dt = {dt}')
+            # entry = {
+            #     'METADATA': self.get_metadata(),
+            #     'DATA': {
+            #         'DATETIME': dt,
+            #         'MEASUREMENTS': self.get_data_record(dt)
+            #     }
+            entry = self.get_data_entry(dt)
+            print(f'entry: {entry}')
+            # data = dict()
+            # data['DATETIME'] = dt
+            # data['MEASUREMENTS'] = self.get_data_record(dt)
+            # entry['DATA'] = data
 
             data = Message(
                 sender_id=self.get_id(),
@@ -429,6 +542,7 @@ class DummyInstrument(Instrument):
             # to controller
             # data.update(subject='DATA', body=entry['DATA'])
             data.update(subject='DATA', body=entry)
+
             # await self.msg_buffer.put(data)
             # await self.to_parent_buf.put(data)
             print(f'instrument data: {data.to_json()}')
@@ -446,10 +560,15 @@ class DummyInstrument(Instrument):
                 print(f'msg: {msg.body}')
                 await self.set_control(msg.body['control'], msg.body['value'])
 
-            elif msg.subject == 'RUNCONTROLS' and msg.body['purpose'] == 'REQUEST':
+            elif (
+                msg.subject == 'RUNCONTROLS' and
+                msg.body['purpose'] == 'REQUEST'
+            ):
 
                 print(f'msg: {msg.body}')
-                await self.handle_control_action(msg.body['control'], msg.body['value'])
+                await self.handle_control_action(
+                    msg.body['control'], msg.body['value']
+                )
                 # await self.set_control(msg.body['control'], msg.body['value'])
 
         # print("DummyInstrument:msg: {}".format(msg.body))
@@ -496,12 +615,13 @@ class DummyInstrument(Instrument):
 
     def parse(self, msg):
         # print(f'parse: {msg.to_json()}')
-        entry = dict()
-        entry['METADATA'] = self.get_metadata()
+        # entry = dict()
+        # entry['METADATA'] = self.get_metadata()
 
-        data = dict()
-        data['DATETIME'] = msg.body['DATETIME']
-        measurements = dict()
+        # data = dict()
+        # data['DATETIME'] = msg.body['DATETIME']
+        dt = msg.body['DATETIME']
+        # measurements = dict()
 
         # TODO: data format issue: metadata in data or in its own field
         #       e.g., units in data or measurement metadata?
@@ -525,14 +645,24 @@ class DummyInstrument(Instrument):
                 val = float(values[i])
             except ValueError:
                 val = -999
-            measurements[name] = {
-                'VALUE': val,
-            }
+            # measurements[name] = {
+            #     'VALUE': val,
+            # }
+
+            self.update_data_record(
+                dt,
+                {name: val}
+            )
 
         for name in controls_list:
-            measurements[name] = {
-                'VALUE': self.get_control_att(name, 'value'),
-            }
+            # measurements[name] = {
+            #     'VALUE': self.get_control_att(name, 'value'),
+            # }
+            self.update_data_record(
+                dt,
+                {name: self.get_control_att(name, 'value')}
+            )
+            print(f'controls: {name} = {self.get_control_att(name, "value")}')
 
         # for meas_name in self.meas_map['LIST']:
         #     meas_def = self.meas_map['DEFINITION'][meas_name]
@@ -546,9 +676,10 @@ class DummyInstrument(Instrument):
         #         'UNCERTAINTY': meas_def['uncertainty']
         #     }
 
-        data['MEASUREMENTS'] = measurements
-        entry['DATA'] = data
-        return entry
+        # data['MEASUREMENTS'] = measurements
+        # entry['DATA'] = data
+        # return entry
+        return dt
 
     def get_definition_instance(self):
         # make sure it's good for json

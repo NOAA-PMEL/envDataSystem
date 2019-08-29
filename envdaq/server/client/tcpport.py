@@ -38,7 +38,7 @@ class TCPPortClient(ClientConnection):
     class _TCPPortClient():
         def __init__(self, address=None):
             print(f'_TCPPortClient')
-            # self.address = address
+            self.address = address
             self.reader = None
             self.writer = None
             self.connect_state = ClientConnection.CLOSED
@@ -58,6 +58,7 @@ class TCPPortClient(ClientConnection):
                     port=address[1]
                 )
                 print(f'connect: {self.reader}, {self.writer}')
+                print(f'{self.address}')
                 self.connect_state = ClientConnection.CONNECTED
             except (asyncio.TimeoutError, ConnectionRefusedError):
                 self.reader = None
@@ -66,13 +67,17 @@ class TCPPortClient(ClientConnection):
                 self.connect_state = ClientConnection.CLOSED
 
         async def readline(self):
-            # print('here')
+            print('here')
             if self.reader:
+                # print(f'readline: {self.reader}')
                 msg = await self.reader.readline()
+                print(f'{msg}')
                 return msg.decode()
 
         async def readuntil(self, terminator='\n'):
+            # print(f'readuntil')
             msg = await self.reader.readuntil(terminator.encode())
+            # print(f'readmsg: {msg}')
             return msg.decode()
 
         async def read(self, num_bytes=1):
@@ -81,8 +86,10 @@ class TCPPortClient(ClientConnection):
 
         async def write(self, msg):
             if self.writer:
+                print(f'msg: {msg}')
                 self.writer.write(msg.encode())
                 await self.writer.drain()
+                print(f'written')
 
         async def close(self):
             self.connect_state = ClientConnection.CLOSED
@@ -163,7 +170,7 @@ class TCPPortClient(ClientConnection):
 
         print('starting read loop')
         while True:
-            print(f'read_loop: {self.ConnectionState()}')
+            # print(f'read_loop: {self.ConnectionState()}')
             if self.ConnectionState() == ClientConnection.CONNECTED:
                 # print(f'read_loop: {tcpport}')
                 if self.read_method == 'readline':
@@ -176,7 +183,7 @@ class TCPPortClient(ClientConnection):
                     msg = await tcpport.readuntil(
                         self.read_num_bytes
                     )
-                print('read loop: {}'.format(msg))
+                # print('read loop: {}'.format(msg))
                 if msg:
                     await self.readq.put(msg)
                 else:

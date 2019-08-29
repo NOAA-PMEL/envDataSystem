@@ -58,6 +58,7 @@ class SyncManager():
     def sync_instrument_instance_nowait(config):
         # pass
         if config:
+            print(f'***** config: {config}')
             print(f'instance: {config["NAME"]}, {config["MODEL"]},')
             try:
                 inst_def = InstrumentDef.objects.get(

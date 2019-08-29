@@ -137,20 +137,21 @@ class TimeSeries1D(PlotApp):
                 ts1d_map = dict()
                 for y in ts1d_config['y_data']:
                     meas_config = self.get_measurement_config(y)
-                    units = 'counts'
-                    if 'units' in meas_config:
-                        units = meas_config['units']
+                    if meas_config:
+                        units = 'counts'
+                        if 'units' in meas_config:
+                            units = meas_config['units']
 
-                    color = ''
-                    if 'pref_color' in meas_config:
-                        color = meas_config['pref_color']
+                        color = ''
+                        if 'pref_color' in meas_config:
+                            color = meas_config['pref_color']
 
-                    if len(self.prefix) > 0:
-                        y = self.prefix + '_' + y
-                    ts1d_map[y] = {
-                        'units': units,
-                        'color': color,
-                    }
+                        if len(self.prefix) > 0:
+                            y = self.prefix + '_' + y
+                        ts1d_map[y] = {
+                            'units': units,
+                            'color': color,
+                        }
                 self.source_map['TimeSeries1D'] = ts1d_map
 
                 print(f'ts1d_setup source: {self.source}')

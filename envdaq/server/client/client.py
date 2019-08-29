@@ -96,7 +96,7 @@ class ClientConnection(abc.ABC):
                         t.cancel()
 
                     await self.connect()
-                    print(f'after connect: {self.client}')
+                    # print(f'after connect: {self.client}')
                     # if self.is_connected is True:
                     await asyncio.sleep(.5)
                     while self.ConnectionState() == ClientConnection.CONNECTING:

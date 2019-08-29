@@ -4,7 +4,7 @@ import random
 from utilities import util
 from data.message import Message
 import importlib
-from client.serialport import SerialPortClient
+from client.tcpport import TCPPortClient
 # import abc
 
 
@@ -59,6 +59,7 @@ class IFDevice(DAQ):
         self.label = self.config['DESCRIPTION']['LABEL']
         self.mfg = None
         self.model = None
+        self.kwargs = kwargs
 
         # self.serial_number = self.config['DESCRIPTION']['SERIAL_NUMBER']
         # self.property_number = self.config['DESCRIPTION']['PROPERTY_NUMBER']
@@ -271,8 +272,89 @@ class SerialPortIFDevice(IFDevice):
     #     await self.client.write(msg.body['COMMAND'])
 
     async def handle(self, msg, type=None):
-        # if (type=="FromParent"):
-        print(f'serialportifdevice.handle: {msg}')
+        if (type == "FromParent"):
+            if msg.subject == 'SEND':
+                await self.client.send(msg.body)
+                print(f'serialportifdevice.handle: {msg}')
+        await asyncio.sleep(.1)
+
+    def get_definition_instance(self):
+        return IFDevice.get_definition()
+
+    def get_definition():
+        pass
+
+
+class TCPPortIFDevice(IFDevice):
+
+    # IFDevice.channel_map['test'] = 'test'
+
+    def __init__(self, config, **kwargs):
+        # def __init__(self, config):
+        print(config)
+        print('TCPPortIFDevice init')
+        super(TCPPortIFDevice, self).__init__(config, **kwargs)
+        # super().__init__(config)
+
+        # TODO: fix label
+        self.label = config['DESCRIPTION']['LABEL']
+        self.name = "TCPPortIFDevice"
+
+        self.address = config['DESCRIPTION']['ADDRESS']
+
+    def get_id(self):
+        return self.__class__.__name__ + '_' + self.address[0] + '_' + self.address[1]
+        self.setup()
+
+    def setup(self):
+        super().setup()
+
+    def start(self, cmd=None):
+        super().start(cmd)
+        print('Starting SerialPortIFDevice')
+
+        self.client = TCPPortClient(
+            address=self.address,
+            **self.kwargs,
+        )
+        print(f'tcp port: {self.client}')
+
+        # # start dummy data loop
+        # task = asyncio.ensure_future(self.data_loop())
+        # self.task_list.append(task)
+        self.task_list.append(
+            asyncio.ensure_future(self.read_data())
+        )
+        # self.task_list.append(
+        #     asyncio.ensure_future(self.write_data())
+        # )
+
+    async def read_data(self):
+        while True:
+            data = await self.client.read()
+            msg = Message(
+                sender_id=self.get_id(),
+                msgtype=IFDevice.class_type,
+                subject='DATA',
+                body={
+                    'DATA': data
+                }
+            )
+            # print(f'tcpportread: {data}')
+            await self.message_to_parent(msg)
+
+    # async def write_data(self, msg):
+    #     # while True:
+    #     #     msg = await self.message_from_parent()
+    #     await self.client.write(msg.body['COMMAND'])
+
+    async def handle(self, msg, type=None):
+        if (type == "FromParent"):
+            if msg.subject == 'SEND':
+                await self.client.send(msg.body)
+                print(f'tcpportifdevice.handle: {msg}')
+        else:
+            print('unkown msg')
         await asyncio.sleep(.1)
 
     def get_definition_instance(self):

@@ -358,6 +358,9 @@
                     document.querySelector('#time-stamp').innerHTML =  (message['DATETIME'].replace(/T|Z/g, " "));
 
                     for (var meas in message['MEASUREMENTS']) {
+                        if (message['MEASUREMENTS'][meas]['VALUE'] == null) {
+                            continue
+                        }
                         //console.log(meas);
                         //cell_id = "#"+meas+"-value"
                         cell_id = meas+"-value"

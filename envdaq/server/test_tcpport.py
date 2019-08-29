@@ -17,7 +17,10 @@ async def send_data(client):
 
         print('send_data: {}'.format(message.to_json()))
         # await client.send(json.dumps(msg))
-        await client.send_message(message)
+        # await client.send('rtclck\n')
+        await client.send('read\n')
+        await client.send('raw=2\n')
+        # await client.send_message(message)
         await asyncio.sleep(1)
 
 
@@ -27,7 +30,8 @@ async def read_data(client):
         # json_msg = await client.read()
         # msg = json.loads(json_msg)
         msg = await client.read()
-        print(f'read_loop: {datetime.utcnow()} {msg.rstrip()}')
+        eol = len(msg.rstrip())
+        print(f'read_loop: {datetime.utcnow()} {msg.rstrip()} {eol}')
         # parse(msg)
 
 
@@ -67,8 +71,14 @@ def shutdown(serialport):
 
 if __name__ == "__main__":
 
+    kw = {'read_method': 'readuntil', 'read_terminator': '\r'}
     tcp = TCPPortClient(
-        address=('localhost', 8199)
+        # host='moxa16chem2',
+        # port=4016,
+        address=('moxa16chem2', 4016),
+        # read_method='readuntil',
+        # read_terminator='\r'
+        **kw
     )
 
     loop = asyncio.get_event_loop()
