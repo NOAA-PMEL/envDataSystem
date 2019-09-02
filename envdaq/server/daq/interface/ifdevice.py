@@ -4,6 +4,7 @@ import random
 from utilities import util
 from data.message import Message
 import importlib
+from client.serialport import SerialPortClient
 from client.tcpport import TCPPortClient
 # import abc
 
@@ -224,11 +225,17 @@ class SerialPortIFDevice(IFDevice):
         self.name = "SerialPortIFDevice"
 
         self.devpath = config['DESCRIPTION']['DEVPATH']
+        self.baudrate = config['DESCRIPTION']['baudrate']
+        self.bytesize = config['DESCRIPTION']['bytesize']
+        self.parity = config['DESCRIPTION']['parity']
+        self.stopbits = config['DESCRIPTION']['stopbits']
+        self.xonxoff = config['DESCRIPTION']['xonxoff']
+        self.rtscts = config['DESCRIPTION']['rtscts']
+
+        self.setup()
 
     def get_id(self):
         return self.__class__.__name__ + '_' + self.devpath
-
-        self.setup()
 
     def setup(self):
         super().setup()
@@ -238,7 +245,14 @@ class SerialPortIFDevice(IFDevice):
         print('Starting SerialPortIFDevice')
 
         self.client = SerialPortClient(
-            uri=self.devpath
+            uri=self.devpath,
+            baudrate=self.baudrate,
+            bytesize=self.bytesize,
+            parity=self.parity,
+            stopbits=self.stopbits,
+            xonxoff=self.xonxoff,
+            rtscts=self.rtscts,
+            **self.kwargs,
         )
         print(f'serial port: {self.client}')
 
@@ -302,9 +316,10 @@ class TCPPortIFDevice(IFDevice):
 
         self.address = config['DESCRIPTION']['ADDRESS']
 
+        self.setup()
+
     def get_id(self):
         return self.__class__.__name__ + '_' + self.address[0] + '_' + self.address[1]
-        self.setup()
 
     def setup(self):
         super().setup()

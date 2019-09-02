@@ -61,7 +61,7 @@ class PlotApp(abc.ABC):
         print('here')
 
     async def update_data(self, msg):
-        # print(f'update data: {msg}')
+        print(f'update data: {msg}')
         self.update_main_source(msg)
         # await self.main_buffer.put(msg)
         await self.msg_buffer.put(msg)
@@ -73,7 +73,7 @@ class PlotApp(abc.ABC):
         if msg:
             data = self.handle_main(msg)
             if data:
-                # print(f'data: {data}')
+                print(f'data: {data}')
                 self.source.stream(data, rollover=self.rollover)
             # print(f'update_main_source: {self.source.data["datetime"]}')
 

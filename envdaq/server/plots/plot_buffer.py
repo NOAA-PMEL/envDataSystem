@@ -4,7 +4,9 @@ import asyncio
 
 
 class PlotBufferManager():
+    
     plot_buffer_map = dict()
+    
     class __PlotBufferMananger():
         def __init__(self):
             self.plot_buffer_map = dict()

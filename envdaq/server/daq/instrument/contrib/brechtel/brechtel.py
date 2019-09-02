@@ -5,7 +5,7 @@ from daq.daq import DAQ
 import asyncio
 from utilities.util import time_to_next
 from daq.interface.interface import Interface
-# from plots.plots import PlotManager
+from plots.plots import PlotManager
 # from plots.apps.plot_app import TimeSeries1D
 
 
@@ -223,7 +223,7 @@ class MCPC(BrechtelInstrument):
                 # print(f'instrument data: {data.to_json()}')
                 # await asyncio.sleep(.1)
                 await self.message_to_ui(data)
-                # await PlotManager.update_data(self.plot_name, data.to_json())
+                await PlotManager.update_data(self.plot_name, data.to_json())
             # print(f'data_json: {data.to_json()}\n')
             # await asyncio.sleep(0.01)
         elif type == 'FromUI':
@@ -270,6 +270,7 @@ class MCPC(BrechtelInstrument):
             self.current_read_cnt += 1
         else:
             parts = line.split('=')
+            print(f'{parts[0]} = {parts[1]}')
             if parts[0] in self.parse_map:
                 self.update_data_record(
                     dt,
@@ -310,7 +311,7 @@ class MCPC(BrechtelInstrument):
         #     'tilt',
         #     # 'checksum',
         # ]
-        controls_list = []
+        controls_list = ['mcpc_power', 'mcpc_pump']
 
         # for name in meas_list:
         #     # TODO: use meta to convert to float, int
@@ -323,9 +324,15 @@ class MCPC(BrechtelInstrument):
         #     }
 
         for name in controls_list:
-            measurements[name] = {
-                'VALUE': self.get_control_att(name, 'value'),
-            }
+            self.update_data_record(
+                dt,
+                {name: None},
+            )
+
+            # measurements[name] = {
+            #     # 'VALUE': self.get_control_att(name, 'value'),
+            #     'VALUE': None,
+            # }
 
         # # for meas_name in self.meas_map['LIST']:
         # #     meas_def = self.meas_map['DEFINITION'][meas_name]
@@ -651,7 +658,7 @@ class MCPC(BrechtelInstrument):
             'parse_label': 'fillcnt',
             'control': None,
         }
-        y_data.append('fill_cnt')
+        y_data.append('fill_count')
 
         process_meas['error'] = {
             'dimensions': {

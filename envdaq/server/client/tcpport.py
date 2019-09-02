@@ -144,7 +144,8 @@ class TCPPortClient(ClientConnection):
             # self.reader, self.writer = await serial_asyncio.open_serial_connection(
             #     url=self.uri,
             # )
-            self.client = self._TCPPortClient()
+            # self.client = self._TCPPortClient()
+            self.client = self._TCPPortClient(address=self.address)
 
             # self.is_connected = True
             # self.ConnectionState() = ClientConnection.CONNECTING
@@ -164,7 +165,7 @@ class TCPPortClient(ClientConnection):
         )
         # self.is_running = True
         while True:
-            await asyncio.sleep(.1)
+            await asyncio.sleep(1)
 
     async def read_loop(self, tcpport):
 
@@ -194,7 +195,7 @@ class TCPPortClient(ClientConnection):
                     await asyncio.sleep(.5)
                 # print('after readq.put')
             else:
-                await asyncio.sleep(1)
+                await asyncio.sleep(.1)
 
     async def send_loop(self, tcpport):
         # TODO: add try except loop to catch invalid state

@@ -151,7 +151,7 @@ class ClientConnection(abc.ABC):
 
     async def send(self, msg):
         # send to client: msg can have more than just a Message
-        # print('send: {}'.format(msg))
+        print('send: {}'.format(msg))
         await self.sendq.put(msg)
         # print('msg sent')
         # await self.sendq.put(msg)

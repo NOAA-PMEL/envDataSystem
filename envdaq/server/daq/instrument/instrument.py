@@ -266,6 +266,7 @@ class Instrument(DAQ):
             #         self.data_record[timestamp][name] = None
 
         for name, value in data.items():
+            print(f'{name} = {value}')
             # self.data_record[timestamp][dataset][name] = value
             self.data_record[timestamp][name] = (
                 {'VALUE': value}

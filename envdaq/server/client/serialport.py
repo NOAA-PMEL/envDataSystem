@@ -1,4 +1,5 @@
 import asyncio
+import serial
 import serial_asyncio
 from client.client import ClientConnection
 
@@ -19,6 +20,12 @@ class SerialPortClient(ClientConnection):
         read_method='readline',
         read_terminator='\n',
         read_num_bytes=1,
+        baudrate=9600,
+        bytesize=8,
+        parity=serial.PARITY_NONE,
+        stopbits=1,
+        xonxoff=0,
+        rtscts=0,
         **kwargs
     ):
         super(SerialPortClient, self).__init__(
@@ -31,13 +38,35 @@ class SerialPortClient(ClientConnection):
         self.read_method = read_method
         self.read_terminator = read_terminator
         self.read_num_bytes = read_num_bytes
+        self.baudrate = baudrate
+        self.bytesize = bytesize
+        self.parity = parity
+        self.stopbits = stopbits
+        self.xonxoff = xonxoff
+        self.rtscts = rtscts
 
     class _SerialPortClient():
-        def __init__(self, uri=None):
+        def __init__(
+            self,
+            uri=None,
+            baudrate=9600,
+            bytesize=8,
+            parity=serial.PARITY_NONE,
+            stopbits=1,
+            xonxoff=0,
+            rtscts=0,
+        ):
             print(f'_SerialPortClient')
             self.reader = None
             self.writer = None
             self.connect_state = ClientConnection.CLOSED
+            self.baudrate = baudrate
+            self.bytesize = bytesize
+            self.parity = parity
+            self.stopbits = stopbits
+            self.xonxoff = xonxoff
+            self.rtscts = rtscts
+
             if uri:
                 asyncio.ensure_future(self.connect(uri))
 
@@ -47,6 +76,12 @@ class SerialPortClient(ClientConnection):
                 self.reader, self.writer = (
                     await serial_asyncio.open_serial_connection(
                         url=uri,
+                        baudrate=self.baudrate,
+                        bytesize=self.bytesize,
+                        parity=self.parity,
+                        stopbits=self.stopbits,
+                        xonxoff=self.xonxoff,
+                        rtscts=self.rtscts,
                     )
                 )
                 print(f'connect: {self.reader}, {self.writer}')
@@ -64,6 +99,7 @@ class SerialPortClient(ClientConnection):
 
         async def readuntil(self, terminator='\n'):
             msg = await self.reader.readuntil(terminator.encode())
+            # print(f'readuntil: {msg}')
             return msg.decode()
 
         async def read(self, num_bytes=1):
@@ -72,6 +108,7 @@ class SerialPortClient(ClientConnection):
 
         async def write(self, msg):
             if self.writer:
+                print(f'msg: {msg}')
                 self.writer.write(msg.encode())
                 await self.writer.drain()
 
@@ -104,10 +141,18 @@ class SerialPortClient(ClientConnection):
             # self.reader, self.writer = await serial_asyncio.open_serial_connection(
             #     url=self.uri,
             # )
-            self.client = self._SerialPortClient(uri=self.uri)
+            self.client = self._SerialPortClient(
+                uri=self.uri,
+                baudrate=self.baudrate,
+                bytesize=self.bytesize,
+                parity=self.parity,
+                stopbits=self.stopbits,
+                xonxoff=self.xonxoff,
+                rtscts=self.rtscts,
+            )
 
             # self.is_connected = True
-            # print(f'SerialPort.connect(): {self.client}')
+            print(f'SerialPort.connect(): {self.client}')
         except Exception as e:
             print(f"not connected: {e}")
             self.client = None
@@ -124,7 +169,16 @@ class SerialPortClient(ClientConnection):
             # self.reader, self.writer = await serial_asyncio.open_serial_connection(
             #     url=self.uri,
             # )
-            self.client = self._SerialPortClient()
+            # self.client = self._SerialPortClient()
+            self.client = self._SerialPortClient(
+                uri=self.uri,
+                baudrate=self.baudrate,
+                bytesize=self.bytesize,
+                parity=self.parity,
+                stopbits=self.stopbits,
+                xonxoff=self.xonxoff,
+                rtscts=self.rtscts,
+            )
 
             # self.is_connected = True
             # print(f'SerialPort.connect(): {self.client}')
@@ -143,7 +197,7 @@ class SerialPortClient(ClientConnection):
         )
         # self.is_running = True
         while True:
-            await asyncio.sleep(.1)
+            await asyncio.sleep(1)
 
     async def read_loop(self, serialport):
 
@@ -161,7 +215,7 @@ class SerialPortClient(ClientConnection):
                     msg = await serialport.readuntil(
                         self.read_num_bytes
                     )
-                print('read loop: {}'.format(msg))
+                # print('read loop: {}'.format(msg))
                 # await self.readq.put(msg)
                 # print('after readq.put')
                 if msg:
@@ -174,17 +228,17 @@ class SerialPortClient(ClientConnection):
                     await asyncio.sleep(.5)
                 # print('after readq.put')
             else:
-                await asyncio.sleep(1)
+                await asyncio.sleep(.1)
 
     async def send_loop(self, serialport):
         # TODO: add try except loop to catch invalid state
         # print('starting send loop')
         while True:
-            # print(f'sendq: {self.sendq}')
+            print(f'sendq: {self.sendq.qsize()}')
             msg = await self.sendq.get()
-            # print('send loop: {}'.format(msg))
+            print('send loop: {}'.format(msg))
             # print(f'websocket: {websocket}')
-            await serialport.send(msg)
+            await serialport.write(msg)
 
     async def shutdown_complete(self):
 

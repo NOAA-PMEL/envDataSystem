@@ -401,6 +401,31 @@ class SerialPortInterface(Interface):
         self.name = 'SerialPortInterface'
         self.label = config['LABEL']
         self.address = config['ADDRESS']
+
+        self.baudrate = 9600
+        if 'baudrate' in config:
+            self.baudrate = config['baudrate']
+
+        self.bytesize = 8
+        if 'bytesize' in config:
+            self.bytesize = config['bytesize']
+
+        self.parity = 'N'
+        if 'parity' in config:
+            self.parity = config['parity']
+
+        self.stopbits = 1
+        if 'stopbits' in config:
+            self.stopbits = config['stopbits']
+
+        self.xonxoff = 0
+        if 'xonxoff' in config:
+            self.xonxoff = config['xonxoff']
+
+        self.rtscts = 0
+        if 'rtscts' in config:
+            self.rtscts = config['rtscts']
+
         self.setup()
 
     def setup(self):
@@ -430,8 +455,13 @@ class SerialPortInterface(Interface):
             "IFDEVCONFIG": {
                 "DESCRIPTION": {
                     "LABEL": self.label,
-                    "DEVPATH": self.address
-
+                    "DEVPATH": self.address,
+                    "baudrate": self.baudrate,
+                    "bytesize": self.bytesize,
+                    "parity": self.parity,
+                    "stopbits": self.stopbits,
+                    "xonxoff": self.xonxoff,
+                    "rtscts": self.rtscts,
                 }
             }
         }
@@ -448,6 +478,7 @@ class SerialPortInterface(Interface):
             ui_config=ui_config,
             **self.kwargs
         )
+        print(f'{self.kwargs}')
         self.ifdevice.to_parent_buf = self.from_child_buf
 
     async def handle(self, msg, type=None):
