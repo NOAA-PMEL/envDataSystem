@@ -502,7 +502,7 @@ class SerialPortInterface(Interface):
         elif type == 'FromParent':
             if msg.subject == 'SEND':
                 await self.ifdevice.message_from_parent(msg)
-                print(f'message:{msg.subject}, {msg.body}')
+                print(f'55555message:{msg.subject}, {msg.body}')
         else:
             print(f'Unknown Message type: {msg.type}, {msg.to_json()}')
 

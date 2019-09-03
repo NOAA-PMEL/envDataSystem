@@ -32,11 +32,11 @@ class SyncManager():
                 elif def_type == 'INSTRUMENT_SYS_DEFS':
                     for name, inst_def in sys_def['INSTRUMENT_SYS_DEFS'].items():
                         try:
-                            print(f'inst_def: {name}')
+                            print(f'3333333333inst_def: {name}')
                             instrument = InstrumentDef.objects.get(name=name)
                             # if force update, update current
                         except InstrumentDef.DoesNotExist:
-                            print(f'new inst def')
+                            print(f'22222222222new inst def')
                             instrument = InstrumentDef(name=name)
                             print(f'{instrument}: {inst_def}')
                             instrument.update(inst_def)
@@ -72,7 +72,7 @@ class SyncManager():
                         definition=inst_def,
                         serial_number=config['SERIAL_NUMBER']
                     )
-                    print(f'existing inst: {inst}')
+                    print(f'44444444444existing inst: {inst}')
                 except Instrument.DoesNotExist:
                     print(f'^^^^^create new: {inst_def}, {config["SERIAL_NUMBER"]}')
                     inst = Instrument(
@@ -81,8 +81,6 @@ class SyncManager():
                     )
                     inst.save()
                     # TODO: add tags    
-
-
 
             except InstrumentDef.DoesNotExist:
                 # TODO: deal with missing instrument def

@@ -3,7 +3,7 @@ import importlib
 import copy
 # import sys
 from daq.daq import DAQ
-# import asyncio
+import asyncio
 from data.message import Message
 from daq.interface.interface import Interface, InterfaceFactory
 # import json
@@ -227,6 +227,13 @@ class Instrument(DAQ):
             return self.data_record.pop(timestamp)
 
         return None
+
+    def get_data_record_param(self, timestamp, name):
+        if (
+            timestamp in self.data_record and
+            name in self.data_record[timestamp]
+        ):
+            return self.data_record[timestamp][name]['VALUE']
 
     def update_data_record(
         self,
@@ -528,7 +535,7 @@ class DummyInstrument(Instrument):
             #         'DATETIME': dt,
             #         'MEASUREMENTS': self.get_data_record(dt)
             #     }
-            entry = self.get_data_entry(dt)
+            entry = self.get_data_entry(dt, add_meta=False)
             print(f'entry: {entry}')
             # data = dict()
             # data['DATETIME'] = dt

@@ -289,7 +289,7 @@ class SerialPortIFDevice(IFDevice):
         if (type == "FromParent"):
             if msg.subject == 'SEND':
                 await self.client.send(msg.body)
-                print(f'serialportifdevice.handle: {msg}')
+                print(f'66666serialportifdevice.handle: {msg}')
         await asyncio.sleep(.1)
 
     def get_definition_instance(self):

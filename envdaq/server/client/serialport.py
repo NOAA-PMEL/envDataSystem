@@ -234,9 +234,9 @@ class SerialPortClient(ClientConnection):
         # TODO: add try except loop to catch invalid state
         # print('starting send loop')
         while True:
-            print(f'sendq: {self.sendq.qsize()}')
+            print(f'7777sendq: {self.sendq.qsize()}')
             msg = await self.sendq.get()
-            print('send loop: {}'.format(msg))
+            print('8888send loop: {}'.format(msg))
             # print(f'websocket: {websocket}')
             await serialport.write(msg)
 
