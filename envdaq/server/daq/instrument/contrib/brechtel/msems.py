@@ -268,9 +268,9 @@ class MSEMS(BrechtelInstrument):
                 # await self.msg_buffer.put(data)
                 # await self.to_parent_buf.put(data)
                 print(f'999999999999msems data: {data.to_json()}')
-                await asyncio.sleep(.1)
-                # await self.message_to_ui(data)
-                # await PlotManager.update_data(self.plot_name, data.to_json())
+                # await asyncio.sleep(.1)
+                await self.message_to_ui(data)
+                await PlotManager.update_data(self.plot_name, data.to_json())
             # print(f'data_json: {data.to_json()}\n')
             # await asyncio.sleep(0.01)
         elif type == 'FromUI':
@@ -740,7 +740,7 @@ class MSEMS(BrechtelInstrument):
             'parse_label': 'sheath_sp',
             'control_group': 'Operation',
         }
-        y_data.append('sheath_sp')
+        y_data.append('sheath_flow_sp')
 
         # TODO: add settings controls
         controls['number_bins'] = {

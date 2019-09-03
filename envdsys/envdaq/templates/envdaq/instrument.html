@@ -196,6 +196,10 @@
                 if (meastype != "controls") {
                     mtype = measurements[meastype]
                     for (var meas in mtype) {
+                        dims = mtype[meas]['dimensions']['axes']
+                        if (mtype[meas]['dimensions']['axes'].length > 1) {
+                            continue
+                        }
                         var name = meas
                         if (meas_prefix) {
                             name = meas_prefix + "_" + meas
@@ -361,7 +365,11 @@
                         if (message['MEASUREMENTS'][meas]['VALUE'] == null) {
                             continue
                         }
-                        //console.log(meas);
+                        // console.log(meas);
+                        // console.log(message['MEASUREMENTS'][meas]['VALUE'])
+                        if (message['MEASUREMENTS'][meas]['VALUE'].constructor === Array) {
+                            continue
+                        }
                         //cell_id = "#"+meas+"-value"
                         cell_id = meas+"-value"
                         //document.querySelector(cell_id).innerHTML = message['MEASUREMENTS'][meas]['VALUE'];
