@@ -394,7 +394,7 @@ class MSEMS(BrechtelInstrument):
         primary_meas_2d = dict()
         primary_meas_2d['size_distribution'] = {
             'dimensions': {
-                'axes': ['TIME', 'DIAMETER'],
+                'axes': ['TIME', 'diameter'],
                 'unlimited': 'TIME',
                 'units': ['dateTime', 'nm'],
             },
@@ -422,7 +422,7 @@ class MSEMS(BrechtelInstrument):
             'parse_label': 'diameter',
             'control': None,
         }
-        dist_data.append('size_distribution')
+        dist_data.append('diameter')
 
         process_meas = dict()
         process_meas['sems_date'] = {

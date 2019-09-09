@@ -1,6 +1,7 @@
 import abc
 import importlib
 import copy
+import random
 # import sys
 from daq.daq import DAQ
 import asyncio
@@ -72,6 +73,7 @@ class Instrument(DAQ):
             self.alias = alias
 
         self.plot_name = '/default_plot'
+        self.plot_list = []
 
         self.serial_number = self.config['DESCRIPTION']['SERIAL_NUMBER']
         self.property_number = self.config['DESCRIPTION']['PROPERTY_NUMBER']
@@ -158,14 +160,16 @@ class Instrument(DAQ):
         print(f'{meta["plot_meta"]["name"]}')
         # TODO: move this to actual instrument
         # # add plots to PlotServer
-        PlotManager.add_app(
-            TimeSeries1D(
-                meta,
-                # name=('/instrument_'+meta['plot_meta']['name'])
-                name=(meta['plot_meta']['name'])
-            ),
-            start_after_add=False
-        )
+
+        # TESTING: moving this to django side
+        # PlotManager.add_app(
+        #     TimeSeries1D(
+        #         meta,
+        #         # name=('/instrument_'+meta['plot_meta']['name'])
+        #         name=(meta['plot_meta']['name'])
+        #     ),
+        #     start_after_add=False
+        # )
 
         print(f"app_name: {meta['plot_meta']['name']}")
         # plot_app_name = ('/instrument_'+meta['plot_meta']['name'])
@@ -220,6 +224,10 @@ class Instrument(DAQ):
         }
         if add_meta:
             entry['METADATA'] = self.get_metadata()
+
+        if len(self.alias) > 0:
+            entry['alias'] = self.alias
+
         return entry
 
     def get_data_record(self, timestamp):
@@ -402,8 +410,17 @@ class Instrument(DAQ):
             return dict()
 
         plot_config = definition['DEFINITION']['plot_config']
+
+        self.plot_list.clear()
+        if 'plots' in plot_config:
+            for plot_name, plot_def in plot_config['plots'].items():
+                app_name = '/instrument_'+self.alias['name']+'_'+plot_name
+                plot_config['plots'][plot_name]['app_name'] = app_name
+                self.plot_list.append(app_name)
+
         self.plot_name = '/instrument_'+self.alias['name']
         plot_config['name'] = self.plot_name
+        plot_config['app_list'] = self.plot_list
 
         return plot_config
 
@@ -554,8 +571,10 @@ class DummyInstrument(Instrument):
             # await self.msg_buffer.put(data)
             # await self.to_parent_buf.put(data)
             print(f'instrument data: {data.to_json()}')
+
             await self.message_to_ui(data)
-            await PlotManager.update_data(self.plot_name, data.to_json())
+            # await PlotManager.update_data(self.plot_name, data.to_json())
+
             # print(f'data_json: {data.to_json()}\n')
             # await asyncio.sleep(0.01)
         elif type == 'FromUI':
@@ -662,6 +681,23 @@ class DummyInstrument(Instrument):
                 {name: val}
             )
 
+        # add fake size dist data
+        sd = []
+        dp = []
+        for n in range(0, 20):
+            sd.append(round(random.random()*10.0, 4))
+        self.update_data_record(
+            dt,
+            {'size_distribution': sd}
+        )
+        dp.append(10)
+        for n in range(1, 20):
+            dp.append(round(dp[n-1]*1.4, 2))
+        self.update_data_record(
+            dt,
+            {'diameter': dp}
+        )
+
         for name in controls_list:
             # measurements[name] = {
             #     'VALUE': self.get_control_att(name, 'value'),
@@ -714,8 +750,46 @@ class DummyInstrument(Instrument):
 
         # array for plot conifg
         y_data = []
+        dist_data = []
+        dim_data = []
 
         # TODO: add interface entry for each measurement
+        primary_meas_2d = dict()
+        primary_meas_2d['size_distribution'] = {
+            'dimensions': {
+                'axes': ['TIME', 'DIAMETER'],
+                'unlimited': 'TIME',
+                'units': ['dateTime', 'nm'],
+            },
+            'units': 'cm-3',  # should be cfunits or udunits
+            'uncertainty': 0.1,
+            'source': 'MEASURED',
+            'data_type': 'NUMERIC',
+            'short_name': 'size_dist',
+            'parse_label': 'bin',
+            'control': None,
+            'axes': {
+                'DIAMETER': 'diameter',
+            }
+        }
+        dist_data.append('size_distribution')
+
+        primary_meas_2d['diameter'] = {
+            'dimensions': {
+                'axes': ['TIME', 'DIAMETER'],
+                'unlimited': 'TIME',
+                'units': ['dateTime', 'nm'],
+            },
+            'units': 'nm',  # should be cfunits or udunits
+            'uncertainty': 0.1,
+            'source': 'MEASURED',
+            'data_type': 'NUMERIC',
+            'short_name': 'dp',
+            'parse_label': 'diameter',
+            'control': None,
+        }
+        dist_data.append('diameter')
+
         primary_meas = dict()
         primary_meas['concentration'] = {
             'dimensions': {
@@ -828,15 +902,29 @@ class DummyInstrument(Instrument):
         measurement_config['process'] = process_meas
         measurement_config['raw'] = raw_meas
         measurement_config['controls'] = controls
+        measurement_config['primary_2d'] = primary_meas_2d
 
         definition['measurement_config'] = measurement_config
 
-        plot_config = dict()
-        time_series1d = dict()
+        # dist_data
 
+        plot_config = dict()
+
+        size_dist = dict()
+        size_dist['app_type'] = 'SizeDistribution'
+        size_dist['y_data'] = ['size_distribution', 'diameter']
+        size_dist['default_y_data'] = ['size_distribution']
+        # size_dist['dimensions'] = ['diameter']
+
+        time_series1d = dict()
+        time_series1d['app_type'] = 'TimeSeries1D'
         time_series1d['y_data'] = y_data
         time_series1d['default_y_data'] = ['concentration']
-        plot_config['TimeSeries1D'] = time_series1d
+
+        plot_config['plots'] = dict()
+        # plot_config['plots'][plot_id/name]
+        plot_config['plots']['main_ts1d'] = time_series1d
+        plot_config['plots']['raw_size_dist'] = size_dist
         definition['plot_config'] = plot_config
 
         # TODO: make definition cleaner so authors don't have to kludge

@@ -3,6 +3,7 @@ from .models import InstrumentAlias, Controller
 from django.utils.safestring import mark_safe
 import json
 from bokeh.embed import server_document
+from plots.plots import PlotManager
 
 
 # # Create your views here.
@@ -80,10 +81,22 @@ def instrument(request, instrument_name):
     plots["host"] = "localhost"
     plots["port"] = 5001
     plots["name"] = "/instrument_"+alias.name
+
+    
+    # TODO: these values need to got into database as runtime
+    #       data?
+    print(f'{PlotManager.get_app_list(alias.name)}')
+    plots["app_list"] = PlotManager.get_app_list(alias.name)
+    print(f'{plots["app_list"]}')
+    plot_scripts = []
+    for app in plots['app_list']:
+        plot_scripts.append(
+            server_document("http://localhost:5001"+app)
+        )
     
     # TODO: get plot name dynamically
     plot_script = server_document("http://localhost:5001"+plots["name"])
-    print(f'plot_script: {plot_script}')
+    print(f'plot_scripts: {plot_scripts}')
     context = {
         'instrument_instance': mark_safe(
             json.dumps(alias.instrument.definition.__str__())
@@ -96,6 +109,7 @@ def instrument(request, instrument_name):
         ),
         'plot_app': mark_safe(json.dumps(plots)),
         'plot_script': plot_script,
+        'plot_scripts': plot_scripts,
     }
     # print(f'context: {context}')
 

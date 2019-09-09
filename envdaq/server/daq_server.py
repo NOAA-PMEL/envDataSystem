@@ -345,7 +345,20 @@ class DAQServer():
         self.add_controllers()
 
         # TODO: Is this the place to start plotmanager?
-        PlotManager.get_server().start()
+        # PlotManager.get_server().start()
+        status = Message(
+            sender_id='DAQ_SERVER',
+            msgtype='GENERIC',
+            subject="READY_STATE",
+            body={
+                'purpose': 'STATUS',
+                'status': 'READY',
+                # 'note': note,
+            }
+        )
+        print(f'_____ send no wait _____: {status.to_json()}')
+        await self.to_gui_buf.put(status)
+
 
     def start(self):
         pass

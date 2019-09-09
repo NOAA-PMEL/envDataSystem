@@ -43,6 +43,7 @@ async def send_data(client):
 async def start(client):
     global run_state
     await client.send('sems_mode=2\n')
+    # await client.send('all\n')
     run_state = 'RUNNING'
 
 
@@ -132,7 +133,8 @@ if __name__ == "__main__":
     kw = {
         # 'read_method': 'readuntil',
         # 'read_terminator': '\r',
-        'baudrate': 230400,
+        # 'baudrate': 230400,
+        'baudrate': 115200,
         # 'baudrate': 38400,
     }
     sp = SerialPortClient(

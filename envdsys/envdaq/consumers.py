@@ -6,6 +6,7 @@ import asyncio
 from envdaq.util.daq import ConfigurationUtility
 import envdaq.util.util as time_util
 from envdaq.util.sync_manager import SyncManager
+from plots.plots import PlotManager
 
 
 class DataConsumer(AsyncWebsocketConsumer):
@@ -316,6 +317,12 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
                     'message': message
                 }
             )
+            # print(f'123123123 data: {message}')
+            if 'alias' in message['BODY']:
+                alias_name = message['BODY']['alias']['name']
+                # alias_name = message.BODY.alias.name
+                # print(f'alias: {alias_name}')
+                await PlotManager.update_data(alias_name, data)
 
         elif (message['SUBJECT'] == 'CONFIG'):
             body = message['BODY']
@@ -342,7 +349,7 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
                     # TODO: add field to force sync option
                     # send config data to syncmanager
                     await SyncManager.sync_instrument_instance(body['data'])
-
+                    PlotManager.add_apps(body['data'])
         elif message['SUBJECT'] == 'RUNCONTROLS':
             print(f'message: {message}')
             body = message['BODY']
@@ -799,7 +806,7 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
         # text_data_json = json.loads(text_data)
         data = json.loads(text_data)
         message = data['message']
-        # print(f'message: {message}')
+        print(f'999999 message: {message}')
 
         if (message['SUBJECT'] == 'CONFIG'):
             body = message['BODY']
@@ -825,6 +832,11 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
                     # TODO: add field to force sync option
                     # send config data to syncmanager
                     await SyncManager.sync_data(body['data'])
+        elif message['SUBJECT'] == 'READY_STATE':
+            print('$$$$$$$ READY_STATE')
+            if message['BODY']['status'] == 'READY':
+                print(f'___ READY TO GO ___: {message}')
+                # PlotManager.get_server().start()
 
         # message = text_data_json['BODY']
 

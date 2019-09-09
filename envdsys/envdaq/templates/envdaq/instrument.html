@@ -28,14 +28,18 @@
 
 
     {% block plots %}
-        <div class="card">
-            {{ plot_script | safe }}
-            {% comment %} <div class="iframe-container">
-                <div id=plot_container>    
-                    
-                </div>
-            </div> {% endcomment %}
-        </div>
+        {% for app in plot_scripts %}
+
+            <div class="card">
+                {% comment %} {{ plot_script | safe }} {% endcomment %}
+                {{ app | safe }}
+                {% comment %} <div class="iframe-container">
+                    <div id=plot_container>    
+                        
+                    </div>
+                </div> {% endcomment %}
+            </div>
+        {% endfor %}
     {% endblock %}
     
     {% block controls %}
@@ -361,9 +365,12 @@
 
                     document.querySelector('#time-stamp').innerHTML =  (message['DATETIME'].replace(/T|Z/g, " "));
 
+                    var cell_value = ''
                     for (var meas in message['MEASUREMENTS']) {
                         if (message['MEASUREMENTS'][meas]['VALUE'] == null) {
+                            //cell_value = ''
                             continue
+                            // cell_value = message['MEASUREMENTS'][meas]['VALUE'];
                         }
                         // console.log(meas);
                         // console.log(message['MEASUREMENTS'][meas]['VALUE'])
@@ -374,6 +381,7 @@
                         cell_id = meas+"-value"
                         //document.querySelector(cell_id).innerHTML = message['MEASUREMENTS'][meas]['VALUE'];
                         document.getElementById(cell_id).innerHTML = message['MEASUREMENTS'][meas]['VALUE'];
+                        // document.getElementById(cell_id).innerHTML = cell_value;
                     }
                     // cell2 = 'cell1';
                     // cell_id = '#'+cell2;
