@@ -836,7 +836,7 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
             print('$$$$$$$ READY_STATE')
             if message['BODY']['status'] == 'READY':
                 print(f'___ READY TO GO ___: {message}')
-                # PlotManager.get_server().start()
+                PlotManager.get_server().start()
 
         # message = text_data_json['BODY']
 

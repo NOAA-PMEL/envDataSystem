@@ -254,7 +254,7 @@ class TimeSeries1D(PlotApp):
 
                 data = handle(data_msg)
                 if data:
-                    print(f'232323 data: {data}')
+                    # print(f'232323 data: {data}')
                     source.stream(data, rollover=self.rollover)
                 # print(f'update_test: {source.data["datetime"]}')
 
@@ -732,7 +732,7 @@ class SizeDistribution(PlotApp):
                 plot_width=600,
                 plot_height=300,
                 toolbar_location='above',
-                # tooltips=TOOLTIPS,
+                tooltips=TOOLTIPS,
                 sizing_mode='stretch_width',
                 # x_range=[0, 1],
                 # y_range=[0, 1],
@@ -757,11 +757,20 @@ class SizeDistribution(PlotApp):
                         new_line = fig.line(
                             source=source,
                             x='test_diameter',
+                            # x='msems_diameter',
                             # y='test_size_distribution',
                             y=y_data,
                             # legend=y_data,
                         )
-                        legend_items.append((y_data, [new_line]))
+                        new_circle = fig.circle(
+                            source=source,
+                            x='test_diameter',
+                            # x='msems_diameter',
+                            # y='test_size_distribution',
+                            y=y_data,
+                            # legend=y_data,
+                        )
+                        legend_items.append((y_data, [new_line, new_circle]))
                     fig.yaxis.axis_label = axis
                     # fig.xaxis.formatter = DatetimeTickFormatter(
                     #     days="%F",
@@ -776,7 +785,7 @@ class SizeDistribution(PlotApp):
                         fig.extra_y_ranges[axis] = DataRange1d()
                         # axis: Range1d()}
                         new_line = Line(
-                            x='test_diameter',
+                            x='msems_diameter',
                             y=y_data,
                         )
                         render = fig.add_glyph(
@@ -819,9 +828,11 @@ class SizeDistribution(PlotApp):
             doc_layout.children[1] = fig
 
         TOOLTIPS = [
-            ("index", "$index"),
-            ("(x,y)", "($x, $y)"),
-            ("desc", "@desc"),
+            # ("name", "$name"),
+            # ("(x,y)", "($x, $y)"),
+            # ("desc", "@desc"),
+            ("Dp", "$x nm"),
+            ("N", "$y cm-3"),
         ]
 
         fig = build_plot()

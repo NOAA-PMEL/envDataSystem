@@ -75,7 +75,8 @@ def instrument(request, instrument_name):
     # measurements = str(alias.instrument.definition.measurement_config.config)
     # print(f'meas: {json.dumps(measurements)}')
     measurements = json.loads(
-        alias.instrument.definition.measurement_config.config)
+        alias.instrument.definition.measurement_config.config
+    )
 
     plots = dict()
     plots["host"] = "localhost"

@@ -3,6 +3,8 @@ import asyncio
 from client.wsclient import WSClient
 from plots.apps.plot_app import PlotApp
 from data.message import Message
+from data.datafile import DataFile
+
 # from urllib.parse import quote
 
 
@@ -34,6 +36,8 @@ class DAQ(abc.ABC):
         self.ui_task_list = []
 
         self.plot_app = None
+
+        self.datafile = None
 
         # self.daq_definition = dict()
         # self.daq_definition['DEFINITION'] = dict()
@@ -91,6 +95,10 @@ class DAQ(abc.ABC):
     def setup(self):
         print(f'daq.setup')
         self.start_connections()
+
+    # @abc.abstractmethod
+    def setup_datafile(self):
+        pass
 
     def start_connections(self):
         print(f'start_connections')

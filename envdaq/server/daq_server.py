@@ -12,7 +12,7 @@ import utilities.util as util
 from datetime import datetime
 # import functools
 import json
-from plots.plots import PlotManager
+# from plots.plots import PlotManager
 
 
 # class FEServer(asyncio.Protocol):
@@ -118,7 +118,6 @@ class DAQServer():
         # task_list.append(
         #     asyncio.ensure_future(self.send_gui_loop())
         # )
-
 
         # start managers
         SysManager.start()
@@ -314,7 +313,7 @@ class DAQServer():
                 'type': 'SYSTEM_DEFINITION',
                 'data': SysManager.get_definitions_all()
 
-            }       
+            }
         )
         await self.to_gui_buf.put(sys_def)
 
@@ -344,7 +343,16 @@ class DAQServer():
         print('Add controllers...')
         self.add_controllers()
 
-        # TODO: Is this the place to start plotmanager?
+        # TODO: Create 'health monitor' to check for status
+        #       this should allow for all components to register
+        #       so we know when things are ready, broken, etc
+
+        # for now...sleep for a set amount of time to allow
+        #   everything to get set up
+        print(f'Waiting for setup...')
+        await asyncio.sleep(3)
+        print(f'Waiting for setup...done.')
+
         # PlotManager.get_server().start()
         status = Message(
             sender_id='DAQ_SERVER',
@@ -358,7 +366,6 @@ class DAQServer():
         )
         print(f'_____ send no wait _____: {status.to_json()}')
         await self.to_gui_buf.put(status)
-
 
     def start(self):
         pass

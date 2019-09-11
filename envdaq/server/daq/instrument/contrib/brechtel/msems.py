@@ -270,8 +270,10 @@ class MSEMS(BrechtelInstrument):
                 print(f'999999999999msems data: {data.to_json()}')
                 # await asyncio.sleep(.1)
                 await self.message_to_ui(data)
-                await PlotManager.update_data(self.plot_name, data.to_json())
-            # print(f'data_json: {data.to_json()}\n')
+                # await PlotManager.update_data(self.plot_name, data.to_json())
+                if self.datafile:
+                    await self.datafile.write_message(data)
+           # print(f'data_json: {data.to_json()}\n')
             # await asyncio.sleep(0.01)
         elif type == 'FromUI':
             if msg.subject == 'STATUS' and msg.body['purpose'] == 'REQUEST':
@@ -764,22 +766,33 @@ class MSEMS(BrechtelInstrument):
             'control_group': 'Operation',
         }
 
-        measurement_config['primary'] = primary_meas_2d
+        measurement_config['primary_2d'] = primary_meas_2d
         # measurement_config['primary'] = primary_meas
         measurement_config['process'] = process_meas
         measurement_config['controls'] = controls
         definition['measurement_config'] = measurement_config
 
         plot_config = dict()
-        time_series1d = dict()
-        size_dist = dict()
 
-        size_dist['dist_data'] = dist_data
-        size_dist['default_dist_data'] = ['size_distribution']
+        size_dist = dict()
+        size_dist['app_type'] = 'SizeDistribution'
+        size_dist['y_data'] = ['size_distribution', 'diameter']
+        size_dist['default_y_data'] = ['size_distribution']
+
+        time_series1d = dict()
+        time_series1d['app_type'] = 'TimeSeries1D'
         time_series1d['y_data'] = y_data
         time_series1d['default_y_data'] = ['concentration']
-        plot_config['TimeSeries1D'] = time_series1d
-        plot_config['SizeDistribution'] = size_dist
+
+        # size_dist['dist_data'] = dist_data
+        # size_dist['default_dist_data'] = ['size_distribution']
+
+        plot_config['plots'] = dict()
+        plot_config['plots']['raw_size_dist'] = size_dist
+        plot_config['plots']['main_ts1d'] = time_series1d
+
+        # plot_config['TimeSeries1D'] = time_series1d
+        # plot_config['SizeDistribution'] = size_dist
         definition['plot_config'] = plot_config
 
         return {'DEFINITION': definition}
