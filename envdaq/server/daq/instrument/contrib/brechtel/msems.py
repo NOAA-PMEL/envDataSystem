@@ -45,12 +45,20 @@ class MSEMS(BrechtelInstrument):
         self.scan_state = 999
         self.scan_run_state = 'STOPPED'
 
+        # override how often metadata is sent
+        self.include_metadata_interval = 300
+
         # this instrument appears to work with readline
         # self.iface_options = {
         #     'read_method': 'readuntil',
         #     'read_terminator': '\r',
         # }
         self.setup()
+
+    def get_datafile_config(self):
+        config = super().get_datafile_config()
+        config['save_interval'] = 0
+        return config
 
     def setup(self):
         super().setup()
@@ -152,7 +160,7 @@ class MSEMS(BrechtelInstrument):
         while True:
             # TODO: implement current_poll_cmds
             cmds = self.current_poll_cmds
-            print(f'cmds: {cmds}')
+            # print(f'cmds: {cmds}')
             # cmds = ['read\n']
 
             if self.iface:
@@ -164,7 +172,7 @@ class MSEMS(BrechtelInstrument):
                         subject='SEND',
                         body=cmd,
                     )
-                    print(f'msg: {msg}')
+                    # print(f'msg: {msg}')
                     await self.iface.message_from_parent(msg)
 
             # for k, iface in self.iface_map.items():
@@ -249,7 +257,7 @@ class MSEMS(BrechtelInstrument):
                         {'diameter': diam},
                     )
 
-                entry = self.get_data_entry(dt, add_meta=False)
+                entry = self.get_data_entry(dt)
                 # print(f'entry: {entry}')
 
                 data = Message(
@@ -267,7 +275,7 @@ class MSEMS(BrechtelInstrument):
 
                 # await self.msg_buffer.put(data)
                 # await self.to_parent_buf.put(data)
-                print(f'999999999999msems data: {data.to_json()}')
+                # print(f'999999999999msems data: {data.to_json()}')
                 # await asyncio.sleep(.1)
                 await self.message_to_ui(data)
                 # await PlotManager.update_data(self.plot_name, data.to_json())

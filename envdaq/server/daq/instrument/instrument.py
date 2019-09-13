@@ -327,6 +327,10 @@ class Instrument(DAQ):
 
         while True:
             if self.include_metadata_interval > 0:
+                wt = utilities.util.time_to_next(
+                    self.include_metadata_interval
+                )
+                print(f'wait time: {wt}')
                 await asyncio.sleep(
                     utilities.util.time_to_next(
                         self.include_metadata_interval

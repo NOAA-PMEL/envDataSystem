@@ -71,7 +71,7 @@ class TCPPortClient(ClientConnection):
             if self.reader:
                 # print(f'readline: {self.reader}')
                 msg = await self.reader.readline()
-                print(f'{msg}')
+                # print(f'{msg}')
                 return msg.decode()
 
         async def readuntil(self, terminator='\n'):
@@ -86,10 +86,10 @@ class TCPPortClient(ClientConnection):
 
         async def write(self, msg):
             if self.writer:
-                print(f'msg: {msg}')
+                # print(f'msg: {msg}')
                 self.writer.write(msg.encode())
                 await self.writer.drain()
-                print(f'written')
+                # print(f'written')
 
         async def close(self):
             self.connect_state = ClientConnection.CLOSED

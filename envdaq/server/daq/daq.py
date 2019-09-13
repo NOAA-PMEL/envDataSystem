@@ -363,7 +363,7 @@ class DAQ(abc.ABC):
     async def message_to_ui(self, msg):
         # while True:
         # print('******message_to_ui')
-        # print(f'message_to_ui: {msg.to_json()}')
+        print(f'message_to_ui: {msg.to_json()}')
         await self.to_ui_buf.put(msg)
 
     async def message_from_parent(self, msg):

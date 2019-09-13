@@ -756,16 +756,16 @@ class SizeDistribution(PlotApp):
                         # print(f'y_data, data: {axis}, {y_data}, {data}, {source.data}')
                         new_line = fig.line(
                             source=source,
-                            x='test_diameter',
-                            # x='msems_diameter',
+                            # x='test_diameter',
+                            x='msems_diameter',
                             # y='test_size_distribution',
                             y=y_data,
                             # legend=y_data,
                         )
                         new_circle = fig.circle(
                             source=source,
-                            x='test_diameter',
-                            # x='msems_diameter',
+                            # x='test_diameter',
+                            x='msems_diameter',
                             # y='test_size_distribution',
                             y=y_data,
                             # legend=y_data,
