@@ -13,6 +13,7 @@ class PlotManager():
     '''
     __server_map = dict()
     __app_list_map = dict()
+    __app_source_map = dict()
 
     DEFAULT_ID = ('localhost', 5001)
 
@@ -31,33 +32,49 @@ class PlotManager():
                     if plot_def['app_type'] == 'TimeSeries1D':
                         PlotManager.add_app(
                             TimeSeries1D(
-                                config,
+                                # config,
+                                plot_def,
                                 plot_name=plot_name,
                                 app_name=plot_def['app_name'],
                             ),
                             start_after_add=False,
                         )
                         app_list.append(plot_def['app_name'])
+                        PlotManager.register_app_source(plot_def)
                     elif plot_def['app_type'] == 'SizeDistribution':
-                        print(f'SizeDistribution add app')
+                        # print(f'SizeDistribution add app')
                         PlotManager.add_app(
                             SizeDistribution(
-                                config,
+                                # config,
+                                plot_def,
                                 plot_name=plot_name,
                                 app_name=plot_def['app_name'],
                             ),
                             start_after_add=False,
                         )
                         app_list.append(plot_def['app_name'])
+                        PlotManager.register_app_source(plot_def)
 
             key = config['NAME']
             if 'alias' in config:
                 key = config['alias']['name']
-            print(f'{app_list}, {PlotManager().__app_list_map}')
+            # print(f'{app_list}, {PlotManager().__app_list_map}')
             PlotManager().__app_list_map[key] = app_list
-            print(f'{app_list}, {PlotManager().__app_list_map}')
+            # print(f'{app_list}, {PlotManager().__app_list_map}')
             # PlotManager.start_server()
 
+    @staticmethod
+    def register_app_source(plot_def):
+        print(f'-=-=-= register_app_source: {plot_def}')
+        if plot_def and 'source_map' in plot_def:
+            for src_id, src in plot_def['source_map'].items():
+                if src_id not in PlotManager().__app_source_map:
+                    PlotManager().__app_source_map[src_id] = []
+                app_name = plot_def['app_name']
+                if app_name not in PlotManager().__app_source_map[src_id]:
+                    PlotManager().__app_source_map[src_id].append(
+                        app_name
+                    )
     @staticmethod
     def get_app_list(key):
         print(f'get_app_list: {key}, {PlotManager().__app_list_map}')
@@ -147,7 +164,20 @@ class PlotManager():
         return PlotManager().__server_map[server_id]
 
     @staticmethod
-    async def update_data(app_key, data, server_id=None):
+    async def update_data_by_source(src_id, data, server_id=None):
+        print(f'update: {src_id}')
+        if src_id in PlotManager().__app_source_map:
+            print(f'    found src_id')
+            server = PlotManager.get_server(server_id=server_id)
+            for app_name in PlotManager().__app_source_map[src_id]:
+                print(f'        app: {app_name}')
+                if server:
+                    app = server.get_app(app_name)
+                    if app:
+                        await app.update_data(data)
+
+    @staticmethod
+    async def update_data_by_key(app_key, data, server_id=None):
         # try:
         #     data = json.loads(data_json)
         # except TypeError:

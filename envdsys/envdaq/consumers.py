@@ -317,12 +317,15 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
                     'message': message
                 }
             )
-            # print(f'123123123 data: {message}')
-            if 'alias' in message['BODY']:
-                alias_name = message['BODY']['alias']['name']
+            print(f'123123123 data: {message}')
+            src_id = message['SENDER_ID']
+            await PlotManager.update_data_by_source(src_id, data)
+
+            # if 'alias' in message['BODY']:
+            #     alias_name = message['BODY']['alias']['name']
                 # alias_name = message.BODY.alias.name
                 # print(f'alias: {alias_name}')
-                await PlotManager.update_data(alias_name, data)
+                # await PlotManager.update_data_by_key(alias_name, data)
 
         elif (message['SUBJECT'] == 'CONFIG'):
             body = message['BODY']

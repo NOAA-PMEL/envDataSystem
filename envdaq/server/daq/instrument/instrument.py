@@ -10,8 +10,8 @@ from data.message import Message
 import utilities.util
 from daq.interface.interface import Interface, InterfaceFactory
 # import json
-from plots.plots import PlotManager
-from plots.apps.plot_app import TimeSeries1D
+# from plots.plots import PlotManager
+# from plots.apps.plot_app import TimeSeries1D
 
 
 class InstrumentFactory():
@@ -60,6 +60,9 @@ class Instrument(DAQ):
         #     ui_config=ui_config,
         #     auto_connect_ui=auto_connect_ui
         # )
+
+        # TODO: Need some way of specifying "standard"
+        #       measurements (inherit from second class?)
         print('init Instrument')
         # self.config = config
         print(self.config)
@@ -346,7 +349,7 @@ class Instrument(DAQ):
         print(f'Starting Instrument {self}')
         super().start(cmd)
 
-        # only need to start this, will be cancelled by 
+        # only need to start this, will be cancelled by
         #   daq on stop
         self.include_metadata = True
         self.task_list.append(
@@ -461,7 +464,8 @@ class Instrument(DAQ):
             'property_number': self.property_number,
             'measurement_meta': self.measurements['meta'],
             'plot_meta': self.get_plot_meta(),
-            'alias': self.alias
+            'alias': self.alias,
+            'ID': self.get_id()
         }
         return meta
 
@@ -476,6 +480,24 @@ class Instrument(DAQ):
         self.plot_list.clear()
         if 'plots' in plot_config:
             for plot_name, plot_def in plot_config['plots'].items():
+                # replace default id w/ instance id
+                # TODO: this is req but add feedback if missing
+                if 'source_map' in plot_def:
+                    if 'default' in plot_def['source_map']:
+
+                        plot_def['source_map'][self.get_id()] = (
+                            plot_def['source_map'].pop('default')
+                        )
+
+                        plot_def['source_map'][self.get_id()]['alias'] = (
+                            self.alias
+                        )
+
+                        mm = 'measurement_meta'
+                        plot_def['source_map'][self.get_id()][mm] = (
+                            self.measurements['meta']
+                        )
+                        
                 app_name = '/instrument_'+self.alias['name']+'_'+plot_name
                 plot_config['plots'][plot_name]['app_name'] = app_name
                 self.plot_list.append(app_name)
@@ -635,15 +657,17 @@ class DummyInstrument(Instrument):
             print(f'instrument data: {data.to_json()}')
 
             await self.message_to_ui(data)
+            # await self.to_parent_buf.put(data)
             if self.datafile:
                 await self.datafile.write_message(data)
 
             # await self.data_file.write_message(data)
-            
+
             # await PlotManager.update_data(self.plot_name, data.to_json())
 
             # print(f'data_json: {data.to_json()}\n')
             # await asyncio.sleep(0.01)
+
         elif type == 'FromUI':
             if msg.subject == 'STATUS' and msg.body['purpose'] == 'REQUEST':
                 print(f'msg: {msg.body}')
@@ -836,6 +860,7 @@ class DummyInstrument(Instrument):
             'parse_label': 'bin',
             'control': None,
             'axes': {
+                # 'TIME', 'datetime',
                 'DIAMETER': 'diameter',
             }
         }
@@ -980,18 +1005,440 @@ class DummyInstrument(Instrument):
         size_dist = dict()
         size_dist['app_type'] = 'SizeDistribution'
         size_dist['y_data'] = ['size_distribution', 'diameter']
+        # size_dist['y_data'] = ['size_distribution', 'diameter']
         size_dist['default_y_data'] = ['size_distribution']
         # size_dist['dimensions'] = ['diameter']
+        source_map = {
+            'default': {
+                'y_data': ['size_distribution', 'diameter'],
+                'default_y_data': ['size_distribution']
+            },
+        }
+        size_dist['source_map'] = source_map
 
         time_series1d = dict()
         time_series1d['app_type'] = 'TimeSeries1D'
         time_series1d['y_data'] = y_data
         time_series1d['default_y_data'] = ['concentration']
+        source_map = {
+            'default': {
+                'y_data': y_data,
+                'default_y_data': ['concentration']
+            },
+        }
+        time_series1d['source_map'] = source_map
 
         plot_config['plots'] = dict()
         # plot_config['plots'][plot_id/name]
         plot_config['plots']['raw_size_dist'] = size_dist
-        plot_config['plots']['main_ts1d'] = time_series1d
+        plot_config['plots']['dummy_ts1d'] = time_series1d
+        definition['plot_config'] = plot_config
+
+        # TODO: make definition cleaner so authors don't have to kludge
+        return {'DEFINITION': definition}
+        # DAQ.daq_definition['DEFINITION'] = definition
+
+        # return DAQ.daq_definition
+
+
+class DummyGPS(Instrument):
+
+    INSTANTIABLE = True
+
+    def __init__(self, config, **kwargs):
+        # def __init__(
+        #     self,
+        #     config,
+        #     ui_config=None,
+        #     auto_connect_ui=True
+        # ):
+
+        super(DummyGPS, self).__init__(config, **kwargs)
+        # super().__init__(
+        #     config,
+        #     ui_config=ui_config,
+        #     auto_connect_ui=auto_connect_ui
+        # )
+        # print('init DummyInstrument')
+
+        self.name = 'DummyGPS'
+        self.type = 'DummyGPSType'
+        self.mfg = 'DumbMfg'
+        self.model = 'DumbModelGPS'
+        self.tag_list = [
+            'gps',
+            'position',
+            'dummy',
+            'testing',
+            'development',
+        ]
+
+        # need to allow for datasets...how?
+
+        # definition = DummyInstrument.get_definition()
+
+        self.meas_map = dict()
+        self.meas_map['LIST'] = [
+            'gps_time',
+            'latitude',
+            'longitude',
+            'altitude'
+        ]
+        self.meas_map['DEFINITION'] = {
+            'concentration': {
+                'index': 0,
+                'units': 'cm-3',
+                'uncertainty': 0.01,
+            },
+            'inlet_temperature': {
+                'index': 1,
+                'units': 'degC',
+                'uncertainty': 0.2
+            },
+            'inlet_flow': {
+                'index': 2,
+                'units': 'l/min',
+                'uncertainty': 0.2,
+            },
+            'inlet_pressure': {
+                'index': 3,
+                'units': 'mb',
+                'uncertainty': 0.5
+            }
+        }
+
+        self.iface_meas_map = None
+
+        self.setup()
+
+    def setup(self):
+        super().setup()
+        # print(f'dummyinstrument.setup')
+        # add instance specific setup here
+
+        # meta = self.get_metadata()
+        # PlotManager.add_app(
+        #     TimeSeries1D(
+        #         meta,
+        #         name=('/instrument_'+meta['plot_meta']['name'])
+        #     ),
+        #     start_after_add=True
+        # )
+        definition = self.get_definition_instance()
+        meas_config = definition['DEFINITION']['measurement_config']
+        for msetsname, mset in meas_config.items():
+            # self.data_record_template[msetname] = dict()
+            for name, meas in mset.items():
+                self.data_record_template[name] = {'VALUE': None}
+
+    async def handle(self, msg, type=None):
+
+        # print(f'%%%%%Instrument.handle: {msg.to_json()}')
+        # handle messages from multiple sources. What ID to use?
+        if (type == 'FromChild' and msg.type == Interface.class_type):
+            # # id = msg.sender_id
+            # entry = self.parse(msg)
+            # self.last_entry = entry
+            # # print('entry = \n{}'.format(entry))
+
+            dt = self.parse(msg)
+            print(f'dt = {dt}')
+
+            # add fake gps data
+            self.update_data_record(
+                dt,
+                {'gps_time': dt}
+            )
+            val = 42 + round(random.random()*1, 3)
+            self.update_data_record(
+                dt,
+                {'latitude': val}
+            )
+            val = -120 + round(random.random()*1, 3)
+            self.update_data_record(
+                dt,
+                {'longitude': val}
+            )
+            val = 500 + round(random.random()*100, 3)
+            self.update_data_record(
+                dt,
+                {'altitude': val}
+            )
+
+            # entry = {
+            #     'METADATA': self.get_metadata(),
+            #     'DATA': {
+            #         'DATETIME': dt,
+            #         'MEASUREMENTS': self.get_data_record(dt)
+            #     }
+            entry = self.get_data_entry(dt)
+            print(f'entry: {entry}')
+            # data = dict()
+            # data['DATETIME'] = dt
+            # data['MEASUREMENTS'] = self.get_data_record(dt)
+            # entry['DATA'] = data
+
+            data = Message(
+                sender_id=self.get_id(),
+                msgtype=Instrument.class_type,
+            )
+            # send data to next step(s)
+            # to controller
+            # data.update(subject='DATA', body=entry['DATA'])
+            data.update(subject='DATA', body=entry)
+
+            # await self.msg_buffer.put(data)
+            # await self.to_parent_buf.put(data)
+            print(f'instrument data: {data.to_json()}')
+
+            await self.message_to_ui(data)
+            # await self.to_parent_buf.put(data)
+            if self.datafile:
+                await self.datafile.write_message(data)
+
+            # await self.data_file.write_message(data)
+
+            # await PlotManager.update_data(self.plot_name, data.to_json())
+
+            # print(f'data_json: {data.to_json()}\n')
+            # await asyncio.sleep(0.01)
+
+        elif type == 'FromUI':
+            if msg.subject == 'STATUS' and msg.body['purpose'] == 'REQUEST':
+                print(f'msg: {msg.body}')
+                self.send_status()
+
+            elif msg.subject == 'CONTROLS' and msg.body['purpose'] == 'REQUEST':
+
+                print(f'msg: {msg.body}')
+                await self.set_control(msg.body['control'], msg.body['value'])
+
+            elif (
+                msg.subject == 'RUNCONTROLS' and
+                msg.body['purpose'] == 'REQUEST'
+            ):
+
+                print(f'msg: {msg.body}')
+                await self.handle_control_action(
+                    msg.body['control'], msg.body['value']
+                )
+                # await self.set_control(msg.body['control'], msg.body['value'])
+
+        # print("DummyInstrument:msg: {}".format(msg.body))
+        # else:
+        #     await asyncio.sleep(0.01)
+
+    async def handle_control_action(self, control, value):
+        if control and value:
+            if control == 'start_stop':
+                if value == 'START':
+                    self.start()
+                elif value == 'STOP':
+                    self.stop()
+
+                # print(f'{self.iface_map}')
+                # await self.to_child_buf.put(cmd)
+                # await self.iface_map['DummyInterface:test_interface'].message_from_parent(cmd)
+                # self.set_control_att(control, 'action_state', 'OK')
+
+    def parse(self, msg):
+        # print(f'parse: {msg.to_json()}')
+        # entry = dict()
+        # entry['METADATA'] = self.get_metadata()
+
+        # data = dict()
+        # data['DATETIME'] = msg.body['DATETIME']
+        dt = msg.body['DATETIME']
+        # measurements = dict()
+        return dt
+        # TODO: data format issue: metadata in data or in its own field
+        #       e.g., units in data or measurement metadata?
+        # TODO: allow for "dimensions"
+        values = msg.body['DATA'].split(',')
+        # print(f'values: {values}')
+        meas_list = [
+            'concentration',
+            'inlet_temperature',
+            'inlet_flow',
+            'inlet_pressure',
+            'pump_power',
+        ]
+        controls_list = [
+            'inlet_temperature_sp',
+            'inlet_flow_sp'
+        ]
+        for i, name in enumerate(meas_list):
+            # TODO: use meta to convert to float, int
+            try:
+                val = float(values[i])
+            except ValueError:
+                val = -999
+            # measurements[name] = {
+            #     'VALUE': val,
+            # }
+
+            self.update_data_record(
+                dt,
+                {name: val}
+            )
+
+        for name in controls_list:
+            # measurements[name] = {
+            #     'VALUE': self.get_control_att(name, 'value'),
+            # }
+            self.update_data_record(
+                dt,
+                {name: self.get_control_att(name, 'value')}
+            )
+            print(f'controls: {name} = {self.get_control_att(name, "value")}')
+
+        return dt
+
+    def get_definition_instance(self):
+        # make sure it's good for json
+        # def_json = json.dumps(DummyInstrument.get_definition())
+        # print(f'def_json: {def_json}')
+        # return json.loads(def_json)
+        return DummyGPS.get_definition()
+
+    def get_definition():
+        # TODO: come up with static definition method
+        definition = dict()
+        definition['module'] = DummyGPS.__module__
+        definition['name'] = DummyGPS.__name__
+        definition['mfg'] = 'DummyMfg'
+        definition['model'] = 'DumbModelGPS'
+        definition['type'] = 'DummyGPSType'
+        definition['tags'] = [
+            'gps',
+            'position',
+            'dummy',
+            'testing',
+            'development',
+        ]
+
+        measurement_config = dict()
+
+        # array for plot conifg
+        y_data = []
+        # dist_data = []
+        # dim_data = []
+
+        # TODO: add interface entry for each measurement
+        # primary_meas_2d = dict()
+        # primary_meas_2d['size_distribution'] = {
+        #     'dimensions': {
+        #         'axes': ['TIME', 'DIAMETER'],
+        #         'unlimited': 'TIME',
+        #         'units': ['dateTime', 'nm'],
+        #     },
+        #     'units': 'cm-3',  # should be cfunits or udunits
+        #     'uncertainty': 0.1,
+        #     'source': 'MEASURED',
+        #     'data_type': 'NUMERIC',
+        #     'short_name': 'size_dist',
+        #     'parse_label': 'bin',
+        #     'control': None,
+        #     'axes': {
+        #         'DIAMETER': 'diameter',
+        #     }
+        # }
+        # dist_data.append('size_distribution')
+
+        # primary_meas_2d['diameter'] = {
+        #     'dimensions': {
+        #         'axes': ['TIME', 'DIAMETER'],
+        #         'unlimited': 'TIME',
+        #         'units': ['dateTime', 'nm'],
+        #     },
+        #     'units': 'nm',  # should be cfunits or udunits
+        #     'uncertainty': 0.1,
+        #     'source': 'MEASURED',
+        #     'data_type': 'NUMERIC',
+        #     'short_name': 'dp',
+        #     'parse_label': 'diameter',
+        #     'control': None,
+        # }
+        # dist_data.append('diameter')
+
+        primary_meas = dict()
+        primary_meas['gps_time'] = {
+            'dimensions': {
+                'axes': ['TIME'],
+                'unlimited': 'TIME',
+                'units': ['dateTime'],
+            },
+            'units': 'dateTime',  # should be cfunits or udunits
+            'uncertainty': 0.1,
+            'source': 'MEASURED',
+            'data_type': 'NUMERIC',
+            'control': None,
+        }
+        y_data.append('gps_time')
+
+        primary_meas['latitude'] = {
+            'dimensions': {
+                'axes': ['TIME'],
+                'unlimited': 'TIME',
+                'units': ['dateTime'],
+            },
+            'units': 'deg',  # should be cfunits or udunits
+            'uncertainty': 0.2,
+            'source': 'MEASURED',
+            'data_type': 'NUMERIC',
+            'control': None,
+        }
+        y_data.append('latitude')
+
+        primary_meas['longitude'] = {
+            'dimensions': {
+                'axes': ['TIME'],
+                'unlimited': 'TIME',
+                'units': ['dateTime'],
+            },
+            'units': 'deg',  # should be cfunits or udunits
+            'uncertainty': 0.2,
+            'source': 'MEASURED',
+            'data_type': 'NUMERIC',
+            'control': None,
+        }
+        y_data.append('longitude')
+
+        primary_meas['altitude'] = {
+            'dimensions': {
+                'axes': ['TIME'],
+                'unlimited': 'TIME',
+                'units': ['dateTime'],
+            },
+            'units': 'm',  # should be cfunits or udunits
+            'uncertainty': 0.4,
+            'source': 'MEASURED',
+            'data_type': 'NUMERIC',
+        }
+        y_data.append('altitude')
+
+        measurement_config['primary'] = primary_meas
+
+        definition['measurement_config'] = measurement_config
+
+        # dist_data
+
+        plot_config = dict()
+
+        time_series1d = dict()
+        time_series1d['app_type'] = 'TimeSeries1D'
+        time_series1d['y_data'] = y_data
+        time_series1d['default_y_data'] = ['altitude']
+        source_map = {
+            'default': {
+                'y_data': y_data,
+                'default_y_data': ['altitude']
+            },
+        }
+        time_series1d['source_map'] = source_map
+
+        plot_config['plots'] = dict()
+        plot_config['plots']['gps_ts1d'] = time_series1d
         definition['plot_config'] = plot_config
 
         # TODO: make definition cleaner so authors don't have to kludge

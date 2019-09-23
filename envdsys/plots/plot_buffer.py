@@ -1,5 +1,5 @@
 import asyncio
-# from collections import deque
+from collections import deque
 # from asyncio.queues import Queue
 
 
@@ -14,20 +14,18 @@ class PlotBufferManager():
         def add_buffer(self, plot_buffer):
             if plot_buffer:
 
-                print(
-                    f'plot_buffer: {plot_buffer.server_id}, {plot_buffer.id}')
+                # print(f'plot_buffer: {plot_buffer.server_id}, {plot_buffer.id}')
                 # if plot_buffer.server_id not in PlotBufferManager.plot_buffer_map:
                 if plot_buffer.server_id not in self.plot_buffer_map:
-                    print('1')
                     # PlotBufferManager.plot_buffer_map[plot_buffer.server_id] = dict()
                     self.plot_buffer_map[plot_buffer.server_id] = dict()
-                print(f'plot_buffer_map: {self.plot_buffer_map}')
+                # print(f'plot_buffer_map: {self.plot_buffer_map}')
                 # PlotBufferManager.plot_buffer_map[plot_buffer.server_id] = {plot_buffer.id: plot_buffer}
                 self.plot_buffer_map[plot_buffer.server_id][plot_buffer.id] = plot_buffer
-                print(f'before add: {self.plot_buffer_map}')
-                print(f'{self.plot_buffer_map[plot_buffer.server_id][plot_buffer.id]}')
-                print(f'plot_buffer_map: {self.plot_buffer_map}')
-                print(f'plot_buffer_map: {self.plot_buffer_map}')
+                # print(f'before add: {self.plot_buffer_map}')
+                # print(f'{self.plot_buffer_map[plot_buffer.server_id][plot_buffer.id]}')
+                # print(f'plot_buffer_map: {self.plot_buffer_map}')
+                # print(f'plot_buffer_map: {self.plot_buffer_map}')
 
         def remove_buffer(self, server_id, id):
             if self.get_buffer(server_id, id):
@@ -116,7 +114,8 @@ class PlotBuffer():
 
         self.server_id = server_id
         self.id = id
-        self.buffer = dict()
+        self.buffer = deque(maxlen=100)
+        # self.buffer = dict()
         self.msg_buf = msg_buf
 
         self.task_list = []
@@ -127,6 +126,17 @@ class PlotBuffer():
     def get_buffer(self):
         return list(self.buffer)
 
+    def has_message(self):
+        # print(f'plot_buffer length: {len(self.buffer)}')
+        return (len(self.buffer) > 0)
+
+    def read(self):
+        try:
+            return self.buffer.popleft()
+        except IndexError:
+            # return empty dictionary if no messages
+            return dict()
+
     async def run(self):
 
         while True:
@@ -134,7 +144,8 @@ class PlotBuffer():
             # print(f'listen: {msg}')
             # TODO: determine if msg is a dict. If not,
             #       turn it into one.
-            self.buffer = msg
+            # self.buffer = msg
+            self.buffer.append(msg)
 
     def stop(self):
         for t in self.task_list:

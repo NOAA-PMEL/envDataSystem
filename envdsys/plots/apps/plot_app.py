@@ -2,6 +2,7 @@ from plots.plot_buffer import PlotBufferManager, PlotBuffer
 from asyncio.queues import Queue
 import asyncio
 import abc
+import copy
 
 # import utilities.util
 from datetime import datetime
@@ -25,16 +26,19 @@ class PlotApp(abc.ABC):
             title=''):
 
         self.config = config
+        self.source_config_map = dict()
         self.name = app_name
         self.plot_name = plot_name
         self.title = title
         self.source = None
+        self.sources = dict()
         self.current_data = dict()
         self.source_map = dict()
         self.server_id = None
         self.message_buffer = None
         self.msg_buffer = Queue()
         self.prefix = ''
+        self.prefix_map = dict()
 
         # init to 60 minutes of data
         self.rollover = 3600
@@ -52,9 +56,29 @@ class PlotApp(abc.ABC):
 
     @abc.abstractmethod
     def setup(self):
+
+        # config is now just plot_def for this app and
+        #  we are mapping just the source config for each source
         if self.config:
-            if 'alias' in self.config:
-                self.prefix = self.config['alias']['prefix']
+            if 'source_map' in self.config:
+                for src_id, src_config in self.config['source_map'].items():
+                    self.source_config_map[src_id] = src_config
+                    if 'alias' in src_config:
+                        self.prefix_map[src_id] = src_config['alias']['prefix']
+                    else:
+                        self.prefix_map[src_id] = ''
+
+        # if config:
+        #     if 'ID' in config:
+        #         id = config['ID']
+        #         self.config_map[id] = config
+        #     # source_id = 'default'
+        #     # if 'plot_meta' in config:
+
+        #         if 'alias' in config:
+        #             self.prefix_map[id] = config['alias']['prefix']
+        #         else:
+        #             self.prefix_map[id] = ''
 
     @abc.abstractmethod
     def make_document(self, doc):
@@ -80,6 +104,13 @@ class PlotApp(abc.ABC):
 
     def handle_main(self, msg):
         pass
+
+    def encode_data_id(self, src_id, data_name):
+        return (src_id + '@' + data_name)
+    
+    def decode_data_id(self, data_id):
+        parts = data_id.split('@')
+        return parts[0], parts[1]
 
     # async def update_main_source(self):
 
@@ -107,47 +138,88 @@ class TimeSeries1D(PlotApp):
         super().setup()
         print(f'TS1D:setup: {self.config}')
 
+        # if 'ID' not in config:
+        #     return
+        # id = config['ID']
+
+        # if config:
+        #     if 'source_map' in config:
+        #         for src_id, src_config in config['source_map'].items():
+        #             self.config_map[src_id] = src_config
+ 
+
         # changed the json schema
-        if (
-            'plot_meta' in self.config and
-            self.plot_name in self.config['plot_meta']['plots']
-        ):
-            plot = self.config['plot_meta']['plots'][self.plot_name]
+        # if (
+        #     'plot_meta' in config and
+        #     self.plot_name in config['plot_meta']['plots']
+        # ):
+        #     plot = config['plot_meta']['plots'][self.plot_name]
 
             # self.name = self.config['plot_meta']['name']
-
-            if plot['app_type'] == 'TimeSeries1D':
-                self.name = plot['app_name']
+        if self.config['app_type'] == 'TimeSeries1D':
+            # if plot['app_type'] == 'TimeSeries1D':
+            #     self.name = plot['app_name']
 
                 # if 'TimeSeries1D' in self.config['plot_meta']:
                 #     ts1d_config = self.config['plot_meta']['TimeSeries1D']
-                ts1d_config = plot
+            ts1d_config = self.config
+            if 'source_map' not in ts1d_config:
+                print(f'no source map in plot {self.name}')
+                return
+
+            # prefix = ''
+            # if len(self.prefix_map[id]) > 0:
+            #     prefix = self.prefix_map[id] + '_'
+
+            # source_entry = dict()
+            # build map
+            ts1d_map = dict()
+            for src_id, src in ts1d_config['source_map'].items():
+
+                prefix = ''
+                if len(self.prefix_map[src_id]) > 0:
+                    prefix = self.prefix_map[src_id] + '_'
+
+                ts1d_map[src_id] = dict()
                 data = dict()
 
                 data['datetime'] = []
-                for y in ts1d_config['y_data']:
-                    name = y
-                    if len(self.prefix) > 0:
-                        name = self.prefix + '_' + y
+                # for y in ts1d_config['y_data']:
+                for y in src['y_data']:
+                    name = prefix + y
+                    # if len(self.prefix) > 0:
+                    #     name = self.prefix + '_' + y
                     data[name] = []
-                # print(f'*&*&* data: {data}')
-                self.source = ColumnDataSource(data=data)
 
-                default_data = ts1d_config['default_y_data']
+                cds = ColumnDataSource(data=data)
+                ts1d_map[src_id]['source'] = cds
+                # print(f'*&*&* data: {data}')
+                # self.source = ColumnDataSource(data=data)
+
+                # default_data = ts1d_config['default_y_data']
+                default_data = src['default_y_data']
                 # print(f'default data : {default_data}')
                 self.current_data['TimeSeries1D'] = dict()
                 new_default_data = []
                 for y in default_data:
-                    if len(self.prefix) > 0:
-                        y = self.prefix + '_' + y
-                        new_default_data.append(y)
-                self.current_data['TimeSeries1D']['y_data'] = new_default_data
+                    y = prefix + y
+                    # if len(self.prefix) > 0:
+                    #     y = self.prefix + '_' + y
+                    # new_default_data.append((src_id, y))
+                    new_default_data.append(
+                        self.encode_data_id(src_id, y)
+                    )
+                    
 
-                # build map
-                ts1d_map = dict()
-                for y in ts1d_config['y_data']:
-                    meas_config = self.get_measurement_config(y)
-                    print(f'meas Config = {meas_config}')
+                self.current_data['TimeSeries1D']['y_data'] = (
+                    new_default_data
+                )
+
+                # for y in ts1d_config['y_data']:
+                info_map = dict()
+                for y in src['y_data']:
+                    meas_config = self.get_measurement_config(src_id, y)
+                    print(f'meas config = {meas_config}')
                     if meas_config:
                         units = 'counts'
                         if 'units' in meas_config:
@@ -157,17 +229,21 @@ class TimeSeries1D(PlotApp):
                         if 'pref_color' in meas_config:
                             color = meas_config['pref_color']
 
-                        if len(self.prefix) > 0:
-                            y = self.prefix + '_' + y
-                        ts1d_map[y] = {
+                        y = prefix + y
+                        # if len(self.prefix) > 0:
+                        #     y = self.prefix + '_' + y
+                        # ts1d_map[y] = {
+                        info_map[y] = {
                             'units': units,
                             'color': color,
                         }
-                self.source_map['TimeSeries1D'] = ts1d_map
+                ts1d_map[src_id]['info_map'] = info_map
 
-                print(f'ts1d_setup source: {self.source}')
-                print(f'ts1d_setup current: {self.current_data}')
-                print(f'ts1d_setup map: {self.source_map}')
+            self.source_map['TimeSeries1D'] = ts1d_map
+
+            print(f'ts1d_setup source: {self.source}')
+            print(f'ts1d_setup current: {self.current_data}')
+            print(f'ts1d_setup map: {self.source_map}')
 
         # if self.config:
         #     print(f'plotapp_configure: {self.config}')
@@ -175,18 +251,31 @@ class TimeSeries1D(PlotApp):
     def update_main_source(self, msg):
         # while True:
         # msg = await self.main_buffer.get()
+        print(f'TS1D: update_main_source')
         if msg:
-            data = self.handle_main(msg)
+            src_id, data = self.handle_main(msg)
+            print(f'    {src_id}: {data}')
             if data:
-                print(f'data: {data}')
-                self.source.stream(data, rollover=self.rollover)
+                # print(f'data: {data}')
+                # self.source.stream(data, rollover=self.rollover)
+                source = self.source_map['TimeSeries1D'][src_id]['source']
+                # print(f'909090  source: {source.data}, {src_id}, {data}')
+                source.stream(data, rollover=self.rollover)
+                # self.source_map['TimeSeries1D'][src_id]['source'].stream(
+                #     data,
+                #     rollover=self.rollover
+                # )
+                # print(f'source: {source.data}')
             # print(f'update_main_source: {self.source.data["datetime"]}')
 
     def handle_main(self, msg):
         data = None
+        src_id = None
         # os.environ['TZ'] = 'UTC+0'
         # time.tzset()
         if 'message' in msg:
+            # print(f'here:1')
+            src_id = msg['message']['SENDER_ID']
             body = msg['message']['BODY']
             data = dict()
             dt_string = body['DATA']['DATETIME']
@@ -197,26 +286,46 @@ class TimeSeries1D(PlotApp):
                 # utilities.util.string_to_dt(dt_string)
             )
             # print(data['datetime'])
+            # print(f'here:1')
+            source_data = self.source_map['TimeSeries1D'][src_id]['source']
+            # print(f'here:2 {source_data}')
             for name, meas in body['DATA']['MEASUREMENTS'].items():
-                if len(self.prefix) > 0:
-                    name = self.prefix + '_' + name
-                if name in self.source.data:
+                if len(self.prefix_map[src_id]) > 0:
+                    name = self.prefix_map[src_id] + '_' + name
+                # if name in self.source.data:
+                # print(f'    {source_data.data}')
+                if name in source_data.data:
+                    # print(f'        {name}: {meas["VALUE"]}')
                     data[name] = []
                     data[name].append(meas['VALUE'])
                     # data[name] = meas['VALUE']
-        return data
+            if len(data) == 0:
+                data = None
+                src_id = None
+            
+        return src_id, data
 
-    def get_measurement_config(self, meas_name):
+    def get_measurement_config(self, src_id, meas_name):
 
-        if 'measurement_meta' in self.config:
-            for datatype, datamap in self.config['measurement_meta'].items():
+        if (
+            src_id in self.source_config_map and
+            'measurement_meta' in self.source_config_map[src_id]
+        ):
+            config = self.source_config_map[src_id]
+            for datatype, datamap in config['measurement_meta'].items():
                 if meas_name in datamap:
                     return datamap[meas_name]
         else:
             return dict()
 
+    def get_prefix_map(self):
+        return copy.deepcopy(self.prefix_map)
+
     def get_prefix(self):
         return self.prefix
+
+    def get_source_map(self):
+        return self.source_map
 
     def get_source_data(self):
         # print(f'source data: {self.source.data}')
@@ -224,7 +333,13 @@ class TimeSeries1D(PlotApp):
         return self.source.data
 
     def get_source_meta(self):
-        return self.current_data, self.source_map
+        return (
+            copy.deepcopy(self.current_data),
+            copy.deepcopy(self.source_map)
+        )
+
+    def get_rollover(self):
+        return self.rollover
 
     def make_document(self, doc):
         # self.source = ColumnDataSource({'x': [], 'y': [], 'color': []})
@@ -232,13 +347,41 @@ class TimeSeries1D(PlotApp):
         # source = ColumnDataSource(
         #     data=dict(x=[], y=[], color=[])
         # )
-        source = ColumnDataSource(
-            data=self.get_source_data()
-        )
+        # source_map = self.get_source_map()
+
+        # source = ColumnDataSource(
+        #     data=self.get_source_data()
+        # )
+
+        # TODO: instantiate ColDatSrc here
         current_data, source_map = self.get_source_meta()
+        
+        # replace ColumnDataSource in source_map with 
+        #   versions instantiated here. Works when deepcopy doesn't
+        for src_id, src in source_map['TimeSeries1D'].items():
+            if 'source' not in src:
+                continue
+
+            source_data = ColumnDataSource(
+                data=src['source'].data
+            )
+            if source_data:
+                source_map['TimeSeries1D'][src_id]['source'] = source_data
+
+        # print(f'^^^^ {current_data}, {source_map}')
         # print(f'plot init: {source.data}')
 
-        prefix = self.get_prefix()
+        prefix_map = self.get_prefix_map()
+        # prefix = self.get_prefix()
+
+        rollover = self.get_rollover()
+
+        def encode_data_id(src_id, data_name):
+            return (src_id + '@' + data_name)
+        
+        def decode_data_id(data_id):
+            parts = data_id.split('@')
+            return parts[0], parts[1]
 
         def update_source():
             # print('update_test')
@@ -247,22 +390,36 @@ class TimeSeries1D(PlotApp):
                 self.name,
             )
             # print(f'plot buffer = {plot_buffer}, {self.server_id}, {self.name}')
-            if plot_buffer:
+            if plot_buffer and plot_buffer.has_message():
                 # print(f'name: {id}, {self.name}')
 
-                data_msg = plot_buffer.buffer
+                # data_msg = plot_buffer.buffer
+                data_msg = plot_buffer.read()
 
-                data = handle(data_msg)
+                src_id, data = handle(data_msg)
+                # print(f' update_source: {src_id}, {data}')
                 if data:
+                    # print(f'data[datetime] = {data["datetime"]}')
                     # print(f'232323 data: {data}')
-                    source.stream(data, rollover=self.rollover)
+                    # source.stream(data, rollover=self.rollover)
+                    # source = source_map['TimeSeries1D'][src_id]['source']
+                    # print(f' {source.data}')
+                    # source.stream(data, rollover=rollover)
+                    # print(f'    {source.data}')
+                    source_map['TimeSeries1D'][src_id]['source'].stream(
+                        data,
+                        rollover=rollover
+                    )
+                    # print(f' update test: {source_map["TimeSeries1D"][src_id]["source"].data}')
                 # print(f'update_test: {source.data["datetime"]}')
 
         def handle(msg):
             data = None
+            src_id = None
             # os.environ['TZ'] = 'UTC+0'
             # time.tzset()
             if 'message' in msg:
+                src_id = msg['message']['SENDER_ID']
                 body = msg['message']['BODY']
                 data = dict()
                 dt_string = body['DATA']['DATETIME']
@@ -274,13 +431,21 @@ class TimeSeries1D(PlotApp):
 
                 )
                 # print(data['datetime'])
+                source_data = source_map['TimeSeries1D'][src_id]['source']
+                # print(f'******  app update: {source_data.data}')
                 for name, meas in body['DATA']['MEASUREMENTS'].items():
-                    if len(prefix) > 0:
-                        name = prefix + '_' + name
-                    if name in source.data:
+                    print(f' {name}: {meas}')
+                    if len(prefix_map[src_id]) > 0:
+                        name = prefix_map[src_id] + '_' + name
+                    # print(f'{name} in {source_data.data}')
+                    if name in source_data.data:
                         data[name] = []
                         data[name].append(meas['VALUE'])
-            return data
+                if len(data) == 0:
+                    data = None
+                    src_id = None
+            
+            return src_id, data
         # def update():
         # def update_axes(number):
         #     print(f'update_axes: {number}')
@@ -321,19 +486,38 @@ class TimeSeries1D(PlotApp):
 
             axes_map = dict()
             for trace in current_data['TimeSeries1D']['y_data']:
-                if trace in source_map['TimeSeries1D']:
-                    units = source_map['TimeSeries1D'][trace]['units']
+                # src_id = trace[0]
+                # y_name = trace[1]
+                src_id, y_name = decode_data_id(trace)
+                # print(f'trace: {trace}, {src_id}, {y_name}')
+                sm = source_map['TimeSeries1D'][src_id]
+                # print(f"here1: {sm}")
+                if y_name in sm['info_map']:
+                    # print("here2")
+                    info_map = sm['info_map'][y_name]
+                    # print("here3")
+                    units = info_map['units']
+                    # print("here4")
                     if units not in axes_map:
                         axes_map[units] = []
+                    # print("here5")
                     axes_map[units].append(trace)
+                    # print("here6")
 
             first = True
             legend_items = []
             for axis, data in axes_map.items():
                 if first:
-                    for y_data in data:
+                    for id_y in data:
+                        # print(f'id_y: {id_y}')
+                        # src_id = id_y[0]
+                        # y_data = id_y[1]
+                        src_id, y_data = decode_data_id(id_y)
+                        y_source = source_map['TimeSeries1D'][src_id]['source']
+                        # print(f'y_source: {y_source.data}')
                         new_line = fig.line(
-                            source=source,
+                            # source=source,
+                            source=y_source,
                             x='datetime',
                             y=y_data,
                             # legend=y_data,
@@ -349,7 +533,13 @@ class TimeSeries1D(PlotApp):
                     )
                 else:
                     # renders = []
-                    for y_data in data:
+                    # for y_data in data:
+                    for id_y in data:
+                        # src_id = id_y[0]
+                        # y_data = id_y[1]
+                        src_id, y_data = decode_data_id(id_y)
+                        y_source = source_map['TimeSeries1D'][src_id]['source']
+
                         fig.extra_y_ranges[axis] = DataRange1d()
                         # axis: Range1d()}
                         new_line = Line(
@@ -357,7 +547,8 @@ class TimeSeries1D(PlotApp):
                             y=y_data,
                         )
                         render = fig.add_glyph(
-                            source,
+                            # source,
+                            y_source,
                             new_line,
                             y_range_name=axis
                         )
@@ -463,15 +654,22 @@ class TimeSeries1D(PlotApp):
         # )
         #     add_line(trace)
         doc.title = self.title
-        doc.add_periodic_callback(update_source, 1000)
+        # doc.add_periodic_callback(update_source, 1000)
+        doc.add_periodic_callback(update_source, 250)
         # new_data = TextInput(value='')
         # new_data.on_change('value', update)
 
         traces_options = []
-        for name, val in source.data.items():
-            if name != "datetime":
-                traces_options.append(name)
+        # for name, val in source.data.items():
+        for src_id, src in source_map['TimeSeries1D'].items():
+            for name, val in src['source'].data.items():
+                if name != "datetime":
+                    # traces_options.append(((src_id, name), name))
+                    option_val = encode_data_id(src_id, name)
+                    traces_options.append((option_val, name))
         traces_current = current_data['TimeSeries1D']['y_data']
+        # traces_current = ['test_concentration']
+        # print(f'options, current: {traces_options}, {traces_current}')
         traces = MultiSelect(
             title='Select data to plot',
             value=traces_current,
@@ -510,52 +708,108 @@ class SizeDistribution(PlotApp):
         # TODO: use config to define data source
         # self.source = self.configure_data_source(config)
 
-    def setup(self):
+    def setup(self, ):
         super().setup()
         print(f'SD:setup: {self.config}')
 
+        # if 'ID' not in config:
+        #     return
+        # id = config['ID']
+
         # changed the json schema
-        if (
-            'plot_meta' in self.config and
-            self.plot_name in self.config['plot_meta']['plots']
-        ):
-            plot = self.config['plot_meta']['plots'][self.plot_name]
+        # if (
+        #     'plot_meta' in self.config and
+        #     self.plot_name in self.config['plot_meta']['plots']
+        # ):
+        #     plot = self.config['plot_meta']['plots'][self.plot_name]
 
             # self.name = self.config['plot_meta']['name']
 
-            if plot['app_type'] == 'SizeDistribution':
-                self.name = plot['app_name']
+        if self.config['app_type'] == 'SizeDistribution':
+            # if plot['app_type'] == 'SizeDistribution':
+                # self.name = plot['app_name']
 
                 # if 'TimeSeries1D' in self.config['plot_meta']:
                 #     sd_config = self.config['plot_meta']['TimeSeries1D']
-                sd_config = plot
+                # sd_config = plot
+            sd_config = self.config
+            if 'source_map' not in sd_config:
+                print(f'no source map in plot {self.name}')
+                return
+
+            # data = dict()
+
+            # prefix = ''
+            # if len(self.prefix) > 0:
+            #     prefix = self.prefix + '_'
+            # prefix = ''
+            # if len(self.prefix_map[id]) > 0:
+            #     prefix = self.prefix_map[id] + '_'
+
+            sd_map = dict()
+            for src_id, src in sd_config['source_map'].items():
+
+                prefix = ''
+                if len(self.prefix_map[src_id]) > 0:
+                    prefix = self.prefix_map[src_id] + '_'
+
+                sd_map[src_id] = dict()
                 data = dict()
 
                 # data['datetime'] = []
-                for y in sd_config['y_data']:
-                    name = y
-                    if len(self.prefix) > 0:
-                        name = self.prefix + '_' + y
+                # for y in sd_config['y_data']:
+                for y in src['y_data']:
+                    name = prefix + y
+                    # if len(self.prefix) > 0:
+                    #     name = self.prefix + '_' + y
                     data[name] = []
-                print(f'*&*&* data: {data}')
-                self.source = ColumnDataSource(data=data)
+                # print(f'*&*&* data: {data}')
+                # self.source = ColumnDataSource(data=data)
+                cds = ColumnDataSource(data=data)
+                sd_map[src_id]['source'] = cds
 
-                default_data = sd_config['default_y_data']
-                print(f'default data : {default_data}')
+                # default_data = sd_config['default_y_data']
+                default_data = src['default_y_data']
+                # print(f'default data : {default_data}')
                 self.current_data['SizeDistribution'] = dict()
                 new_default_data = []
                 for y in default_data:
-                    if len(self.prefix) > 0:
-                        y = self.prefix + '_' + y
-                        new_default_data.append(y)
-                self.current_data['SizeDistribution']['y_data'] = new_default_data
+                    # if len(self.prefix) > 0:
+                    #     y = self.prefix + '_' + y
+                    #     new_default_data.append(y)
+                    y = prefix + y
+                    # new_default_data.append((src_id, y))
+                    new_default_data.append(
+                        self.encode_data_id(src_id, y)
+                    )
+                    print(f'new_default_data: {new_default_data}')
+                
+                self.current_data['SizeDistribution']['y_data'] = (
+                    new_default_data
+                )
+                print(f'21212121 current data: {self.current_data}')
 
                 # build map
-                sd_map = dict()
-                for y in sd_config['y_data']:
-                    meas_config = self.get_measurement_config(y)
+                # sd_map = dict()
+                info_map = dict()
+                # for y in sd_config['y_data']:
+                for y in src['y_data']:
+                    meas_config = self.get_measurement_config(src_id, y)
                     print(f'meas Config = {meas_config}')
+
                     if meas_config:
+                        x_axis = 'diameter'
+                        if (
+                            'dimensions' in meas_config and
+                            'axes' in meas_config
+                        ):
+                            axes = meas_config['dimensions']['axes']
+                            if (len(axes) > 1):
+                                # assume x-axis is second dim
+                                x_axis_dim = axes[1]
+                                x_axis = meas_config['axes'][x_axis_dim]
+                        x_axis = prefix + x_axis
+
                         units = 'counts'
                         if 'units' in meas_config:
                             units = meas_config['units']
@@ -564,17 +818,22 @@ class SizeDistribution(PlotApp):
                         if 'pref_color' in meas_config:
                             color = meas_config['pref_color']
 
-                        if len(self.prefix) > 0:
-                            y = self.prefix + '_' + y
-                        sd_map[y] = {
+                        # if len(self.prefix) > 0:
+                        #     y = self.prefix + '_' + y
+                        y = prefix + y
+
+                        info_map[y] = {
+                            'x_axis': x_axis,
                             'units': units,
                             'color': color,
                         }
-                self.source_map['SizeDistribution'] = sd_map
+                sd_map[src_id]['info_map'] = info_map
 
-                print(f'sd_setup source: {self.source.data}')
-                print(f'sd_setup current: {self.current_data}')
-                print(f'sd_setup map: {self.source_map}')
+            self.source_map['SizeDistribution'] = sd_map
+
+            # print(f'sd_setup source: {self.source.data}')
+            print(f'sd_setup current: {self.current_data}')
+            print(f'sd_setup map: {self.source_map}')
 
         # if self.config:
         #     print(f'plotapp_configure: {self.config}')
@@ -583,20 +842,30 @@ class SizeDistribution(PlotApp):
         # while True:
         # msg = await self.main_buffer.get()
         if msg:
-            data = self.handle_main(msg)
+            src_id, data = self.handle_main(msg)
             if data:
                 # print(f'data: {data}')
                 # self.source.stream(data, rollover=self.rollover)
-                self.source.data = data
+                # self.source.data = data
+                self.source_map['SizeDistribution'][src_id]['source'].data = data
+                # self.source_map['SizeDistribution'][src_id]['source'].stream(
+                #     data,
+                #     rollover=self.rollover
+                # )
+
             # print(f'update_main_source: {self.source.data["datetime"]}')
 
     def handle_main(self, msg):
         data = None
+        src_id = None
         # os.environ['TZ'] = 'UTC+0'
         # time.tzset()
         if 'message' in msg:
+            # print(f'$$$$$$ @@@ {msg}')
+            src_id = msg['message']['SENDER_ID']
             body = msg['message']['BODY']
             data = dict()
+            # print(f'    *** handle: {src_id}, {body}')
             # dt_string = body['DATA']['DATETIME']
             # data['datetime'] = []
             # data['datetime'].append(
@@ -605,26 +874,53 @@ class SizeDistribution(PlotApp):
             #     # utilities.util.string_to_dt(dt_string)
             # )
             # print(data['datetime'])
+            source_data = self.source_map['SizeDistribution'][src_id]['source']
+            # print(f'    source_data: {source_data}')
             for name, meas in body['DATA']['MEASUREMENTS'].items():
-                if len(self.prefix) > 0:
-                    name = self.prefix + '_' + name
-                if name in self.source.data:
+                # print(f'        {name}: {meas}')
+                if len(self.prefix_map[src_id]) > 0:
+                    name = self.prefix_map[src_id] + '_' + name
+                # if name in self.source.data:
+                # print(f'        {source_data.data}')
+                if name in source_data.data:
                     # data[name] = []
                     # data[name].append(meas['VALUE'])
                     data[name] = meas['VALUE']
-        return data
 
-    def get_measurement_config(self, meas_name):
+        # if len(data) == 0:
+        #     data = None
+        #     src_id = None
 
-        if 'measurement_meta' in self.config:
-            for datatype, datamap in self.config['measurement_meta'].items():
+        return src_id, data
+
+    def get_measurement_config(self, src_id, meas_name):
+
+        # if 'measurement_meta' in self.config:
+        #     for datatype, datamap in self.config['measurement_meta'].items():
+        #         if meas_name in datamap:
+        #             return datamap[meas_name]
+        # else:
+        #     return dict()
+
+        if (
+            src_id in self.source_config_map and
+            'measurement_meta' in self.source_config_map[src_id]
+        ):
+            config = self.source_config_map[src_id]
+            for datatype, datamap in config['measurement_meta'].items():
                 if meas_name in datamap:
                     return datamap[meas_name]
         else:
             return dict()
 
+    def get_prefix_map(self):
+        return self.prefix_map
+
     def get_prefix(self):
         return self.prefix
+
+    def get_source_map(self):
+        return self.source_map
 
     def get_source_data(self):
         # print(f'source data: {self.source.data}')
@@ -632,7 +928,10 @@ class SizeDistribution(PlotApp):
         return self.source.data
 
     def get_source_meta(self):
-        return self.current_data, self.source_map
+        return (
+            copy.deepcopy(self.current_data),
+            copy.deepcopy(self.source_map)
+        )
 
     def make_document(self, doc):
         # self.source = ColumnDataSource({'x': [], 'y': [], 'color': []})
@@ -640,13 +939,33 @@ class SizeDistribution(PlotApp):
         # source = ColumnDataSource(
         #     data=dict(x=[], y=[], color=[])
         # )
-        source = ColumnDataSource(
-            data=self.get_source_data()
-        )
+        # source = ColumnDataSource(
+        #     data=self.get_source_data()
+        # )
         current_data, source_map = self.get_source_meta()
         # print(f'plot init: {source.data}')
 
-        prefix = self.get_prefix()
+        # replace ColumnDataSource in source_map with 
+        #   versions instantiated here. Works when deepcopy doesn't
+        for src_id, src in source_map['SizeDistribution'].items():
+            if 'source' not in src:
+                continue
+
+            source_data = ColumnDataSource(
+                data=src['source'].data
+            )
+            if source_data:
+                source_map['SizeDistribution'][src_id]['source'] = source_data
+
+        prefix_map = self.get_prefix_map()
+        # prefix = self.get_prefix()
+
+        def encode_data_id(src_id, data_name):
+            return (src_id + '@' + data_name)
+        
+        def decode_data_id(data_id):
+            parts = data_id.split('@')
+            return parts[0], parts[1]
 
         def update_source():
             # print('update_test')
@@ -655,18 +974,27 @@ class SizeDistribution(PlotApp):
                 self.name,
             )
             # print(f'plot buffer = {plot_buffer}, {self.server_id}, {self.name}')
-            if plot_buffer:
+            if plot_buffer and plot_buffer.has_message():
                 # print(f'name: {id}, {self.name}')
+                print(f'plot_buffer: {len(plot_buffer.buffer)}, {plot_buffer.buffer}')
+                # data_msg = plot_buffer.buffer
+                data_msg = plot_buffer.read()
 
-                data_msg = plot_buffer.buffer
-
-                data = handle(data_msg)
+                src_id, data = handle(data_msg)
+                # print(f' {src_id}: {data}')
                 if data:
                     # print(f'66666 update source: {data}, {source.data}')
                     # source.stream(data, rollover=self.rollover)
                     # source.stream(data, rollover=1)
                     # source.stream(data, rollover=len(data[next(iter(data))]))
-                    source.data = data
+                    # source.data = data
+                    source = source_map['SizeDistribution'][src_id]['source']
+                    # print(f'source: {source}, {self.rollover}')
+                    source_map['SizeDistribution'][src_id]['source'].data = data
+                    # source_map['SizeDistribution'][src_id]['source'].stream(
+                    #     data,
+                    #     rollover=self.rollover
+                    # )
                     # source = ColumnDataSource(
                     #     data=self.get_source_data()
                     # )
@@ -675,13 +1003,16 @@ class SizeDistribution(PlotApp):
 
         def handle(msg):
             data = None
+            src_id = None
             # os.environ['TZ'] = 'UTC+0'
             # time.tzset()
             # print(f'handle: {msg}')
             if 'message' in msg:
+                src_id = msg['message']['SENDER_ID']
                 body = msg['message']['BODY']
+                # print(f'    *** handle: {src_id}, {body}')
                 data = dict()
-                dt_string = body['DATA']['DATETIME']
+                # dt_string = body['DATA']['DATETIME']
                 # # print(f'*****pandas: {pd.to_datetime(dt_string, format=isofmt)}')
                 # data['datetime'] = []
                 # data['datetime'].append(
@@ -690,17 +1021,25 @@ class SizeDistribution(PlotApp):
 
                 # )
                 # print(data['datetime'])
+                source_data = source_map['SizeDistribution'][src_id]['source']
                 for name, meas in body['DATA']['MEASUREMENTS'].items():
                     # print('here')
-                    if len(prefix) > 0:
-                        name = prefix + '_' + name
-                    if name in source.data:
+                    if len(prefix_map[src_id]) > 0:
+                        name = prefix_map[src_id] + '_' + name
+                    # if name in source.data:
+                    # print(f' {name} in {source_data.data}')
+                    if name in source_data.data:
                         # print(f'22222222 data: {name}, {source.data}, {data}')
                         # data[name] = []
                         # data[name].append(meas['VALUE'])
                         data[name] = meas['VALUE']
                         # print(f'33333333 data: {name}, {source.data}, {data}')
-            return data
+
+                if len(data) == 0:
+                    data = None
+                    src_id = None
+            
+            return src_id, data
         # def update():
         # def update_axes(number):
         #     print(f'update_axes: {number}')
@@ -740,9 +1079,16 @@ class SizeDistribution(PlotApp):
             )
 
             axes_map = dict()
+            print(f'49494 current_data: {current_data}')
             for trace in current_data['SizeDistribution']['y_data']:
-                if trace in source_map['SizeDistribution']:
-                    units = source_map['SizeDistribution'][trace]['units']
+                # src_id = trace[0]
+                # y_name = trace[1]
+                src_id, y_name = decode_data_id(trace)
+                sm = source_map['SizeDistribution'][src_id]
+                if y_name in sm['info_map']:
+                    info_map = sm['info_map'][y_name]
+                    units = info_map['units']
+                    # units = source_map['SizeDistribution'][trace]['units']
                     if units not in axes_map:
                         axes_map[units] = []
                     axes_map[units].append(trace)
@@ -752,20 +1098,27 @@ class SizeDistribution(PlotApp):
             # print(f'11111111111 source: {source.column_names}')
             for axis, data in axes_map.items():
                 if first:
-                    for y_data in data:
+                    for id_y in data:
                         # print(f'y_data, data: {axis}, {y_data}, {data}, {source.data}')
+                        # src_id = id_y[0]
+                        # y_data = id_y[1]
+                        src_id, y_data = decode_data_id(id_y)
+                        sm = source_map['SizeDistribution'][src_id]
+                        y_source = sm['source']
+                        print(f'1010101 sd: build: {y_source}, {y_data}, {sm["info_map"][y_data]["x_axis"]}')
                         new_line = fig.line(
-                            source=source,
-                            # x='test_diameter',
-                            x='msems_diameter',
+                            source=y_source,
+                            x=sm['info_map'][y_data]['x_axis'],
+                            # x='msems_diameter',
                             # y='test_size_distribution',
                             y=y_data,
                             # legend=y_data,
                         )
                         new_circle = fig.circle(
-                            source=source,
-                            # x='test_diameter',
-                            x='msems_diameter',
+                            source=y_source,
+                            # x=source_map['SizeDistribution'][y_data]['x_axis'],
+                            x=sm['info_map'][y_data]['x_axis'],
+                            # x='msems_diameter',
                             # y='test_size_distribution',
                             y=y_data,
                             # legend=y_data,
@@ -781,15 +1134,25 @@ class SizeDistribution(PlotApp):
                     # )
                 else:
                     # renders = []
-                    for y_data in data:
+                
+                    for id_y in data:
+                        # print(f'y_data, data: {axis}, {y_data}, {data}, {source.data}')
+                        # src_id = id_y[0]
+                        # y_data = id_y[1]
+                        src_id, y_data = decode_data_id(id_y)
+                        sm = source_map['SizeDistribution'][src_id]
+                        y_source = sm['source']
+
                         fig.extra_y_ranges[axis] = DataRange1d()
                         # axis: Range1d()}
                         new_line = Line(
-                            x='msems_diameter',
+                            sm['info_map'][y_data]['x_axis'],
+                            # x=source_map['SizeDistribution'][y_data]['x_axis'],
                             y=y_data,
                         )
                         render = fig.add_glyph(
-                            source,
+                            # source,
+                            y_source,
                             new_line,
                             y_range_name=axis
                         )
@@ -837,12 +1200,20 @@ class SizeDistribution(PlotApp):
 
         fig = build_plot()
         doc.title = self.title
-        doc.add_periodic_callback(update_source, 1000)
+        # doc.add_periodic_callback(update_source, 1000)
+        doc.add_periodic_callback(update_source, 250)
 
         traces_options = []
-        for name, val in source.data.items():
-            if name != "datetime":
-                traces_options.append(name)
+        # for name, val in source.data.items():
+        #     if name != "datetime":
+        #         traces_options.append(name)
+        for src_id, src in source_map['SizeDistribution'].items():
+            for name, val in src['source'].data.items():
+                if name != "datetime":
+                    # traces_options.append(((src_id, name), name))        
+                    option = (encode_data_id(src_id, name))
+                    traces_options.append((option, name))
+                    # traces_options.append(name)        
         traces_current = current_data['SizeDistribution']['y_data']
         traces = MultiSelect(
             title='Select data to plot',

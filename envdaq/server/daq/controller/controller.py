@@ -66,18 +66,8 @@ class Controller(DAQ):
 
     # def __init__(self, config):
     def __init__(self, config, **kwargs):
-        # def __init__(
-        #     self,
-        #     config,
-        #     ui_config=None,
-        #     auto_connect_ui=True
-        # ):
         super(Controller, self).__init__(config, **kwargs)
-        # super().__init__(
-        #    config,
-        #    ui_config=ui_config,
-        #    auto_connect_ui=auto_connect_ui
-        # )
+
         print('init Controller')
         print(self.config)
 
@@ -92,24 +82,6 @@ class Controller(DAQ):
         # signals/measurements from dataManager/aggregator
         self.signal_list = []
         self.signal_map = {}
-
-        # self.self.loop = asyncio.get_event_loop()
-
-        # self.sendq = asyncio.Queue(loop=self.loop)
-        # self.readq = asyncio.Queue(loop=self.event_loop)
-
-        # TODO: eventuallly this will be from factory and in config
-        # TODO: properly instantiate and close WSClient in controller
-        # self.gui_client = WSClient(
-        #     uri='ws://localhost:8001/ws/envdaq/data_test/')
-
-        # self.task_list.append(asyncio.ensure_future(self.send_gui_data()))
-        # self.task_list.append(asyncio.ensure_future(self.read_gui_data()))
-        # asyncio.ensure_future(self.message_to_gui())
-        # asyncio.ensure_future(self.from_gui_loop())
-        # asyncio.ensure_future(self.send_data())
-
-        # self.create_msg_buffers(config=None)
 
         # self.add_instruments()
         # self.add_signals()
@@ -166,43 +138,9 @@ class Controller(DAQ):
         print(f'get_ui_address: {address}')
         return address
 
-    # async def send_message(self, message):
-    #     # TODO: Do I need queues? Message and string methods?
-    #     # await self.sendq.put(message.to_json())
-    #     await self.sendq.put(message)
-    #     # await self.to_gui_buf.put(message)
-
-    # async def send_gui_data(self):
-
-    #     while True:
-    #         # body = 'fake message - {}'.format(datetime.utcnow().isoformat(timespec='seconds'))
-    #         # msg = {'message': body}
-    #         # message = Message(type='Test', sender_id='me', subject='test', body=msg)
-    #         # # print('send_data: {}'.format(msg))
-    #         # print('send_data: {}'.format(message.to_json))
-    #         # # await client.send(json.dumps(msg))
-    #         message = await self.sendq.get()
-    #         # print('send gui message')
-    #         await self.gui_client.send_message(message)
-    #         # await asyncio.sleep(1)
-
-    # async def read_gui_data(self):
-
-    #     while True:
-    #         msg = await self.gui_client.read_message()
-    #         # msg = await self.gui_client.read()
-    #         # await self.handle(msg)
-    #         await asyncio.sleep(0.01)
-    #         print('read_gui_data: {}'.format(msg))
-
     def start(self, cmd=None):
         print('Starting Controller')
         super().start(cmd)
-
-        # task = asyncio.ensure_future(self.read_loop())
-        # task = asyncio.ensure_future(self.from_child_loop())
-        # task = asyncio.ensure_future(self.from_gui_loop())
-        # self.task_list.append(task)
 
         # start instruments
         for k, v in self.instrument_map.items():
@@ -372,6 +310,18 @@ class DummyController(Controller):
         super().setup()
         # add extra here    
 
+        # build dummy istrument map
+        self.dummy_instrument_map = dict()
+        for inst_id, inst in self.instrument_map.items():
+            print(f'()()() setup: {inst.type}, {inst.label}, {inst.alias}')
+            if 'dummy' in inst.tag_list:
+                self.dummy_instrument_map[inst_id] = {
+                    'instrument': inst,
+                    # anything else? alias? label?
+                }
+
+        print(f'dummy_map: {self.dummy_instrument_map}')
+        
     async def handle(self, msg, type=None):
         # print(f'%%%%%Instrument.handle: {msg.to_json()}')
         # handle messages from multiple sources. What ID to use?

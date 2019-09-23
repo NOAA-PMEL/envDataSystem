@@ -150,10 +150,17 @@ class DummyIFDevice(IFDevice):
         self.label = "DummyIFDevice"
         self.name = "DummyIFDevice"
 
+        if 'DUMMY_PORT' in config['DESCRIPTION']:
+            self.dummy_port = config['DESCRIPTION']['DUMMY_PORT']
+        else:
+            self.dummy_port = 1
     # def get_id(self):
     #     return ('DummyIFDevice')
 
         self.setup()
+
+    def get_id(self):
+        return self.__class__.__name__ + '_' + str(self.dummy_port)
 
     def setup(self):
         super().setup()

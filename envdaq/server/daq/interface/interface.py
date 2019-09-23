@@ -308,6 +308,12 @@ class DummyInterface(Interface):
         # print(self.ifdevice.to_parent_buf)
 
         self.name = 'DummyInterface'
+
+        self.dummy_port = 1
+        if 'dummy_port' in config:
+            self.dummy_port = config['dummy_port']
+
+
         self.setup()
 
     def setup(self):
@@ -328,10 +334,23 @@ class DummyInterface(Interface):
         #     self.iface_map[iface.get_id()] = iface
 
         # TODO: remove hardcode and use config
-        ifdev_config = json.loads(
-            '{"IFDEVICE": {"MODULE": "daq.interface.ifdevice", "CLASS": "DummyIFDevice"},'
-            ' "IFDEVCONFIG": {"DESCRIPTION": {"LABEL": "Dummy IFDevice", "SERIAL_NUMBER": "1234", "PROPERTY_NUMBER": "CD0001234"}}}'
-        )
+        # ifdev_config = json.loads(
+        #     '{"IFDEVICE": {"MODULE": "daq.interface.ifdevice", "CLASS": "DummyIFDevice"},'
+        #     ' "IFDEVCONFIG": {"DESCRIPTION": {"LABEL": "Dummy IFDevice", "SERIAL_NUMBER": "1234", "PROPERTY_NUMBER": "CD0001234"}}}'
+        # )
+
+        ifdev_config = {
+            "IFDEVICE": {
+                "MODULE": "daq.interface.ifdevice",
+                "CLASS": "DummyIFDevice"
+            },
+            "IFDEVCONFIG": {
+                "DESCRIPTION": {
+                    "LABEL": self.label,
+                    "DUMMY_PORT": self.dummy_port,
+                }
+            }
+        }
         ui_config = dict()
         # ui_config['do_ui_connection'] = False
 

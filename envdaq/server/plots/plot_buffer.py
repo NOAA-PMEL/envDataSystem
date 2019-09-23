@@ -1,5 +1,5 @@
 import asyncio
-# from collections import deque
+from collections import deque
 # from asyncio.queues import Queue
 
 
@@ -116,7 +116,8 @@ class PlotBuffer():
 
         self.server_id = server_id
         self.id = id
-        self.buffer = dict()
+        self.buffer = deque(maxlen=100)
+        # self.buffer = dict()
         self.msg_buf = msg_buf
 
         self.task_list = []
@@ -127,6 +128,16 @@ class PlotBuffer():
     def get_buffer(self):
         return list(self.buffer)
 
+    def has_message(self):
+        return (len(self.buffer) > 0)
+
+    def read(self):
+        try:
+            return self.buffer.popleft()
+        except IndexError:
+            # return empty dictionary if no messages
+            return dict()
+
     async def run(self):
 
         while True:
@@ -134,7 +145,8 @@ class PlotBuffer():
             # print(f'listen: {msg}')
             # TODO: determine if msg is a dict. If not,
             #       turn it into one.
-            self.buffer = msg
+            # self.buffer = msg
+            self.buffer.append(msg)
 
     def stop(self):
         for t in self.task_list:
