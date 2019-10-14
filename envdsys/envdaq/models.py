@@ -221,6 +221,12 @@ class Controller(models.Model):
     name = models.CharField(max_length=50)
     uniqueID = models.UUIDField(default=uuid.uuid1, editable=False)
 
+    alias_name = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True
+    )
+
     class Meta:
         # verbose_name = 'DAQ Server
         verbose_name_plural = 'Controllers'
@@ -241,6 +247,14 @@ class Controller(models.Model):
 
     # instrument_list = get_instruments()
 
+    measurement_config = models.OneToOneField(
+        # Configuration,
+        'envtags.Configuration',
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+    )
+
     def get_instruments(self):
 
         aliases = InstrumentAlias.objects.filter(
@@ -257,10 +271,10 @@ class Controller(models.Model):
 
     def __str__(self):
         '''String representation of Controller object. '''
-        return self.name
+        return self.alias_name
 
     def __repr__(self):
-        return (f'{self.name}.{self.uniqueID}')
+        return (f'{self.alias_name}.{self.uniqueID}')
 
     def update_instruments(self, config):
         max_tries = 5
@@ -318,6 +332,29 @@ class Controller(models.Model):
                             print(f'Waiting for instrument db to populate')
                             time.sleep(0.5)
                 # pass
+
+    def update_measurements(self, config):
+        if config:
+            try:
+                cfg = Configuration.objects.get(
+                    name=(f'{self}_controller_measurement_sets')
+                )
+                cfg.config = json.dumps(config)
+                cfg.save()
+                self.measurement_config = cfg
+                self.save()
+
+            except Configuration.DoesNotExist:
+                # c = config.loads(config)
+                # c_json = config.dumps(c)
+                cfg = Configuration(
+                    name=(f'{self}_controller_measurement_sets'),
+                    config=json.dumps(config),
+                )
+                cfg.save()
+                print(f'cfg: {cfg}')
+                self.measurement_config = cfg
+                self.save()
 
 
 # InstrumentRepresentation?

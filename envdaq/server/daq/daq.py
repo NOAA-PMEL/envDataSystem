@@ -51,7 +51,13 @@ class DAQ(abc.ABC):
         # print(f"id: {self.get_id()}")
 
         # in case we want to add heierarchy
+        # parent = {
+        #   class: 'CONTROLLER',
+        #   id: <controller_name>,
+        # }
         self.parent = None
+
+        self.data_request_list = []
 
         # Message buffers (Queues)
         #   to/from parent
@@ -110,6 +116,14 @@ class DAQ(abc.ABC):
             asyncio.ensure_future(self.run_ui_connection())
         )
     
+    def register_data_request(self, entry):
+        if (
+            entry and
+            entry not in self.data_request_list
+        ):
+
+            self.data_request_list.append(entry)
+
     def get_id(self):
         id = self.__class__.__name__
         if self.label is not None:

@@ -24,14 +24,18 @@
 {% endblock %}
 
 {% block plots %}
-    <div class="card">
-        {% comment %} {{ plot_script | safe }} {% endcomment %}
-        {% comment %} <div class="iframe-container">
-            <div id=plot_container>    
-                
-            </div>
-        </div> {% endcomment %}
-    </div>
+    {% for app in plot_scripts %}
+
+        <div class="card">
+            {% comment %} {{ plot_script | safe }} {% endcomment %}
+            {{ app | safe }}
+            {% comment %} <div class="iframe-container">
+                <div id=plot_container>    
+                    
+                </div>
+            </div> {% endcomment %}
+        </div>
+    {% endfor %}
 {% endblock %}
 
 {% block controls %}
@@ -49,159 +53,253 @@
 {% endblock %}
 
 {% block rawdata %}
-    <button class="accordion"><em>Raw data from server</em></button>
+    {% comment %} <button class="accordion"><em>Raw data from server</em></button>
     <div class="panel">
         <textarea readonly class="status-box" id="metadata-window" cols="10" rows="10"></textarea>
         <textarea readonly class="status-box" id="data-window" cols="10" rows="10"></textarea>
-    </div>
+    </div> {% endcomment %}
 {% endblock %}
 
 
 {% block content %}
 
-    <script>
+<style>
+    #data-table #control-table{
+        {% comment %} width: 100%; {% endcomment %}
+        -webkit-overflow-scrolling: touch;
+        overflow-x: auto;
+        display: block;
+        {% comment %} table-layout: fixed; {% endcomment %}
+    }
+        {% comment %} #data-table-namecol {
+        width=200px;
+    }
+        #data-table-valuecol {
+        width=200px;
+    } {% endcomment %}
+
+</style>                                                                                                                                                                     
+
+<script>
+   
+    window.onload=init;
+
+    var wait_for_setup = true;
+
+    var measurements_json = {{ controller_measurements }}
+    var measurements = JSON.parse("{{ controller_measurements | escapejs }}")
+    // console.log(measurements)
+
+    function init() {
         
-        window.onload=init;
+        {% comment %} build_table() {% endcomment %}
 
-        var wait_for_setup = true;
+        {% comment %} {{ instrument_label_json }} {% endcomment %}
+        setup_accordions()
+        build_data_table()
+        // build_controls_table()
+        //reqest_status()
+        wait_for_setup = false
+    }
+
+    
+    function build_data_table() {
+        // var measurements = JSON.parse('{{ instrument_measurements | escapejs }}')
+        // var tablediv = document.getElementById('meas-table')[0];
+        var tablediv = document.getElementById('meas-table');
         
-        function init() {
-            
-            {% comment %} build_table() {% endcomment %}
+        var table = document.createElement('table');
+        table.setAttribute('id', 'data-table');
+        table.setAttribute('class', 'daq-table')
+        //table.setAttribute('style', 'border-collapse: collapse; border-radius: 10px; overflow: hidden')
 
-            {% comment %} {{ instrument_label_json }} {% endcomment %}
-            setup_accordions()
-            build_data_table()
-            // build_controls_table()
-            //reqest_status()
-            wait_for_setup = false
-        }
+        var caption = table.createCaption()
+        caption.innerHTML = "<em>Data</em>"
 
-       
-        function build_data_table() {
-            // var measurements = JSON.parse('{{ instrument_measurements | escapejs }}')
-            // var tablediv = document.getElementById('meas-table')[0];
-            var tablediv = document.getElementById('meas-table');
-            
-            var table = document.createElement('table');
-            table.setAttribute('id', 'data-table');
-            table.setAttribute('class', 'daq-table')
-            //table.setAttribute('style', 'border-collapse: collapse; border-radius: 10px; overflow: hidden')
+        var header = table.createTHead();
+        var row = header.insertRow(0);
+        row.setAttribute('style', 'border: 1px solid black')
+        var cell = row.insertCell(0);
+        cell.setAttribute('id', 'data-table-namecol');
+        cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
+        cell.innerHTML = "<b>Name</b>";
+        cell = row.insertCell(1);
+        cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
+        cell.innerHTML = "<b>Value</b>";
+        cell.setAttribute('id', 'data-table-valuecol');
+        cell.innerHTML = "Value"
+        cell = row.insertCell(2);
+        cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
+        cell.innerHTML = "<b>Units</b>";
+        cell.setAttribute('id', 'data-table-unitcol');
 
-            var caption = table.createCaption()
-            caption.innerHTML = "<em>Data</em>"
-
-            var header = table.createTHead();
-            var row = header.insertRow(0);
-            row.setAttribute('style', 'border: 1px solid black')
-            var cell = row.insertCell(0);
-            cell.setAttribute('id', 'data-table-namecol');
-            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
-            cell.innerHTML = "<b>Name</b>";
-            cell = row.insertCell(1);
-            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
-            cell.innerHTML = "<b>Value</b>";
-            cell.setAttribute('id', 'data-table-valuecol');
-            cell.innerHTML = "Value"
-            cell = row.insertCell(2);
-            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
-            cell.innerHTML = "<b>Units</b>";
-            cell.setAttribute('id', 'data-table-unitcol');
-
-            tablediv.appendChild(table);
-        }
-
-
-        // websocket communication
-
-        var controller_name = {{ controller_name }}
-
-        console.log(controller_name)
-        var websocket = new WebSocket(
-            'ws://' + window.location.host +
-            '/ws/envdaq/controller/'+controller_name+'/');
-
-        websocket.onmessage = function(e) {
-            var data = JSON.parse(e.data)
-            console.log(data)
-            // document.getElementById('data-window').innerHTML = data
-            if (data['message']['SUBJECT'] == 'DATA') {
-                console.log(data)    
-            } else if (data['message']['SUBJECT'] == 'STATUS') {
-
-                if (data.message.BODY.purpose == 'UPDATE') {
-                   {% comment %} console.log(JSON.stringify(data.message.BODY.status)) {% endcomment %}
-                    var status = data.message.BODY.status
-                    update_status(status)
+        for (var component_type in measurements) {
+            if (component_type != "controls") {
+                comp_inst_list = measurements[component_type]
+                for (var instrument in comp_inst_list) {
+                    inst = comp_inst_list[instrument]
+                    inst_alias = inst['alias']
+                    inst_meas_meta = inst['measurement_meta']
+                    for (var meas_name in inst_meas_meta) {
+                        meas = inst_meas_meta[meas_name]
+                        // console.log(meas)
+                        dims = meas['dimensions']['axes']
+                        if (meas['dimensions']['axes'].length > 1) {
+                            continue
+                        }
+                        var name = meas_name
+                        if (inst_alias['prefix'].length >0) {
+                            name = inst_alias['prefix'] + "_" + meas_name
+                        }
+                        cell_name = name.replace('_', '-')
+                        row = table.insertRow(-1);
+                        cell = row.insertCell(0);
+                        cell.setAttribute('id', (cell_name+'-name'));
+                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center')
+                        cell.innerHTML = name
+                        cell = row.insertCell(1);
+                        cell.setAttribute('id', (cell_name+'-value'));
+                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
+                        cell.innerHTML = '';         
+                        cell = row.insertCell(2);           
+                        cell.setAttribute('id', (cell_name+'-units'));
+                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
+                        cell.innerHTML = meas['units']                    
+                    }
                 }
             }
         }
+        var td = table.rows[0].cells[0];
+        td.width = '200px';
+        td = table.rows[0].cells[1];
+        td.width = '200px';
+        td = table.rows[0].cells[2];
+        td.width = '100px';
+           
+        tablediv.appendChild(table);
+    }
 
-        websocket.onopen = function(event) {
-            console.log('Connected to: ' + event.currentTarget.url)
-            while (wait_for_setup) {}
-            
-            reqest_status()
-        }
 
+    // websocket communication
 
-        function reqest_status() {
+    var controller_name = {{ controller_name }}
 
-            var message = {}
-            message['SUBJECT'] = 'STATUS'
-            message['BODY'] = {
-                'purpose': 'REQUEST',
-           }
-            console.log(JSON.stringify(message))
-            websocket.send(
-                JSON.stringify({'message': message})
-            )
+  // console.log(controller_name)
+    var websocket = new WebSocket(
+        'ws://' + window.location.host +
+        '/ws/envdaq/controller/'+controller_name+'/');
 
-        };
+    websocket.onmessage = function(e) {
+        var data = JSON.parse(e.data)
+        // console.log(data)
+        // document.getElementById('data-window').innerHTML = data
+        if (data['message']['SUBJECT'] == 'DATA') {
+            // console.log(data)    
 
-        function update_status(status) {
-            console.log(status)
-            runstate = status.run_status
-            opsButtonSet(runstate)
-            document.getElementById("status-window").value = JSON.stringify(status)
-            document.getElementById("status-window").innerHTML = JSON.stringify(status)
-        };
+            var message = data['message']['BODY']['DATA'];
+            var prefix = data['message']['BODY']['alias']['prefix'];
+            //document.querySelector('#data-window').value = (JSON.stringify(data['message']['BODY']['DATA']) + '\n');
 
-        function opsButtonRequest(obj) {
-            button = document.getElementById('start-stop-button')
-            var req = "STOP"
-            if (button.value == "Start") {
-                req = "START"
-            } 
+            // do time-stamp if there is data we want?
+            document.querySelector('#time-stamp').innerHTML =  (message['DATETIME'].replace(/T|Z/g, " "));
 
-            var message = {}
-            message['SUBJECT'] = 'RUNCONTROLS'
-            message['BODY'] = {
-                'purpose': 'REQUEST',
-                'control': 'start_stop',
-                'value': req,
+            var cell_value = ''
+            for (var meas in message['MEASUREMENTS']) {
+                if (message['MEASUREMENTS'][meas]['VALUE'] == null) {
+                    //cell_value = ''
+                    continue
+                    // cell_value = message['MEASUREMENTS'][meas]['VALUE'];
+                }
+                // console.log(meas);
+                // console.log(message['MEASUREMENTS'][meas]['VALUE'])
+                if (message['MEASUREMENTS'][meas]['VALUE'].constructor === Array) {
+                    continue
+                }
+                //cell_id = "#"+meas+"-value"
+                cell_id = prefix+"-"+meas+"-value"
+                //document.querySelector(cell_id).innerHTML = message['MEASUREMENTS'][meas]['VALUE'];
+                //document.getElementById(cell_id).innerHTML = message['MEASUREMENTS'][meas]['VALUE'];
+                var val_cell = document.getElementById(cell_id)
+                if (val_cell) {
+                    val_cell.innerHTML = message['MEASUREMENTS'][meas]['VALUE'];
+                }
+                // document.getElementById(cell_id).innerHTML = cell_value;
             }
+         } else if (data['message']['SUBJECT'] == 'STATUS') {
 
-            websocket.send(
-                JSON.stringify({'message': message})
-            )
-
-        }
-
-        function opsButtonSet(runstate) {
-            button = document.getElementById('start-stop-button')
-
-            var class_val = 'opsbutton started'
-            var value = "Stop"
-
-            if (runstate == "STOPPED") {
-                class_val = 'opsbutton stopped'
-                value = "Start"
+            if (data.message.BODY.purpose == 'UPDATE') {
+                {% comment %} console.log(JSON.stringify(data.message.BODY.status)) {% endcomment %}
+                var status = data.message.BODY.status
+                update_status(status)
             }
-            button.value = value
-            button.className = class_val
+        }
+    }
+
+    websocket.onopen = function(event) {
+        console.log('Connected to: ' + event.currentTarget.url)
+        while (wait_for_setup) {}
+        
+        reqest_status()
+    }
+
+
+    function reqest_status() {
+
+        var message = {}
+        message['SUBJECT'] = 'STATUS'
+        message['BODY'] = {
+            'purpose': 'REQUEST',
+        }
+        console.log(JSON.stringify(message))
+        websocket.send(
+            JSON.stringify({'message': message})
+        )
+
+    };
+
+    function update_status(status) {
+        console.log(status)
+        runstate = status.run_status
+        opsButtonSet(runstate)
+        document.getElementById("status-window").value = JSON.stringify(status)
+        document.getElementById("status-window").innerHTML = JSON.stringify(status)
+    };
+
+    function opsButtonRequest(obj) {
+        button = document.getElementById('start-stop-button')
+        var req = "STOP"
+        if (button.value == "Start") {
+            req = "START"
+        } 
+
+        var message = {}
+        message['SUBJECT'] = 'RUNCONTROLS'
+        message['BODY'] = {
+            'purpose': 'REQUEST',
+            'control': 'start_stop',
+            'value': req,
         }
 
-    </script>
+        websocket.send(
+            JSON.stringify({'message': message})
+        )
+
+    }
+
+    function opsButtonSet(runstate) {
+        button = document.getElementById('start-stop-button')
+
+        var class_val = 'opsbutton started'
+        var value = "Stop"
+
+        if (runstate == "STOPPED") {
+            class_val = 'opsbutton stopped'
+            value = "Start"
+        }
+        button.value = value
+        button.className = class_val
+    }
+
+</script>
 
 {% endblock %}

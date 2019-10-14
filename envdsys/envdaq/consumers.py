@@ -242,6 +242,15 @@ class ControllerConsumer(AsyncWebsocketConsumer):
     # Receive message from room group
     async def controller_message(self, event):
         message = event['message']
+        # print(f' --3434-- controller_message: {json.dumps(message)}')
+        # Send message to WebSocket
+        await self.send(text_data=json.dumps({
+            'message': message
+        }))
+
+    # Receive message from room group
+    async def requested_message(self, event):
+        message = event['message']
         print(f'data_message: {json.dumps(message)}')
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
@@ -258,7 +267,7 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
         self.instrument_group_name = (
             'instrument_{}'.format(self.instrument_name)
         )
-        # print(f'name = {self.instrument_name}')
+        print(f'name = {self.instrument_name}')
         # Join room group
         await self.channel_layer.group_add(
             self.instrument_group_name,
@@ -317,9 +326,26 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
                     'message': message
                 }
             )
-            print(f'123123123 data: {message}')
+            # print(f'123123123 data: {message}')
             src_id = message['SENDER_ID']
             await PlotManager.update_data_by_source(src_id, data)
+
+            # print(f'message ***111***: {message}')
+            if (
+                'BODY' in message and
+                'DATA_REQUEST_LIST' in message['BODY']
+            ):
+            # TODO: make this a utility function
+                for dr in message['BODY']['DATA_REQUEST_LIST']:
+                    if dr['class'] == 'CONTROLLER':
+                        group_name = f'controller_{dr["alias"]["name"]}'
+                        await self.channel_layer.group_send(
+                            group_name.replace(' ', ''),
+                            {
+                                'type': 'controller_message',
+                                'message': message
+                            }
+                        )
 
             # if 'alias' in message['BODY']:
             #     alias_name = message['BODY']['alias']['name']
@@ -809,7 +835,7 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
         # text_data_json = json.loads(text_data)
         data = json.loads(text_data)
         message = data['message']
-        print(f'999999 message: {message}')
+        # print(f'999999 message: {message}')
 
         if (message['SUBJECT'] == 'CONFIG'):
             body = message['BODY']

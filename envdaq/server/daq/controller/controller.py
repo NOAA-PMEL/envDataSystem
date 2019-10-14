@@ -1,12 +1,12 @@
 # import abc
-import sys
+# import sys
 import importlib
 import asyncio
 from daq.daq import DAQ
-from daq.instrument.instrument import InstrumentFactory
+from daq.instrument.instrument import InstrumentFactory, Instrument
 from data.message import Message
-from plots.plots import PlotManager
-from plots.apps.plot_app import TimeSeries1D
+# from plots.plots import PlotManager
+# from plots.apps.plot_app import TimeSeries1D
 # from daq.manager.manager import DAQManager
 
 
@@ -16,6 +16,9 @@ class ControllerFactory():
     def create(config, **kwargs):
         create_cfg = config['CONTROLLER']
         contconfig = config['CONTCONFIG']
+        alias = None
+        if 'ALIAS' in config:
+            alias = config['ALIAS']
         print("module: " + create_cfg['MODULE'])
         print("class: " + create_cfg['CLASS'])
 
@@ -24,7 +27,7 @@ class ControllerFactory():
             print(mod_)
             cls_ = getattr(mod_, create_cfg['CLASS'])
             print(cls_)
-            return cls_(contconfig, **kwargs)
+            return cls_(contconfig, alias=alias, **kwargs)
 
         except Exception as e:  # better to catch ImportException?
             print(f"Controller: Unexpected error: {e}")
@@ -65,7 +68,7 @@ class Controller(DAQ):
     }
 
     # def __init__(self, config):
-    def __init__(self, config, **kwargs):
+    def __init__(self, config, alias=None, **kwargs):
         super(Controller, self).__init__(config, **kwargs)
 
         print('init Controller')
@@ -73,8 +76,14 @@ class Controller(DAQ):
 
         self.name = 'Controller'
 
+        self.alias = dict()
+        if alias:
+            self.alias = alias
+
         self.instrument_list = []
         self.instrument_map = {}
+
+        self.component_map = dict()
 
         # TODO: flesh out sensor objects as simple instruments
         self.sensor_list = []
@@ -83,6 +92,9 @@ class Controller(DAQ):
         self.signal_list = []
         self.signal_map = {}
 
+        self.measurements = dict()
+        self.measurements['meta'] = dict()
+
         # self.add_instruments()
         # self.add_signals()
 
@@ -90,12 +102,14 @@ class Controller(DAQ):
         print(f'Controller setup')
         super().setup()
 
+        self.configure_components()
+
         self.add_instruments()
         # self.add_signals()
         # print(f'id = {self.get_id()}')
 
         meta = self.get_metadata()
- 
+
         # TODO: move this to actual instrument
         # # add plots to PlotServer
         # PlotManager.add_app(
@@ -112,7 +126,6 @@ class Controller(DAQ):
         # meta['plot_app'] = {
         #     'name': ('/controller_'+meta['plot_meta']['name'])
         # }
-
 
         # tell ui to build controller
         msg = Message(
@@ -132,9 +145,15 @@ class Controller(DAQ):
         if (self.config['AUTO_START']):
             self.start()
 
+    def configure_components(self):
+        pass
+
     def get_ui_address(self):
-        print(self.label)
-        address = 'envdaq/controller/'+self.label+'/'
+        # print(self.label)
+        if self.alias and ('name' in self.alias):
+            address = 'envdaq/controller/'+self.alias['name']+'/'
+        else:
+            address = 'envdaq/controller/'+self.label+'/'
         print(f'get_ui_address: {address}')
         return address
 
@@ -214,6 +233,17 @@ class Controller(DAQ):
 
     def add_instruments(self):
         print('Add instruments')
+        # has_map = False
+        # if 'INST_MAP' in self.config:
+        #     has_map = True
+        #     for itype, ilist in self.config['INST_MAP'].items():
+        #         self.instrument_map[itype] = []
+        #     self.instrument_map['UNKNOWN'] = []
+
+        comp_inst = None
+        if 'INSTRUMENTS' in self.component_map:
+            comp_inst = self.component_map['INSTRUMENTS']
+
         for k, icfg in self.config['INST_LIST'].items():
             # for instr in self.config['INST_LIST']:
             # inst = InstrumentFactory().create(icfg['INST_CONFIG'])
@@ -222,9 +252,37 @@ class Controller(DAQ):
             inst.to_parent_buf = self.from_child_buf
             self.instrument_map[inst.get_id()] = inst
 
+            if ('INST_MAP' in self.config and comp_inst):
+                for itype, ilist in self.config['INST_MAP'].items():
+                    if k in ilist:
+                        if itype in comp_inst:
+                            comp_inst[itype].append(inst)
+                            inst.register_data_request(
+                                {
+                                    'class': 'CONTROLLER',
+                                    'id': self.label,
+                                    'alias': self.alias,
+                                    'ui_address': self.get_ui_address()
+                                }
+                            )
+
+        self.build_controller_meta()
+
+        # if has_map:
+        #     for itype, ilist in self.config['INST_MAP'].items():
+        #         if k in ilist:
+        #             self.instrument_map[itype].append(inst)
+
+    def build_controller_meta(self):
+        pass
+
     def get_metadata(self):
 
         # print(f'**** get_metadata: {self}')
+
+        if len(self.alias) == 0:
+            self.alias['name'] = self.label.replace(' ', '')
+            self.alias['prefix'] = self.label.replace(' ', '')
 
         instrument_meta = dict()
         # instrument_meta['instrument_meta'] = dict()
@@ -240,7 +298,9 @@ class Controller(DAQ):
         meta = {
             'NAME': self.name,
             'LABEL': self.label,
-            'instrument_meta': instrument_meta
+            'alias': self.alias,
+            'instrument_meta': instrument_meta,
+            'measurement_meta': self.measurements['meta']
         }
         return meta
 
@@ -253,7 +313,7 @@ class Controller(DAQ):
                 plot_config = plot_meta
                 # print(f'controller: plot_meta {plot_meta]}')
         #     inst_meta[name] = inst.get_metadata()
-        
+
         # definition = self.get_definition_instance()
         # if 'plot_config' not in definition['DEFINITION']:
         #     return dict()
@@ -308,24 +368,135 @@ class DummyController(Controller):
 
     def setup(self):
         super().setup()
-        # add extra here    
+        # add extra here
 
         # build dummy istrument map
-        self.dummy_instrument_map = dict()
-        for inst_id, inst in self.instrument_map.items():
-            print(f'()()() setup: {inst.type}, {inst.label}, {inst.alias}')
-            if 'dummy' in inst.tag_list:
-                self.dummy_instrument_map[inst_id] = {
-                    'instrument': inst,
-                    # anything else? alias? label?
-                }
+        # self.dummy_instrument_map = dict()
+        # for inst_id, inst in self.instrument_map.items():
+        #     print(f'()()() setup: {inst.type}, {inst.label}, {inst.alias}')
+        #     if 'dummy' in inst.tag_list:
+        #         self.dummy_instrument_map[inst_id] = {
+        #             'instrument': inst,
+        #             # anything else? alias? label?
+        #         }
 
-        print(f'dummy_map: {self.dummy_instrument_map}')
+        # print(f'dummy_map: {self.dummy_instrument_map}')
+
+    def configure_components(self):
+
+        self.component_map['INSTRUMENTS'] = {
+            'GPS': [],
+            'DUMMY': [],
+        }
+
+    def build_controller_meta(self):
+
+        meas_meta = dict()
+
+        if len(self.component_map['INSTRUMENTS']['GPS']) > 0:
+            # configure GPS measurements
+            gps = dict()
+            for inst in self.component_map['INSTRUMENTS']['GPS']:
+
+                inst_meta = inst.get_metadata()
+                inst_alias = inst_meta['alias']
+                inst_id = inst_meta['ID']
+
+                inst_meas = inst_meta['measurement_meta']
+                inst_plots = inst_meta['plot_meta']
+
+
+                # meas_meta[inst_id] = dict()
+                # meas_meta[inst_id]['alias'] = inst_alias
+                gps[inst_id] = dict()
+                gps[inst_id]['alias'] = inst_alias
+                gps[inst_id]['measurement_meta'] = dict()
+                mm = gps[inst_id]['measurement_meta']
+                for mtype, meas in inst_meas.items():
+                    if 'latitude' in meas:
+                        mm['latitude'] = (
+                            meas['latitude']
+                        )
+                        # meas_meta[inst_id]['latitude'] = {
+                        # gps[inst_id]['latitude'] = {
+                        #     'measurement_meta': meas['latitude'],
+                        # }
+                    if 'longitude' in meas:
+                        mm['longitude'] = (
+                            meas['longitude']
+                        )
+                        # meas_meta[inst_id]['longitude'] = {
+                        # gps[inst_id]['longitude'] = {
+                        #     'measurement_meta': meas['longitude'],
+                        # }
+                    if 'altitude' in meas:
+                        mm['altitude'] = (
+                            meas['altitude']
+                        )
+                        # meas_meta[inst_id]['altitude'] = {
+                        # gps[inst_id]['altitude'] = {
+                        #     'measurement_meta': meas['altitude'],
+                        # }
+            meas_meta['GPS'] = gps
+
+        if len(self.component_map['INSTRUMENTS']['DUMMY']) > 0:
+            # configure GPS measurements
+            dummy = dict()
+            for inst in self.component_map['INSTRUMENTS']['DUMMY']:
+
+                inst_meta = inst.get_metadata()
+                inst_alias = inst_meta['alias']
+                inst_id = inst_meta['ID']
+
+                inst_meas = inst_meta['measurement_meta']
+                inst_plots = inst_meta['plot_meta']
+
+                # meas_meta = dict()
+                # meas_meta[inst_id] = dict()
+                # meas_meta[inst_id]['alias'] = inst_alias
+                dummy[inst_id] = dict()
+                dummy[inst_id]['alias'] = inst_alias
+                dummy[inst_id]['measurement_meta'] = dict()
+                mm = dummy[inst_id]['measurement_meta']
+                for mtype, meas in inst_meas.items():
+                    if 'size_distribution' in meas:
+                        mm['size_distribution'] = (
+                            meas['size_distribution']
+                        )
+                        # {
+                        # # dummy[inst_id]['size_distribution'] = {
+                        #     'measurement_meta': meas['size_distribution'],
+                        # }
+                    if 'diameter' in meas:
+                        mm['diameter'] = (
+                            meas['diameter']
+                        )
+                        # meas_meta[inst_id]['diameter'] = {
+                        # dummy[inst_id]['diameter'] = {
+                        #     'measurement_meta': meas['diameter'],
+                        # }
+                    if 'concentration' in meas:
+                        mm['concentration'] = (
+                            meas['concentration']
+                        )
+                        # meas_meta[inst_id]['concentration'] = {
+                        # dummy[inst_id]['concentration'] = {
+                        #     'measurement_meta': meas['concentration'],
+                        # }
+            meas_meta['DUMMY'] = dummy
         
+        # add controller measurements
+        print('here')
+        # add controls
+
+        self.measurements['meta'] = meas_meta
+
+        # build plot_meta
+
     async def handle(self, msg, type=None):
         # print(f'%%%%%Instrument.handle: {msg.to_json()}')
         # handle messages from multiple sources. What ID to use?
-        if (type == 'FromChild' and msg.type == Interface.class_type):
+        if (type == 'FromChild' and msg.type == Instrument.class_type):
             id = msg.sender_id
             # entry = self.parse(msg)
             # self.last_entry = entry
@@ -343,7 +514,7 @@ class DummyController(Controller):
 
             await self.message_to_ui(data)
             # await PlotManager.update_data(self.plot_name, data.to_json())
-            
+
             # print(f'data_json: {data.to_json()}\n')
         elif type == 'FromUI':
             if msg.subject == 'STATUS' and msg.body['purpose'] == 'REQUEST':

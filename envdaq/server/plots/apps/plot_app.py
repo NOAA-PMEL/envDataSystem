@@ -61,7 +61,7 @@ class PlotApp(abc.ABC):
         print('here')
 
     async def update_data(self, msg):
-        print(f'update data: {msg}')
+        # print(f'update data: {msg}')
         self.update_main_source(msg)
         # await self.main_buffer.put(msg)
         await self.msg_buffer.put(msg)
@@ -73,7 +73,7 @@ class PlotApp(abc.ABC):
         if msg:
             data = self.handle_main(msg)
             if data:
-                print(f'data: {data}')
+                # print(f'data: {data}')
                 self.source.stream(data, rollover=self.rollover)
             # print(f'update_main_source: {self.source.data["datetime"]}')
 
@@ -443,3 +443,11 @@ class TimeSeries1D(PlotApp):
         )
         doc.add_root(doc_layout)
         # doc.add_root(fig)
+
+
+# to convert lon, lat to web mercator units
+# def deg2m(lon, lat):
+# ...     x = lon * 20037508.34 / 180
+# ...     y = math.log(math.tan((90 + lat) * math.pi / 360)) / (math.pi / 180)
+# ...     y = y * 20037508.34 / 180
+# ...     return (x, y)

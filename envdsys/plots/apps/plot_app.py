@@ -94,7 +94,7 @@ class PlotApp(abc.ABC):
         # print('here')
 
     async def update_data(self, msg):
-        print(f'update data: {msg}')
+        # print(f'update data: {msg}')
         self.update_main_source(msg)
         # await self.main_buffer.put(msg)
         await self.msg_buffer.put(msg)
@@ -219,7 +219,7 @@ class TimeSeries1D(PlotApp):
                 info_map = dict()
                 for y in src['y_data']:
                     meas_config = self.get_measurement_config(src_id, y)
-                    print(f'meas config = {meas_config}')
+                    # print(f'meas config = {meas_config}')
                     if meas_config:
                         units = 'counts'
                         if 'units' in meas_config:
@@ -251,7 +251,7 @@ class TimeSeries1D(PlotApp):
     def update_main_source(self, msg):
         # while True:
         # msg = await self.main_buffer.get()
-        print(f'TS1D: update_main_source')
+        # print(f'TS1D: update_main_source')
         if msg:
             src_id, data = self.handle_main(msg)
             print(f'    {src_id}: {data}')
@@ -434,7 +434,7 @@ class TimeSeries1D(PlotApp):
                 source_data = source_map['TimeSeries1D'][src_id]['source']
                 # print(f'******  app update: {source_data.data}')
                 for name, meas in body['DATA']['MEASUREMENTS'].items():
-                    print(f' {name}: {meas}')
+                    # print(f' {name}: {meas}')
                     if len(prefix_map[src_id]) > 0:
                         name = prefix_map[src_id] + '_' + name
                     # print(f'{name} in {source_data.data}')
@@ -782,12 +782,12 @@ class SizeDistribution(PlotApp):
                     new_default_data.append(
                         self.encode_data_id(src_id, y)
                     )
-                    print(f'new_default_data: {new_default_data}')
+                    # print(f'new_default_data: {new_default_data}')
                 
                 self.current_data['SizeDistribution']['y_data'] = (
                     new_default_data
                 )
-                print(f'21212121 current data: {self.current_data}')
+                # print(f'21212121 current data: {self.current_data}')
 
                 # build map
                 # sd_map = dict()
@@ -1105,7 +1105,7 @@ class SizeDistribution(PlotApp):
                         src_id, y_data = decode_data_id(id_y)
                         sm = source_map['SizeDistribution'][src_id]
                         y_source = sm['source']
-                        print(f'1010101 sd: build: {y_source}, {y_data}, {sm["info_map"][y_data]["x_axis"]}')
+                        # print(f'1010101 sd: build: {y_source}, {y_data}, {sm["info_map"][y_data]["x_axis"]}')
                         new_line = fig.line(
                             source=y_source,
                             x=sm['info_map'][y_data]['x_axis'],

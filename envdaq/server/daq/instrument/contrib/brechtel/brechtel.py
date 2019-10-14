@@ -179,7 +179,7 @@ class MCPC(BrechtelInstrument):
                 # print(f'instrument data: {data.to_json()}')
                 # await asyncio.sleep(.1)
                 await self.message_to_ui(data)
-                await PlotManager.update_data(self.plot_name, data.to_json())
+                # await PlotManager.update_data(self.plot_name, data.to_json())
             # print(f'data_json: {data.to_json()}\n')
             # await asyncio.sleep(0.01)
         elif type == 'FromUI':

@@ -415,10 +415,14 @@ class MSEMS(BrechtelInstrument):
             'short_name': 'size_dist',
             'parse_label': 'bin',
             'control': None,
+            'axes': {
+                # 'TIME', 'datetime',
+                'DIAMETER': 'diameter_nm',
+            }
         }
         dist_data.append('size_distribution')
 
-        primary_meas_2d['diameter'] = {
+        primary_meas_2d['diameter_nm'] = {
             'dimensions': {
                 'axes': ['TIME', 'DIAMETER'],
                 'unlimited': 'TIME',
@@ -426,13 +430,13 @@ class MSEMS(BrechtelInstrument):
             },
             'units': 'nm',  # should be cfunits or udunits
             'uncertainty': 0.1,
-            'source': 'MEASURED',
+            'source': 'CALCULATED',
             'data_type': 'NUMERIC',
             'short_name': 'dp',
             'parse_label': 'diameter',
             'control': None,
         }
-        dist_data.append('diameter')
+        dist_data.append('diameter_nm')
 
         process_meas = dict()
         process_meas['sems_date'] = {
@@ -778,19 +782,35 @@ class MSEMS(BrechtelInstrument):
         # measurement_config['primary'] = primary_meas
         measurement_config['process'] = process_meas
         measurement_config['controls'] = controls
+
         definition['measurement_config'] = measurement_config
 
         plot_config = dict()
 
         size_dist = dict()
         size_dist['app_type'] = 'SizeDistribution'
-        size_dist['y_data'] = ['size_distribution', 'diameter']
+        size_dist['y_data'] = ['size_distribution', 'diameter_nm']
         size_dist['default_y_data'] = ['size_distribution']
+        source_map = {
+            'default': {
+                'y_data': ['size_distribution', 'diameter_nm'],
+                'default_y_data': ['size_distribution']
+            },
+        }
+        size_dist['source_map'] = source_map
 
         time_series1d = dict()
         time_series1d['app_type'] = 'TimeSeries1D'
         time_series1d['y_data'] = y_data
         time_series1d['default_y_data'] = ['concentration']
+        source_map = {
+            'default': {
+                'y_data': y_data,
+                'default_y_data': ['concentration']
+            },
+        }
+        time_series1d['source_map'] = source_map
+
 
         # size_dist['dist_data'] = dist_data
         # size_dist['default_dist_data'] = ['size_distribution']
@@ -798,9 +818,6 @@ class MSEMS(BrechtelInstrument):
         plot_config['plots'] = dict()
         plot_config['plots']['raw_size_dist'] = size_dist
         plot_config['plots']['main_ts1d'] = time_series1d
-
-        # plot_config['TimeSeries1D'] = time_series1d
-        # plot_config['SizeDistribution'] = size_dist
         definition['plot_config'] = plot_config
 
         return {'DEFINITION': definition}

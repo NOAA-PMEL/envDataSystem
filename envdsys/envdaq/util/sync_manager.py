@@ -96,7 +96,7 @@ class SyncManager():
     def sync_controller_instance_nowait(config):
         # pass
         if config:
-            print(f'contoller instance: {config["NAME"]}')
+            print(f'controller instance: {config["NAME"]}')
             try:
                 cont_def = ControllerDef.objects.get(
                     name=config['NAME'],
@@ -107,19 +107,24 @@ class SyncManager():
                 try:
                     cont = Controller.objects.get(
                         name=config['LABEL'],
+                        alias_name=config['alias']['name'],
                         definition=cont_def,
                         # serial_number=config['SERIAL_NUMBER']
                     )
                     cont.update_instruments(config['instrument_meta'])
+                    cont.update_measurements(config['measurement_meta'])
                 except Controller.DoesNotExist:
                     # print(f'^^^^^create new: {inst_def}, {config["SERIAL_NUMBER"]}')
                     cont = Controller(
                         name=config['LABEL'],
+                        alias_name=config['alias']['name'],
                         definition=cont_def,
                         # serial_number=config['SERIAL_NUMBER'],
                     )
                     cont.save()
                     cont.update_instruments(config['instrument_meta'])
+                    # TODO: just do one update here to make simpler
+                    cont.update_measurements(config['measurement_meta'])
                     # TODO: add tags    
             
             except ControllerDef.DoesNotExist:

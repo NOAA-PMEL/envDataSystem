@@ -1,91 +1,91 @@
 {% extends 'envdaq/base.html' %}
 
-    {% block header %}
-        <h1>envDSys : Instrument : {{ instrument_label|cut:'"' }}</h1>
-        <h2>({{ instrument_instance|cut:'"' }})</h2>
-    {% endblock %}
+{% block header %}
+    <h1>envDSys : Instrument : {{ instrument_label|cut:'"' }}</h1>
+    <h2>({{ instrument_instance|cut:'"' }})</h2>
+{% endblock %}
 
 
-    {% comment %} <div class="status"></div> {% endcomment %}
-    {% block status %}
+{% comment %} <div class="status"></div> {% endcomment %}
+{% block status %}
+    <div class="card">
+    <textarea readonly class="status-box" id="status-window" cols="60" rows="5"></textarea><br/>
+    {% comment %} <textarea id="status-window" width="100%" rows="5"></textarea><br/> {% endcomment %}
+    {% comment %} <div id="status-window" class="status-box"></div> {% endcomment %}
+    <button id="refresh-status-button" class="opsbutton" value="Refresh" onclick=reqest_status()>Refresh</button>
+    </div>
+{% endblock %}
+
+{% block data %}
+    <div class="card">
+    <b><p id="time-stamp"></p></b><br/>
+    <div id="meas-table">
+
+        {% comment %} <script>build_data_table()</script> {% endcomment %}
+    </div>
+    </div>
+{% endblock %}
+
+
+{% block plots %}
+    {% for app in plot_scripts %}
+
         <div class="card">
-        <textarea readonly class="status-box" id="status-window" cols="60" rows="5"></textarea><br/>
-        {% comment %} <textarea id="status-window" width="100%" rows="5"></textarea><br/> {% endcomment %}
-        {% comment %} <div id="status-window" class="status-box"></div> {% endcomment %}
-        <button id="refresh-status-button" class="opsbutton" value="Refresh" onclick=reqest_status()>Refresh</button>
-        </div>
-    {% endblock %}
-    
-    {% block data %}
-        <div class="card">
-        <b><p id="time-stamp"></p></b><br/>
-        <div id="meas-table">
-
-            {% comment %} <script>build_data_table()</script> {% endcomment %}
-        </div>
-        </div>
-    {% endblock %}
-
-
-    {% block plots %}
-        {% for app in plot_scripts %}
-
-            <div class="card">
-                {% comment %} {{ plot_script | safe }} {% endcomment %}
-                {{ app | safe }}
-                {% comment %} <div class="iframe-container">
-                    <div id=plot_container>    
-                        
-                    </div>
-                </div> {% endcomment %}
-            </div>
-        {% endfor %}
-    {% endblock %}
-    
-    {% block controls %}
-        <div class="card">
-            <div id="controls-table"></div>
-            {% comment %} <label for="input_temperature_sp">Input Temperature SP</label>
-            <input id="input_temperature_sp" type="number" name="input_temperature_sp" min="10.0" max="30.0" value="25.0">
-            <input id"input_temperature_sp_set" type="button" value="Set"> {% endcomment %}
-            {% comment %} <div id="run-control> {% endcomment %}
-                <div class="opsbutton-container">
-                    <input type="button" id="start-stop-button" value="Start" class="opsbutton stopped" onclick=opsButtonRequest(this)>
+            {% comment %} {{ plot_script | safe }} {% endcomment %}
+            {{ app | safe }}
+            {% comment %} <div class="iframe-container">
+                <div id=plot_container>    
+                    
                 </div>
-            {% comment %} </div> {% endcomment %}
+            </div> {% endcomment %}
         </div>
-    {% endblock %}
+    {% endfor %}
+{% endblock %}
 
-    {% block rawdata %}
-        <button class="accordion"><em>Raw data from server</em></button>
-        <div class="panel">
-            <textarea readonly class="status-box" id="metadata-window" cols="10" rows="10"></textarea>
-            <textarea readonly class="status-box" id="data-window" cols="10" rows="10"></textarea>
-        </div>
-    {% endblock %}
+{% block controls %}
+    <div class="card">
+        <div id="controls-table"></div>
+        {% comment %} <label for="input_temperature_sp">Input Temperature SP</label>
+        <input id="input_temperature_sp" type="number" name="input_temperature_sp" min="10.0" max="30.0" value="25.0">
+        <input id"input_temperature_sp_set" type="button" value="Set"> {% endcomment %}
+        {% comment %} <div id="run-control> {% endcomment %}
+            <div class="opsbutton-container">
+                <input type="button" id="start-stop-button" value="Start" class="opsbutton stopped" onclick=opsButtonRequest(this)>
+            </div>
+        {% comment %} </div> {% endcomment %}
+    </div>
+{% endblock %}
 
-    <div class="children"></div>
+{% block rawdata %}
+    <button class="accordion"><em>Raw data from server</em></button>
+    <div class="panel">
+        <textarea readonly class="status-box" id="metadata-window" cols="10" rows="10"></textarea>
+        <textarea readonly class="status-box" id="data-window" cols="10" rows="10"></textarea>
+    </div>
+{% endblock %}
+
+<div class="children"></div>
 
 {% block content %}
     
 
     {% comment %} <h2>Instrument:{{ instrument_name_json|cut:'"' }}:{{ instrument_label_json|cut:'"' }}</h2> {% endcomment %}
-    <style>
-    #data-table #control-table{
-        {% comment %} width: 100%; {% endcomment %}
-         -webkit-overflow-scrolling: touch;
-        overflow-x: auto;
-        display: block;
-        {% comment %} table-layout: fixed; {% endcomment %}
-    }
-     {% comment %} #data-table-namecol {
-        width=200px;
-    }
-     #data-table-valuecol {
-        width=200px;
-    } {% endcomment %}
+<style>
+#data-table #control-table{
+    {% comment %} width: 100%; {% endcomment %}
+    -webkit-overflow-scrolling: touch;
+    overflow-x: auto;
+    display: block;
+    {% comment %} table-layout: fixed; {% endcomment %}
+}
+    {% comment %} #data-table-namecol {
+    width=200px;
+}
+    #data-table-valuecol {
+    width=200px;
+} {% endcomment %}
 
-    </style>                                                                                                                                                                     
+</style>                                                                                                                                                                     
     
  
     {% comment %} <button class="accordion"><em>Raw data from server</em></button>

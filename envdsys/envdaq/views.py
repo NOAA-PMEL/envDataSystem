@@ -35,7 +35,7 @@ def daqserver(request):
     return render(request, 'envdaq/daqserver.html')
 
 
-def controller(request, controller_name):
+def controller(request, controller_alias_name):
     # list needs to be filtered based on controller
     # instrument_list = InstrumentMask.objects.all()
     # print(instrument_list)
@@ -43,10 +43,30 @@ def controller(request, controller_name):
 
     # TODO: lookup controller name in Models pass config/def in context
     #       what to do if not in db?
+    try:
+        ctr = Controller.objects.get(alias_name=controller_alias_name)
+        print(f'controller: {ctr}')
+    except Controller.DoesNotexist:
+        # TODO: return 404 ... lookup how
+        pass
+    
+    # TODO: have function that gets 'tree' config for 
+    #       every view
+    # instruments = ctr.get_instruments()
+    # get instrument names for links
 
-    print(f'controller_name: {mark_safe(json.dumps(controller_name))}')
+    measurements = json.loads(
+        ctr.measurement_config.config
+    )
+
+    print(f'controller_name: {mark_safe(json.dumps(ctr.name))}')
     context = {
-        'controller_name': mark_safe(json.dumps(controller_name)),
+        'controller_display_name': mark_safe(json.dumps(ctr.name)),
+        'controller_name': mark_safe(json.dumps(ctr.alias_name)),
+        'controller_measurements': mark_safe(
+            json.dumps(measurements)
+        ),
+        'plot_scripts': []
     }
     return render(request, 'envdaq/controller.html', context=context)
 

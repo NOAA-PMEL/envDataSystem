@@ -249,6 +249,9 @@ class Instrument(DAQ):
                 'MEASUREMENTS': self.get_data_record(timestamp)
             },
         }
+        # add data request list for ui to use
+        entry['DATA_REQUEST_LIST'] = self.data_request_list
+
         if self.include_metadata or force_add_meta:
             entry['METADATA'] = self.get_metadata()
             self.include_metadata = False
@@ -451,8 +454,8 @@ class Instrument(DAQ):
 
         # TODO: force alias or do a better job of defaults
         if len(self.alias) == 0:
-            self.alias['name'] = self.label,
-            self.alias['prefix'] = self.label
+            self.alias['name'] = self.label.replace(' ', '')
+            self.alias['prefix'] = self.label.replace(' ', '')
 
         meta = {
             'NAME': self.name,
@@ -842,7 +845,7 @@ class DummyInstrument(Instrument):
         # array for plot conifg
         y_data = []
         dist_data = []
-        dim_data = []
+        # dim_data = []
 
         # TODO: add interface entry for each measurement
         primary_meas_2d = dict()
@@ -1004,7 +1007,7 @@ class DummyInstrument(Instrument):
 
         size_dist = dict()
         size_dist['app_type'] = 'SizeDistribution'
-        size_dist['y_data'] = ['size_distribution', 'diameter']
+        size_dist['y_data'] = ['size_distribution', 'diameter_nm']
         # size_dist['y_data'] = ['size_distribution', 'diameter']
         size_dist['default_y_data'] = ['size_distribution']
         # size_dist['dimensions'] = ['diameter']
@@ -1414,7 +1417,7 @@ class DummyGPS(Instrument):
             'uncertainty': 0.4,
             'source': 'MEASURED',
             'data_type': 'NUMERIC',
-        }
+        }                                           
         y_data.append('altitude')
 
         measurement_config['primary'] = primary_meas
