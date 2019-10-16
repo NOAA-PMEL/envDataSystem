@@ -95,6 +95,9 @@ class Controller(DAQ):
         self.measurements = dict()
         self.measurements['meta'] = dict()
 
+        self.plot_config = dict()
+        # self.plot_meta
+
         # self.add_instruments()
         # self.add_signals()
 
@@ -300,7 +303,8 @@ class Controller(DAQ):
             'LABEL': self.label,
             'alias': self.alias,
             'instrument_meta': instrument_meta,
-            'measurement_meta': self.measurements['meta']
+            'measurement_meta': self.measurements['meta'],
+            'plot_meta': self.plot_config
         }
         return meta
 
@@ -392,11 +396,45 @@ class DummyController(Controller):
     def build_controller_meta(self):
 
         meas_meta = dict()
+        self.plot_config = {
+            'plots': dict(),
+        }
+
+        time_series1d = {
+            'app_type': 'TimeSeries1D',
+            'source_map': dict(),
+        }
+        ts1d_source_map = dict()
+
+        size_dist = {
+            'app_type': 'SizeDistribution',
+            'source_map': dict(),
+        }
+        sd_source_map = dict()
+
+        geo_plot = {
+            'app_type': 'GeoMapPlot',
+            'source_map': dict(),
+        }
 
         if len(self.component_map['INSTRUMENTS']['GPS']) > 0:
             # configure GPS measurements
+            # TODO: how to specify primary GPS (or other) meas?
             gps = dict()
+
+            # size_dist_y_data = []
+            # size_dist_default_y_data = []
+
+            geo = []
+            geo = []
+
             for inst in self.component_map['INSTRUMENTS']['GPS']:
+
+                ts1d_y_data = []
+                ts1d_default_y_data = []
+                ts1d_meas = {
+                    'primary': dict(),
+                }
 
                 inst_meta = inst.get_metadata()
                 inst_alias = inst_meta['alias']
@@ -405,13 +443,13 @@ class DummyController(Controller):
                 inst_meas = inst_meta['measurement_meta']
                 inst_plots = inst_meta['plot_meta']
 
-
                 # meas_meta[inst_id] = dict()
                 # meas_meta[inst_id]['alias'] = inst_alias
                 gps[inst_id] = dict()
                 gps[inst_id]['alias'] = inst_alias
                 gps[inst_id]['measurement_meta'] = dict()
-                mm = gps[inst_id]['measurement_meta']
+                gps[inst_id]['measurement_meta']['primary'] = dict()
+                mm = gps[inst_id]['measurement_meta']['primary']
                 for mtype, meas in inst_meas.items():
                     if 'latitude' in meas:
                         mm['latitude'] = (
@@ -421,6 +459,9 @@ class DummyController(Controller):
                         # gps[inst_id]['latitude'] = {
                         #     'measurement_meta': meas['latitude'],
                         # }
+                        ts1d_y_data.append('latitude')
+                        ts1d_meas['primary']['latitude'] = meas['latitude']
+
                     if 'longitude' in meas:
                         mm['longitude'] = (
                             meas['longitude']
@@ -429,6 +470,9 @@ class DummyController(Controller):
                         # gps[inst_id]['longitude'] = {
                         #     'measurement_meta': meas['longitude'],
                         # }
+                        ts1d_y_data.append('longitude')
+                        ts1d_meas['primary']['longitude'] = meas['longitude']
+
                     if 'altitude' in meas:
                         mm['altitude'] = (
                             meas['altitude']
@@ -437,12 +481,38 @@ class DummyController(Controller):
                         # gps[inst_id]['altitude'] = {
                         #     'measurement_meta': meas['altitude'],
                         # }
+                        ts1d_y_data.append('altitude')
+                        ts1d_default_y_data.append('altitude')
+                        ts1d_meas['primary']['altitude'] = meas['altitude']
+
+                ts1d_source_map[inst_id] = {
+                    'y_data': ts1d_y_data,
+                    'default_y_data': ts1d_default_y_data,
+                    'alias': inst_alias,
+                    'measurement_meta': ts1d_meas
+                }
+
             meas_meta['GPS'] = gps
 
         if len(self.component_map['INSTRUMENTS']['DUMMY']) > 0:
             # configure GPS measurements
             dummy = dict()
+
+            # ts1d_source_map = dict()
+
             for inst in self.component_map['INSTRUMENTS']['DUMMY']:
+
+                ts1d_y_data = []
+                ts1d_default_y_data = []
+                ts1d_meas = {
+                    'primary': dict(),
+                }
+
+                sd_y_data = []
+                sd_default_y_data = []
+                sd_meas = {
+                    'primary': dict(),
+                }
 
                 inst_meta = inst.get_metadata()
                 inst_alias = inst_meta['alias']
@@ -457,7 +527,8 @@ class DummyController(Controller):
                 dummy[inst_id] = dict()
                 dummy[inst_id]['alias'] = inst_alias
                 dummy[inst_id]['measurement_meta'] = dict()
-                mm = dummy[inst_id]['measurement_meta']
+                dummy[inst_id]['measurement_meta']['primary'] = dict()
+                mm = dummy[inst_id]['measurement_meta']['primary']
                 for mtype, meas in inst_meas.items():
                     if 'size_distribution' in meas:
                         mm['size_distribution'] = (
@@ -467,6 +538,10 @@ class DummyController(Controller):
                         # # dummy[inst_id]['size_distribution'] = {
                         #     'measurement_meta': meas['size_distribution'],
                         # }
+                        sd_y_data.append('size_distribution')
+                        sd_meas['primary']['size_distribution'] = (
+                            meas['size_distribution']
+                        )
                     if 'diameter' in meas:
                         mm['diameter'] = (
                             meas['diameter']
@@ -475,6 +550,10 @@ class DummyController(Controller):
                         # dummy[inst_id]['diameter'] = {
                         #     'measurement_meta': meas['diameter'],
                         # }
+                        sd_y_data.append('diameter')
+                        sd_meas['primary']['diameter'] = (
+                            meas['diameter']
+                        )
                     if 'concentration' in meas:
                         mm['concentration'] = (
                             meas['concentration']
@@ -483,11 +562,51 @@ class DummyController(Controller):
                         # dummy[inst_id]['concentration'] = {
                         #     'measurement_meta': meas['concentration'],
                         # }
+                        ts1d_y_data.append('concentration')
+                        ts1d_meas['primary']['concentration'] = (
+                            meas['concentration']
+                        )
+
+                ts1d_source_map[inst_id] = {
+                    'y_data': ts1d_y_data,
+                    'default_y_data': ts1d_default_y_data,
+                    'alias': inst_alias,
+                    'measurement_meta': ts1d_meas
+                }
+
+                sd_source_map[inst_id] = {
+                    'y_data': sd_y_data,
+                    'default_y_data': sd_default_y_data,
+                    'alias': inst_alias,
+                    'measurement_meta': sd_meas
+                }
+
             meas_meta['DUMMY'] = dummy
-        
+
         # add controller measurements
         print('here')
         # add controls
+
+        prefix = self.alias['prefix']
+        self.plot_list = []
+
+        # Add TimeSeries
+        time_series1d['source_map'] = ts1d_source_map
+        plot_name = prefix + '_ts1d'
+        self.plot_config['plots'][plot_name] = time_series1d
+        app_name = '/controller_' + self.alias['name'] + '_' + plot_name
+        self.plot_config['plots'][plot_name]['app_name'] = app_name
+        self.plot_list.append(app_name)
+
+        # Add SizeDist
+        size_dist['source_map'] = sd_source_map
+        plot_name = prefix + '_raw_size_dist'
+        self.plot_config['plots'][plot_name] = size_dist
+        app_name = '/controller_' + self.alias['name'] + '_' + plot_name
+        self.plot_config['plots'][plot_name]['app_name'] = app_name
+        self.plot_list.append(app_name)
+
+        self.plot_config['app_list'] = self.plot_list
 
         self.measurements['meta'] = meas_meta
 

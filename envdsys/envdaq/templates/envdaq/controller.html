@@ -15,25 +15,18 @@
 
 {% block data %}
     <div class="card">
-    <b><p id="time-stamp"></p></b><br/>
-    <div id="meas-table">
+        <b><p id="time-stamp"></p></b><br/>
+        <div id="meas-table">
 
-        {% comment %} <script>build_data_table()</script> {% endcomment %}
-    </div>
+            {% comment %} <script>build_data_table()</script> {% endcomment %}
+        </div>
     </div>
 {% endblock %}
 
 {% block plots %}
     {% for app in plot_scripts %}
-
         <div class="card">
-            {% comment %} {{ plot_script | safe }} {% endcomment %}
             {{ app | safe }}
-            {% comment %} <div class="iframe-container">
-                <div id=plot_container>    
-                    
-                </div>
-            </div> {% endcomment %}
         </div>
     {% endfor %}
 {% endblock %}
@@ -41,23 +34,13 @@
 {% block controls %}
     <div class="card">
         <div id="controls-table"></div>
-        {% comment %} <label for="input_temperature_sp">Input Temperature SP</label>
-        <input id="input_temperature_sp" type="number" name="input_temperature_sp" min="10.0" max="30.0" value="25.0">
-        <input id"input_temperature_sp_set" type="button" value="Set"> {% endcomment %}
-        {% comment %} <div id="run-control> {% endcomment %}
-            <div class="opsbutton-container">
-                <input type="button" id="start-stop-button" value="Start" class="opsbutton stopped" onclick=opsButtonRequest(this)>
-            </div>
-        {% comment %} </div> {% endcomment %}
+        <div class="opsbutton-container">
+            <input type="button" id="start-stop-button" value="Start" class="opsbutton stopped" onclick=opsButtonRequest(this)>
+        </div>
     </div>
 {% endblock %}
 
 {% block rawdata %}
-    {% comment %} <button class="accordion"><em>Raw data from server</em></button>
-    <div class="panel">
-        <textarea readonly class="status-box" id="metadata-window" cols="10" rows="10"></textarea>
-        <textarea readonly class="status-box" id="data-window" cols="10" rows="10"></textarea>
-    </div> {% endcomment %}
 {% endblock %}
 
 
@@ -92,19 +75,18 @@
 
     function init() {
         
-        {% comment %} build_table() {% endcomment %}
-
-        {% comment %} {{ instrument_label_json }} {% endcomment %}
-        setup_accordions()
+        //setup_accordions()
+        console.log('building table')
         build_data_table()
+        console.log('table built')
         // build_controls_table()
         //reqest_status()
         wait_for_setup = false
+        console.log(wait_for_setup)
+        //reqest_status()
     }
 
-    
     function build_data_table() {
-        // var measurements = JSON.parse('{{ instrument_measurements | escapejs }}')
         // var tablediv = document.getElementById('meas-table')[0];
         var tablediv = document.getElementById('meas-table');
         
@@ -133,6 +115,7 @@
         cell.innerHTML = "<b>Units</b>";
         cell.setAttribute('id', 'data-table-unitcol');
 
+        // console.log(measurements)
         for (var component_type in measurements) {
             if (component_type != "controls") {
                 comp_inst_list = measurements[component_type]
@@ -140,31 +123,36 @@
                     inst = comp_inst_list[instrument]
                     inst_alias = inst['alias']
                     inst_meas_meta = inst['measurement_meta']
-                    for (var meas_name in inst_meas_meta) {
-                        meas = inst_meas_meta[meas_name]
-                        // console.log(meas)
-                        dims = meas['dimensions']['axes']
-                        if (meas['dimensions']['axes'].length > 1) {
-                            continue
+                    for (var meas_type in inst_meas_meta) {
+                        if (meas_type != 'controls') {
+                            mtype = inst_meas_meta[meas_type]
+                            for (var meas_name in mtype) {
+                                meas = mtype[meas_name]
+                                // console.log(meas)
+                                dims = meas['dimensions']['axes']
+                                if (meas['dimensions']['axes'].length > 1) {
+                                    continue
+                                }
+                                var name = meas_name
+                                if (inst_alias['prefix'].length >0) {
+                                    name = inst_alias['prefix'] + "_" + meas_name
+                                }
+                                cell_name = name.replace('_', '-')
+                                row = table.insertRow(-1);
+                                cell = row.insertCell(0);
+                                cell.setAttribute('id', (cell_name+'-name'));
+                                cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center')
+                                cell.innerHTML = name
+                                cell = row.insertCell(1);
+                                cell.setAttribute('id', (cell_name+'-value'));
+                                cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
+                                cell.innerHTML = '';         
+                                cell = row.insertCell(2);           
+                                cell.setAttribute('id', (cell_name+'-units'));
+                                cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
+                                cell.innerHTML = meas['units']                    
+                            }
                         }
-                        var name = meas_name
-                        if (inst_alias['prefix'].length >0) {
-                            name = inst_alias['prefix'] + "_" + meas_name
-                        }
-                        cell_name = name.replace('_', '-')
-                        row = table.insertRow(-1);
-                        cell = row.insertCell(0);
-                        cell.setAttribute('id', (cell_name+'-name'));
-                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center')
-                        cell.innerHTML = name
-                        cell = row.insertCell(1);
-                        cell.setAttribute('id', (cell_name+'-value'));
-                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
-                        cell.innerHTML = '';         
-                        cell = row.insertCell(2);           
-                        cell.setAttribute('id', (cell_name+'-units'));
-                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
-                        cell.innerHTML = meas['units']                    
                     }
                 }
             }
@@ -178,7 +166,6 @@
            
         tablediv.appendChild(table);
     }
-
 
     // websocket communication
 
@@ -237,13 +224,15 @@
 
     websocket.onopen = function(event) {
         console.log('Connected to: ' + event.currentTarget.url)
-        while (wait_for_setup) {}
-        
-        reqest_status()
+//        while (wait_for_setup) {
+//            console.log('waiting for setup: '+wait_for_setup)
+//        }
+        request_status()
+        console.log('request_status')
+        //reqest_status()
     }
 
-
-    function reqest_status() {
+    function request_status() {
 
         var message = {}
         message['SUBJECT'] = 'STATUS'

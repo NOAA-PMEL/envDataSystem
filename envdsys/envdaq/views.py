@@ -59,14 +59,32 @@ def controller(request, controller_alias_name):
         ctr.measurement_config.config
     )
 
+    plots = dict()
+    plots["host"] = "localhost"
+    plots["port"] = 5001
+    plots["name"] = "/controller_"+ctr.alias_name
+
+    print(f'{PlotManager.get_app_list(ctr.alias_name)}')
+    plots["app_list"] = PlotManager.get_app_list(ctr.alias_name)
+    plot_scripts = []
+    for app in plots['app_list']:
+        plot_scripts.append(
+            server_document("http://localhost:5001"+app)
+        )
+    # plot_script = server_document("http://localhost:5001"+plots["name"])
+    # print(f'plot_script: {plot_script}')
+    print(f'565656 plot_scripts: {plot_scripts}')
     print(f'controller_name: {mark_safe(json.dumps(ctr.name))}')
     context = {
         'controller_display_name': mark_safe(json.dumps(ctr.name)),
         'controller_name': mark_safe(json.dumps(ctr.alias_name)),
+        'controller_label': mark_safe(json.dumps(ctr.name)),
         'controller_measurements': mark_safe(
             json.dumps(measurements)
         ),
-        'plot_scripts': []
+        'plot_app': mark_safe(json.dumps(plots)),
+        # 'plot_scriocat': plot_script,
+        'plot_scripts': plot_scripts,
     }
     return render(request, 'envdaq/controller.html', context=context)
 

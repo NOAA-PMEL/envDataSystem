@@ -110,11 +110,11 @@ class PlotBufferManager():
 
 
 class PlotBuffer():
-    def __init__(self, server_id, id, msg_buf):
+    def __init__(self, server_id, id, msg_buf, buf_size=100):
 
         self.server_id = server_id
         self.id = id
-        self.buffer = deque(maxlen=100)
+        self.buffer = deque(maxlen=buf_size)
         # self.buffer = dict()
         self.msg_buf = msg_buf
 

@@ -171,7 +171,8 @@ class ControllerConsumer(AsyncWebsocketConsumer):
                     # TODO: add field to force sync option
                     # send config data to syncmanager
                     await SyncManager.sync_controller_instance(body['data'])
-        
+                    PlotManager.add_apps(body['data'])
+                    
         elif message['SUBJECT'] == 'RUNCONTROLS':
             print(f'message: {message}')
             body = message['BODY']

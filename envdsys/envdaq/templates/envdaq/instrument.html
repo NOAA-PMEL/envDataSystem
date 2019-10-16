@@ -29,7 +29,7 @@
 
 {% block plots %}
     {% for app in plot_scripts %}
-
+    {% comment %} {{ plot_scripts }} {% endcomment %}
         <div class="card">
             {% comment %} {{ plot_script | safe }} {% endcomment %}
             {{ app | safe }}
@@ -161,7 +161,7 @@
             build_data_table()
             build_controls_table()
 
-            //reqest_status()
+            // reqest_status()
             wait_for_setup = false
 
         }
@@ -330,7 +330,7 @@
             td.width = '100px';
             td = table.rows[0].cells[3];
             td.width = '100px'
-           tablediv.appendChild(table);
+            tablediv.appendChild(table);
 
            //var t = document.getElementById("control-table").createCaption()
            //t.innerHTML = "Settings"
@@ -404,7 +404,7 @@
             //while (wait_for_setup) {}
             console.log('setup done')
             
-            reqest_status()
+            request_status()
         }
 
         {% comment %} document.querySelector('#inst-name-input').focus();
@@ -452,7 +452,7 @@
 
         }
 
-        function reqest_status() {
+        function request_status() {
 
             var message = {}
             message['SUBJECT'] = 'STATUS'

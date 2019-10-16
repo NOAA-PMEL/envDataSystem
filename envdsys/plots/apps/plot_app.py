@@ -3,6 +3,7 @@ from asyncio.queues import Queue
 import asyncio
 import abc
 import copy
+import time
 
 # import utilities.util
 from datetime import datetime
@@ -42,6 +43,8 @@ class PlotApp(abc.ABC):
 
         # init to 60 minutes of data
         self.rollover = 3600
+
+        self.buf_size = 100
 
         # PlotBufferManager.add_buffer(PlotBuffer('/', self.msg_buffer))
         print(f'init: {self.name}')
@@ -88,7 +91,12 @@ class PlotApp(abc.ABC):
 
         self.server_id = server_id
         PlotBufferManager.add_buffer(
-            PlotBuffer(self.server_id, self.name, self.msg_buffer)
+            PlotBuffer(
+                self.server_id,
+                self.name,
+                self.msg_buffer,
+                buf_size=self.buf_size
+            )
         )
         # print(f'plot_app_buffer: {PlotBufferManager}, {PlotBufferManager.get_buffer(self.name)}')
         # print('here')
@@ -137,7 +145,7 @@ class TimeSeries1D(PlotApp):
     def setup(self):
         super().setup()
         print(f'TS1D:setup: {self.config}')
-
+        
         # if 'ID' not in config:
         #     return
         # id = config['ID']
@@ -157,6 +165,10 @@ class TimeSeries1D(PlotApp):
 
             # self.name = self.config['plot_meta']['name']
         if self.config['app_type'] == 'TimeSeries1D':
+
+            self.current_data['TimeSeries1D'] = dict()
+            self.current_data['TimeSeries1D']['y_data'] = []
+
             # if plot['app_type'] == 'TimeSeries1D':
             #     self.name = plot['app_name']
 
@@ -199,21 +211,23 @@ class TimeSeries1D(PlotApp):
                 # default_data = ts1d_config['default_y_data']
                 default_data = src['default_y_data']
                 # print(f'default data : {default_data}')
-                self.current_data['TimeSeries1D'] = dict()
-                new_default_data = []
+                # self.current_data['TimeSeries1D'] = dict()
+                # new_default_data = []
                 for y in default_data:
                     y = prefix + y
                     # if len(self.prefix) > 0:
                     #     y = self.prefix + '_' + y
                     # new_default_data.append((src_id, y))
-                    new_default_data.append(
+                    # new_default_data.append(
+                    #     self.encode_data_id(src_id, y)
+                    # )
+                    self.current_data['TimeSeries1D']['y_data'].append(
                         self.encode_data_id(src_id, y)
                     )
-                    
 
-                self.current_data['TimeSeries1D']['y_data'] = (
-                    new_default_data
-                )
+                # self.current_data['TimeSeries1D']['y_data'] = (
+                #     new_default_data
+                # )
 
                 # for y in ts1d_config['y_data']:
                 info_map = dict()
@@ -708,6 +722,8 @@ class SizeDistribution(PlotApp):
         # TODO: use config to define data source
         # self.source = self.configure_data_source(config)
 
+        self.buf_size = 10
+        
     def setup(self, ):
         super().setup()
         print(f'SD:setup: {self.config}')
@@ -736,6 +752,9 @@ class SizeDistribution(PlotApp):
             if 'source_map' not in sd_config:
                 print(f'no source map in plot {self.name}')
                 return
+
+            self.current_data['SizeDistribution'] = dict()
+            self.current_data['SizeDistribution']['y_data'] = []
 
             # data = dict()
 
@@ -771,22 +790,25 @@ class SizeDistribution(PlotApp):
                 # default_data = sd_config['default_y_data']
                 default_data = src['default_y_data']
                 # print(f'default data : {default_data}')
-                self.current_data['SizeDistribution'] = dict()
-                new_default_data = []
+                # self.current_data['SizeDistribution'] = dict()
+                # new_default_data = []
                 for y in default_data:
                     # if len(self.prefix) > 0:
                     #     y = self.prefix + '_' + y
                     #     new_default_data.append(y)
                     y = prefix + y
                     # new_default_data.append((src_id, y))
-                    new_default_data.append(
+                    # new_default_data.append(
+                    #     self.encode_data_id(src_id, y)
+                    # )
+                    self.current_data['SizeDistribution']['y_data'].append(
                         self.encode_data_id(src_id, y)
                     )
                     # print(f'new_default_data: {new_default_data}')
                 
-                self.current_data['SizeDistribution']['y_data'] = (
-                    new_default_data
-                )
+                # self.current_data['SizeDistribution']['y_data'] = (
+                #     new_default_data
+                # )
                 # print(f'21212121 current data: {self.current_data}')
 
                 # build map
@@ -1230,5 +1252,6 @@ class SizeDistribution(PlotApp):
             ],
             sizing_mode="stretch_width"
         )
+        # time.sleep(0.5)
         doc.add_root(doc_layout)
         # doc.add_root(fig)

@@ -60,7 +60,7 @@ class PlotManager():
                 key = config['alias']['name']
             # print(f'{app_list}, {PlotManager().__app_list_map}')
             PlotManager().__app_list_map[key] = app_list
-            # print(f'{app_list}, {PlotManager().__app_list_map}')
+            print(f'{app_list}, {PlotManager().__app_list_map}')
             # PlotManager.start_server()
 
     @staticmethod
