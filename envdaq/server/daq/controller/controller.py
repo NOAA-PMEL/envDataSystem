@@ -256,18 +256,21 @@ class Controller(DAQ):
             self.instrument_map[inst.get_id()] = inst
 
             if ('INST_MAP' in self.config and comp_inst):
-                for itype, ilist in self.config['INST_MAP'].items():
-                    if k in ilist:
-                        if itype in comp_inst:
-                            comp_inst[itype].append(inst)
-                            inst.register_data_request(
-                                {
-                                    'class': 'CONTROLLER',
-                                    'id': self.label,
-                                    'alias': self.alias,
-                                    'ui_address': self.get_ui_address()
-                                }
-                            )
+                for itype, imap in self.config['INST_MAP'].items():
+                    if 'LIST' in imap:
+                        if k in imap['LIST']:
+                            if itype in comp_inst:
+                                comp_inst[itype]['LIST'].append(inst)
+                                inst.register_data_request(
+                                    {
+                                        'class': 'CONTROLLER',
+                                        'id': self.label,
+                                        'alias': self.alias,
+                                        'ui_address': self.get_ui_address()
+                                    }
+                                )
+                    if 'PRIMARY' in imap:
+                        comp_inst[itype]['PRIMARY'] = imap['PRIMARY']
 
         self.build_controller_meta()
 
@@ -389,8 +392,13 @@ class DummyController(Controller):
     def configure_components(self):
 
         self.component_map['INSTRUMENTS'] = {
-            'GPS': [],
-            'DUMMY': [],
+            'GPS': {
+                'LIST': [],
+                'PRIMARY': None
+            },
+            'DUMMY': {
+                'LIST': [],
+            }
         }
 
     def build_controller_meta(self):
@@ -416,8 +424,9 @@ class DummyController(Controller):
             'app_type': 'GeoMapPlot',
             'source_map': dict(),
         }
+        geo_source_map = dict()
 
-        if len(self.component_map['INSTRUMENTS']['GPS']) > 0:
+        if len(self.component_map['INSTRUMENTS']['GPS']['LIST']) > 0:
             # configure GPS measurements
             # TODO: how to specify primary GPS (or other) meas?
             gps = dict()
@@ -425,14 +434,16 @@ class DummyController(Controller):
             # size_dist_y_data = []
             # size_dist_default_y_data = []
 
-            geo = []
-            geo = []
-
-            for inst in self.component_map['INSTRUMENTS']['GPS']:
+            for inst in self.component_map['INSTRUMENTS']['GPS']['LIST']:
 
                 ts1d_y_data = []
                 ts1d_default_y_data = []
                 ts1d_meas = {
+                    'primary': dict(),
+                }
+
+                geo_z_data = []
+                geo_meas = {
                     'primary': dict(),
                 }
 
@@ -462,6 +473,10 @@ class DummyController(Controller):
                         ts1d_y_data.append('latitude')
                         ts1d_meas['primary']['latitude'] = meas['latitude']
 
+                        geo_z_data.append('latitude')
+                        geo_lat_dim = 'latitude'
+                        geo_meas['primary']['latitude'] = meas['latitude']
+
                     if 'longitude' in meas:
                         mm['longitude'] = (
                             meas['longitude']
@@ -472,6 +487,10 @@ class DummyController(Controller):
                         # }
                         ts1d_y_data.append('longitude')
                         ts1d_meas['primary']['longitude'] = meas['longitude']
+
+                        geo_z_data.append('longitude')
+                        geo_lon_dim = 'longitude'
+                        geo_meas['primary']['longitude'] = meas['longitude']
 
                     if 'altitude' in meas:
                         mm['altitude'] = (
@@ -485,6 +504,10 @@ class DummyController(Controller):
                         ts1d_default_y_data.append('altitude')
                         ts1d_meas['primary']['altitude'] = meas['altitude']
 
+                        geo_z_data.append('altitude')
+                        geo_alt_dim = 'altitude'
+                        geo_meas['primary']['altitude'] = meas['altitude']
+
                 ts1d_source_map[inst_id] = {
                     'y_data': ts1d_y_data,
                     'default_y_data': ts1d_default_y_data,
@@ -492,15 +515,28 @@ class DummyController(Controller):
                     'measurement_meta': ts1d_meas
                 }
 
+                main_gps = self.component_map['INSTRUMENTS']['GPS']['PRIMARY']
+                geo_source_map[inst_id] = {
+                    'z_data': geo_z_data,
+                    'default_z_data': [],
+                    'alias': inst_alias,
+                    'measurement_meta': geo_meas,
+                    'latitude': geo_lat_dim,
+                    'longitude': geo_lon_dim,
+                    'altitude': geo_alt_dim,
+                    'primary_gps': main_gps,
+                    'instrument_type': 'GPS'
+                }
+
             meas_meta['GPS'] = gps
 
-        if len(self.component_map['INSTRUMENTS']['DUMMY']) > 0:
+        if len(self.component_map['INSTRUMENTS']['DUMMY']['LIST']) > 0:
             # configure GPS measurements
             dummy = dict()
 
             # ts1d_source_map = dict()
 
-            for inst in self.component_map['INSTRUMENTS']['DUMMY']:
+            for inst in self.component_map['INSTRUMENTS']['DUMMY']['LIST']:
 
                 ts1d_y_data = []
                 ts1d_default_y_data = []
@@ -511,6 +547,11 @@ class DummyController(Controller):
                 sd_y_data = []
                 sd_default_y_data = []
                 sd_meas = {
+                    'primary': dict(),
+                }
+
+                geo_z_data = []
+                geo_meas = {
                     'primary': dict(),
                 }
 
@@ -567,6 +608,11 @@ class DummyController(Controller):
                             meas['concentration']
                         )
 
+                        geo_z_data.append('concentration')
+                        geo_meas['primary']['concentration'] = (
+                            meas['concentration']
+                        )
+
                 ts1d_source_map[inst_id] = {
                     'y_data': ts1d_y_data,
                     'default_y_data': ts1d_default_y_data,
@@ -579,6 +625,14 @@ class DummyController(Controller):
                     'default_y_data': sd_default_y_data,
                     'alias': inst_alias,
                     'measurement_meta': sd_meas
+                }
+
+                geo_source_map[inst_id] = {
+                    'z_data': geo_z_data,
+                    'default_z_data': [],
+                    'alias': inst_alias,
+                    'measurement_meta': geo_meas,
+                    'instrument_type': 'DUMMY'
                 }
 
             meas_meta['DUMMY'] = dummy
@@ -602,6 +656,14 @@ class DummyController(Controller):
         size_dist['source_map'] = sd_source_map
         plot_name = prefix + '_raw_size_dist'
         self.plot_config['plots'][plot_name] = size_dist
+        app_name = '/controller_' + self.alias['name'] + '_' + plot_name
+        self.plot_config['plots'][plot_name]['app_name'] = app_name
+        self.plot_list.append(app_name)
+
+        # Add GeoMapPlot
+        geo_plot['source_map'] = geo_source_map
+        plot_name = prefix + '_geo_map'
+        self.plot_config['plots'][plot_name] = geo_plot
         app_name = '/controller_' + self.alias['name'] + '_' + plot_name
         self.plot_config['plots'][plot_name]['app_name'] = app_name
         self.plot_list.append(app_name)

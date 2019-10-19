@@ -2,7 +2,7 @@ import asyncio
 import json
 from asyncio.queues import Queue
 from .plot_server import PlotServer
-from plots.apps.plot_app import TimeSeries1D, SizeDistribution
+from plots.apps.plot_app import TimeSeries1D, SizeDistribution, GeoMapPlot
 
 
 class PlotManager():
@@ -45,6 +45,19 @@ class PlotManager():
                         # print(f'SizeDistribution add app')
                         PlotManager.add_app(
                             SizeDistribution(
+                                # config,
+                                plot_def,
+                                plot_name=plot_name,
+                                app_name=plot_def['app_name'],
+                            ),
+                            start_after_add=False,
+                        )
+                        app_list.append(plot_def['app_name'])
+                        PlotManager.register_app_source(plot_def)
+                    elif plot_def['app_type'] == 'GeoMapPlot':
+                        # print(f'SizeDistribution add app')
+                        PlotManager.add_app(
+                            GeoMapPlot(
                                 # config,
                                 plot_def,
                                 plot_name=plot_name,
