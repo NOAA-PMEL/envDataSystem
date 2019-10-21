@@ -374,7 +374,7 @@ class TCPPortIFDevice(IFDevice):
         if (type == "FromParent"):
             if msg.subject == 'SEND':
                 await self.client.send(msg.body)
-                print(f'tcpportifdevice.handle: {msg}')
+                # print(f'tcpportifdevice.handle: {msg.to_json()}')
         else:
             print('unkown msg')
         await asyncio.sleep(.1)
