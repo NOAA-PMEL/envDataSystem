@@ -327,7 +327,7 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
                     'message': message
                 }
             )
-            # print(f'123123123 data: {message}')
+            print(f'123123123 data: {message}')
             src_id = message['SENDER_ID']
             await PlotManager.update_data_by_source(src_id, data)
 

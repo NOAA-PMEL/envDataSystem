@@ -6,6 +6,7 @@ from data.message import Message
 import importlib
 from client.serialport import SerialPortClient
 from client.tcpport import TCPPortClient
+from labjack import ljm
 # import abc
 
 
@@ -438,3 +439,130 @@ class TCPPortIFDevice(IFDevice):
 
 #     # def get_channel_map():
 #     #    return IFDevice.channel_map
+
+
+class LabJackT7Device(IFDevice):
+
+    # IFDevice.channel_map['test'] = 'test'
+
+    def __init__(self, config, **kwargs):
+        # def __init__(self, config):
+        print(config)
+        print('LabJackT7Device init')
+        super(LabJackT7Device, self).__init__(config, **kwargs)
+        # super().__init__(config)
+
+        # TODO: fix label
+        self.label = config['DESCRIPTION']['LABEL']
+        self.name = "LabJackT7Device"
+
+        self.device_type = 'T7'
+        self.conection_type = 'ANY'
+        if 'connection_type' in config['DESCRIPTION']:
+            self.conection_type = config['DESCRIPTION']['connection_type']
+        self.identifier = 'ANY'
+        if 'identifier' in config['DESCRIPTION']:
+            self.identifier = config['DESCRIPTION']['identifier']
+        if 'serial_number' in config['DESCRIPTION']:
+            self.identifier = config['DESCRIPTION']['serial_number']
+
+        self.lj = None
+
+        # self.devpath = config['DESCRIPTION']['DEVPATH']
+        # self.baudrate = config['DESCRIPTION']['baudrate']
+        # self.bytesize = config['DESCRIPTION']['bytesize']
+        # self.parity = config['DESCRIPTION']['parity']
+        # self.stopbits = config['DESCRIPTION']['stopbits']
+        # self.xonxoff = config['DESCRIPTION']['xonxoff']
+        # self.rtscts = config['DESCRIPTION']['rtscts']
+
+        self.setup()
+
+    def get_id(self):
+        return self.__class__.__name__ + '_' + self.identifier
+
+    def setup(self):
+        super().setup()
+
+    def start(self, cmd=None):
+        super().start(cmd)
+        print('Starting LabJackT7Device')
+
+        try:
+            self.lj = ljm.openS(
+                deviceType=self.device_type,
+                connectionType=self.conection_type,
+                identifier=self.identifier
+            )
+        except ljm.LJMError as e:
+            print(f'could not connect to labjack: {e}')
+            self.lj = None
+
+        # self.client = SerialPortClient(
+        #     uri=self.devpath,
+        #     baudrate=self.baudrate,
+        #     bytesize=self.bytesize,
+        #     parity=self.parity,
+        #     stopbits=self.stopbits,
+        #     xonxoff=self.xonxoff,
+        #     rtscts=self.rtscts,
+        #     **self.kwargs,
+        # )
+        # print(f'serial port: {self.client}')
+
+        # # start dummy data loop
+        # task = asyncio.ensure_future(self.data_loop())
+        # self.task_list.append(task)
+
+        # self.task_list.append(
+        #     asyncio.ensure_future(self.read_data())
+        # )
+
+        # self.task_list.append(
+        #     asyncio.ensure_future(self.write_data())
+        # )
+
+    def stop(self, cmd=None):
+        if self.handle:
+            self.handle.close()
+
+    async def read_data(self):
+        while True:
+            data = await self.client.read()
+            msg = Message(
+                sender_id=self.get_id(),
+                msgtype=IFDevice.class_type,
+                subject='DATA',
+                body={
+                    'DATA': data
+                }
+            )
+            # print(f'serialportread: {data}')
+            await self.message_to_parent(msg)
+
+    # async def write_data(self, msg):
+    #     # while True:
+    #     #     msg = await self.message_from_parent()
+    #     await self.client.write(msg.body['COMMAND'])
+
+    async def handle(self, msg, type=None):
+        if (type == "FromParent"):
+            if msg.subject == 'SEND':
+                
+                # await self.client.send(msg.body)
+                # print(f'66666serialportifdevice.handle: {msg}')
+
+                if msg.body['cmd'] == 'set_voltage':
+                    ljm.eWriteName(
+                        self.lj,
+                        msg.body['channel'],
+                        msg.body['value']
+                    )
+
+        await asyncio.sleep(.1)
+
+    def get_definition_instance(self):
+        return IFDevice.get_definition()
+
+    def get_definition():
+        pass

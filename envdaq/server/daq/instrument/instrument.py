@@ -431,7 +431,11 @@ class Instrument(DAQ):
         # for now, single interface but eventually loop
         # through configured interfaces
         # list = self.config['IFACE_LIST']
+        cfg_comps = None
+        self.iface_components = dict()
         print(f'config = {self.config["IFACE_LIST"]}')
+        if 'IFACE_MAP' in self.config:
+            cfg_comps = self.config['IFACE_MAP']
 
         for k, ifcfg in self.config['IFACE_LIST'].items():
             # self.iface_map[iface.name] = iface
@@ -442,11 +446,18 @@ class Instrument(DAQ):
                 ifcfg,
                 **self.iface_options
             )
-            print(f'iface: {iface}')
+            print(f'iface: {k}: {iface}')
             # iface.msg_buffer = self.iface_rcv_buffer
             # iface.msg_send_buffer = self.from_child_buf
             iface.to_parent_buf = self.from_child_buf
             self.iface_map[iface.get_id()] = iface
+            if cfg_comps:
+                for comp, label in cfg_comps.items():
+                    if label == k:
+                        self.iface_components[comp] = iface.get_id()
+
+            print(f'iface_map: {self.iface_map}')
+            print(f'iface_comp: {self.iface_components}')
 
     def get_metadata(self):
 
