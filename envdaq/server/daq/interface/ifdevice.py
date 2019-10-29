@@ -66,6 +66,9 @@ class IFDevice(DAQ):
         # self.serial_number = self.config['DESCRIPTION']['SERIAL_NUMBER']
         # self.property_number = self.config['DESCRIPTION']['PROPERTY_NUMBER']
 
+        self.parent_map = dict()
+        self.started = False
+
         self.iface_map = dict()
         # self.add_interfaces()
 
@@ -74,6 +77,36 @@ class IFDevice(DAQ):
     #     id = super().get_id()
     #     # id = 'tmp'
     #     return id
+
+    def register_parent(
+        self,
+        parent_id,
+        to_parent_buffer=None
+    ):
+        # if parent_id in self.parent_map:
+        #     return
+        # self.parent_map[parent_id] = {
+        #     'to_parent_buffer': to_parent_buffer
+        # }
+        super().register_parent(
+            parent_id,
+            to_parent_buffer
+        )
+        if not self.started:
+            self.start()          
+
+    def deregister_parent(self, parent_id):
+        
+        # try:
+        #     del self.parent_map[parent_id]
+        # except KeyError:
+        #     pass
+
+        if (
+            # self.started and
+            len(self.parent_map) == 0
+        ):
+            self.stop()
 
     def get_ui_address(self):
         print(self.label)
@@ -90,6 +123,8 @@ class IFDevice(DAQ):
         for k, iface in self.iface_map.items():
             iface.start()
 
+        self.started = True
+
     def stop(self, cmd=None):
 
         for k, iface in self.iface_map.items():
@@ -97,15 +132,26 @@ class IFDevice(DAQ):
 
         super().stop(cmd)
 
+        self.started = False
+
     # def disconnect(self, msg=None):
     #     pass
 
     def shutdown(self):
 
+        if self.started:
+            print(f'waiting registered devices to clear')
+            return
+
         for k, iface in self.iface_map.items():
             iface.shutdown()
 
+        # for id, parent in self.parent_map.items():
+        #     self.deregister_parent(id)
+
         super().shutdown()
+
+        self.started = False
 
     # def add_interfaces(self):
     #     print('Add interfaces')
@@ -286,7 +332,7 @@ class SerialPortIFDevice(IFDevice):
                 }
             )
             # print(f'serialportread: {data}')
-            await self.message_to_parent(msg)
+            await self.message_to_parents(msg)
 
     # async def write_data(self, msg):
     #     # while True:
@@ -364,7 +410,7 @@ class TCPPortIFDevice(IFDevice):
                 }
             )
             # print(f'tcpportread: {data}')
-            await self.message_to_parent(msg)
+            await self.message_to_parents(msg)
 
     # async def write_data(self, msg):
     #     # while True:
@@ -378,7 +424,11 @@ class TCPPortIFDevice(IFDevice):
                 # print(f'tcpportifdevice.handle: {msg.to_json()}')
         else:
             print('unkown msg')
-        await asyncio.sleep(.1)
+        
+        try:
+            await asyncio.sleep(.1)
+        except asyncio.CancelledError:
+            pass
 
     def get_definition_instance(self):
         return IFDevice.get_definition()
@@ -523,8 +573,11 @@ class LabJackT7Device(IFDevice):
         # )
 
     def stop(self, cmd=None):
-        if self.handle:
-            self.handle.close()
+        if self.lj:
+            ljm.close(self.lj)
+        self.lj = None
+
+        super().stop(cmd)
 
     async def read_data(self):
         while True:
@@ -558,8 +611,10 @@ class LabJackT7Device(IFDevice):
                         msg.body['channel'],
                         msg.body['value']
                     )
-
-        await asyncio.sleep(.1)
+        try:
+            await asyncio.sleep(.1)
+        except asyncio.CancelledError:
+            pass
 
     def get_definition_instance(self):
         return IFDevice.get_definition()

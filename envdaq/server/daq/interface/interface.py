@@ -118,10 +118,19 @@ class Interface(DAQ):
         print('Starting Interface')
         super().start(cmd)
 
+
         # task = asyncio.ensure_future(self.read_loop())
         # self.task_list.append(task)
-        if self.ifdevice is not None:
-            self.ifdevice.start()
+        # if self.ifdevice is not None:
+        #     self.ifdevice.start()
+
+        # Changed to allow multiple interface instances
+        #   for a given device. Device will run as long
+        #   as there are interfaces registered
+        self.ifdevice.register_parent(
+            self.get_id(),
+            to_parent_buffer=self.from_child_buf
+        )
 
     # def read(self, cmd=None):
     #     pass
@@ -140,8 +149,9 @@ class Interface(DAQ):
         #     # print(t)
         #     t.cancel()
 
-        if self.ifdevice is not None:
-            self.ifdevice.stop()
+        # if self.ifdevice is not None:
+        #     self.ifdevice.stop()
+        self.ifdevice.deregister_parent(self.get_id())
 
         super().stop(cmd)
 
@@ -156,6 +166,7 @@ class Interface(DAQ):
         #     t.cancel()
 
         if self.ifdevice is not None:
+            self.ifdevice.deregister_parent(self.get_id())
             self.ifdevice.shutdown()
 
         super().shutdown()
@@ -313,7 +324,6 @@ class DummyInterface(Interface):
         if 'dummy_port' in config:
             self.dummy_port = config['dummy_port']
 
-
         self.setup()
 
     def setup(self):
@@ -360,7 +370,7 @@ class DummyInterface(Interface):
             ui_config=ui_config,
             **self.kwargs
         )
-        self.ifdevice.to_parent_buf = self.from_child_buf
+        # self.ifdevice.to_parent_buf = self.from_child_buf
 
     async def handle(self, msg, type=None):
 
@@ -498,7 +508,11 @@ class SerialPortInterface(Interface):
             **self.kwargs
         )
         print(f'{self.kwargs}')
-        self.ifdevice.to_parent_buf = self.from_child_buf
+        # self.ifdevice.register_parent(
+        #     self.get_id(),
+        #     to_parent_buffer=self.from_child_buf
+        # )
+        # self.ifdevice.to_parent_buf = self.from_child_buf
 
     async def handle(self, msg, type=None):
 
@@ -612,7 +626,11 @@ class TCPPortInterface(Interface):
             ui_config=ui_config,
             **self.kwargs
         )
-        self.ifdevice.to_parent_buf = self.from_child_buf
+        # self.ifdevice.register_parent(
+        #     self.get_id(),
+        #     to_parent_buffer=self.from_child_buf
+        # )
+        # self.ifdevice.to_parent_buf = self.from_child_buf
 
     async def handle(self, msg, type=None):
 
@@ -804,7 +822,11 @@ class LabJackT7Interface(Interface):
             **self.kwargs
         )
         print(f'{self.kwargs}')
-        self.ifdevice.to_parent_buf = self.from_child_buf
+        # self.ifdevice.register_parent(
+        #     self.get_id(),
+        #     to_parent_buffer=self.from_child_buf
+        # )
+        # self.ifdevice.to_parent_buf = self.from_child_buf
 
     async def handle(self, msg, type=None):
 
@@ -827,7 +849,7 @@ class LabJackT7Interface(Interface):
         elif type == 'FromParent':
             if msg.subject == 'SEND':
                 await self.ifdevice.message_from_parent(msg)
-                print(f'55555message:{msg.subject}, {msg.body}')
+                # print(f'55555message:{msg.subject}, {msg.body}')
         else:
             print(f'Unknown Message type: {msg.type}, {msg.to_json()}')
 

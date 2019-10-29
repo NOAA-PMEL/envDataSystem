@@ -54,16 +54,18 @@ class IFDeviceManager():
         print('create DummyIFDevice')
         # TODO: use different way to get id for lookup
         #       should not have to instantiate and del
-        dev = IFDeviceFactory().create(config, **kwargs)
+        device = IFDeviceFactory().create(config, **kwargs)
         # dev = DummyIFDevice(config, ui_config=None)
-        print(f'dev = {dev}')
-        id = dev.get_id()
+        print(f'dev = {device}')
+        id = device.get_id()
         # TODO: why am I del dev here?
         if id in self.devmap:
-            del dev
+            # device.shutdown()
+            del device
             dev = self.devmap[id]
         else:
-            self.devmap[id] = dev
+            # dev.do_ui_connection = True
+            self.devmap[id] = device
 
         # else:
 
@@ -71,4 +73,5 @@ class IFDeviceManager():
 
         print(f'devmap: {self.devmap}')
         # print(DummyIFDevice.get_channel_map())
-        return dev
+        # return dev
+        return self.devmap[id]

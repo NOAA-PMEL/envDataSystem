@@ -6,6 +6,7 @@ import asyncio
 from utilities.util import time_to_next, dt_to_string
 from daq.interface.interface import Interface
 import math
+import numpy as np
 
 
 class TSIInstrument(Instrument):
@@ -115,12 +116,18 @@ class APS3320(TSIInstrument):
         # self.current_poll_cmds = ['read\n', 'raw=2\n']
         # self.current_read_cnt = 0
 
+        self.mode = 'scanning'
+
         self.scan_start_param = 'date'
         self.scan_stop_param = 'mcpc_errs'
         self.scan_ready = False
         self.current_size_dist = []
         self.scan_state = 999
         self.scan_run_state = 'STOPPED'
+
+        self.scan_length = 120
+        if 'scan_length' in config['DESCRIPTION']:
+            self.scan_length = config['DESCRIPTION']['scan_length']
 
         # override how often metadata is sent
         self.include_metadata_interval = 300
@@ -168,8 +175,10 @@ class APS3320(TSIInstrument):
         self.is_polled = True
         # self.poll_rate = 300  # every 5 minutes
         # self.overhead = 15 # seconds
-        self.poll_rate = 10  # every 5 minutes
-        self.overhead = 1  # seconds
+        # self.poll_rate = 10  # every 5 minutes
+        self.poll_rate = self.scan_length
+        self.overhead = 15  # seconds
+        # self.overhead = 1  # seconds
 
         # create parse_map and empty data_record
         self.parse_map = dict()
@@ -296,10 +305,16 @@ class APS3320(TSIInstrument):
     async def poll_loop(self):
         print(f'polling loop started')
 
+        scan_time = self.poll_rate
         sample_time = self.poll_rate - self.overhead
         start_sample = f'S{sample_time}\r'
         clear = 'C\r'
         cmds = [clear, start_sample]
+
+        # wait for start of next scan period
+        print(f'Starting scan in {time_to_next(scan_time)} seconds')
+        await asyncio.sleep(time_to_next(scan_time))
+
         while True:
             # TODO: implement current_poll_cmds
             # cmds = self.current_poll_cmds
@@ -838,12 +853,14 @@ class CPC3760A_DMPS(TSIInstrument):
         # self.current_poll_cmds = ['read\n', 'raw=2\n']
         # self.current_read_cnt = 0
 
+        self.mode = 'scanning'
         self.scan_start_param = 'date'
         self.scan_stop_param = 'mcpc_errs'
         self.scan_ready = False
         self.current_size_dist = []
         self.scan_state = 999
         self.scan_run_state = 'STOPPED'
+
 
         # override how often metadata is sent
         self.include_metadata_interval = 300
@@ -873,6 +890,10 @@ class CPC3760A_DMPS(TSIInstrument):
         self.dlogDp_list = []
         self.hv_list = []
 
+        self.scan_length = 120
+        if 'scan_length' in config['DESCRIPTION']:
+            self.scan_length = config['DESCRIPTION']['scan_length']
+
         self.dp_steps = 10
         if 'dp_steps' in config['DESCRIPTION']:
             self.dp_steps = config['DESCRIPTION']['dp_steps']
@@ -896,6 +917,14 @@ class CPC3760A_DMPS(TSIInstrument):
         self.dma_type = 'HaukeShort'
         if 'dma_type' in config['DESCRIPTION']:
             self.dma_type = config['DESCRIPTION']['dma_type']
+
+        self.sheath_flow = 9.0
+        if 'sheath_flow' in config['DESCRIPTION']:
+            self.sheath_flow = config['DESCRIPTION']['sheath_flow']
+
+        self.sample_flow = 0.9
+        if 'sample_flow' in config['DESCRIPTION']:
+            self.sample_flow = config['DESCRIPTION']['sample_flow']
 
         self.hv_channel = None
         if 'hv_channel' in config['DESCRIPTION']:
@@ -943,9 +972,11 @@ class CPC3760A_DMPS(TSIInstrument):
         self.is_polled = True
         # self.poll_rate = 300  # every 5 minutes
         # self.overhead = 15 # seconds
-        self.poll_rate = 60  # every 5 minutes
-        self.overhead = 5  # seconds
-
+        # self.poll_rate = 60  # every 5 minutes
+        # self.overhead = 5  # seconds
+        self.poll_rate = self.scan_length
+        self.overhead = 15
+        
         self.steps = 10
         self.secs_per_step = 3
         self.step_overhead = 1        
@@ -978,7 +1009,7 @@ class CPC3760A_DMPS(TSIInstrument):
 
         for i in range(1,self.dp_steps):
             self.diameters_um.append(
-                self.diameters_um[i-1]*logStep
+                round(self.diameters_um[i-1]*logStep, 4)
             )
 
         print(f'diameters: {self.diameters_um}')
@@ -988,12 +1019,12 @@ class CPC3760A_DMPS(TSIInstrument):
         self.hv_list = []
 
         if self.dma_type == 'HaukeShort':
-            nomQSh = 9.0
+            nomQSh = self.sheath_flow
             Rout = self.Hauke_Rout
             Rin = self.Hauke_Rin
             L = self.HaukeShort_L
         elif self.dma_type == 'HaukeMed':
-            nomQSh = 0.5
+            nomQSh = self.sheath_flow
             Rout = self.Hauke_Rout
             Rin = self.Hauke_Rin
             L = self.HaukeMed_L
@@ -1033,7 +1064,7 @@ class CPC3760A_DMPS(TSIInstrument):
                 nomQSh*1000.0/60.0 * math.log(Rout/Rin) / 
                 (Zp * 2.0 * math.pi * L * 100.0)
             )
-            self.hv_list.append(hVolt)
+            self.hv_list.append(round(hVolt, 3))
 
         print(f'hv: {self.hv_list}')
 
@@ -1072,6 +1103,7 @@ class CPC3760A_DMPS(TSIInstrument):
         cmd_list = [dump_counts]
 
         self.scan_ready = False
+        self.valid_step_counts = False
 
         if self.iface_components['cpc']:
             cpc_id = self.iface_components['cpc']
@@ -1159,15 +1191,16 @@ class CPC3760A_DMPS(TSIInstrument):
     async def poll_loop(self):
         print(f'polling loop started')
 
-        # FOR TESTING ONLY! REMOVE
-        self.purge_time = 1
+        # # FOR TESTING ONLY! REMOVE
+        # self.purge_time = 1
         scan_time = self.poll_rate
         sample_time = self.poll_rate - self.overhead
         step_scan_time = sample_time / self.dp_steps
         step_sample_time = step_scan_time - self.purge_time
 
         # wait for start of next scan period
-        await asyncio.sleep(scan_time)
+        print(f'Starting scan in {time_to_next(scan_time)} seconds')
+        await asyncio.sleep(time_to_next(scan_time))
 
         # start_sample = f'S{sample_time}\r'
         dump_counts = 'DC\r'
@@ -1182,6 +1215,8 @@ class CPC3760A_DMPS(TSIInstrument):
             self.scan_start_time = dt_to_string()
             self.scan_duration = self.poll_rate
             self.scan_ready = False
+            self.current_scan_counts = []
+            self.current_scan_secs = []
 
             # start steps
             self.current_step = 0
@@ -1189,6 +1224,9 @@ class CPC3760A_DMPS(TSIInstrument):
             if self.step_direction == 'down':
                 self.current_step = self.dp_steps-1
                 self.step_increment = -1
+
+            hv_id = self.iface_components['hv']
+            cpc_id = self.iface_components['cpc']
 
             while (
                 self.current_step >= 0 and
@@ -1207,16 +1245,16 @@ class CPC3760A_DMPS(TSIInstrument):
                     body=body,
                 )
                 # print(f'msg: {msg.body}')
-                if self.iface_components['hv']:
-                    hv_id = self.iface_components['hv']
+                if self.iface_map[hv_id]:
+                    
                     await self.iface_map[hv_id].message_from_parent(msg)
 
+                await asyncio.sleep(self.purge_time)
                 self.valid_step_counts = False
-                asyncio.sleep(self.purge_time)
 
                 # clear count buffer
-                if self.iface_components['cpc']:
-                    cpc_id = self.iface_components['cpc']
+                if self.iface_map[cpc_id]:
+                    
                     # self.current_read_cnt = 0
                     msg = Message(
                         sender_id=self.get_id(),
@@ -1240,6 +1278,8 @@ class CPC3760A_DMPS(TSIInstrument):
                     await self.iface_map[cpc_id].message_from_parent(msg)
 
                 self.current_step += self.step_increment
+                
+            self.scan_ready = True
 
             self.current_step = 0
             self.step_increment = 1
@@ -1264,7 +1304,7 @@ class CPC3760A_DMPS(TSIInstrument):
             #     return
 
             dt = self.parse(msg)
-            return
+            # return
             # print(f'dt = {dt}')
             # print(f'last_entry: {self.last_entry}')
             # if (
@@ -1279,7 +1319,7 @@ class CPC3760A_DMPS(TSIInstrument):
             # TODO: how to deal with record that crosses second bound?
             # if self.current_read_cnt == len(self.current_poll_cmds):
             if self.mode == 'scanning' and self.scan_ready:
-            # if self.scan_ready:
+                # if self.scan_ready:
                 
                 print(f'scan ready...dt = {dt}')
                 self.update_data_record(
@@ -1399,66 +1439,133 @@ class CPC3760A_DMPS(TSIInstrument):
         dt = msg.body['DATETIME']
         print(f'msg[DATETIME]: {dt}')
 
-        line = msg.body['DATA'].rstrip()
-        print(f'line = {line}')
-        if ('OK' in line):
-            return
+        # print(f'{msg.sender_id}, {self.iface_components["cpc"]}')
+        if msg.sender_id == self.iface_components['cpc']:
+
+            line = msg.body['DATA'].rstrip()
+            print(f'line = {line}')
+            if ('OK' in line):
+                return
+        
+            if not self.valid_step_counts:
+                print(f'waiting...')
+                return None
+
+            params = line.split(',')
+            # TODO: add try to catch bad values
+            self.current_scan_secs.append(float(params[0]))
+            self.current_scan_counts.append(float(params[1]))
+
+            if self.scan_ready:
+
+                if self.step_direction == 'down':
+                    self.current_scan_counts.reverse()
+                    self.current_scan_secs.reverse()
+
+                dn = []
+                for count, sec in zip(
+                    self.current_scan_counts,
+                    self.current_scan_secs
+                ):
+
+                    conc = (
+                        (count / sec) *
+                        (60.0 / self.sample_flow) *
+                        (1.0 / 1000.0)
+                    )
+                    dn.append(round(conc, 4))
+                # counts = np.array(self.current_scan_counts)
+                # secs = np.array(self.current_scan_secs)
+
+                # conc = counts/secs
+                # conc *= (60.0 / self.sample_flow)
+                # conc *= (1/1000)
+                # conc = (
+                #     (counts/secs) *
+                #     (60 / self.sample_flow) *
+                #     (1.0 / 1000.0)
+                # )
+
+                self.update_data_record(
+                    self.scan_start_time,
+                    {'bin_concentration': dn}
+                )
+
+                self.update_data_record(
+                    self.scan_start_time,
+                    {'bin_counts': self.current_scan_counts}
+                )
+
+                self.update_data_record(
+                    self.scan_start_time,
+                    {'bin_seconds': self.current_scan_secs}
+                )
+
+                npdn = np.array(dn)
+                intN = np.sum(npdn)
+                self.update_data_record(
+                    self.scan_start_time,
+                    {'integral_concentration': round(intN, 2)}
+                )
+
+                return self.scan_start_time
+        
         return None
-        params = line.split(',')
-        if params[1] == 'D':
-            checksum = params[0]
-            mode = params[2]
-            status_flag = params[4]
-            try:
-                sample_time = float(params[5])
-            except ValueError:
-                sample_time = 0
+        # params = line.split(',')
+        # if params[1] == 'D':
+        #     checksum = params[0]
+        #     mode = params[2]
+        #     status_flag = params[4]
+        #     try:
+        #         sample_time = float(params[5])
+        #     except ValueError:
+        #         sample_time = 0
 
-            first_channel = 11
-            data_channels = len(params)-10
-            num_channel = 52
+        #     first_channel = 11
+        #     data_channels = len(params)-10
+        #     num_channel = 52
 
-            conc = []
-            for i in range(0, 52):
-                conc.append(0)
+        #     conc = []
+        #     for i in range(0, 52):
+        #         conc.append(0)
 
-            for i in range(first_channel, len(params)):
-                try:
-                    conc[i-first_channel] = float(params[i])
-                except ValueError:
-                    conc[i-first_channel] = 0
+        #     for i in range(first_channel, len(params)):
+        #         try:
+        #             conc[i-first_channel] = float(params[i])
+        #         except ValueError:
+        #             conc[i-first_channel] = 0
 
-            self.update_data_record(
-                self.scan_start_time,
-                {'bin_concentration': conc}
-            )
+        #     self.update_data_record(
+        #         self.scan_start_time,
+        #         {'bin_concentration': conc}
+        #     )
 
-            # integrate concentration
-            intN = 0
-            for i in range(0, num_channel):
-                if self.diameters_um[i] > self.first_good_diameter:
-                    intN += conc[i]
+        #     # integrate concentration
+        #     intN = 0
+        #     for i in range(0, num_channel):
+        #         if self.diameters_um[i] > self.first_good_diameter:
+        #             intN += conc[i]
 
-            self.update_data_record(
-                self.scan_start_time,
-                {'integral_concentration': intN}
-            )
+        #     self.update_data_record(
+        #         self.scan_start_time,
+        #         {'integral_concentration': intN}
+        #     )
 
-            # populate these for now
-            self.update_data_record(
-                self.scan_start_time,
-                {'sheath_flow': None}
-            )
+        #     # populate these for now
+        #     self.update_data_record(
+        #         self.scan_start_time,
+        #         {'sheath_flow': None}
+        #     )
 
-            self.update_data_record(
-                self.scan_start_time,
-                {'sample_flow': None}
-            )
+        #     self.update_data_record(
+        #         self.scan_start_time,
+        #         {'sample_flow': None}
+        #     )
 
-            self.scan_ready = True
+        #     self.scan_ready = True
 
-            print(f'conc: {conc}')
-        return self.scan_start_time
+        #     print(f'conc: {conc}')
+        # return self.scan_start_time
 
     #     # if len(line) == 0:
     #     #     self.current_read_cnt += 1
@@ -1595,7 +1702,27 @@ class CPC3760A_DMPS(TSIInstrument):
                 'DIAMETER': 'diameter_um',
             }
         }
-        dist_data.append('bin_concentration')
+        dist_data.append('bin_counts')
+
+        raw_2d['bin_seconds'] = {
+            'dimensions': {
+                'axes': ['TIME', 'DIAMETER'],
+                'unlimited': 'TIME',
+                'units': ['dateTime', 'um'],
+            },
+            'units': 'seconds',  # should be cfunits or udunits
+            'uncertainty': 0.1,
+            'source': 'MEASURED',
+            'data_type': 'NUMERIC',
+            'short_name': 'bin_secs',
+            # 'parse_label': 'bin',
+            'control': None,
+            'axes': {
+                # 'TIME', 'datetime',
+                'DIAMETER': 'diameter_um',
+            }
+        }
+        dist_data.append('bin_seconds')
 
         primary_meas = dict()
         primary_meas['integral_concentration'] = {

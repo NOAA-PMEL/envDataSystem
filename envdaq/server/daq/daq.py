@@ -31,7 +31,7 @@ class DAQ(abc.ABC):
         self.loop = asyncio.get_event_loop()
         self.config = config
         self.ui_config = ui_config
-        self.auto_connect_ui = auto_connect_ui
+        self.do_ui_connection = auto_connect_ui
         self.task_list = []
         self.ui_task_list = []
 
@@ -56,6 +56,7 @@ class DAQ(abc.ABC):
         #   id: <controller_name>,
         # }
         self.parent = None
+        self.parent_map = dict()
 
         self.data_request_list = []
 
@@ -115,7 +116,27 @@ class DAQ(abc.ABC):
         self.task_list.append(
             asyncio.ensure_future(self.run_ui_connection())
         )
-    
+
+    # TODO: convert all to_parent_buffers to 
+    #       registration process
+    def register_parent(
+        self,
+        parent_id,
+        to_parent_buffer=None
+    ):
+        if parent_id in self.parent_map:
+            return
+        self.parent_map[parent_id] = {
+            'to_parent_buffer': to_parent_buffer
+        }
+
+    def deregister_parent(self, parent_id):
+        
+        try:
+            del self.parent_map[parent_id]
+        except KeyError:
+            pass
+        
     def register_data_request(self, entry):
         if (
             entry and
@@ -242,10 +263,18 @@ class DAQ(abc.ABC):
 
     async def run_ui_connection(self):
 
+        # # start ui queues
+        # self.ui_task_list.append(
+        #     asyncio.ensure_future(self.to_ui_loop())
+        # )
+        # self.ui_task_list.append(
+        #     asyncio.ensure_future(self.from_ui_loop())
+        # )
+
         while True:
-            # print(f'1111111111 run_connect: {self.auto_connect_ui}, {self.ui_client}')
+            # print(f'1111111111 run_connect: {self.do_ui_connection}, {self.ui_client}')
             if (
-                self.auto_connect_ui and (
+                self.do_ui_connection and (
                     self.ui_client is None or not self.ui_client.isConnected()
                 )
             ):
@@ -312,6 +341,10 @@ class DAQ(abc.ABC):
 
     def shutdown(self):
 
+        # if self.started:
+        #     print(f'wait for shutdown...')
+        #     return
+
         if self.ui_client is not None:
             # self.loop.run_until_complete(self.gui_client.close())
             self.ui_client.sync_close()
@@ -349,6 +382,7 @@ class DAQ(abc.ABC):
         while True:
             msg = await self.from_child_buf.get()
             # print(f'****from_child_loop: {msg.to_json()}')
+            # print(f'from_child: {self.get_id()}')
             await self.handle(msg, type="FromChild")
             # await asyncio.sleep(.1)
 
@@ -362,22 +396,29 @@ class DAQ(abc.ABC):
         # print(f'starting daq from_ui_loop')
         while True:
             message = await self.ui_client.read_message()
-            print(f'message = {message.to_json()}')
+            # print(f'message = {message.to_json()}')
             await self.handle(message, type='FromUI')
 
     async def message_to_parent(self, msg):
         # while True:
-        # print(f'message_to_parent: {msg.to_json()}')
+        # print(f'message_to_parent: {self.get_id()}, {msg.to_json()}')
         await self.to_parent_buf.put(msg)
 
+    async def message_to_parents(self, msg):
+        # while True:
+        # print(f'message_to_parent: {self.get_id()}, {msg.to_json()}')
+        for id, parent in self.parent_map.items():
+            if parent['to_parent_buffer']:
+                await parent['to_parent_buffer'].put(msg)
+
     def message_to_ui_nowait(self, msg):
-        print(f'no wait: {msg.to_json()}')
+        # print(f'no wait: {msg.to_json()}')
         asyncio.ensure_future(self.message_to_ui(msg))
 
     async def message_to_ui(self, msg):
         # while True:
         # print('******message_to_ui')
-        print(f'message_to_ui: {msg.to_json()}')
+        # print(f'message_to_ui: {msg.to_json()}')
         await self.to_ui_buf.put(msg)
 
     async def message_from_parent(self, msg):
