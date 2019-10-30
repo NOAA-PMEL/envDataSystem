@@ -118,3 +118,9 @@ envdsys/envdaq/static/envdaq/images/header-backgound.jpg
 envdsys/envdaq/static/envdaq/js/main.js
 envdsys/envdaq/templates/envdaq/index_bs.html
 envdsys/envtags/config_data.txt
+envdaq/docs/envdaq_config aps.json
+envdaq/docs/envdaq_config cpc.json
+envdaq/docs/envdaq_config sizing.json
+envdaq/docs/envdaq_config.json
+envdaq/docs/tmp_config.json
+envdsys/envdaq/templates/envdaq/controller_orig.html
