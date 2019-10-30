@@ -646,7 +646,7 @@ class APS3320(TSIInstrument):
             'dimensions': {
                 'axes': ['TIME', 'DIAMETER'],
                 'unlimited': 'TIME',
-                'units': ['dateTime', 'nm'],
+                'units': ['dateTime', 'um'],
             },
             'units': 'cm-3',  # should be cfunits or udunits
             'uncertainty': 0.1,

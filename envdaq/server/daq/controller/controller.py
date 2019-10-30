@@ -638,7 +638,7 @@ class DummyController(Controller):
             meas_meta['DUMMY'] = dummy
 
         # add controller measurements
-        print('here')
+        # print('here')
         # add controls
 
         prefix = self.alias['prefix']

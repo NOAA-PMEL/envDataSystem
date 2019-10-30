@@ -58,7 +58,7 @@ class PlotApp(abc.ABC):
             PlotBuffer(self.server_id, self.name, self.msg_buffer)
         )
         # print(f'plot_app_buffer: {PlotBufferManager}, {PlotBufferManager.get_buffer(self.name)}')
-        print('here')
+        # print('here')
 
     async def update_data(self, msg):
         # print(f'update data: {msg}')

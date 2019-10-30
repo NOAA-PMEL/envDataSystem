@@ -1221,7 +1221,7 @@ class SizeDistribution(PlotApp):
             # ("name", "$name"),
             # ("(x,y)", "($x, $y)"),
             # ("desc", "@desc"),
-            ("Dp", "$x nm"),
+            ("Dp", "$x um"),
             ("N", "$y cm-3"),
         ]
 

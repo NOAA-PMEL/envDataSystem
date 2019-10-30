@@ -67,7 +67,7 @@ class TCPPortClient(ClientConnection):
                 self.connect_state = ClientConnection.CLOSED
 
         async def readline(self):
-            print('here')
+            # print('here')
             if self.reader:
                 # print(f'readline: {self.reader}')
                 msg = await self.reader.readline()
