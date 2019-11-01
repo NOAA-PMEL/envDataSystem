@@ -443,77 +443,77 @@ class SizingSystem(Controller):
             # geo_meas = {
             #     'primary': dict(),
             # }
-        cont_meta
-            inst_meta = inst.get_metadata()
-            inst_alias = inst_meta['alias']
-            inst_id = inst_meta['ID']
+        # cont_meta
+        #     inst_meta = inst.get_metadata()
+        #     inst_alias = inst_meta['alias']
+        #     inst_id = inst_meta['ID']
 
-            inst_meas = inst_meta['measurement_meta']
-            inst_plots = inst_meta['plot_meta']
+        #     inst_meas = inst_meta['measurement_meta']
+        #     inst_plots = inst_meta['plot_meta']
 
-            # meas_meta[inst_id] = dict()
-            # meas_meta[inst_id]['alias'] = inst_alias
-            sizing[inst_id] = dict()
-            sizing[inst_id]['alias'] = inst_alias
-            sizing[inst_id]['measurement_meta'] = dict()
-            sizing[inst_id]['measurement_meta']['primary'] = dict()
-            mm = sizing[inst_id]['measurement_meta']['primary']
-            for mtype, meas in inst_meas.items():
-                if 'integral_concentration' in meas:
-                    mm['integral_concentration'] = (
-                        meas['integral_concentration']
-                    )
-                    # meas_meta[inst_id]['latitude'] = {
-                    # gps[inst_id]['latitude'] = {
-                    #     'measurement_meta': meas['latitude'],
-                    # }
-                    ts1d_y_data.append('integral_concentration')
-                    ts1d_meas['primary']['integral_concentration'] = (
-                        meas['integral_concentration']
-                    )
+        #     # meas_meta[inst_id] = dict()
+        #     # meas_meta[inst_id]['alias'] = inst_alias
+        #     sizing[inst_id] = dict()
+        #     sizing[inst_id]['alias'] = inst_alias
+        #     sizing[inst_id]['measurement_meta'] = dict()
+        #     sizing[inst_id]['measurement_meta']['primary'] = dict()
+        #     mm = sizing[inst_id]['measurement_meta']['primary']
+        #     for mtype, meas in inst_meas.items():
+        #         if 'integral_concentration' in meas:
+        #             mm['integral_concentration'] = (
+        #                 meas['integral_concentration']
+        #             )
+        #             # meas_meta[inst_id]['latitude'] = {
+        #             # gps[inst_id]['latitude'] = {
+        #             #     'measurement_meta': meas['latitude'],
+        #             # }
+        #             ts1d_y_data.append('integral_concentration')
+        #             ts1d_meas['primary']['integral_concentration'] = (
+        #                 meas['integral_concentration']
+        #             )
 
-                    # geo_z_data.append('latitude')
-                    # geo_lat_dim = 'latitude'
-                    # geo_meas['primary']['latitude'] = meas['latitude']
+        #             # geo_z_data.append('latitude')
+        #             # geo_lat_dim = 'latitude'
+        #             # geo_meas['primary']['latitude'] = meas['latitude']
 
-                if 'bin_concentration' in meas:
-                    mm['bin_concentration'] = (
-                        meas['bin_concentration']
-                    )
-                    # {
-                    # # dummy[inst_id]['size_distribution'] = {
-                    #     'measurement_meta': meas['size_distribution'],
-                    # }
-                    sd_y_data.append('bin_concentration')
-                    sd_meas['primary']['bin_concentration'] = (
-                        meas['bin_concentration']
-                    )
-                if 'diameter_um' in meas:
-                    mm['diameter_um'] = (
-                        meas['diameter_um']
-                    )
-                    # meas_meta[inst_id]['diameter'] = {
-                    # dummy[inst_id]['diameter'] = {
-                    #     'measurement_meta': meas['diameter'],
-                    # }
-                    sd_y_data.append('diameter_um')
-                    sd_meas['primary']['diameter_um'] = (
-                        meas['diameter_um']
-                    )
+        #         if 'bin_concentration' in meas:
+        #             mm['bin_concentration'] = (
+        #                 meas['bin_concentration']
+        #             )
+        #             # {
+        #             # # dummy[inst_id]['size_distribution'] = {
+        #             #     'measurement_meta': meas['size_distribution'],
+        #             # }
+        #             sd_y_data.append('bin_concentration')
+        #             sd_meas['primary']['bin_concentration'] = (
+        #                 meas['bin_concentration']
+        #             )
+        #         if 'diameter_um' in meas:
+        #             mm['diameter_um'] = (
+        #                 meas['diameter_um']
+        #             )
+        #             # meas_meta[inst_id]['diameter'] = {
+        #             # dummy[inst_id]['diameter'] = {
+        #             #     'measurement_meta': meas['diameter'],
+        #             # }
+        #             sd_y_data.append('diameter_um')
+        #             sd_meas['primary']['diameter_um'] = (
+        #                 meas['diameter_um']
+        #             )
 
-            ts1d_source_map[inst_id] = {
-                'y_data': ts1d_y_data,
-                'default_y_data': ts1d_default_y_data,
-                'alias': inst_alias,
-                'measurement_meta': ts1d_meas
-            }
+        #     ts1d_source_map[inst_id] = {
+        #         'y_data': ts1d_y_data,
+        #         'default_y_data': ts1d_default_y_data,
+        #         'alias': inst_alias,
+        #         'measurement_meta': ts1d_meas
+        #     }
 
-            sd_source_map[inst_id] = {
-                'y_data': sd_y_data,
-                'default_y_data': sd_default_y_data,
-                'alias': inst_alias,
-                'measurement_meta': sd_meas
-            }
+        #     sd_source_map[inst_id] = {
+        #         'y_data': sd_y_data,
+        #         'default_y_data': sd_default_y_data,
+        #         'alias': inst_alias,
+        #         'measurement_meta': sd_meas
+        #     }
 
             # main_gps = self.component_map['INSTRUMENTS']['GPS']['PRIMARY']
             # geo_source_map[inst_id] = {
@@ -636,12 +636,161 @@ class SizingSystem(Controller):
     #     self.daq_definition['class'] = self.__name__
 
     def get_definition_instance(self):
-        return DummyController.get_definition()
+        return SizingSystem.get_definition()
 
     def get_definition():
         definition = dict()
-        definition['module'] = DummyController.__module__
-        definition['name'] = DummyController.__name__
+        definition['module'] = SizingSystem.__module__
+        definition['name'] = SizingSystem.__name__
+        definition['tags'] = [
+            'size distribution',
+            'particle',
+            'aerosol',
+            'physics',
+            'aitken mode',
+            'accumulation mode',
+            'coarse mode',
+            'sizing',
+            'inverted'        
+        ]
+
+        measurement_config = dict()
+
+        y_data = []
+        dist_data = []
+
+        primary_meas_2d = dict()
+        primary_meas_2d['dmps_dndlogdp'] = {
+            'dimensions': {
+                'axes': ['TIME', 'DIAMETER'],
+                'unlimited': 'TIME',
+                'units': ['dateTime', 'um'],
+            },
+            'units': 'cm-3',  # should be cfunits or udunits
+            'uncertainty': 0.1,
+            'source': 'CALCULATED',
+            'data_type': 'NUMERIC',
+            # 'short_name': 'bin_conc',
+            # 'parse_label': 'bin',
+            'control': None,
+            'axes': {
+                # 'TIME', 'datetime',
+                'DIAMETER': 'dmps_diameter_um',
+            }
+        }
+        dist_data.append('dmps_dndlogdp')
+
+        primary_meas_2d['dmps_diameter_um'] = {
+            'dimensions': {
+                'axes': ['TIME', 'DIAMETER'],
+                'unlimited': 'TIME',
+                'units': ['dateTime', 'um'],
+            },
+            'units': 'um',  # should be cfunits or udunits
+            'uncertainty': 0.1,
+            'source': 'CALCULATED',
+            'data_type': 'NUMERIC',
+            'short_name': 'dmps_dp',
+            # 'parse_label': 'diameter',
+            'control': None,
+        }
+        dist_data.append('dmps_diameter_um')
+
+        primary_meas_2d = dict()
+        primary_meas_2d['aps_dndlogdp'] = {
+            'dimensions': {
+                'axes': ['TIME', 'DIAMETER'],
+                'unlimited': 'TIME',
+                'units': ['dateTime', 'um'],
+            },
+            'units': 'cm-3',  # should be cfunits or udunits
+            'uncertainty': 0.1,
+            'source': 'CALCULATED',
+            'data_type': 'NUMERIC',
+            # 'short_name': 'bin_conc',
+            # 'parse_label': 'bin',
+            'control': None,
+            'axes': {
+                # 'TIME', 'datetime',
+                'DIAMETER': 'aps_diameter_aero_um',
+            }
+        }
+        dist_data.append('aps_dndlogdp')
+
+        primary_meas_2d['aps_diameter_aero_um'] = {
+            'dimensions': {
+                'axes': ['TIME', 'DIAMETER'],
+                'unlimited': 'TIME',
+                'units': ['dateTime', 'um'],
+            },
+            'units': 'um',  # should be cfunits or udunits
+            'uncertainty': 0.1,
+            'source': 'CALCULATED',
+            'data_type': 'NUMERIC',
+            'short_name': 'aps_dpa',
+            # 'parse_label': 'diameter',
+            'control': None,
+        }
+        dist_data.append('aps_diameter_aero_um')
+
+        primary_meas = dict()
+        primary_meas['integral_concentration'] = {
+            'dimensions': {
+                'axes': ['TIME'],
+                'unlimited': 'TIME',
+                'units': ['dateTime'],
+            },
+            'units': 'cm-3',  # should be cfunits or udunits
+            'uncertainty': 0.2,
+            'source': 'calculated',
+            'data_type': 'NUMERIC',
+            'short_name': 'int_conc',
+            # 'parse_label': 'scan_max_volts',
+            'control': None,
+        }
+        y_data.append('integral_concentration')
+
+        measurement_config['primary_2d'] = primary_meas_2d
+        measurement_config['primary'] = primary_meas
+        definition['measurement_config'] = measurement_config
+
+        plot_config = dict()
+
+        size_dist = dict()
+        size_dist['app_type'] = 'SizeDistribution'
+        size_dist['y_data'] = dist_data,
+        size_dist['default_y_data'] = [
+            'dmps_dndlogdp',
+            'aps_dndlogdp'
+        ]
+        source_map = {
+            'default': {
+                'y_data': dist_data,
+                'default_y_data': [
+                    'dmps_dndlogdp',
+                    'aps_dndlogdp'
+                ]
+            },
+        }
+        size_dist['source_map'] = source_map
+
+        time_series1d = dict()
+        time_series1d['app_type'] = 'TimeSeries1D'
+        time_series1d['y_data'] = y_data
+        time_series1d['default_y_data'] = ['integral_concentration']
+        source_map = {
+            'default': {
+                'y_data': y_data,
+                'default_y_data': ['integral_concentration']
+            },
+        }
+        time_series1d['source_map'] = source_map
+
+        plot_config['plots'] = dict()
+        plot_config['plots']['inverted_size_dist'] = size_dist
+        plot_config['plots']['main_ts1d'] = time_series1d
+        definition['plot_config'] = plot_config
+
         return {'DEFINITION': definition}
         # DAQ.daq_definition['DEFINITION'] = definition
         # return DAQ.daq_definition
