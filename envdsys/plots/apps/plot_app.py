@@ -1441,7 +1441,7 @@ class GeoMapPlot(PlotApp):
         msg_list = []
         gps_id = next(iter(self.sync_buffer['GPS']))
         gps_data = self.sync_buffer['GPS'][gps_id]
-        for src_id, data in self.sync_buffer['DATA']:
+        for src_id, data in self.sync_buffer['DATA'].items():
             if (
                 dt_string in data and
                 dt_string in gps_data
@@ -1462,7 +1462,7 @@ class GeoMapPlot(PlotApp):
                 )
 
         # check for dt buffer length and trim if necessary
-        if len(self.sync_buffer['DATETIME'] > max_size):
+        if len(self.sync_buffer['DATETIME']) > max_size:
             dt = self.sync_buffer['DATETIME'][0]
             gps_id = next(iter(self.sync_buffer['GPS']))
 
