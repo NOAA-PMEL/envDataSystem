@@ -250,7 +250,8 @@ class DummyIFDevice(IFDevice):
         # print(msg.to_json())
         # self.msg_send_buffer.put_nowait(msg)
         # print(f'to parent: {msg.to_json()}')
-        await self.message_to_parent(msg)
+        # await self.message_to_parent(msg)
+        await self.message_to_parents(msg)
 
     async def handle(self, msg, type=None):
         print(f'ifdevice.handle: {msg}')
@@ -591,7 +592,8 @@ class LabJackT7Device(IFDevice):
                 }
             )
             # print(f'serialportread: {data}')
-            await self.message_to_parent(msg)
+            # await self.message_to_parent(msg)
+            await self.message_to_parents(msg)
 
     # async def write_data(self, msg):
     #     # while True:
