@@ -5,6 +5,7 @@ import asyncio
 from daq.daq import DAQ
 from daq.instrument.instrument import InstrumentFactory, Instrument
 from data.message import Message
+import math
 # from plots.plots import PlotManager
 # from plots.apps.plot_app import TimeSeries1D
 # from daq.manager.manager import DAQManager
@@ -94,9 +95,13 @@ class Controller(DAQ):
 
         self.measurements = dict()
         self.measurements['meta'] = dict()
+        self.measurements['measurement_sets'] = dict()
 
         self.plot_config = dict()
         # self.plot_meta
+
+        self.data_record_template = dict()
+        self.data_record = dict()
 
         # self.add_instruments()
         # self.add_signals()
@@ -108,6 +113,7 @@ class Controller(DAQ):
         self.configure_components()
 
         self.add_instruments()
+        self.add_measurements()
         # self.add_signals()
         # print(f'id = {self.get_id()}')
 
@@ -216,6 +222,86 @@ class Controller(DAQ):
 
         super().shutdown()
 
+    # def get_data_entry(self, timestamp, force_add_meta=False):
+    #     self.include_metadata = False
+
+    #     print(f'timestamp: {timestamp}')
+    #     entry = {
+    #         # 'METADATA': self.get_metadata(),
+    #         'DATA': {
+    #             'DATETIME': timestamp,
+    #             'MEASUREMENTS': self.get_data_record(timestamp)
+    #         },
+    #     }
+    #     # add data request list for ui to use
+    #     entry['DATA_REQUEST_LIST'] = self.data_request_list
+
+    #     if self.include_metadata or force_add_meta:
+    #         entry['METADATA'] = self.get_metadata()
+    #         self.include_metadata = False
+
+    #     if len(self.alias) > 0:
+    #         entry['alias'] = self.alias
+
+    #     return entry
+
+    # def get_data_record(self, timestamp):
+    #     if timestamp in self.data_record:
+    #         return self.data_record.pop(timestamp)
+
+    #     return None
+
+    # def get_data_record_param(self, timestamp, name):
+    #     if (
+    #         timestamp in self.data_record and
+    #         name in self.data_record[timestamp]
+    #     ):
+    #         return self.data_record[timestamp][name]['VALUE']
+
+    # def update_data_record(
+    #     self,
+    #     timestamp,
+    #     data,
+    #     dataset='primary',
+    # ):
+    #     '''
+    #     Update data records dictionary using timestamp as
+    #     key value.
+
+    #     Parameters:
+
+    #     timestamp(str): string representation of timestamp
+    #         format: YYYY-MM-DDThh:mm:ssZ
+
+    #     data(dict): dictionary of measurement(s)
+    #         format: {meas_name: val, ...}
+
+    #     dataset(str): dataset to store data in
+
+    #     Returns:
+
+    #     nothing
+    #     '''
+
+    #     if not self.data_record:
+    #         self.data_record = dict()
+
+    #     if timestamp not in self.data_record:
+    #         # create blank data record
+    #         self.data_record[timestamp] = (
+    #             copy.deepcopy(self.data_record_template)
+    #         )
+    #         # if dataset not in self.data_record[timestamp]:
+    #         #     for label, name in self.parse_map.items():
+    #         #         self.data_record[timestamp][name] = None
+
+    #     for name, value in data.items():
+    #         print(f'{name} = {value}')
+    #         # self.data_record[timestamp][dataset][name] = value
+    #         self.data_record[timestamp][name] = (
+    #             {'VALUE': value}
+    #         )
+
     async def handle(self, msg, type=None):
         print(f'controller handle: {msg}')
         await asyncio.sleep(0.01)
@@ -281,6 +367,24 @@ class Controller(DAQ):
 
     def build_controller_meta(self):
         pass
+
+    def add_measurements(self):
+        # print('******add measurements')
+        definition = self.get_definition_instance()
+        # print('definition')
+        if 'measurement_config' in definition['DEFINITION']:
+            config = definition['DEFINITION']['measurement_config']
+            self.measurements['meta'] = config
+            for set_name, meas_set in config.items():
+                # print(f'set_name: {set_name}')
+                self.measurements['measurement_sets'][set_name] = dict()
+                mset = self.measurements['measurement_sets'][set_name]
+                for name, meas_cfg in meas_set.items():
+                    # print(f'name: {name}')
+                    mset[name] = dict()
+                    mset[name]['value'] = None
+
+        # print(f'add_measurement: {self.measurements}')
 
     def get_metadata(self):
 
@@ -638,6 +742,131 @@ class DummyController(Controller):
             meas_meta['DUMMY'] = dummy
 
         # add controller measurements
+        if (
+            len(self.component_map['INSTRUMENTS']['GPS']['LIST']) > 0 and
+            len(self.component_map['INSTRUMENTS']['DUMMY']['LIST']) > 0
+        ):
+            # configure GPS measurements
+            ctr_meas = dict()
+            ctr_meas[self.get_id()] = dict()
+            ctr_meas[self.get_id()]['alias'] = self.alias
+            ctr_meas[self.get_id()]['measurement_meta'] = dict()
+
+            ts1d_y_data = []
+            ts1d_default_y_data = []
+            ts1d_meas = {
+                # 'primary': dict(),
+            }
+
+            sd_y_data = []
+            sd_default_y_data = []
+            sd_meas = {
+                # 'primary': dict(),
+            }
+
+            geo_z_data = []
+            geo_meas = {
+                # 'primary': dict(),
+            }
+
+
+            # y_data = []
+            # dist_data = []
+
+            primary_meas_2d = dict()
+            primary_meas_2d['dndlogdp'] = {
+                'dimensions': {
+                    'axes': ['TIME', 'DIAMETER'],
+                    'unlimited': 'TIME',
+                    'units': ['dateTime', 'um'],
+                },
+                'units': 'cm-3',  # should be cfunits or udunits
+                'uncertainty': 0.1,
+                'source': 'CALCULATED',
+                'data_type': 'NUMERIC',
+                # 'short_name': 'bin_conc',
+                # 'parse_label': 'bin',
+                'control': None,
+                'axes': {
+                    # 'TIME', 'datetime',
+                    'DIAMETER': 'inverted_diameter_um',
+                }
+            }
+            sd_y_data.append('dndlogdp')
+
+            primary_meas_2d['inverted_diameter_um'] = {
+                'dimensions': {
+                    'axes': ['TIME', 'DIAMETER'],
+                    'unlimited': 'TIME',
+                    'units': ['dateTime', 'um'],
+                },
+                'units': 'um',  # should be cfunits or udunits
+                'uncertainty': 0.1,
+                'source': 'CALCULATED',
+                'data_type': 'NUMERIC',
+                'short_name': 'inverted_dp',
+                # 'parse_label': 'diameter',
+                'control': None,
+                'axes': {
+                    # 'TIME', 'datetime',
+                    'DIAMETER': 'inverted_diameter_um',
+                }
+            }
+            sd_y_data.append('inverted_diameter_um')
+
+            primary_meas = dict()
+            primary_meas['integral_concentration'] = {
+                'dimensions': {
+                    'axes': ['TIME'],
+                    'unlimited': 'TIME',
+                    'units': ['dateTime'],
+                },
+                'units': 'cm-3',  # should be cfunits or udunits
+                'uncertainty': 0.2,
+                'source': 'calculated',
+                'data_type': 'NUMERIC',
+                'short_name': 'int_conc',
+                # 'parse_label': 'scan_max_volts',
+                'control': None,
+            }
+            ts1d_y_data.append('integral_concentration')
+            geo_z_data.append('integral_concentration')
+
+            ctr_meas[self.get_id()]['measurement_meta']['primary_2d'] = (
+                primary_meas_2d
+            )
+            ctr_meas[self.get_id()]['measurement_meta']['primary'] = (
+                primary_meas
+            )
+
+            ts1d_meas['primary'] = primary_meas
+            ts1d_source_map[self.get_id()] = {
+                'y_data': ts1d_y_data,
+                'default_y_data': ts1d_default_y_data,
+                'alias': self.alias,
+                'measurement_meta': ts1d_meas
+            }
+
+            sd_meas['primary_2d'] = primary_meas_2d
+            sd_source_map[self.get_id()] = {
+                'y_data': sd_y_data,
+                'default_y_data': sd_default_y_data,
+                'alias': self.alias,
+                'measurement_meta': sd_meas
+            }
+
+            geo_meas['primary'] = primary_meas
+            geo_source_map[self.get_id()] = {
+                'z_data': geo_z_data,
+                'default_z_data': [],
+                'alias': self.alias,
+                'measurement_meta': geo_meas,
+                'instrument_type': 'DUMMY'
+            }
+
+            meas_meta['CONTROLLER'] = ctr_meas
+
+        # add controller measurements
         # print('here')
         # add controls
 
@@ -678,23 +907,27 @@ class DummyController(Controller):
         # print(f'%%%%%Instrument.handle: {msg.to_json()}')
         # handle messages from multiple sources. What ID to use?
         if (type == 'FromChild' and msg.type == Instrument.class_type):
-            id = msg.sender_id
+            # id = msg.sender_id
             # entry = self.parse(msg)
             # self.last_entry = entry
             # print('entry = \n{}'.format(entry))
 
-            data = Message(
-                sender_id=self.get_id(),
-                msgtype=Controller.class_type,
-            )
-            # send data to next step(s)
-            # to controller
-            # data.update(subject='DATA', body=entry['DATA'])
-            data.update(subject='DATA', body=entry)
-            # print(f'instrument data: {data.to_json()}')
+            entry = self.calculate_data(msg)
 
-            await self.message_to_ui(data)
-            # await PlotManager.update_data(self.plot_name, data.to_json())
+            if entry:
+                data = Message(
+                    sender_id=self.get_id(),
+                    msgtype=Controller.class_type,
+                )
+                # send data to next step(s)
+                # to controller
+                # data.update(subject='DATA', body=entry['DATA'])
+                data.update(subject='DATA', body=entry)
+                # print(f'instrument data: {data.to_json()}')
+
+                await self.message_to_ui(data)
+                # await asyncio.sleep(.1)
+                # await PlotManager.update_data(self.plot_name, data.to_json())
 
             # print(f'data_json: {data.to_json()}\n')
         elif type == 'FromUI':
@@ -713,6 +946,55 @@ class DummyController(Controller):
         # print("DummyInstrument:msg: {}".format(msg.body))
         # else:
         #     await asyncio.sleep(0.01)
+
+    def calculate_data(self, msg):
+        
+        id = msg.sender_id
+        if len(self.component_map['INSTRUMENTS']['DUMMY']['LIST']) > 0:
+            dummy = self.component_map['INSTRUMENTS']['DUMMY']['LIST'][0]
+            if id == dummy.get_id():
+                dt = msg.body['DATA']['DATETIME']
+                measurements = msg.body['DATA']['MEASUREMENTS']
+                dp = measurements['diameter']['VALUE']
+                dlogdp = math.pow(
+                    10,
+                    math.log10(dp[1]/dp[0])
+                )
+
+                size_dist = measurements['size_distribution']['VALUE']
+                dndlogdp = []
+                intN = 0
+                for bin in size_dist:
+                    dndlogdp.append(round(bin/dlogdp, 3))
+                    intN += bin
+                
+                entry = {
+                    'DATA': {
+                        'DATETIME': dt,
+                        'MEASUREMENTS': {
+                            'dndlogdp': {
+                                'VALUE': dndlogdp
+                            },
+                            'inverted_diameter_um': {
+                                'VALUE': dp,
+                            },
+                            'integral_concentration': {
+                                'VALUE': round(intN, 3)
+                            }
+                        }
+                    }
+
+                }
+
+                if len(self.alias) > 0:
+                    entry['alias'] = self.alias
+
+                return entry
+        return None
+
+                
+
+
 
     async def handle_control_action(self, control, value):
         pass
@@ -749,6 +1031,120 @@ class DummyController(Controller):
         definition = dict()
         definition['module'] = DummyController.__module__
         definition['name'] = DummyController.__name__
+        definition['tags'] = [
+            'dummy',
+            'testing',
+            'position',
+            'gps',
+            'size distribution',
+            'particle',
+            'aerosol',
+            'physics',
+            'aitken mode',
+            'accumulation mode',
+            'coarse mode',
+            'sizing',
+            'inverted'        
+        ]
+
+        # measurement_config = dict()
+
+        # y_data = []
+        # dist_data = []
+
+        # primary_meas_2d = dict()
+        # primary_meas_2d['dndlogdp'] = {
+        #     'dimensions': {
+        #         'axes': ['TIME', 'DIAMETER'],
+        #         'unlimited': 'TIME',
+        #         'units': ['dateTime', 'um'],
+        #     },
+        #     'units': 'cm-3',  # should be cfunits or udunits
+        #     'uncertainty': 0.1,
+        #     'source': 'CALCULATED',
+        #     'data_type': 'NUMERIC',
+        #     # 'short_name': 'bin_conc',
+        #     # 'parse_label': 'bin',
+        #     'control': None,
+        #     'axes': {
+        #         # 'TIME', 'datetime',
+        #         'DIAMETER': 'inverted_diameter_um',
+        #     }
+        # }
+        # dist_data.append('dndlogdp')
+
+        # primary_meas_2d['inverted_diameter_um'] = {
+        #     'dimensions': {
+        #         'axes': ['TIME', 'DIAMETER'],
+        #         'unlimited': 'TIME',
+        #         'units': ['dateTime', 'um'],
+        #     },
+        #     'units': 'um',  # should be cfunits or udunits
+        #     'uncertainty': 0.1,
+        #     'source': 'CALCULATED',
+        #     'data_type': 'NUMERIC',
+        #     'short_name': 'dmps_dp',
+        #     # 'parse_label': 'diameter',
+        #     'control': None,
+        # }
+        # dist_data.append('inverted_diameter_um')
+
+        # primary_meas = dict()
+        # primary_meas['integral_concentration'] = {
+        #     'dimensions': {
+        #         'axes': ['TIME'],
+        #         'unlimited': 'TIME',
+        #         'units': ['dateTime'],
+        #     },
+        #     'units': 'cm-3',  # should be cfunits or udunits
+        #     'uncertainty': 0.2,
+        #     'source': 'calculated',
+        #     'data_type': 'NUMERIC',
+        #     'short_name': 'int_conc',
+        #     # 'parse_label': 'scan_max_volts',
+        #     'control': None,
+        # }
+        # y_data.append('integral_concentration')
+
+        # measurement_config['primary_2d'] = primary_meas_2d
+        # measurement_config['primary'] = primary_meas
+        # definition['measurement_config'] = measurement_config
+
+        # plot_config = dict()
+
+        # size_dist = dict()
+        # size_dist['app_type'] = 'SizeDistribution'
+        # size_dist['y_data'] = dist_data,
+        # size_dist['default_y_data'] = [
+        #     'dndlogdp',
+        # ]
+        # source_map = {
+        #     'default': {
+        #         'y_data': dist_data,
+        #         'default_y_data': [
+        #             'dndlogdp'
+        #         ]
+        #     },
+        # }
+        # size_dist['source_map'] = source_map
+
+        # time_series1d = dict()
+        # time_series1d['app_type'] = 'TimeSeries1D'
+        # time_series1d['y_data'] = y_data
+        # time_series1d['default_y_data'] = ['integral_concentration']
+        # source_map = {
+        #     'default': {
+        #         'y_data': y_data,
+        #         'default_y_data': ['integral_concentration']
+        #     },
+        # }
+        # time_series1d['source_map'] = source_map
+
+        # plot_config['plots'] = dict()
+        # plot_config['plots']['inverted_size_dist'] = size_dist
+        # plot_config['plots']['main_ts1d'] = time_series1d
+        # definition['plot_config'] = plot_config
+
         return {'DEFINITION': definition}
         # DAQ.daq_definition['DEFINITION'] = definition
         # return DAQ.daq_definition

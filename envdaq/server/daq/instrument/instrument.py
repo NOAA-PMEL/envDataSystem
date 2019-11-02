@@ -671,7 +671,7 @@ class DummyInstrument(Instrument):
             print(f'instrument data: {data.to_json()}')
 
             await self.message_to_ui(data)
-            # await self.to_parent_buf.put(data)
+            await self.to_parent_buf.put(data)
             if self.datafile:
                 await self.datafile.write_message(data)
 
@@ -1206,7 +1206,7 @@ class DummyGPS(Instrument):
             print(f'instrument data: {data.to_json()}')
 
             await self.message_to_ui(data)
-            # await self.to_parent_buf.put(data)
+            await self.to_parent_buf.put(data)
             if self.datafile:
                 await self.datafile.write_message(data)
 

@@ -133,8 +133,8 @@ class ControllerConsumer(AsyncWebsocketConsumer):
         # if status, pass to socket
 
         # print(text_data)
-        text_data_json = json.loads(text_data)
-        message = text_data_json['message']
+        data = json.loads(text_data)
+        message = data['message']
 
         if (message['SUBJECT'] == 'DATA'):
             # print(f'controller data message')
@@ -145,6 +145,8 @@ class ControllerConsumer(AsyncWebsocketConsumer):
                     'message': message
                 }
             )
+            src_id = message['SENDER_ID']
+            await PlotManager.update_data_by_source(src_id, data)
 
         elif (message['SUBJECT'] == 'CONFIG'):
             body = message['BODY']

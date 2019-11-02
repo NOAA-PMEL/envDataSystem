@@ -1469,7 +1469,7 @@ class GeoMapPlot(PlotApp):
             if dt in self.sync_buffer['GPS'][gps_id]:
                 self.sync_buffer['GPS'][gps_id].pop(dt)
 
-            for src_id, data in self.sync_buffer['DATA']:
+            for src_id, data in self.sync_buffer['DATA'].items():
                 if dt in data:
                     data.pop(dt)
 

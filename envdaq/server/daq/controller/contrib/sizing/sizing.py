@@ -39,7 +39,6 @@ class SizingSystem(Controller):
                 #         math.log10(max_dp/min_dp)/(30-1)
                 #     )
 
-
     def configure_components(self):
 
         self.component_map['INSTRUMENTS'] = {
@@ -75,7 +74,6 @@ class SizingSystem(Controller):
             'source_map': dict(),
         }
         sd_source_map = dict()
-
 
         if len(self.component_map['INSTRUMENTS']['aitken_dmps']['LIST']) > 0:
             # configure GPS measurements
