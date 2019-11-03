@@ -3,6 +3,7 @@ from bokeh.application import Application
 from bokeh.application.handlers.function import FunctionHandler
 import asyncio
 
+
 class PlotServer():
 
     def __init__(self, server_id, app_list=[]):
@@ -41,7 +42,7 @@ class PlotServer():
         else:
             return None
 
-    def start(self):
+    def start(self, add_ws_origin=None):
 
         # if (self.running):
         #     return
@@ -64,6 +65,11 @@ class PlotServer():
 
         # add django server to ws_origin
         ws_origin.append('localhost:8001')
+
+        # add extra ws_origin
+        if add_ws_origin:
+            ws_origin.append(add_ws_origin)
+
         print(f'------- {self.apps},{self.address},{self.port}')
         self.server = Server(
             self.apps,

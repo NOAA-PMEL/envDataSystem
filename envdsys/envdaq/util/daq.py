@@ -11,7 +11,11 @@ class ConfigurationUtility():
     def __init__(self):
         pass
 
-    async def get_config(self, input=None):
+    async def get_config(
+        self,
+        input=None,
+        name=None
+    ):
         '''
         Build json config file from database. Starts with
         local server and builds from there based on last stored
@@ -41,11 +45,23 @@ class ConfigurationUtility():
         return config
 
     @database_sync_to_async
-    def get_config_sync(self, input=None):
-        daq = DAQServer.objects.get(pk=1)
+    def get_config_sync(
+        self,
+        input=None,
+        name=None
+    ):
+        try:
+            if name and len(name)>0:
+                daq = DAQServer.objects.get(name=name)
+            else:
+                daq = DAQServer.objects.get(pk=1)
+            return daq.configuration.get_config()
+        except ObjectDoesNotExist:
+            print(f'DAQ server: {name} does not exist')
+            return None
+
         # daq = DAQServer.objects.get(name='envDAQ_config_orig')
         # print(f'daq.config = {daq.configuration.config}')
-        return daq.configuration.get_config()
 
     async def get_daq(pk=None, name=None, tags=None):
         # TODO: add ability to choose wanted daq

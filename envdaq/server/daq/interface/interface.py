@@ -12,7 +12,7 @@ from daq.manager.manager import Managers
 class InterfaceFactory():
 
     @staticmethod
-    def create(config, **kwargs):
+    def create(config, ui_config=None, **kwargs):
         print(config)
         create_cfg = config['INTERFACE']
         ifconfig = config['IFCONFIG']
@@ -30,7 +30,7 @@ class InterfaceFactory():
             # print(f'cls: {cls_}')
             # inst_class = eval(config['class'])
             # return inst_class.factory_create()
-            test = cls_(ifconfig, **kwargs)
+            test = cls_(ifconfig, ui_config=ui_config, **kwargs)
             # print(test)
             return test
 
@@ -43,8 +43,8 @@ class Interface(DAQ):
 
     class_type = 'INTERFACE'
 
-    def __init__(self, config, **kwargs):
-        super(Interface, self).__init__(config, **kwargs)
+    def __init__(self, config, ui_config=None, **kwargs):
+        super(Interface, self).__init__(config, ui_config=ui_config, **kwargs)
         print('Interface init')
 
         self.name = 'Interface'
@@ -297,8 +297,8 @@ class DummyInterface(Interface):
 
     class_type = 'DUMMY_INTERFACE'
 
-    def __init__(self, config, **kwargs):
-        super(DummyInterface, self).__init__(config, **kwargs)
+    def __init__(self, config, ui_config=None, **kwargs):
+        super(DummyInterface, self).__init__(config, ui_config=ui_config, **kwargs)
 
         # ifdev_config = json.loads('{"IFDEVICE": {"MODULE": "daq.interface.ifdevice", "CLASS": "DummyIFDevice"}, "IFDEVCONFIG": {"DESCRIPTION": {"LABEL": "Dummy IFDevice", "SERIAL_NUMBER": "1234", "PROPERTY_NUMBER": "CD0001234"}}}')
         # ui_config = dict()
@@ -367,7 +367,7 @@ class DummyInterface(Interface):
         self.ifdevice = self.ifdevice_manager.create(
             'DummyIFDevice',
             ifdev_config,
-            ui_config=ui_config,
+            ui_config=self.ui_config,
             **self.kwargs
         )
         # self.ifdevice.to_parent_buf = self.from_child_buf
@@ -406,8 +406,8 @@ class SerialPortInterface(Interface):
 
     class_type = 'SERIALPORT_INTERFACE'
 
-    def __init__(self, config, **kwargs):
-        super(SerialPortInterface, self).__init__(config, **kwargs)
+    def __init__(self, config, ui_config=None, **kwargs):
+        super(SerialPortInterface, self).__init__(config, ui_config=ui_config, **kwargs)
 
         # ifdev_config = json.loads('{"IFDEVICE": {"MODULE": "daq.interface.ifdevice", "CLASS": "DummyIFDevice"}, "IFDEVCONFIG": {"DESCRIPTION": {"LABEL": "Dummy IFDevice", "SERIAL_NUMBER": "1234", "PROPERTY_NUMBER": "CD0001234"}}}')
         # ui_config = dict()
@@ -504,7 +504,7 @@ class SerialPortInterface(Interface):
         self.ifdevice = self.ifdevice_manager.create(
             'SerialPortIFDevice',
             ifdev_config,
-            ui_config=ui_config,
+            ui_config=self.ui_config,
             **self.kwargs
         )
         print(f'{self.kwargs}')
@@ -550,8 +550,8 @@ class TCPPortInterface(Interface):
 
     class_type = 'TCPPORT_INTERFACE'
 
-    def __init__(self, config, **kwargs):
-        super(TCPPortInterface, self).__init__(config, **kwargs)
+    def __init__(self, config, ui_config=None, **kwargs):
+        super(TCPPortInterface, self).__init__(config, ui_config=ui_config, **kwargs)
 
         # ifdev_config = json.loads('{"IFDEVICE": {"MODULE": "daq.interface.ifdevice", "CLASS": "DummyIFDevice"}, "IFDEVCONFIG": {"DESCRIPTION": {"LABEL": "Dummy IFDevice", "SERIAL_NUMBER": "1234", "PROPERTY_NUMBER": "CD0001234"}}}')
         # ui_config = dict()
@@ -623,7 +623,7 @@ class TCPPortInterface(Interface):
         self.ifdevice = self.ifdevice_manager.create(
             'TCPPortIFDevice',
             ifdev_config,
-            ui_config=ui_config,
+            ui_config=self.ui_config,
             **self.kwargs
         )
         # self.ifdevice.register_parent(
@@ -706,31 +706,12 @@ class TCPPortInterface(Interface):
 #             print('Unknown Message type: {}'.format(msg.type))
 
 
-if __name__ == "__main__":
-
-    config = {
-        'INTERFACE': {
-            'MODULE': 'daq.interface',
-            'CLASS': 'DummyInterface',
-        },
-        'IFCONFIG': {
-            'ADDRESS': 'DummyAddress',
-            'SerialNumber': '1234'
-        }
-    }
-    # print(config['IFTYPE'])
-    # print(config['IFCONFIG'])
-
-    iface = InterfaceFactory()
-    iface.create(config)
-
-
 class LabJackT7Interface(Interface):
 
     class_type = 'LABJACKT7_INTERFACE'
 
-    def __init__(self, config, **kwargs):
-        super(LabJackT7Interface, self).__init__(config, **kwargs)
+    def __init__(self, config, ui_config=None, **kwargs):
+        super(LabJackT7Interface, self).__init__(config, ui_config=ui_config, **kwargs)
 
         # ifdev_config = json.loads('{"IFDEVICE": {"MODULE": "daq.interface.ifdevice", "CLASS": "DummyIFDevice"}, "IFDEVCONFIG": {"DESCRIPTION": {"LABEL": "Dummy IFDevice", "SERIAL_NUMBER": "1234", "PROPERTY_NUMBER": "CD0001234"}}}')
         # ui_config = dict()
@@ -818,7 +799,7 @@ class LabJackT7Interface(Interface):
         self.ifdevice = self.ifdevice_manager.create(
             'LabJackT7Interface',
             ifdev_config,
-            ui_config=ui_config,
+            ui_config=self.ui_config,
             **self.kwargs
         )
         print(f'{self.kwargs}')
@@ -858,3 +839,22 @@ class LabJackT7Interface(Interface):
 
     def get_definition():
         pass
+
+if __name__ == "__main__":
+
+    config = {
+        'INTERFACE': {
+            'MODULE': 'daq.interface',
+            'CLASS': 'DummyInterface',
+        },
+        'IFCONFIG': {
+            'ADDRESS': 'DummyAddress',
+            'SerialNumber': '1234'
+        }
+    }
+    # print(config['IFTYPE'])
+    # print(config['IFCONFIG'])
+
+    iface = InterfaceFactory()
+    iface.create(config)
+

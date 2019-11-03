@@ -18,6 +18,7 @@ class DAQ(abc.ABC):
         self,
         config,
         ui_config=None,
+        base_file_path=None,
         auto_connect_ui=True,
         **kwargs
     ):
@@ -249,7 +250,10 @@ class DAQ(abc.ABC):
         print(f'connecting to ui: {self}')
         # build ui_address
         # ui_address = 'ws://localhost:8001/ws/'+quote(self.get_ui_address())
-        ui_address = 'ws://localhost:8001/ws/'+self.get_ui_address().replace(" ", "")
+        # ui_address = 'ws://localhost:8001/ws/'+self.get_ui_address().replace(" ", "")
+        ui_address = f'ws://{self.ui_config["host"]}'
+        ui_address += f':{self.ui_config["port"]}'
+        ui_address += '/ws/'+self.get_ui_address().replace(" ", "")
         # ui_address.replace(" ", "")
         print(f'ui_address: {ui_address}')
         # ui_address = 'ws://localhost:8001/ws/envdaq/data_test/'

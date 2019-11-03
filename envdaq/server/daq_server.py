@@ -1,4 +1,5 @@
 import asyncio
+from importlib import import_module
 # import time
 # import math
 # from daq.interface.interface import InterfaceFactory, Interface
@@ -15,92 +16,55 @@ import json
 # from plots.plots import PlotManager
 
 
-# class FEServer(asyncio.Protocol):
-
-#     clients = {}
-
-#     def __init__(self, sendq):
-#         self.buffer = ""
-#         self.sendq = sendq
-#         print('init: ')
-#         print(self.sendq)
-#         # self.clients = {}
-#         self.task_list = []
-
-#         self.task_list.append(
-#             asyncio.ensure_future(self.read_loop())
-#         )
-
-#     async def read_loop(self):
-
-#         while True:
-
-#             msg = await self.sendq.get()
-#             # print('sendq: {}'.format(msg))
-#             self.send_to_clients(msg)
-#             # self.transport.write(msg)
-#             await asyncio.sleep(.1)
-
-#     def connection_made(self, transport):
-#         print('Connection made!')
-#         self.transport = transport
-#         self.address = transport.get_extra_info('peername')
-#         FEServer.clients[self.address] = transport
-
-#         print(FEServer.clients, len(FEServer.clients))
-
-#     def data_received(self, data):
-#         # self.transport.write(data)
-#         self.send_to_clients(data.decode())
-#         print('data received: {}'.format(data.decode()))
-#         # self.broadcast(data)
-
-#     def eof_received(self):
-#         if self.transport.can_write_eof():
-#             self.transport.write_eof()
-
-#     def connection_lost(self, error):
-#         # if error:
-#         #     self.log.error('ERROR: {}'.format(error))
-#         # else:
-#         #     self.log.debug('closing')
-
-#         del self.clients[self.address]
-#         print(self.clients)
-#         super().connection_lost(error)
-
-#     def send_to_clients(self, msg):
-#         # print('here_send')
-#         print('msg = {}'.format(msg))
-#         # self.transport.write(msg.encode())
-#         # self.transport.write((msg+'\r\n').encode())
-#         print('send to clients: ', FEServer.clients)
-#         for k, v in FEServer.clients.items():
-#             print(k, v)
-#             # v.write(msg.encode())
-#             # w=v
-#             # w.write((msg+'\n').encode('idna'))
-#             # w.write((msg+'\r\n').encode())
-#             v.write((msg+'\r\n').encode())
-
-
 class DAQServer():
 
-    def __init__(self, config=None, ui_config=None):
+    def __init__(
+        self,
+        config=None,
+        server_name=None,
+        ui_config=None
+    ):
         self.controller_list = []
         self.controller_map = dict()
         self.task_list = []
         self.last_data = {}
         self.run_flag = False
-
+        
+        # defaults
+        self.server_name = ''
+        self.ui_config = {
+            'host': 'localhost',
+            'port': 8001,
+        }
+        self.base_file_path = '/tmp'
+        
         self.loop = asyncio.get_event_loop()
 
-        if ui_config is None:
-            ui_config = {
-                'host': 'localhost',
-                'port': 8001,
-            }
-        self.ui_config = ui_config
+        # try to import config from daq_settings.py
+        try:
+            daq_settings = import_module('daq_settings')
+            server_config = daq_settings.server_config
+            
+            if 'name' in server_config:
+                self.server_name = server_config['name']
+            
+            if 'ui_config' in server_config:
+                self.ui_config = server_config['ui_config']
+
+            if 'base_file_path' in server_config:
+                self.base_file_path = (
+                    server_config['base_file_path']
+                )
+
+        except ModuleNotFoundError:
+            print(f'settings file not found, using defaults')
+            self.server_name = ''
+
+        # override config file settings
+        if server_name:
+            self.server_name = server_name
+        if ui_config:
+            self.ui_config = ui_config
 
         self.config = config
 
@@ -217,7 +181,11 @@ class DAQServer():
             # self.iface_map[iface.name] = iface
             # print(ifcfg['IFACE_CONFIG'])
             # controller = ControllerFactory().create(icfg['CONT_CONFIG'])
-            controller = ControllerFactory().create(icfg, ui_config=self.ui_config)
+            controller = ControllerFactory().create(
+                icfg,
+                ui_config=self.ui_config,
+                base_file_path=self.base_file_path
+            )
             print(controller)
             controller.to_parent_buf = self.from_child_buf
             self.controller_map[controller.get_id()] = controller
@@ -328,6 +296,7 @@ class DAQServer():
                 body={
                     'purpose': 'REQUEST',
                     'type': 'ENVDAQ_CONFIG',
+                    'server_name': self.server_name
                 }
             )
             await self.to_gui_buf.put(req)

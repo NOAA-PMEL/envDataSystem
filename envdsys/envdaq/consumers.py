@@ -800,6 +800,13 @@ class IFDeviceConsumer(AsyncWebsocketConsumer):
 class DAQServerConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
+        
+        # self.server_name = (
+        #     self.scope['url_route']['kwargs']['server_name']
+        # )
+        self.hostname = self.scope['server'][0]
+        self.port = self.scope['server'][1]
+        print(f'hostname:port : {self.hostname}:{self.port}')
         self.daqserver_group_name = 'daq_messages'
 
         # Join room group
@@ -844,7 +851,11 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
             body = message['BODY']
             if (body['purpose'] == 'REQUEST'):
                 if (body['type'] == 'ENVDAQ_CONFIG'):
-                    cfg = await ConfigurationUtility().get_config()
+                    if 'server_name' in body:
+                        server_name = body['server_name']
+                    cfg = await ConfigurationUtility().get_config(
+                        name=server_name
+                    )
 
                     reply = {
                         'TYPE': 'GUI',
@@ -868,7 +879,11 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
             print('$$$$$$$ READY_STATE')
             if message['BODY']['status'] == 'READY':
                 print(f'___ READY TO GO ___: {message}')
-                PlotManager.get_server().start()
+                print(f'hostname: {self.hostname}')
+                ws_origin = f'{self.hostname}:{self.port}'
+                PlotManager.get_server().start(
+                    add_ws_origin=ws_origin
+                )
 
         # message = text_data_json['BODY']
 

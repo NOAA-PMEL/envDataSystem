@@ -444,6 +444,7 @@ class Instrument(DAQ):
             # iface = InterfaceFactory().create(ifcfg['IFACE_CONFIG'])
             iface = InterfaceFactory().create(
                 ifcfg,
+                ui_config=self.ui_config,
                 **self.iface_options
             )
             print(f'iface: {k}: {iface}')

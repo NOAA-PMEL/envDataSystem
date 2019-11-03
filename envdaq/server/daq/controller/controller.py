@@ -40,33 +40,33 @@ class Controller(DAQ):
     class_type = 'CONTROLLER'
 
     # TODO: add way to pass gui hints/defines to front end
-    gui_def = {
-        'CONTROLS': {
-            'RUN': {
-                'LABEL': 'Run',
-                'DESCRIPTION': 'Start/Stop controller',
-                'WIDGET': 'Button',
-                'OPTIONS': ['Start', 'Stop'],
-            },
-            'AUTOSTART': {
-                'LABEL': 'Auto Start',
-                'DESCRIPTION': 'Select to automatically run on startup',
-                'WIDGET': 'Boolean',
-            },
-            'ACTIVE': {
-                'LABEL': 'Active',
-                'DESCRIPTION': 'Select to activate/deactivate controller',
-                'WIDGET': 'Boolean',
-            },
-            'STATUS': {
-                'LABEL': 'Status',
-                'DESCRIPTION': 'Controller status indicator',
-                'WIDGET': 'ColorTextOutput',
-                'OPTIONS': [('OK', 'green'), ('Not OK', 'red')],
-            }
-        }
+    # gui_def = {
+    #     'CONTROLS': {
+    #         'RUN': {
+    #             'LABEL': 'Run',
+    #             'DESCRIPTION': 'Start/Stop controller',
+    #             'WIDGET': 'Button',
+    #             'OPTIONS': ['Start', 'Stop'],
+    #         },
+    #         'AUTOSTART': {
+    #             'LABEL': 'Auto Start',
+    #             'DESCRIPTION': 'Select to automatically run on startup',
+    #             'WIDGET': 'Boolean',
+    #         },
+    #         'ACTIVE': {
+    #             'LABEL': 'Active',
+    #             'DESCRIPTION': 'Select to activate/deactivate controller',
+    #             'WIDGET': 'Boolean',
+    #         },
+    #         'STATUS': {
+    #             'LABEL': 'Status',
+    #             'DESCRIPTION': 'Controller status indicator',
+    #             'WIDGET': 'ColorTextOutput',
+    #             'OPTIONS': [('OK', 'green'), ('Not OK', 'red')],
+    #         }
+    #     }
 
-    }
+    # }
 
     # def __init__(self, config):
     def __init__(self, config, alias=None, **kwargs):
