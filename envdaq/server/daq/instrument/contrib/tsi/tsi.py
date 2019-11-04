@@ -456,6 +456,7 @@ class APS3320(TSIInstrument):
                 print(f'999999999999msems data: {data.to_json()}')
                 # await asyncio.sleep(.1)
                 await self.message_to_ui(data)
+                await self.to_parent_buf.put(data)
                 # await PlotManager.update_data(self.plot_name, data.to_json())
                 if self.datafile:
                     await self.datafile.write_message(data)
@@ -526,10 +527,14 @@ class APS3320(TSIInstrument):
 
             for i in range(first_channel, len(params)):
                 try:
-                    conc[i-first_channel] = float(params[i])
+                    n = float(params[i])
+                    if n < 0:
+                        n = 0
+                    conc[i-first_channel] = n
                 except ValueError:
                     conc[i-first_channel] = 0
 
+                    
             self.update_data_record(
                 self.scan_start_time,
                 {'bin_concentration': conc}
@@ -1394,6 +1399,7 @@ class CPC3760A_DMPS(TSIInstrument):
                 print(f'999999999999msems data: {data.to_json()}')
                 # await asyncio.sleep(.1)
                 await self.message_to_ui(data)
+                await self.to_parent_buf.put(data)
                 # await PlotManager.update_data(self.plot_name, data.to_json())
                 if self.datafile:
                     await self.datafile.write_message(data)

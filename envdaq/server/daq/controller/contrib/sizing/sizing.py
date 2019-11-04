@@ -5,7 +5,8 @@ from data.message import Message
 from daq.controller.controller import Controller, ControllerFactory
 import math
 import subprocess
-import datetime
+from datetime import datetime
+
 
 class SizingSystem(Controller):
     INSTANTIABLE = True
@@ -40,10 +41,10 @@ class SizingSystem(Controller):
 
         # print(f'dummy_map: {self.dummy_instrument_map}')
 
-                #     dlogdp = math.pow(
-                #         10,
-                #         math.log10(max_dp/min_dp)/(30-1)
-                #     )
+        #     dlogdp = math.pow(
+        #         10,
+        #         math.log10(max_dp/min_dp)/(30-1)
+        #     )
 
     def configure_components(self):
 
@@ -452,7 +453,6 @@ class SizingSystem(Controller):
             #     # 'primary': dict(),
             # }
 
-
             # y_data = []
             # dist_data = []
 
@@ -499,7 +499,6 @@ class SizingSystem(Controller):
                 }
                 sd_y_data.append('dmps_diameter_um')
 
-                primary_meas = dict()
                 primary_meas['dmps_integral_concentration'] = {
                     'dimensions': {
                         'axes': ['TIME'],
@@ -558,7 +557,6 @@ class SizingSystem(Controller):
                 }
                 sd_y_data.append('aps_diameter_um')
 
-                primary_meas = dict()
                 primary_meas['aps_integral_concentration'] = {
                     'dimensions': {
                         'axes': ['TIME'],
@@ -599,131 +597,130 @@ class SizingSystem(Controller):
                 'measurement_meta': sd_meas
             }
 
-            geo_meas['primary'] = primary_meas
-            geo_source_map[self.get_id()] = {
-                'z_data': geo_z_data,
-                'default_z_data': [],
-                'alias': self.alias,
-                'measurement_meta': geo_meas,
-                'instrument_type': 'DUMMY'
-            }
+            # geo_meas['primary'] = primary_meas
+            # geo_source_map[self.get_id()] = {
+            #     'z_data': geo_z_data,
+            #     'default_z_data': [],
+            #     'alias': self.alias,
+            #     'measurement_meta': geo_meas,
+            #     'instrument_type': 'DUMMY'
+            # }
 
             meas_meta['CONTROLLER'] = ctr_meas
 
+        # # controller derived measurements
+        # # TODO: define these in get_definition like instrument
+        # #       and retrieve with add_measurements to populate
+        # #       self.measurements
+        # sizing = dict()
 
-        # controller derived measurements
-        # TODO: define these in get_definition like instrument
-        #       and retrieve with add_measurements to populate
-        #       self.measurements
-        sizing = dict()
+        # # size_dist_y_data = []
+        # # size_dist_default_y_data = []
 
-        # size_dist_y_data = []
-        # size_dist_default_y_data = []
+        # # for inst in self.component_map['INSTRUMENTS']['sizing']['LIST']:
 
-        # for inst in self.component_map['INSTRUMENTS']['sizing']['LIST']:
+        # ts1d_y_data = []
+        # ts1d_default_y_data = []
+        # ts1d_meas = {
+        #     'primary': dict(),
+        # }
 
-        ts1d_y_data = []
-        ts1d_default_y_data = []
-        ts1d_meas = {
-            'primary': dict(),
-        }
+        # sd_y_data = []
+        # sd_default_y_data = []
+        # sd_meas = {
+        #     'primary': dict(),
+        # }
 
-        sd_y_data = []
-        sd_default_y_data = []
-        sd_meas = {
-            'primary': dict(),
-        }
+        #     # geo_z_data = []
+        #     # geo_meas = {
+        #     #     'primary': dict(),
+        #     # }
+        # # cont_meta
+        # #     inst_meta = inst.get_metadata()
+        # #     inst_alias = inst_meta['alias']
+        # #     inst_id = inst_meta['ID']
 
-            # geo_z_data = []
-            # geo_meas = {
-            #     'primary': dict(),
-            # }
-        # cont_meta
-        #     inst_meta = inst.get_metadata()
-        #     inst_alias = inst_meta['alias']
-        #     inst_id = inst_meta['ID']
+        # #     inst_meas = inst_meta['measurement_meta']
+        # #     inst_plots = inst_meta['plot_meta']
 
-        #     inst_meas = inst_meta['measurement_meta']
-        #     inst_plots = inst_meta['plot_meta']
+        # #     # meas_meta[inst_id] = dict()
+        # #     # meas_meta[inst_id]['alias'] = inst_alias
+        # #     sizing[inst_id] = dict()
+        # #     sizing[inst_id]['alias'] = inst_alias
+        # #     sizing[inst_id]['measurement_meta'] = dict()
+        # #     sizing[inst_id]['measurement_meta']['primary'] = dict()
+        # #     mm = sizing[inst_id]['measurement_meta']['primary']
+        # #     for mtype, meas in inst_meas.items():
+        # #         if 'integral_concentration' in meas:
+        # #             mm['integral_concentration'] = (
+        # #                 meas['integral_concentration']
+        # #             )
+        # #             # meas_meta[inst_id]['latitude'] = {
+        # #             # gps[inst_id]['latitude'] = {
+        # #             #     'measurement_meta': meas['latitude'],
+        # #             # }
+        # #             ts1d_y_data.append('integral_concentration')
+        # #             ts1d_meas['primary']['integral_concentration'] = (
+        # #                 meas['integral_concentration']
+        # #             )
 
-        #     # meas_meta[inst_id] = dict()
-        #     # meas_meta[inst_id]['alias'] = inst_alias
-        #     sizing[inst_id] = dict()
-        #     sizing[inst_id]['alias'] = inst_alias
-        #     sizing[inst_id]['measurement_meta'] = dict()
-        #     sizing[inst_id]['measurement_meta']['primary'] = dict()
-        #     mm = sizing[inst_id]['measurement_meta']['primary']
-        #     for mtype, meas in inst_meas.items():
-        #         if 'integral_concentration' in meas:
-        #             mm['integral_concentration'] = (
-        #                 meas['integral_concentration']
-        #             )
-        #             # meas_meta[inst_id]['latitude'] = {
-        #             # gps[inst_id]['latitude'] = {
-        #             #     'measurement_meta': meas['latitude'],
-        #             # }
-        #             ts1d_y_data.append('integral_concentration')
-        #             ts1d_meas['primary']['integral_concentration'] = (
-        #                 meas['integral_concentration']
-        #             )
+        # #             # geo_z_data.append('latitude')
+        # #             # geo_lat_dim = 'latitude'
+        # #             # geo_meas['primary']['latitude'] = meas['latitude']
 
-        #             # geo_z_data.append('latitude')
-        #             # geo_lat_dim = 'latitude'
-        #             # geo_meas['primary']['latitude'] = meas['latitude']
+        # #         if 'bin_concentration' in meas:
+        # #             mm['bin_concentration'] = (
+        # #                 meas['bin_concentration']
+        # #             )
+        # #             # {
+        # #             # # dummy[inst_id]['size_distribution'] = {
+        # #             #     'measurement_meta': meas['size_distribution'],
+        # #             # }
+        # #             sd_y_data.append('bin_concentration')
+        # #             sd_meas['primary']['bin_concentration'] = (
+        # #                 meas['bin_concentration']
+        # #             )
+        # #         if 'diameter_um' in meas:
+        # #             mm['diameter_um'] = (
+        # #                 meas['diameter_um']
+        # #             )
+        # #             # meas_meta[inst_id]['diameter'] = {
+        # #             # dummy[inst_id]['diameter'] = {
+        # #             #     'measurement_meta': meas['diameter'],
+        # #             # }
+        # #             sd_y_data.append('diameter_um')
+        # #             sd_meas['primary']['diameter_um'] = (
+        # #                 meas['diameter_um']
+        # #             )
 
-        #         if 'bin_concentration' in meas:
-        #             mm['bin_concentration'] = (
-        #                 meas['bin_concentration']
-        #             )
-        #             # {
-        #             # # dummy[inst_id]['size_distribution'] = {
-        #             #     'measurement_meta': meas['size_distribution'],
-        #             # }
-        #             sd_y_data.append('bin_concentration')
-        #             sd_meas['primary']['bin_concentration'] = (
-        #                 meas['bin_concentration']
-        #             )
-        #         if 'diameter_um' in meas:
-        #             mm['diameter_um'] = (
-        #                 meas['diameter_um']
-        #             )
-        #             # meas_meta[inst_id]['diameter'] = {
-        #             # dummy[inst_id]['diameter'] = {
-        #             #     'measurement_meta': meas['diameter'],
-        #             # }
-        #             sd_y_data.append('diameter_um')
-        #             sd_meas['primary']['diameter_um'] = (
-        #                 meas['diameter_um']
-        #             )
+        # #     ts1d_source_map[inst_id] = {
+        # #         'y_data': ts1d_y_data,
+        # #         'default_y_data': ts1d_default_y_data,
+        # #         'alias': inst_alias,
+        # #         'measurement_meta': ts1d_meas
+        # #     }
 
-        #     ts1d_source_map[inst_id] = {
-        #         'y_data': ts1d_y_data,
-        #         'default_y_data': ts1d_default_y_data,
-        #         'alias': inst_alias,
-        #         'measurement_meta': ts1d_meas
-        #     }
+        # #     sd_source_map[inst_id] = {
+        # #         'y_data': sd_y_data,
+        # #         'default_y_data': sd_default_y_data,
+        # #         'alias': inst_alias,
+        # #         'measurement_meta': sd_meas
+        # #     }
 
-        #     sd_source_map[inst_id] = {
-        #         'y_data': sd_y_data,
-        #         'default_y_data': sd_default_y_data,
-        #         'alias': inst_alias,
-        #         'measurement_meta': sd_meas
-        #     }
+        #     # main_gps = self.component_map['INSTRUMENTS']['GPS']['PRIMARY']
+        #     # geo_source_map[inst_id] = {
+        #     #     'z_data': geo_z_data,
+        #     #     'default_z_data': [],
+        #     #     'alias': inst_alias,
+        #     #     'measurement_meta': geo_meas,
+        #     #     'latitude': geo_lat_dim,
+        #     #     'longitude': geo_lon_dim,
+        #     #     'altitude': geo_alt_dim,
+        #     #     'primary_gps': main_gps,
+        #     #     'instrument_type': 'GPS'
+        #     # }
 
-            # main_gps = self.component_map['INSTRUMENTS']['GPS']['PRIMARY']
-            # geo_source_map[inst_id] = {
-            #     'z_data': geo_z_data,
-            #     'default_z_data': [],
-            #     'alias': inst_alias,
-            #     'measurement_meta': geo_meas,
-            #     'latitude': geo_lat_dim,
-            #     'longitude': geo_lon_dim,
-            #     'altitude': geo_alt_dim,
-            #     'primary_gps': main_gps,
-            #     'instrument_type': 'GPS'
-            # }
-
-        meas_meta['sizing'] = sizing
+        # meas_meta['sizing'] = sizing
 
         # add controller measurements
         # print('here')
@@ -807,101 +804,112 @@ class SizingSystem(Controller):
         #     await asyncio.sleep(0.01)
 
     def calculate_data(self, msg):
-        
+
         # TODO: add get_data entry functions to controller
 
         id = msg.sender_id
         dt = msg.body['DATA']['DATETIME']
-        
+
         if self.has_aitken and self.has_accum:
             meas = msg.body['DATA']['MEASUREMENTS']
 
-            aitken = self.component_map['INSTRUMENTS']['aitken']['LIST'][0]
-            accum = self.component_map['INSTRUMENTS']['accum']['LIST'][0]
-            
+            aitken = self.component_map['INSTRUMENTS']['aitken_dmps']['LIST'][0]
+            accum = self.component_map['INSTRUMENTS']['accum_dmps']['LIST'][0]
+
             if id == aitken.get_id():
-                
+
                 if dt not in self.dmps_data:
                     self.dmps_data = dict()
                     self.dmps_data[dt] = dict()
-                
+
                 self.dmps_data[dt]['aitken'] = {
-                        'dp': meas['diameter_um'],
-                        'dn': meas['bin_concentration']
+                    'dp': meas['diameter_um']['VALUE'],
+                    'dn': meas['bin_concentration']['VALUE']
                 }
 
             elif id == accum.get_id():
-                
+
                 if dt not in self.dmps_data:
                     self.dmps_data = dict()
                     self.dmps_data[dt] = dict()
-                
+
                 self.dmps_data[dt]['accum'] = {
-                        'dp': meas['diameter_um'],
-                        'dn': meas['bin_concentration']
+                    'dp': meas['diameter_um']['VALUE'],
+                    'dn': meas['bin_concentration']['VALUE']
                 }
 
             if (
                 dt in self.dmps_data and
-                'aitken' in self.dmps_data[dt] and 
+                'aitken' in self.dmps_data[dt] and
                 'accum' in self.dmps_data[dt]
             ):
 
                 # save input file
-                ts = datetime.timestamp(datetime.now())
+                # ts = datetime.timestamp(datetime.now())
+                ts = 101.1234  # place holder
                 Tk = 293.15
                 p = 1013.15
                 num_bins = (
                     len(self.dmps_data[dt]['aitken']['dp']) +
                     len(self.dmps_data[dt]['accum']['dp'])
                 )
-                fn = './inversion/IfT/ein.dat'
+                fn = './envdaq/server/inversion/ein.dat'
                 with open(fn, 'w') as f:
                     # write dp
-                    f.write(f'{ts}\t{Tk}\t{p}\t{num_bins}')
+                    f.write(f'{ts} {Tk} {p} {num_bins}')
                     for dp in self.dmps_data[dt]['aitken']['dp']:
-                        f.write(f'\t{dp}')
+                        f.write(f' {round(dp*1000, 2)}')
                     for dp in self.dmps_data[dt]['accum']['dp']:
-                        f.write(f'\t{dp}')
+                        f.write(f' {round(dp*1000, 2)}')
                     f.write('\n')
 
                     # write dn
-                    f.write(f'{ts}\t{Tk}\t{p}\t{num_bins}')
+                    f.write(f'{ts} {Tk} {p} {num_bins}')
                     for dn in self.dmps_data[dt]['aitken']['dn']:
-                        f.write(f'\t{dn}')
+                        f.write(f' {dn}')
                     for dn in self.dmps_data[dt]['accum']['dn']:
-                        f.write(f'\t{dn}')
+                        f.write(f' {dn}')
                     f.write('\n')
 
                 # do inversion
                 print(f'do inversion')
 
-                inv = './inversion/main'
-                res = subprocess.run([inv], stdout=subprocess.DEVNULL)
+                inv = './main'
+                res = subprocess.run(
+                    [inv],
+                    stdout=subprocess.DEVNULL,
+                    cwd='./envdaq/server/inversion'
+                )
                 print(f'inversion process result: {res}')
 
                 # check res code
 
                 # read output file
-                fn = './inversion/IfT/out.dat'
+                fn = './envdaq/server/inversion/out.dat'
                 # out_dp = []
                 # out_dndlogdp = []
-                with open(fn, 'w') as f:
+                with open(fn, 'r') as f:
                     dp_line = f.readline()
-                    dndlogdp_line = f.readLine()
+                    dndlogdp_line = f.readline()
 
                 dp_parts = dp_line.split()
                 dndlogdp_parts = dndlogdp_line.split()
 
                 dmps_dp = []
                 dmps_dndlogdp = []
-                for dp, dn in zip(dp_parts, dndlogdp_parts):
-                    dmps_dp.append(float(dp))
-                    dmps_dndlogdp.append(float(dn))
- 
+                # for dp, dn in zip(dp_parts, dndlogdp_parts):
+                for i in range(4, len(dp_parts)):
+                    dmps_dp.append(float(dp_parts[i])/1000)
+                    dmps_dndlogdp.append(float(dndlogdp_parts[i]))
+
+                dmps_dlogdp = math.pow(
+                    10,
+                    math.log10(dmps_dp[1]/dmps_dp[0])
+                )
+
                 dmps_intN = 0
-                for bin in dmps_dn:
-                    dmps_intN += bin
+                for bin in dmps_dndlogdp:
+                    dmps_intN += bin*dmps_dlogdp
 
                 if dt not in self.data_ready:
                     self.data_ready = dict()
@@ -923,13 +931,14 @@ class SizingSystem(Controller):
 
             aps = self.component_map['INSTRUMENTS']['aps']['LIST'][0]
             if id == aps.get_id():
-                
-                aps_dp = meas['diameter_um'],
-                aps_dn = meas['bin_concentration']
-                
+
+                aps_dp = meas['diameter_um']['VALUE']
+                aps_dn = meas['bin_concentration']['VALUE']
+
+                print(f'aps_dp[8] = {aps_dp[8]}')
                 aps_dlogdp = math.pow(
                     10,
-                    math.log10(aps_dp[1]/aps_dp[0])
+                    math.log10(aps_dp[9]/aps_dp[8])
                 )
 
                 aps_dndlogdp = []
@@ -963,14 +972,19 @@ class SizingSystem(Controller):
         ):
             # return valid entry
             entry = {
-                'DATA': dt,
-                'MEASUREMENTS': dict()
+                'DATA': {
+                    'DATETIME': dt,
+                    'MEASUREMENTS': dict()
+                }
             }
-            for name, rec in self.data_ready['dmps']:
-                entry['MEASUREMENTS'][name] = rec
-            for name, rec in self.data_ready['aps']:
-                entry['MEASUREMENTS'][name] = rec
-            
+            for name, rec in self.data_ready[dt]['dmps'].items():
+                entry['DATA']['MEASUREMENTS'][name] = rec
+            for name, rec in self.data_ready[dt]['aps'].items():
+                entry['DATA']['MEASUREMENTS'][name] = rec
+
+            if self.alias:
+                entry['alias'] = self.alias
+
             return entry
 
         return None
@@ -1019,7 +1033,7 @@ class SizingSystem(Controller):
             'accumulation mode',
             'coarse mode',
             'sizing',
-            'inverted'        
+            'inverted'
         ]
 
         # measurement_config = dict()
