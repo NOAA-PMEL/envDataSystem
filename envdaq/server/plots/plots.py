@@ -3,6 +3,7 @@ import json
 from asyncio.queues import Queue
 from .plot_server import PlotServer
 from plots.apps.plot_app import TimeSeries1D
+from django.conf import settings
 
 
 class PlotManager():
@@ -14,7 +15,8 @@ class PlotManager():
     server_map = dict()
     app_list_map = dict()
 
-    DEFAULT_ID = ('localhost', 5001)
+    # DEFAULT_ID = ('localhost', 5001)
+    DEFAULT_ID = settings.PLOT_SERVER['server_id']
 
     @staticmethod
     # def add_app(

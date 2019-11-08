@@ -272,7 +272,7 @@ class TimeSeries1D(PlotApp):
         # print(f'TS1D: update_main_source')
         if msg:
             src_id, data = self.handle_main(msg)
-            print(f'    {src_id}: {data}')
+            # print(f'    {src_id}: {data}')
             if data:
                 # print(f'data: {data}')
                 # self.source.stream(data, rollover=self.rollover)
@@ -821,7 +821,7 @@ class SizeDistribution(PlotApp):
                 # for y in sd_config['y_data']:
                 for y in src['y_data']:
                     meas_config = self.get_measurement_config(src_id, y)
-                    print(f'meas Config = {meas_config}')
+                    # print(f'meas Config = {meas_config}')
 
                     if meas_config:
                         x_axis = 'diameter'
@@ -1002,8 +1002,8 @@ class SizeDistribution(PlotApp):
             # print(f'plot buffer = {plot_buffer}, {self.server_id}, {self.name}')
             if plot_buffer and plot_buffer.has_message():
                 # print(f'name: {id}, {self.name}')
-                print(
-                    f'plot_buffer: {len(plot_buffer.buffer)}, {plot_buffer.buffer}')
+                # print(
+                #     f'plot_buffer: {len(plot_buffer.buffer)}, {plot_buffer.buffer}')
                 # data_msg = plot_buffer.buffer
                 data_msg = plot_buffer.read()
 
@@ -1106,7 +1106,7 @@ class SizeDistribution(PlotApp):
             )
 
             axes_map = dict()
-            print(f'49494 current_data: {current_data}')
+            # print(f'49494 current_data: {current_data}')
             for trace in current_data['SizeDistribution']['y_data']:
                 # src_id = trace[0]
                 # y_name = trace[1]
@@ -1411,7 +1411,7 @@ class GeoMapPlot(PlotApp):
         if msg:
             # src_id, data = self.handle_main(msg)
             data_list = self.handle_main(msg)
-            print(f' {data_list}')
+            # print(f' {data_list}')
             # print(f'    {src_id}: {data}')
             return
             if data:
@@ -1489,7 +1489,7 @@ class GeoMapPlot(PlotApp):
             data = dict()
             dt_string = body['DATA']['DATETIME']
             msg_list = self.get_sync_data(src_id, dt_string, msg)
-            print(f'msg_list: {msg_list}')
+            # print(f'msg_list: {msg_list}')
             return None
 
             data['datetime'] = []

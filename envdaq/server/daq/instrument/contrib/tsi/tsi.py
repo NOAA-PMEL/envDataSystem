@@ -624,8 +624,8 @@ class APS3320(TSIInstrument):
         }
         dist_data.append('diameter_um')
 
-        raw_2d = dict()
-        raw_2d['bin_counts'] = {
+        raw_meas_2d = dict()
+        raw_meas_2d['bin_counts'] = {
             'dimensions': {
                 'axes': ['TIME', 'DIAMETER'],
                 'unlimited': 'TIME',

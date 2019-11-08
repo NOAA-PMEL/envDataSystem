@@ -4,6 +4,7 @@ from django.utils.safestring import mark_safe
 import json
 from bokeh.embed import server_document
 from plots.plots import PlotManager
+from django.conf import settings
 
 
 # # Create your views here.
@@ -36,6 +37,8 @@ def daqserver(request):
 
 
 def controller(request, controller_alias_name):
+
+    print(f'{settings.ALLOWED_HOSTS}')
     # list needs to be filtered based on controller
     # instrument_list = InstrumentMask.objects.all()
     # print(instrument_list)
@@ -58,10 +61,15 @@ def controller(request, controller_alias_name):
     measurements = json.loads(
         ctr.measurement_config.config
     )
+    host = 'localhost'
+    port = 5001
+    if 'server_id' in settings.PLOT_SERVER:
+        host = settings.PLOT_SERVER['server_id'][0]
+        port = settings.PLOT_SERVER['server_id'][1]
 
     plots = dict()
-    plots["host"] = "localhost"
-    plots["port"] = 5001
+    plots["host"] = host
+    plots["port"] = port
     plots["name"] = "/controller_"+ctr.alias_name
 
     print(f'{PlotManager.get_app_list(ctr.alias_name)}')
@@ -69,7 +77,7 @@ def controller(request, controller_alias_name):
     plot_scripts = []
     for app in plots['app_list']:
         plot_scripts.append(
-            server_document("http://localhost:5001"+app)
+            server_document(f"http://{host}:{port}"+app)
         )
     # plot_script = server_document("http://localhost:5001"+plots["name"])
     # print(f'plot_script: {plot_script}')
@@ -116,9 +124,15 @@ def instrument(request, instrument_name):
         alias.instrument.definition.measurement_config.config
     )
 
+    host = 'localhost'
+    port = 5001
+    if 'server_id' in settings.PLOT_SERVER:
+        host = settings.PLOT_SERVER['server_id'][0]
+        port = settings.PLOT_SERVER['server_id'][1]
+
     plots = dict()
-    plots["host"] = "localhost"
-    plots["port"] = 5001
+    plots["host"] = host
+    plots["port"] = port
     plots["name"] = "/instrument_"+alias.name
 
     
@@ -130,11 +144,11 @@ def instrument(request, instrument_name):
     plot_scripts = []
     for app in plots['app_list']:
         plot_scripts.append(
-            server_document("http://localhost:5001"+app)
+            server_document(f"http://{host}:{port}"+app)
         )
     
     # TODO: get plot name dynamically
-    plot_script = server_document("http://localhost:5001"+plots["name"])
+    plot_script = server_document(f"http://{host}:{port}"+plots["name"])
     print(f'plot_scripts: {plot_scripts}')
     context = {
         'instrument_instance': mark_safe(

@@ -233,7 +233,7 @@ class ControllerConsumer(AsyncWebsocketConsumer):
                 )
 
             else:
-                print(f'message: {message}')
+                # print(f'message: {message}')
                 await self.channel_layer.group_send(
                     self.controller_group_name,
                     {
@@ -254,7 +254,7 @@ class ControllerConsumer(AsyncWebsocketConsumer):
     # Receive message from room group
     async def requested_message(self, event):
         message = event['message']
-        print(f'data_message: {json.dumps(message)}')
+        # print(f'data_message: {json.dumps(message)}')
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
             'message': message
@@ -329,7 +329,7 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
                     'message': message
                 }
             )
-            print(f'123123123 data: {message}')
+            # print(f'123123123 data: {message}')
             src_id = message['SENDER_ID']
             await PlotManager.update_data_by_source(src_id, data)
 
@@ -430,7 +430,7 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
                     'SUBJECT': 'STATUS',
                     'BODY': body
                 }
-                print(f'consumer: {message}')
+                # print(f'consumer: {message}')
                 await self.channel_layer.group_send(
                     self.instrument_group_name,
                     {
@@ -440,7 +440,7 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
                 )
 
             else:
-                print(f'message: {message}')
+                # print(f'message: {message}')
                 await self.channel_layer.group_send(
                     self.instrument_group_name,
                     {
@@ -612,7 +612,7 @@ class InterfaceConsumer(AsyncWebsocketConsumer):
                 )
 
             else:
-                print(f'message: {message}')
+                # print(f'message: {message}')
                 await self.channel_layer.group_send(
                     self.interface_group_name,
                     {
@@ -621,11 +621,10 @@ class InterfaceConsumer(AsyncWebsocketConsumer):
                     }
                 )
 
-
     # Receive message from room group
     async def interface_message(self, event):
         message = event['message']
-        print(f'interface_message: {json.dumps(message)}')
+        # print(f'interface_message: {json.dumps(message)}')
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
             'message': message
@@ -778,7 +777,7 @@ class IFDeviceConsumer(AsyncWebsocketConsumer):
                 )
 
             else:
-                print(f'message: {message}')
+                # print(f'message: {message}')
                 await self.channel_layer.group_send(
                     self.ifdevice_group_name,
                     {
@@ -790,7 +789,7 @@ class IFDeviceConsumer(AsyncWebsocketConsumer):
     # Receive message from room group
     async def ifdevice_message(self, event):
         message = event['message']
-        print(f'ifdevice_message: {json.dumps(message)}')
+        # print(f'ifdevice_message: {json.dumps(message)}')
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
             'message': message
@@ -806,7 +805,7 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
         # )
         self.hostname = self.scope['server'][0]
         self.port = self.scope['server'][1]
-        print(f'hostname:port : {self.hostname}:{self.port}')
+        # print(f'hostname:port : {self.hostname}:{self.port}')
         self.daqserver_group_name = 'daq_messages'
 
         # Join room group

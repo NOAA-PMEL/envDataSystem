@@ -55,8 +55,12 @@ class PlotServer():
             )
 
         ws_origin = []
+        print(f'self.id = {self.id}')
         ws_origin.append(self.address+':'+str(self.port))
-        if self.address != 'localhost' and self.address != '127.0.0.1':
+        if (
+            self.address != 'localhost' and
+            self.address != '127.0.0.1'
+        ):
             ws_origin.append('localhost:'+str(self.port))
 
         # add django server to ws_origin
