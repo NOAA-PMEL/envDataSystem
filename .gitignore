@@ -129,3 +129,5 @@ envdsys/envdaq/templates/envdaq/controller_orig.html
 inversion/IfT/*
 envdaq/server/inversion/out.dat
 envdaq/server/inversion/ein.dat
+envdaq/docs/tmp_config sizing_system.json
+envdaq/docs/envdaq_config_uas_test_home.json
