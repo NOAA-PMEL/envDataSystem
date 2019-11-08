@@ -24,6 +24,7 @@ class HandixInstrument(Instrument):
         # TODO: add properties get/set to interface for
         #       things like readmethod
 
+
 class POPS(HandixInstrument):
 
     INSTANTIABLE = True
@@ -279,7 +280,6 @@ class POPS(HandixInstrument):
             dt = self.parse(msg)
 
             if self.scan_ready:
-
                 
                 # calc dp
                 dp = []
@@ -305,7 +305,7 @@ class POPS(HandixInstrument):
                 )
 
                 entry = self.get_data_entry(dt)
-                print(f'entry: {entry}')
+                # print(f'entry: {entry}')
 
                 self.scan_ready = False
 
@@ -320,9 +320,10 @@ class POPS(HandixInstrument):
 
                 # await self.msg_buffer.put(data)
                 # await self.to_parent_buf.put(data)
-                print(f'999999999999msems data: {data.to_json()}')
+                # print(f'999999999999msems data: {data.to_json()}')
                 # await asyncio.sleep(.1)
                 await self.message_to_ui(data)
+                await self.to_parent_buf.put(data)
                 # await PlotManager.update_data(self.plot_name, data.to_json())
                 if self.datafile:
                     await self.datafile.write_message(data)
@@ -330,14 +331,14 @@ class POPS(HandixInstrument):
             # await asyncio.sleep(0.01)
         elif type == 'FromUI':
             if msg.subject == 'STATUS' and msg.body['purpose'] == 'REQUEST':
-                print(f'msg: {msg.body}')
+                # print(f'msg: {msg.body}')
                 self.send_status()
 
             elif msg.subject == 'CONTROLS' and msg.body['purpose'] == 'REQUEST':
-                print(f'msg: {msg.body}')
+                # print(f'msg: {msg.body}')
                 await self.set_control(msg.body['control'], msg.body['value'])
             elif msg.subject == 'RUNCONTROLS' and msg.body['purpose'] == 'REQUEST':
-                print(f'msg: {msg.body}')
+                # print(f'msg: {msg.body}')
                 await self.handle_control_action(msg.body['control'], msg.body['value'])
                 # await self.set_control(msg.body['control'], msg.body['value'])
 
@@ -359,17 +360,17 @@ class POPS(HandixInstrument):
                 self.set_control_att(control, 'action_state', 'OK')
 
     def parse(self, msg):
-        print(f'parse: {msg.to_json()}')
+        # print(f'parse: {msg.to_json()}')
         # entry = dict()
         # entry['METADATA'] = self.get_metadata()
 
         # data = dict()
         # data['DATETIME'] = msg.body['DATETIME']
         dt = msg.body['DATETIME']
-        print(f'msg[DATETIME]: {dt}')
+        # print(f'msg[DATETIME]: {dt}')
 
         line = msg.body['DATA'].strip()
-        print(f'line = {line}')
+        # print(f'line = {line}')
 
         # DateTime	PartCt	PartCon	BL	STD	P	POPS_Flow	LDTemp	LD_Mon	Temp	b0	b1	b2	b3
 
@@ -423,107 +424,6 @@ class POPS(HandixInstrument):
             self.scan_ready = True
 
         return dt
-
-        # if params[1] == 'D':
-        #     checksum = params[0]
-        #     mode = params[2]
-        #     status_flag = params[4]
-        #     try:
-        #         sample_time = float(params[5])
-        #     except ValueError:
-        #         sample_time = 0
-
-        #     first_channel = 11
-        #     data_channels = len(params)-10
-        #     num_channel = 52
-
-        #     conc = []
-        #     for i in range(0, 52):
-        #         conc.append(0)
-
-        #     for i in range(first_channel, len(params)):
-        #         try:
-        #             conc[i-first_channel] = float(params[i])
-        #         except ValueError:
-        #             conc[i-first_channel] = 0
-
-        #     self.update_data_record(
-        #         self.scan_start_time,
-        #         {'bin_concentration': conc}
-        #     )
-
-        #     # integrate concentration
-        #     intN = 0
-        #     for i in range(0, num_channel):
-        #         if self.diameters_um[i] > self.first_good_diameter:
-        #             intN += conc[i]
-
-        #     self.update_data_record(
-        #         self.scan_start_time,
-        #         {'integral_concentration': intN}
-        #     )
-
-        #     # populate these for now
-        #     self.update_data_record(
-        #         self.scan_start_time,
-        #         {'sheath_flow': None}
-        #     )
-
-        #     self.update_data_record(
-        #         self.scan_start_time,
-        #         {'sample_flow': None}
-        #     )
-
-        #     self.scan_ready = True
-
-        #     print(f'conc: {conc}')
-        # return self.scan_start_time
-
-    #     # if len(line) == 0:
-    #     #     self.current_read_cnt += 1
-    #     # else:
-    #     parts = line.split('=')
-
-    #     if len(parts) < 2:
-    #         return dt
-
-    #     # self.scan_state = 999
-    #     # if self.scan_run_state == 'STOPPING':
-    #     #     if parts[0] == 'scan_state':
-    #     #         self.scan_state = int(parts[1])
-
-    #     # print(f'77777777777777{parts[0]} = {parts[1]}')
-    #     if parts[0] in self.parse_map:
-    #         self.update_data_record(
-    #             dt,
-    #             {self.parse_map[parts[0]]: parts[1]},
-    #         )
-    #         if self.scan_stop_param == parts[0]:
-    #             self.scan_ready = True
-    #         elif self.scan_start_param == parts[0]:
-    #             self.current_size_dist.clear()
-    #     elif parts[0].find('bin') >= 0:
-    #         self.current_size_dist.append(
-    #             float(parts[1])
-    #         )
-    #     # # TODO: how to limit to one/sec
-    #     # # check for new second
-    #     # # if data['DATETIME'] == self.last_entry['DATA']['DATETIME']:
-    #     # #     # don't duplicate timestamp for now
-    #     # #     return
-    #     # # self.last_entry['DATETIME'] = data['DATETIME']
-
-    #     # measurements = dict()
-
-    #    # controls_list = ['mcpc_power', 'mcpc_pump']
-
-    #     # for name in controls_list:
-    #     #     self.update_data_record(
-    #     #         dt,
-    #     #         {name: None},
-    #     #     )
-
-    #     return dt
 
     def get_definition_instance(self):
         # make sure it's good for json

@@ -507,7 +507,7 @@ class SerialPortInterface(Interface):
             ui_config=self.ui_config,
             **self.kwargs
         )
-        print(f'{self.kwargs}')
+        # print(f'{self.kwargs}')
         # self.ifdevice.register_parent(
         #     self.get_id(),
         #     to_parent_buffer=self.from_child_buf
@@ -535,7 +535,7 @@ class SerialPortInterface(Interface):
         elif type == 'FromParent':
             if msg.subject == 'SEND':
                 await self.ifdevice.message_from_parent(msg)
-                print(f'55555message:{msg.subject}, {msg.body}')
+                # print(f'55555message:{msg.subject}, {msg.body}')
         else:
             print(f'Unknown Message type: {msg.type}, {msg.to_json()}')
 
@@ -651,7 +651,7 @@ class TCPPortInterface(Interface):
                 # await self.msg_send_buffer.put(msg)
                 await self.message_to_parent(msg)
         elif type == 'FromParent':
-            # print(f'message{msg.subject}, {msg.body}')
+            print(f'message{msg.subject}, {msg.body}')
             await self.ifdevice.message_from_parent(msg)
         else:
             print(f'Unknown Message type: {msg.type}, {msg.to_json()}')

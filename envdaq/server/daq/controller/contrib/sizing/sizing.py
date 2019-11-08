@@ -853,7 +853,8 @@ class SizingSystem(Controller):
                     len(self.dmps_data[dt]['aitken']['dp']) +
                     len(self.dmps_data[dt]['accum']['dp'])
                 )
-                fn = './envdaq/server/inversion/ein.dat'
+
+                fn = './daq/controller/contrib/sizing/inversion/ein.dat'
                 with open(fn, 'w') as f:
                     # write dp
                     f.write(f'{ts} {Tk} {p} {num_bins}')
@@ -878,14 +879,14 @@ class SizingSystem(Controller):
                 res = subprocess.run(
                     [inv],
                     stdout=subprocess.DEVNULL,
-                    cwd='./envdaq/server/inversion'
+                    cwd='../daq/controller/contrib/sizing/inversion'
                 )
                 print(f'inversion process result: {res}')
 
                 # check res code
 
                 # read output file
-                fn = './envdaq/server/inversion/out.dat'
+                fn = '../daq/controller/contrib/sizing/inversion/out.dat'
                 # out_dp = []
                 # out_dndlogdp = []
                 with open(fn, 'r') as f:
@@ -900,12 +901,13 @@ class SizingSystem(Controller):
                 # for dp, dn in zip(dp_parts, dndlogdp_parts):
                 for i in range(4, len(dp_parts)):
                     dmps_dp.append(float(dp_parts[i])/1000)
-                    dmps_dndlogdp.append(float(dndlogdp_parts[i]))
+                    dmps_dndlogdp.append(round(float(dndlogdp_parts[i]), 3))
 
-                dmps_dlogdp = math.pow(
-                    10,
-                    math.log10(dmps_dp[1]/dmps_dp[0])
-                )
+                # dmps_dlogdp = math.pow(
+                #     10,
+                #     math.log10(dmps_dp[1]/dmps_dp[0])
+                # )
+                dmps_dlogdp = math.log10(dmps_dp[1]/dmps_dp[0])
 
                 dmps_intN = 0
                 for bin in dmps_dndlogdp:
@@ -922,7 +924,7 @@ class SizingSystem(Controller):
                         'VALUE': dmps_dp
                     },
                     'dmps_integral_concentration': {
-                        'VALUE': dmps_intN
+                        'VALUE': round(dmps_intN, 3)
                     }
                 }
 
@@ -936,10 +938,11 @@ class SizingSystem(Controller):
                 aps_dn = meas['bin_concentration']['VALUE']
 
                 print(f'aps_dp[8] = {aps_dp[8]}')
-                aps_dlogdp = math.pow(
-                    10,
-                    math.log10(aps_dp[9]/aps_dp[8])
-                )
+                # aps_dlogdp = math.pow(
+                #     10,
+                #     math.log10(aps_dp[9]/aps_dp[8])
+                # )
+                aps_dlogdp = math.log10(aps_dp[9]/aps_dp[8])
 
                 aps_dndlogdp = []
                 aps_intN = 0

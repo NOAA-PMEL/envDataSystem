@@ -65,7 +65,7 @@ class DataFile():
             self.file_interval = config['file_interval']
        
     async def write_message(self, msg):
-        print(f'{msg.to_json()}')
+        # print(f'{msg.to_json()}')
         if msg.subject == 'DATA':
             await self.write(msg.body)
         # if 'body' in msg and 'DATA' in msg['body']:
@@ -74,7 +74,7 @@ class DataFile():
     async def write(self, data):
         # add message to queue and return
         data['FILE_META'] = self.format
-        print(f'write: {data}')
+        # print(f'write: {data}')
         await self.data_buffer.put(data)
         # record =  dict()
         # record['FILE_META'] = self.format
@@ -85,7 +85,7 @@ class DataFile():
         while True:
 
             data = await self.data_buffer.get()
-            print(f'datafile.__write: {data}')
+            # print(f'datafile.__write: {data}')
 
             if data and ('DATA' in data):
                 d_and_t = data['DATA']['DATETIME'].split('T')

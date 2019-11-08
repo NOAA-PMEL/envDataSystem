@@ -54,7 +54,11 @@ except NameError:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    '192.168.86.51',
+    '161.55.82.246'
+]
 
 
 # Application definition

@@ -1,7 +1,7 @@
-import json
+# import json
 from daq.instrument.instrument import Instrument
 from data.message import Message
-from daq.daq import DAQ
+# from daq.daq import DAQ
 import asyncio
 from utilities.util import time_to_next, dt_to_string
 from daq.interface.interface import Interface
@@ -137,6 +137,9 @@ class APS3320(TSIInstrument):
             'read_method': 'readuntil',
             'read_terminator': '\r',
         }
+
+        self.nominal_sample_flow = 1.0
+        self.nominal_sheath_flow = 4.0
 
         self.diameters_um = [
             .50468, .54215,
@@ -381,62 +384,16 @@ class APS3320(TSIInstrument):
             # TODO: how to deal with record that crosses second bound?
             # if self.current_read_cnt == len(self.current_poll_cmds):
             if self.mode == 'scanning' and self.scan_ready:
-            # if self.scan_ready:
-                
+                # if self.scan_ready:
+
                 print(f'scan ready...dt = {dt}')
                 self.update_data_record(
                     dt,
                     {'diameter_um': self.diameters_um},
                 )
 
-                # # entry['METADATA'] = self.get_metadata()
-                # self.update_data_record(
-                #     dt,
-                #     {'sheath_flow_sp': 2.5},
-                # )
-                # self.update_data_record(
-                #     dt,
-                #     {'number_bins': 30},
-                # )
-                # self.update_data_record(
-                #     dt,
-                #     {'bin_time': 1},
-                # )
-
-                # if len(self.current_size_dist) == 30:
-                #     self.update_data_record(
-                #         dt,
-                #         {'size_distribution': self.current_size_dist},
-                #     )
-
-                #     # calculate diameters
-                #     min_dp = 10
-                #     param = self.get_data_record_param(
-                #         dt,
-                #         'actual_max_dp'
-                #     )
-                #     if not param:
-                #         max_dp = 300
-                #     else:
-                #         max_dp = float(param)
-                #     dlogdp = math.pow(
-                #         10,
-                #         math.log10(max_dp/min_dp)/(30-1)
-                #     )
-                #     # dlogdp = dlogdp / (30-1)
-                #     diam = []
-                #     diam.append(10)
-                #     for x in range(1, 30):
-                #         dp = round(diam[x-1] * dlogdp, 2)
-                #         diam.append(dp)
-
-                #     self.update_data_record(
-                #         dt,
-                #         {'diameter': diam},
-                #     )
-
                 entry = self.get_data_entry(dt)
-                print(f'entry: {entry}')
+                # print(f'entry: {entry}')
 
                 data = Message(
                     sender_id=self.get_id(),
@@ -451,10 +408,7 @@ class APS3320(TSIInstrument):
                 self.current_read_cnt = 0
                 self.scan_ready = False
 
-                # await self.msg_buffer.put(data)
-                # await self.to_parent_buf.put(data)
-                print(f'999999999999msems data: {data.to_json()}')
-                # await asyncio.sleep(.1)
+                # print(f'999999999999 aps data: {data.to_json()}')
                 await self.message_to_ui(data)
                 await self.to_parent_buf.put(data)
                 # await PlotManager.update_data(self.plot_name, data.to_json())
@@ -467,12 +421,23 @@ class APS3320(TSIInstrument):
                 print(f'msg: {msg.body}')
                 self.send_status()
 
-            elif msg.subject == 'CONTROLS' and msg.body['purpose'] == 'REQUEST':
+            elif (
+                msg.subject == 'CONTROLS' and
+                msg.body['purpose'] == 'REQUEST'
+            ):
                 print(f'msg: {msg.body}')
-                await self.set_control(msg.body['control'], msg.body['value'])
-            elif msg.subject == 'RUNCONTROLS' and msg.body['purpose'] == 'REQUEST':
+                await self.set_control(
+                    msg.body['control'], msg.body['value']
+                )
+
+            elif (
+                msg.subject == 'RUNCONTROLS' and
+                msg.body['purpose'] == 'REQUEST'
+            ):
                 print(f'msg: {msg.body}')
-                await self.handle_control_action(msg.body['control'], msg.body['value'])
+                await self.handle_control_action(
+                    msg.body['control'], msg.body['value']
+                )
                 # await self.set_control(msg.body['control'], msg.body['value'])
 
         # print("DummyInstrument:msg: {}".format(msg.body))
@@ -521,23 +486,40 @@ class APS3320(TSIInstrument):
             data_channels = len(params)-10
             num_channel = 52
 
-            conc = []
+            # TODO: these are counts, not conc
+            cnts = []
             for i in range(0, 52):
-                conc.append(0)
+                cnts.append(0)
 
             for i in range(first_channel, len(params)):
                 try:
                     n = float(params[i])
                     if n < 0:
                         n = 0
-                    conc[i-first_channel] = n
+                    cnts[i-first_channel] = n
                 except ValueError:
-                    conc[i-first_channel] = 0
+                    cnts[i-first_channel] = 0
 
-                    
+            self.update_data_record(
+                self.scan_start_time,
+                {'bin_counts': cnts}
+            )
+
+            conc = []
+            for n in cnts:
+                if sample_time > 0:
+                    # convert counts(s-1) to conc (cm-3)
+                    dn = n * (60 * self.nominal_sample_flow / 1000)
+                    conc.append(round(dn, 3))
+
             self.update_data_record(
                 self.scan_start_time,
                 {'bin_concentration': conc}
+            )
+
+            self.update_data_record(
+                self.scan_start_time,
+                {'sample_calc_time': sample_time}
             )
 
             # integrate concentration
@@ -554,64 +536,23 @@ class APS3320(TSIInstrument):
             # populate these for now
             self.update_data_record(
                 self.scan_start_time,
-                {'sheath_flow': None}
+                {'sheath_flow': self.nominal_sheath_flow}
             )
 
             self.update_data_record(
                 self.scan_start_time,
-                {'sample_flow': None}
+                {'sample_flow': self.nominal_sample_flow}
+            )
+
+            self.update_data_record(
+                self.scan_start_time,
+                {'sample_duration': self.poll_rate}
             )
 
             self.scan_ready = True
 
             print(f'conc: {conc}')
         return self.scan_start_time
-
-    #     # if len(line) == 0:
-    #     #     self.current_read_cnt += 1
-    #     # else:
-    #     parts = line.split('=')
-
-    #     if len(parts) < 2:
-    #         return dt
-
-    #     # self.scan_state = 999
-    #     # if self.scan_run_state == 'STOPPING':
-    #     #     if parts[0] == 'scan_state':
-    #     #         self.scan_state = int(parts[1])
-
-    #     # print(f'77777777777777{parts[0]} = {parts[1]}')
-    #     if parts[0] in self.parse_map:
-    #         self.update_data_record(
-    #             dt,
-    #             {self.parse_map[parts[0]]: parts[1]},
-    #         )
-    #         if self.scan_stop_param == parts[0]:
-    #             self.scan_ready = True
-    #         elif self.scan_start_param == parts[0]:
-    #             self.current_size_dist.clear()
-    #     elif parts[0].find('bin') >= 0:
-    #         self.current_size_dist.append(
-    #             float(parts[1])
-    #         )
-    #     # # TODO: how to limit to one/sec
-    #     # # check for new second
-    #     # # if data['DATETIME'] == self.last_entry['DATA']['DATETIME']:
-    #     # #     # don't duplicate timestamp for now
-    #     # #     return
-    #     # # self.last_entry['DATETIME'] = data['DATETIME']
-
-    #     # measurements = dict()
-
-    #    # controls_list = ['mcpc_power', 'mcpc_pump']
-
-    #     # for name in controls_list:
-    #     #     self.update_data_record(
-    #     #         dt,
-    #     #         {name: None},
-    #     #     )
-
-    #     return dt
 
     def get_definition_instance(self):
         # make sure it's good for json
@@ -721,6 +662,22 @@ class APS3320(TSIInstrument):
         }
         y_data.append('integral_concentration')
 
+        raw_meas = dict()
+        raw_meas['sample_calc_time'] = {
+            'dimensions': {
+                'axes': ['TIME'],
+                'unlimited': 'TIME',
+                'units': ['dateTime'],
+            },
+            'units': 'seconds',  # should be cfunits or udunits
+            'uncertainty': 0.2,
+            'source': 'MEASURED',
+            'data_type': 'NUMERIC',
+            # 'short_name': 'sat_bot_temp',
+            # 'parse_label': 'scan_max_volts',
+            'control': None,
+        }
+
         process_meas = dict()
         process_meas['sheath_flow'] = {
             'dimensions': {
@@ -770,7 +727,9 @@ class APS3320(TSIInstrument):
         }
 
         measurement_config['primary_2d'] = primary_meas_2d
+        measurement_config['raw_2d'] = raw_meas_2d
         measurement_config['primary'] = primary_meas
+        measurement_config['raw'] = raw_meas
         measurement_config['process'] = process_meas
         # measurement_config['controls'] = controls
 
@@ -814,7 +773,7 @@ class CPC3760A_DMPS(TSIInstrument):
 
     '''
     TSI CPC Model 3760A: DMPS Mode
-    
+
     Eventually, this will be part of a compound instrument but
     for now I have to do it this way
 
@@ -825,7 +784,7 @@ class CPC3760A_DMPS(TSIInstrument):
 
     static const JCharacter* kTSI_DumpCmd = 					"D";
     static const JCharacter* kTSI_DumpCountsCmd = 					"DC";
- 
+
     static const JCharacter kCR = 0x0d;
     static const JCharacter kNL = 0x0a;
     '''
@@ -865,7 +824,6 @@ class CPC3760A_DMPS(TSIInstrument):
         self.current_size_dist = []
         self.scan_state = 999
         self.scan_run_state = 'STOPPED'
-
 
         # override how often metadata is sent
         self.include_metadata_interval = 300
@@ -981,10 +939,10 @@ class CPC3760A_DMPS(TSIInstrument):
         # self.overhead = 5  # seconds
         self.poll_rate = self.scan_length
         self.overhead = 15
-        
+
         self.steps = 10
         self.secs_per_step = 3
-        self.step_overhead = 1        
+        self.step_overhead = 1
 
         # TODO: calculate diameters and voltages
         self.calculate_dp_list()
@@ -1007,12 +965,13 @@ class CPC3760A_DMPS(TSIInstrument):
     def calculate_dp_list(self):
 
         self.diameters_um = []
-        logStep = math.log10(self.last_dp/self.first_dp) / float(self.dp_steps-1)
+        logStep = math.log10(self.last_dp/self.first_dp) / \
+            float(self.dp_steps-1)
         logStep = pow(10.0, logStep)
         self.diameters_um.append(self.first_dp)
         self.dlogDp_list.append(logStep)
 
-        for i in range(1,self.dp_steps):
+        for i in range(1, self.dp_steps):
             self.diameters_um.append(
                 round(self.diameters_um[i-1]*logStep, 4)
             )
@@ -1041,8 +1000,8 @@ class CPC3760A_DMPS(TSIInstrument):
         term2 = (self.Pref/measP)
         term3 = (1.0+110.4/self.Tref)/(1.0+110.4/(measT+self.CtoK))
         lambda_calc = (
-            # self.Lambda_ref * ((self.measT+self.CtoK)/self.Tref) * 
-            # (self.Pref/measP) * 
+            # self.Lambda_ref * ((self.measT+self.CtoK)/self.Tref) *
+            # (self.Pref/measP) *
             # (1.0+110.4/self.Tref)/(1.0+110.4/(measT+self.CtoK))
             term1 * term2 * term3
         )
@@ -1061,12 +1020,12 @@ class CPC3760A_DMPS(TSIInstrument):
             )
 
             Zp = (
-                self.e_charge * cSlip * 100000000.0 / 
+                self.e_charge * cSlip * 100000000.0 /
                 (3.0 * math.pi * visc * diam * 0.000001)
             )
 
             hVolt = (
-                nomQSh*1000.0/60.0 * math.log(Rout/Rin) / 
+                nomQSh*1000.0/60.0 * math.log(Rout/Rin) /
                 (Zp * 2.0 * math.pi * L * 100.0)
             )
             self.hv_list.append(round(hVolt, 3))
@@ -1132,7 +1091,7 @@ class CPC3760A_DMPS(TSIInstrument):
     async def stop_scanning(self):
 
         print(f'stop scanning')
-        
+
         dump_counts = 'DC\r'
 
         cmd_list = [dump_counts]
@@ -1251,7 +1210,7 @@ class CPC3760A_DMPS(TSIInstrument):
                 )
                 # print(f'msg: {msg.body}')
                 if self.iface_map[hv_id]:
-                    
+
                     await self.iface_map[hv_id].message_from_parent(msg)
 
                 await asyncio.sleep(self.purge_time)
@@ -1259,7 +1218,7 @@ class CPC3760A_DMPS(TSIInstrument):
 
                 # clear count buffer
                 if self.iface_map[cpc_id]:
-                    
+
                     # self.current_read_cnt = 0
                     msg = Message(
                         sender_id=self.get_id(),
@@ -1283,7 +1242,7 @@ class CPC3760A_DMPS(TSIInstrument):
                     await self.iface_map[cpc_id].message_from_parent(msg)
 
                 self.current_step += self.step_increment
-                
+
             self.scan_ready = True
 
             self.current_step = 0
@@ -1325,7 +1284,7 @@ class CPC3760A_DMPS(TSIInstrument):
             # if self.current_read_cnt == len(self.current_poll_cmds):
             if self.mode == 'scanning' and self.scan_ready:
                 # if self.scan_ready:
-                
+
                 print(f'scan ready...dt = {dt}')
                 self.update_data_record(
                     dt,
@@ -1452,7 +1411,7 @@ class CPC3760A_DMPS(TSIInstrument):
             print(f'line = {line}')
             if ('OK' in line):
                 return
-        
+
             if not self.valid_step_counts:
                 print(f'waiting...')
                 return None
@@ -1515,7 +1474,7 @@ class CPC3760A_DMPS(TSIInstrument):
                 )
 
                 return self.scan_start_time
-        
+
         return None
         # params = line.split(',')
         # if params[1] == 'D':
@@ -1843,18 +1802,18 @@ class CPC3760A_DMPS(TSIInstrument):
 # //	JFloat measQin = GetInletFlow();
 
 # 	//cout << "calc hv 1 " << measT <<  " " << measP << " " << measQsh << " " << endl;
-	
+
 # 	// calc lamba(P,T)
-# 	JFloat lambda = Lambda_ref * ((measT+CtoK)/Tref) * (Pref/measP) * 
+# 	JFloat lambda = Lambda_ref * ((measT+CtoK)/Tref) * (Pref/measP) *
 # 				     (1.0+110.4/Tref)/(1.0+110.4/(measT+CtoK));
 
 # //	cout << "calc hv 2 " << lambda << endl;
-# 	JFloat visc = Visc_ref * pow(((measT+CtoK)/Tref),1.5) * 
+# 	JFloat visc = Visc_ref * pow(((measT+CtoK)/Tref),1.5) *
 # 					 (Tref + 110.4) / ((measT+CtoK)+110.4);
 
 # //	cout << "calc hv 3 " << visc << endl;
 # 	JSize steps = dp->GetElementCount();
-	
+
 # //	cout << "calc hv 4 " << steps << endl;
 # 	for (JIndex step=1; step<=steps; step++) {
 
@@ -1868,35 +1827,35 @@ class CPC3760A_DMPS(TSIInstrument):
 # //	JFloat measQin = GetInletFlow();
 
 # 	//cout << "calc hv 1 " << measT <<  " " << measP << " " << measQsh << " " << endl;
-	
+
 # 	// calc lamba(P,T)
-# 	JFloat lambda = Lambda_ref * ((measT+CtoK)/Tref) * (Pref/measP) * 
+# 	JFloat lambda = Lambda_ref * ((measT+CtoK)/Tref) * (Pref/measP) *
 # 				     (1.0+110.4/Tref)/(1.0+110.4/(measT+CtoK));
 
 # //	cout << "calc hv 2 " << lambda << endl;
-# 	JFloat visc = Visc_ref * pow(((measT+CtoK)/Tref),1.5) * 
+# 	JFloat visc = Visc_ref * pow(((measT+CtoK)/Tref),1.5) *
 # 					 (Tref + 110.4) / ((measT+CtoK)+110.4);
 
 # //	cout << "calc hv 3 " << visc << endl;
 # 	JSize steps = dp->GetElementCount();
-	
+
 # //	cout << "calc hv 4 " << steps << endl;
 # 	for (JIndex step=1; step<=steps; step++) {
 
 # //	cout << "calc hv 5 " << step << endl;
 # 		JFloat diam = dp->GetElement(step) * 1000.0; // convert um->nm
-		
+
 # //	cout << "calc hv 6 " << diam << endl;
-# 		JFloat cSlip = 1.0 + lambda/diam * 
+# 		JFloat cSlip = 1.0 + lambda/diam *
 # 				(2.514+0.8*exp(-0.55*diam/lambda));
 # //				(2.514+0.8*exp(-0.55*dp->GetElement(step)/lambda));
-			
+
 # //	cout << "calc hv 7 " << cSlip << endl;
-# 		JFloat Zp = e_charge * cSlip * 100000000.0 / 
-# 				(3.0 * kJPi * visc * diam * 0.000001);	
+# 		JFloat Zp = e_charge * cSlip * 100000000.0 /
+# 				(3.0 * kJPi * visc * diam * 0.000001);
 
 # //	cout << "calc hv 8 " << Zp << endl;
-# 		JFloat hVolt = measQsh*1000.0/60.0 * log(itsRout/itsRin) / 
+# 		JFloat hVolt = measQsh*1000.0/60.0 * log(itsRout/itsRin) /
 # 				(Zp * 2.0 * kJPi * itsL * 100.0);
 
 # //	cout << "calc hv 9 " << diam << " " << hVolt << endl;
@@ -1913,35 +1872,35 @@ class CPC3760A_DMPS(TSIInstrument):
 # //	JFloat measQin = GetInletFlow();
 
 # 	//cout << "calc hv 1 " << measT <<  " " << measP << " " << measQsh << " " << endl;
-	
+
 # 	// calc lamba(P,T)
-# 	JFloat lambda = Lambda_ref * ((measT+CtoK)/Tref) * (Pref/measP) * 
+# 	JFloat lambda = Lambda_ref * ((measT+CtoK)/Tref) * (Pref/measP) *
 # 				     (1.0+110.4/Tref)/(1.0+110.4/(measT+CtoK));
 
 # //	cout << "calc hv 2 " << lambda << endl;
-# 	JFloat visc = Visc_ref * pow(((measT+CtoK)/Tref),1.5) * 
+# 	JFloat visc = Visc_ref * pow(((measT+CtoK)/Tref),1.5) *
 # 					 (Tref + 110.4) / ((measT+CtoK)+110.4);
 
 # //	cout << "calc hv 3 " << visc << endl;
 # 	JSize steps = dp->GetElementCount();
-	
+
 # //	cout << "calc hv 4 " << steps << endl;
 # 	for (JIndex step=1; step<=steps; step++) {
 
 # //	cout << "calc hv 5 " << step << endl;
 # 		JFloat diam = dp->GetElement(step) * 1000.0; // convert um->nm
-		
+
 # //	cout << "calc hv 6 " << diam << endl;
-# 		JFloat cSlip = 1.0 + lambda/diam * 
+# 		JFloat cSlip = 1.0 + lambda/diam *
 # 				(2.514+0.8*exp(-0.55*diam/lambda));
 # //				(2.514+0.8*exp(-0.55*dp->GetElement(step)/lambda));
-			
+
 # //	cout << "calc hv 7 " << cSlip << endl;
-# 		JFloat Zp = e_charge * cSlip * 100000000.0 / 
-# 				(3.0 * kJPi * visc * diam * 0.000001);	
+# 		JFloat Zp = e_charge * cSlip * 100000000.0 /
+# 				(3.0 * kJPi * visc * diam * 0.000001);
 
 # //	cout << "calc hv 8 " << Zp << endl;
-# 		JFloat hVolt = measQsh*1000.0/60.0 * log(itsRout/itsRin) / 
+# 		JFloat hVolt = measQsh*1000.0/60.0 * log(itsRout/itsRin) /
 # 				(Zp * 2.0 * kJPi * itsL * 100.0);
 
 # //	cout << "calc hv 9 " << diam << " " << hVolt << endl;
@@ -1958,35 +1917,35 @@ class CPC3760A_DMPS(TSIInstrument):
 # //	JFloat measQin = GetInletFlow();
 
 # 	//cout << "calc hv 1 " << measT <<  " " << measP << " " << measQsh << " " << endl;
-	
+
 # 	// calc lamba(P,T)
-# 	JFloat lambda = Lambda_ref * ((measT+CtoK)/Tref) * (Pref/measP) * 
+# 	JFloat lambda = Lambda_ref * ((measT+CtoK)/Tref) * (Pref/measP) *
 # 				     (1.0+110.4/Tref)/(1.0+110.4/(measT+CtoK));
 
 # //	cout << "calc hv 2 " << lambda << endl;
-# 	JFloat visc = Visc_ref * pow(((measT+CtoK)/Tref),1.5) * 
+# 	JFloat visc = Visc_ref * pow(((measT+CtoK)/Tref),1.5) *
 # 					 (Tref + 110.4) / ((measT+CtoK)+110.4);
 
 # //	cout << "calc hv 3 " << visc << endl;
 # 	JSize steps = dp->GetElementCount();
-	
+
 # //	cout << "calc hv 4 " << steps << endl;
 # 	for (JIndex step=1; step<=steps; step++) {
 
 # //	cout << "calc hv 5 " << step << endl;
 # 		JFloat diam = dp->GetElement(step) * 1000.0; // convert um->nm
-		
+
 # //	cout << "calc hv 6 " << diam << endl;
-# 		JFloat cSlip = 1.0 + lambda/diam * 
+# 		JFloat cSlip = 1.0 + lambda/diam *
 # 				(2.514+0.8*exp(-0.55*diam/lambda));
 # //				(2.514+0.8*exp(-0.55*dp->GetElement(step)/lambda));
-			
+
 # //	cout << "calc hv 7 " << cSlip << endl;
-# 		JFloat Zp = e_charge * cSlip * 100000000.0 / 
-# 				(3.0 * kJPi * visc * diam * 0.000001);	
+# 		JFloat Zp = e_charge * cSlip * 100000000.0 /
+# 				(3.0 * kJPi * visc * diam * 0.000001);
 
 # //	cout << "calc hv 8 " << Zp << endl;
-# 		JFloat hVolt = measQsh*1000.0/60.0 * log(itsRout/itsRin) / 
+# 		JFloat hVolt = measQsh*1000.0/60.0 * log(itsRout/itsRin) /
 # 				(Zp * 2.0 * kJPi * itsL * 100.0);
 
 # //	cout << "calc hv 9 " << diam << " " << hVolt << endl;
@@ -1994,7 +1953,7 @@ class CPC3760A_DMPS(TSIInstrument):
 # 	}
 # 	return kJTrue;
 # }
-# + lambda/diam * 
+# + lambda/diam *
 # 				(2.514+0.8*ASDMA::CalculateHighVoltages(const ADDataArray* dp, ADDataArray* hv)
 # {
 # 	JFloat measT = GetTemp();
@@ -2003,35 +1962,35 @@ class CPC3760A_DMPS(TSIInstrument):
 # //	JFloat measQin = GetInletFlow();
 
 # 	//cout << "calc hv 1 " << measT <<  " " << measP << " " << measQsh << " " << endl;
-	
+
 # 	// calc lamba(P,T)
-# 	JFloat lambda = Lambda_ref * ((measT+CtoK)/Tref) * (Pref/measP) * 
+# 	JFloat lambda = Lambda_ref * ((measT+CtoK)/Tref) * (Pref/measP) *
 # 				     (1.0+110.4/Tref)/(1.0+110.4/(measT+CtoK));
 
 # //	cout << "calc hv 2 " << lambda << endl;
-# 	JFloat visc = Visc_ref * pow(((measT+CtoK)/Tref),1.5) * 
+# 	JFloat visc = Visc_ref * pow(((measT+CtoK)/Tref),1.5) *
 # 					 (Tref + 110.4) / ((measT+CtoK)+110.4);
 
 # //	cout << "calc hv 3 " << visc << endl;
 # 	JSize steps = dp->GetElementCount();
-	
+
 # //	cout << "calc hv 4 " << steps << endl;
 # 	for (JIndex step=1; step<=steps; step++) {
 
 # //	cout << "calc hv 5 " << step << endl;
 # 		JFloat diam = dp->GetElement(step) * 1000.0; // convert um->nm
-		
+
 # //	cout << "calc hv 6 " << diam << endl;
-# 		JFloat cSlip = 1.0 + lambda/diam * 
+# 		JFloat cSlip = 1.0 + lambda/diam *
 # 				(2.514+0.8*exp(-0.55*diam/lambda));
 # //				(2.514+0.8*exp(-0.55*dp->GetElement(step)/lambda));
-			
+
 # //	cout << "calc hv 7 " << cSlip << endl;
-# 		JFloat Zp = e_charge * cSlip * 100000000.0 / 
-# 				(3.0 * kJPi * visc * diam * 0.000001);	
+# 		JFloat Zp = e_charge * cSlip * 100000000.0 /
+# 				(3.0 * kJPi * visc * diam * 0.000001);
 
 # //	cout << "calc hv 8 " << Zp << endl;
-# 		JFloat hVolt = measQsh*1000.0/60.0 * log(itsRout/itsRin) / 
+# 		JFloat hVolt = measQsh*1000.0/60.0 * log(itsRout/itsRin) /
 # 				(Zp * 2.0 * kJPi * itsL * 100.0);
 
 # //	cout << "calc hv 9 " << diam << " " << hVolt << endl;
@@ -2041,13 +2000,13 @@ class CPC3760A_DMPS(TSIInstrument):
 # }
 # exp(-0.55*diam/lambda));
 # //				(2.514+0.8*exp(-0.55*dp->GetElement(step)/lambda));
-			
+
 # //	cout << "calc hv 7 " << cSlip << endl;
-# 		JFloat Zp = e_charge * cSlip * 100000000.0 / 
-# 				(3.0 * kJPi * visc * diam * 0.000001);	
+# 		JFloat Zp = e_charge * cSlip * 100000000.0 /
+# 				(3.0 * kJPi * visc * diam * 0.000001);
 
 # //	cout << "calc hv 8 " << Zp << endl;
-# 		JFloat hVolt = measQsh*1000.0/60.0 * log(itsRout/itsRin) / 
+# 		JFloat hVolt = measQsh*1000.0/60.0 * log(itsRout/itsRin) /
 # 				(Zp * 2.0 * kJPi * itsL * 100.0);
 
 # //	cout << "calc hv 9 " << diam << " " << hVolt << endl;

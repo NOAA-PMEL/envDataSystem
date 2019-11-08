@@ -105,7 +105,9 @@ class MSEMS(BrechtelInstrument):
             asyncio.ensure_future(self.start_scanning())
 
     async def start_scanning(self):
-        if self.iface:
+        # if self.iface:
+        if self.iface_components['default']:
+            if_id = self.iface_components['default']
             self.current_read_cnt = 0
             cmd = 'sems_mode=2\n'
             msg = Message(
@@ -115,11 +117,14 @@ class MSEMS(BrechtelInstrument):
                 body=cmd,
             )
             print(f'msg: {msg}')
-            await self.iface.message_from_parent(msg)
+            # await self.iface.message_from_parent(msg)
+            await self.iface_map[if_id].message_from_parent(msg)
             self.scan_state = 'RUNNING'
 
     async def stop_scanning(self):
-        if self.iface:
+        if self.iface_components['default']:
+            if_id = self.iface_components['default']
+        # if self.iface:
             self.current_read_cnt = 0
             cmd = 'sems_mode=0\n'
             msg = Message(
@@ -128,9 +133,10 @@ class MSEMS(BrechtelInstrument):
                 subject='SEND',
                 body=cmd,
             )
-            print(f'msg: {self.iface}, {msg.to_json()}')
+            # print(f'msg: {self.iface}, {msg.to_json()}')
             # self.scan_run_state = 'STOPPING'
-            await self.iface.message_from_parent(msg)
+            # await self.iface.message_from_parent(msg)
+            await self.iface_map[if_id].message_from_parent(msg)
             # while self.scan_state > 0:
             #     await asyncio.sleep(.1)
             # self.scan_run_state = 'STOPPED'
@@ -163,7 +169,9 @@ class MSEMS(BrechtelInstrument):
             # print(f'cmds: {cmds}')
             # cmds = ['read\n']
 
-            if self.iface:
+            # if self.iface:
+            if self.iface_components['default']:
+                if_id = self.iface_components['default']
                 self.current_read_cnt = 0
                 for cmd in cmds:
                     msg = Message(
@@ -172,8 +180,9 @@ class MSEMS(BrechtelInstrument):
                         subject='SEND',
                         body=cmd,
                     )
-                    # print(f'msg: {msg}')
-                    await self.iface.message_from_parent(msg)
+                    print(f'msg: {msg}')
+                    # await self.iface.message_from_parent(msg)
+                    await self.iface_map[if_id].message_from_parent(msg)
 
             # for k, iface in self.iface_map.items():
             #     for cmd in cmds:
@@ -210,7 +219,7 @@ class MSEMS(BrechtelInstrument):
             # if self.current_read_cnt == len(self.current_poll_cmds):
             if self.mode == 'scanning' and self.scan_ready:
 
-                print(f'dt = {dt}')
+                # print(f'dt = {dt}')
                 # entry['METADATA'] = self.get_metadata()
                 self.update_data_record(
                     dt,
@@ -228,8 +237,17 @@ class MSEMS(BrechtelInstrument):
                 if len(self.current_size_dist) == 30:
                     self.update_data_record(
                         dt,
-                        {'size_distribution': self.current_size_dist},
+                        {'bin_concentration': self.current_size_dist}
                     )
+
+                    intN = 0
+                    for n in self.current_size_dist:
+                        intN += n
+                    self.update_data_record(
+                        dt,
+                        {'integral_concentration': intN}
+                    )
+                   
 
                     # calculate diameters
                     min_dp = 10
@@ -247,14 +265,22 @@ class MSEMS(BrechtelInstrument):
                     )
                     # dlogdp = dlogdp / (30-1)
                     diam = []
+                    diam_um = []
                     diam.append(10)
+                    diam_um.append(10/1000)
                     for x in range(1, 30):
                         dp = round(diam[x-1] * dlogdp, 2)
                         diam.append(dp)
+                        diam_um.append(round(dp/1000, 3))
 
                     self.update_data_record(
                         dt,
-                        {'diameter': diam},
+                        {'diameter_nm': diam},
+                    )
+
+                    self.update_data_record(
+                        dt,
+                        {'diameter_um': diam_um},
                     )
 
                 entry = self.get_data_entry(dt)
@@ -278,6 +304,7 @@ class MSEMS(BrechtelInstrument):
                 # print(f'999999999999msems data: {data.to_json()}')
                 # await asyncio.sleep(.1)
                 await self.message_to_ui(data)
+                await self.to_parent_buf.put(data)
                 # await PlotManager.update_data(self.plot_name, data.to_json())
                 if self.datafile:
                     await self.datafile.write_message(data)
@@ -402,25 +429,45 @@ class MSEMS(BrechtelInstrument):
 
         # TODO: add interface entry for each measurement
         primary_meas_2d = dict()
-        primary_meas_2d['size_distribution'] = {
+        primary_meas_2d['bin_concentration'] = {
             'dimensions': {
-                'axes': ['TIME', 'diameter'],
+                'axes': ['TIME', 'DIAMETER'],
                 'unlimited': 'TIME',
-                'units': ['dateTime', 'nm'],
+                'units': ['dateTime', 'um'],
             },
             'units': 'cm-3',  # should be cfunits or udunits
             'uncertainty': 0.1,
             'source': 'MEASURED',
             'data_type': 'NUMERIC',
-            'short_name': 'size_dist',
+            'short_name': 'bin_conc',
             'parse_label': 'bin',
             'control': None,
             'axes': {
                 # 'TIME', 'datetime',
-                'DIAMETER': 'diameter_nm',
+                'DIAMETER': 'diameter_um',
             }
         }
-        dist_data.append('size_distribution')
+        dist_data.append('bin_concentration')
+
+        primary_meas_2d['diameter_um'] = {
+            'dimensions': {
+                'axes': ['TIME', 'DIAMETER'],
+                'unlimited': 'TIME',
+                'units': ['dateTime', 'um'],
+            },
+            'units': 'nm',  # should be cfunits or udunits
+            'uncertainty': 0.1,
+            'source': 'CALCULATED',
+            'data_type': 'NUMERIC',
+            'short_name': 'dp',
+            'parse_label': 'diameter_um',
+            'control': None,
+            'axes': {
+                # 'TIME', 'datetime',
+                'DIAMETER': 'diameter_um',
+            }
+        }
+        dist_data.append('diameter_um')
 
         primary_meas_2d['diameter_nm'] = {
             'dimensions': {
@@ -435,8 +482,29 @@ class MSEMS(BrechtelInstrument):
             'short_name': 'dp',
             'parse_label': 'diameter',
             'control': None,
+            'axes': {
+                # 'TIME', 'datetime',
+                'DIAMETER': 'diameter_um',
+            }
         }
         dist_data.append('diameter_nm')
+
+        primary_meas = dict()
+        primary_meas['integral_concentration'] = {
+            'dimensions': {
+                'axes': ['TIME'],
+                'unlimited': 'TIME',
+                'units': ['dateTime'],
+            },
+            'units': 'cm-3',  # should be cfunits or udunits
+            'uncertainty': 0.2,
+            'source': 'CALCULATED',
+            'data_type': 'NUMERIC',
+            'short_name': 'int_conc',
+            'parse_label': 'int_conc',
+            'control': None,
+        }
+        y_data.append('integral_concentration')
 
         process_meas = dict()
         process_meas['sems_date'] = {
@@ -779,7 +847,7 @@ class MSEMS(BrechtelInstrument):
         }
 
         measurement_config['primary_2d'] = primary_meas_2d
-        # measurement_config['primary'] = primary_meas
+        measurement_config['primary'] = primary_meas
         measurement_config['process'] = process_meas
         measurement_config['controls'] = controls
 
@@ -789,12 +857,12 @@ class MSEMS(BrechtelInstrument):
 
         size_dist = dict()
         size_dist['app_type'] = 'SizeDistribution'
-        size_dist['y_data'] = ['size_distribution', 'diameter_nm']
-        size_dist['default_y_data'] = ['size_distribution']
+        size_dist['y_data'] = ['bin_concentration', 'diameter_um']
+        size_dist['default_y_data'] = ['bin_concentration']
         source_map = {
             'default': {
-                'y_data': ['size_distribution', 'diameter_nm'],
-                'default_y_data': ['size_distribution']
+                'y_data': ['bin_concentration', 'diameter_um'],
+                'default_y_data': ['bin_concentration']
             },
         }
         size_dist['source_map'] = source_map
@@ -802,11 +870,11 @@ class MSEMS(BrechtelInstrument):
         time_series1d = dict()
         time_series1d['app_type'] = 'TimeSeries1D'
         time_series1d['y_data'] = y_data
-        time_series1d['default_y_data'] = ['concentration']
+        time_series1d['default_y_data'] = ['integral_concentration']
         source_map = {
             'default': {
                 'y_data': y_data,
-                'default_y_data': ['concentration']
+                'default_y_data': ['integral_concentration']
             },
         }
         time_series1d['source_map'] = source_map

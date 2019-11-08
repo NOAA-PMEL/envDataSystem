@@ -183,8 +183,8 @@ class Instrument(DAQ):
 
         # plot_config['data'] = plot_data
 
-        print(f'{meta["plot_meta"]}')
-        print(f'{meta["plot_meta"]["name"]}')
+        # print(f'{meta["plot_meta"]}')
+        # print(f'{meta["plot_meta"]["name"]}')
         # TODO: move this to actual instrument
         # # add plots to PlotServer
 
@@ -218,7 +218,7 @@ class Instrument(DAQ):
             }
         )
         self.message_to_ui_nowait(msg)
-        print(f'setup: {msg.body}')
+        # print(f'setup: {msg.body}')
 
     # def add_plot_app(self, plot_typ):
 
@@ -241,7 +241,7 @@ class Instrument(DAQ):
     #     pass
 
     def get_data_entry(self, timestamp, force_add_meta=False):
-        print(f'timestamp: {timestamp}')
+        # print(f'timestamp: {timestamp}')
         entry = {
             # 'METADATA': self.get_metadata(),
             'DATA': {
@@ -312,7 +312,7 @@ class Instrument(DAQ):
             #         self.data_record[timestamp][name] = None
 
         for name, value in data.items():
-            print(f'{name} = {value}')
+            # print(f'{name} = {value}')
             # self.data_record[timestamp][dataset][name] = value
             self.data_record[timestamp][name] = (
                 {'VALUE': value}
@@ -336,7 +336,7 @@ class Instrument(DAQ):
                 wt = utilities.util.time_to_next(
                     self.include_metadata_interval
                 )
-                print(f'wait time: {wt}')
+                # print(f'wait time: {wt}')
                 await asyncio.sleep(
                     utilities.util.time_to_next(
                         self.include_metadata_interval
@@ -433,7 +433,7 @@ class Instrument(DAQ):
         # list = self.config['IFACE_LIST']
         cfg_comps = None
         self.iface_components = dict()
-        print(f'config = {self.config["IFACE_LIST"]}')
+        # print(f'config = {self.config["IFACE_LIST"]}')
         if 'IFACE_MAP' in self.config:
             cfg_comps = self.config['IFACE_MAP']
 
@@ -456,7 +456,10 @@ class Instrument(DAQ):
                 for comp, label in cfg_comps.items():
                     if label == k:
                         self.iface_components[comp] = iface.get_id()
-
+            else:
+                self.iface_components['default'] = (
+                    iface.get_id()
+                )
             print(f'iface_map: {self.iface_map}')
             print(f'iface_comp: {self.iface_components}')
 
@@ -644,7 +647,7 @@ class DummyInstrument(Instrument):
             # # print('entry = \n{}'.format(entry))
 
             dt = self.parse(msg)
-            print(f'dt = {dt}')
+            # print(f'dt = {dt}')
             # entry = {
             #     'METADATA': self.get_metadata(),
             #     'DATA': {
@@ -652,7 +655,7 @@ class DummyInstrument(Instrument):
             #         'MEASUREMENTS': self.get_data_record(dt)
             #     }
             entry = self.get_data_entry(dt)
-            print(f'entry: {entry}')
+            # print(f'entry: {entry}')
             # data = dict()
             # data['DATETIME'] = dt
             # data['MEASUREMENTS'] = self.get_data_record(dt)
@@ -669,7 +672,7 @@ class DummyInstrument(Instrument):
 
             # await self.msg_buffer.put(data)
             # await self.to_parent_buf.put(data)
-            print(f'instrument data: {data.to_json()}')
+            # print(f'instrument data: {data.to_json()}')
 
             await self.message_to_ui(data)
             await self.to_parent_buf.put(data)
@@ -685,7 +688,7 @@ class DummyInstrument(Instrument):
 
         elif type == 'FromUI':
             if msg.subject == 'STATUS' and msg.body['purpose'] == 'REQUEST':
-                print(f'msg: {msg.body}')
+                # print(f'msg: {msg.body}')
                 self.send_status()
 
             elif msg.subject == 'CONTROLS' and msg.body['purpose'] == 'REQUEST':
@@ -1204,7 +1207,7 @@ class DummyGPS(Instrument):
 
             # await self.msg_buffer.put(data)
             # await self.to_parent_buf.put(data)
-            print(f'instrument data: {data.to_json()}')
+            # print(f'instrument data: {data.to_json()}')
 
             await self.message_to_ui(data)
             await self.to_parent_buf.put(data)
@@ -1220,12 +1223,12 @@ class DummyGPS(Instrument):
 
         elif type == 'FromUI':
             if msg.subject == 'STATUS' and msg.body['purpose'] == 'REQUEST':
-                print(f'msg: {msg.body}')
+                # print(f'msg: {msg.body}')
                 self.send_status()
 
             elif msg.subject == 'CONTROLS' and msg.body['purpose'] == 'REQUEST':
 
-                print(f'msg: {msg.body}')
+                # print(f'msg: {msg.body}')
                 await self.set_control(msg.body['control'], msg.body['value'])
 
             elif (
@@ -1233,7 +1236,7 @@ class DummyGPS(Instrument):
                 msg.body['purpose'] == 'REQUEST'
             ):
 
-                print(f'msg: {msg.body}')
+                # print(f'msg: {msg.body}')
                 await self.handle_control_action(
                     msg.body['control'], msg.body['value']
                 )

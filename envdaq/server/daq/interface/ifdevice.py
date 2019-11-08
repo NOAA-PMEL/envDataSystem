@@ -111,7 +111,7 @@ class IFDevice(DAQ):
     def get_ui_address(self):
         print(self.label)
         address = 'envdaq/ifdevice/'+self.label+'/'
-        print(f'get_ui_address: {address}')
+        # print(f'get_ui_address: {address}')
         return address
 
     # def connect(self, msg=None):
@@ -254,7 +254,7 @@ class DummyIFDevice(IFDevice):
         await self.message_to_parents(msg)
 
     async def handle(self, msg, type=None):
-        print(f'ifdevice.handle: {msg}')
+        # print(f'ifdevice.handle: {msg}')
         await asyncio.sleep(.1)
 
     def get_definition_instance(self):
@@ -309,7 +309,7 @@ class SerialPortIFDevice(IFDevice):
             rtscts=self.rtscts,
             **self.kwargs,
         )
-        print(f'serial port: {self.client}')
+        # print(f'serial port: {self.client}')
 
         # # start dummy data loop
         # task = asyncio.ensure_future(self.data_loop())
@@ -344,7 +344,7 @@ class SerialPortIFDevice(IFDevice):
         if (type == "FromParent"):
             if msg.subject == 'SEND':
                 await self.client.send(msg.body)
-                print(f'66666serialportifdevice.handle: {msg}')
+                # print(f'66666serialportifdevice.handle: {msg}')
         await asyncio.sleep(.1)
 
     def get_definition_instance(self):
@@ -381,13 +381,13 @@ class TCPPortIFDevice(IFDevice):
 
     def start(self, cmd=None):
         super().start(cmd)
-        print('Starting SerialPortIFDevice')
+        print('Starting TCPPortIFDevice')
 
         self.client = TCPPortClient(
             address=self.address,
             **self.kwargs,
         )
-        print(f'tcp port: {self.client}')
+        # print(f'tcp port: {self.client}')
 
         # # start dummy data loop
         # task = asyncio.ensure_future(self.data_loop())
@@ -436,60 +436,6 @@ class TCPPortIFDevice(IFDevice):
 
     def get_definition():
         pass
-
-# class IFDeviceOLD(DAQ):
-#     # class IFDevice():
-
-#     # channel_map = {'default': 'default'}
-#     class_type = 'IFDEVICE'
-
-#     def __init__(self, config, **kwargs):
-#         # def __init__(self, config):
-#         print('IFDevice init')
-#         super(IFDevice, self).__init__(config, **kwargs)
-#         # super().__init__(config)
-
-#         self.config = config
-#         self.task_list = []
-
-#         # Message buffers
-#         #   to/from parent
-#         self.msg_send_buffer = None
-#         self.msg_rcv_buffer = None
-
-#     # @abc.abstractmethod
-#     def get_id(self):
-#         id = super().get_id()
-#         # id = 'tmp'
-#         return id
-
-#     def get_ui_address(self):
-#         print(self.label)
-#         address = 'envdaq/ifdevice/'+self.label+'/'
-#         print(f'get_ui_address: {address}')
-#         return address
-
-#     def connect(self, msg=None):
-#         pass
-
-#     def start(self, msg=None):
-#         pass
-
-#     def stop(self, msg=None):
-#         pass
-
-#     def disconnect(self, msg=None):
-#         pass
-
-#     async def handle(self, data, type=None):
-#         await asyncio.sleep(1)
-#         # pass
-
-#     def handle2(self, data):
-#         pass
-
-#     # def get_channel_map():
-#     #    return IFDevice.channel_map
 
 
 class LabJackT7Device(IFDevice):

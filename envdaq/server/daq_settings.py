@@ -10,7 +10,7 @@ server_config = {
     #     'port': 8001
     # },
     'ui_config': {
-        'host': '161.55.82.246',
+        'host': 'localhost',
         'port': 8001
     },
 
