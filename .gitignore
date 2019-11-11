@@ -132,3 +132,5 @@ envdaq/server/inversion/ein.dat
 envdaq/docs/tmp_config sizing_system.json
 envdaq/docs/envdaq_config_uas_test_home.json
 
+envdsys/envdsys/settings.py
+envdaq/server/daq_settings.py
