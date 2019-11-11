@@ -861,7 +861,9 @@ class MSEMS(BrechtelInstrument):
         size_dist['default_y_data'] = ['bin_concentration']
         source_map = {
             'default': {
-                'y_data': ['bin_concentration', 'diameter_um'],
+                'y_data': {
+                    'default': ['bin_concentration', 'diameter_um']
+                },
                 'default_y_data': ['bin_concentration']
             },
         }
@@ -873,7 +875,9 @@ class MSEMS(BrechtelInstrument):
         time_series1d['default_y_data'] = ['integral_concentration']
         source_map = {
             'default': {
-                'y_data': y_data,
+                'y_data': {
+                    'default': y_data
+                },
                 'default_y_data': ['integral_concentration']
             },
         }

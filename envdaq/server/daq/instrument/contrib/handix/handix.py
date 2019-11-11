@@ -699,7 +699,9 @@ class POPS(HandixInstrument):
         size_dist['default_y_data'] = ['bin_concentration']
         source_map = {
             'default': {
-                'y_data': dist_data,
+                'y_data': {
+                    'default': dist_data
+                },
                 'default_y_data': ['bin_concentration']
             },
         }
@@ -711,7 +713,9 @@ class POPS(HandixInstrument):
         time_series1d['default_y_data'] = ['integral_concentration']
         source_map = {
             'default': {
-                'y_data': y_data,
+                'y_data': {
+                    'default': y_data
+                },
                 'default_y_data': ['integral_concentration']
             },
         }

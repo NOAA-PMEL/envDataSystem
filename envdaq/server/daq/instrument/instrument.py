@@ -647,7 +647,7 @@ class DummyInstrument(Instrument):
             # # print('entry = \n{}'.format(entry))
 
             dt = self.parse(msg)
-            # print(f'dt = {dt}')
+            print(f'dt = {dt}')
             # entry = {
             #     'METADATA': self.get_metadata(),
             #     'DATA': {
@@ -655,7 +655,7 @@ class DummyInstrument(Instrument):
             #         'MEASUREMENTS': self.get_data_record(dt)
             #     }
             entry = self.get_data_entry(dt)
-            # print(f'entry: {entry}')
+            print(f'entry: {entry}')
             # data = dict()
             # data['DATETIME'] = dt
             # data['MEASUREMENTS'] = self.get_data_record(dt)
@@ -672,7 +672,7 @@ class DummyInstrument(Instrument):
 
             # await self.msg_buffer.put(data)
             # await self.to_parent_buf.put(data)
-            # print(f'instrument data: {data.to_json()}')
+            print(f'instrument data: {data.to_json()}')
 
             await self.message_to_ui(data)
             await self.to_parent_buf.put(data)
@@ -807,6 +807,22 @@ class DummyInstrument(Instrument):
             {'diameter': dp}
         )
 
+        sd2 = []
+        dp2 = []
+        for n in range(0, 50):
+            sd2.append(round(random.random()*10.0, 4))
+        self.update_data_record(
+            dt,
+            {'size_distribution2': sd2}
+        )
+        dp2.append(100)
+        for n in range(1, 50):
+            dp2.append(round(dp2[n-1]*1.15, 2))
+        self.update_data_record(
+            dt,
+            {'diameter2': dp2}
+        )
+
         for name in controls_list:
             # measurements[name] = {
             #     'VALUE': self.get_control_att(name, 'value'),
@@ -899,6 +915,42 @@ class DummyInstrument(Instrument):
             'control': None,
         }
         dist_data.append('diameter')
+
+        primary_meas_2d['size_distribution2'] = {
+            'dimensions': {
+                'axes': ['TIME', 'DIAMETER'],
+                'unlimited': 'TIME',
+                'units': ['dateTime', 'nm'],
+            },
+            'units': 'cm-3',  # should be cfunits or udunits
+            'uncertainty': 0.1,
+            'source': 'MEASURED',
+            'data_type': 'NUMERIC',
+            'short_name': 'size_dist2',
+            'parse_label': 'bin2',
+            'control': None,
+            'axes': {
+                # 'TIME', 'datetime',
+                'DIAMETER': 'diameter2',
+            }
+        }
+        dist_data.append('size_distribution2')
+
+        primary_meas_2d['diameter2'] = {
+            'dimensions': {
+                'axes': ['TIME', 'DIAMETER'],
+                'unlimited': 'TIME',
+                'units': ['dateTime', 'nm'],
+            },
+            'units': 'nm',  # should be cfunits or udunits
+            'uncertainty': 0.1,
+            'source': 'MEASURED',
+            'data_type': 'NUMERIC',
+            'short_name': 'dp2',
+            'parse_label': 'diameter2',
+            'control': None,
+        }
+        dist_data.append('diameter2')
 
         primary_meas = dict()
         primary_meas['concentration'] = {
@@ -1028,7 +1080,10 @@ class DummyInstrument(Instrument):
         # size_dist['dimensions'] = ['diameter']
         source_map = {
             'default': {
-                'y_data': ['size_distribution', 'diameter'],
+                'y_data': {
+                    'short': ['size_distribution', 'diameter'],
+                    'long': ['size_distribution2', 'diameter2'],
+                },
                 'default_y_data': ['size_distribution']
             },
         }
@@ -1040,7 +1095,9 @@ class DummyInstrument(Instrument):
         time_series1d['default_y_data'] = ['concentration']
         source_map = {
             'default': {
-                'y_data': y_data,
+                'y_data': {
+                    'default': y_data,
+                },
                 'default_y_data': ['concentration']
             },
         }
@@ -1449,7 +1506,9 @@ class DummyGPS(Instrument):
         time_series1d['default_y_data'] = ['altitude']
         source_map = {
             'default': {
-                'y_data': y_data,
+                'y_data': {
+                    'default': y_data,
+                },
                 'default_y_data': ['altitude']
             },
         }

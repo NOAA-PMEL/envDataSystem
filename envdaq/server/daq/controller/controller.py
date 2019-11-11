@@ -613,7 +613,9 @@ class DummyController(Controller):
                         geo_meas['primary']['altitude'] = meas['altitude']
 
                 ts1d_source_map[inst_id] = {
-                    'y_data': ts1d_y_data,
+                    'y_data': {
+                        'default': ts1d_y_data
+                    },
                     'default_y_data': ts1d_default_y_data,
                     'alias': inst_alias,
                     'measurement_meta': ts1d_meas
@@ -621,7 +623,9 @@ class DummyController(Controller):
 
                 main_gps = self.component_map['INSTRUMENTS']['GPS']['PRIMARY']
                 geo_source_map[inst_id] = {
-                    'z_data': geo_z_data,
+                    'z_data': {
+                        'default': geo_z_data
+                    },
                     'default_z_data': [],
                     'alias': inst_alias,
                     'measurement_meta': geo_meas,
@@ -718,21 +722,27 @@ class DummyController(Controller):
                         )
 
                 ts1d_source_map[inst_id] = {
-                    'y_data': ts1d_y_data,
+                    'y_data': {
+                        'default': ts1d_y_data
+                    },
                     'default_y_data': ts1d_default_y_data,
                     'alias': inst_alias,
                     'measurement_meta': ts1d_meas
                 }
 
                 sd_source_map[inst_id] = {
-                    'y_data': sd_y_data,
+                    'y_data': {
+                        'default': sd_y_data
+                    },
                     'default_y_data': sd_default_y_data,
                     'alias': inst_alias,
                     'measurement_meta': sd_meas
                 }
 
                 geo_source_map[inst_id] = {
-                    'z_data': geo_z_data,
+                    'z_data': {
+                        'default': geo_z_data
+                    },
                     'default_z_data': [],
                     'alias': inst_alias,
                     'measurement_meta': geo_meas,
@@ -841,7 +851,9 @@ class DummyController(Controller):
 
             ts1d_meas['primary'] = primary_meas
             ts1d_source_map[self.get_id()] = {
-                'y_data': ts1d_y_data,
+                'y_data': {
+                    'default': ts1d_y_data
+                },
                 'default_y_data': ts1d_default_y_data,
                 'alias': self.alias,
                 'measurement_meta': ts1d_meas
@@ -849,7 +861,9 @@ class DummyController(Controller):
 
             sd_meas['primary_2d'] = primary_meas_2d
             sd_source_map[self.get_id()] = {
-                'y_data': sd_y_data,
+                'y_data': {
+                    'default': sd_y_data
+                },
                 'default_y_data': sd_default_y_data,
                 'alias': self.alias,
                 'measurement_meta': sd_meas
@@ -857,7 +871,9 @@ class DummyController(Controller):
 
             geo_meas['primary'] = primary_meas
             geo_source_map[self.get_id()] = {
-                'z_data': geo_z_data,
+                'z_data': {
+                    'default': geo_z_data
+                },
                 'default_z_data': [],
                 'alias': self.alias,
                 'measurement_meta': geo_meas,
@@ -991,10 +1007,6 @@ class DummyController(Controller):
 
                 return entry
         return None
-
-                
-
-
 
     async def handle_control_action(self, control, value):
         pass

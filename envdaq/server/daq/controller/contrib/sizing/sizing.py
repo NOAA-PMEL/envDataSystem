@@ -172,14 +172,18 @@ class SizingSystem(Controller):
                         )
 
                 ts1d_source_map[inst_id] = {
-                    'y_data': ts1d_y_data,
+                    'y_data': {
+                        'default': ts1d_y_data
+                    },
                     'default_y_data': ts1d_default_y_data,
                     'alias': inst_alias,
                     'measurement_meta': ts1d_meas
                 }
 
                 sd_source_map[inst_id] = {
-                    'y_data': sd_y_data,
+                    'y_data': {
+                        'default': sd_y_data
+                    },
                     'default_y_data': sd_default_y_data,
                     'alias': inst_alias,
                     'measurement_meta': sd_meas
@@ -286,14 +290,18 @@ class SizingSystem(Controller):
                         )
 
                 ts1d_source_map[inst_id] = {
-                    'y_data': ts1d_y_data,
+                    'y_data': {
+                        'default': ts1d_y_data
+                    },
                     'default_y_data': ts1d_default_y_data,
                     'alias': inst_alias,
                     'measurement_meta': ts1d_meas
                 }
 
                 sd_source_map[inst_id] = {
-                    'y_data': sd_y_data,
+                    'y_data': {
+                        'default': sd_y_data
+                    },
                     'default_y_data': sd_default_y_data,
                     'alias': inst_alias,
                     'measurement_meta': sd_meas
@@ -400,14 +408,18 @@ class SizingSystem(Controller):
                         )
 
                 ts1d_source_map[inst_id] = {
-                    'y_data': ts1d_y_data,
+                    'y_data': {
+                        'default': ts1d_y_data
+                    },
                     'default_y_data': ts1d_default_y_data,
                     'alias': inst_alias,
                     'measurement_meta': ts1d_meas
                 }
 
                 sd_source_map[inst_id] = {
-                    'y_data': sd_y_data,
+                    'y_data': {
+                        'default': sd_y_data
+                    },
                     'default_y_data': sd_default_y_data,
                     'alias': inst_alias,
                     'measurement_meta': sd_meas
@@ -442,7 +454,8 @@ class SizingSystem(Controller):
                 # 'primary': dict(),
             }
 
-            sd_y_data = []
+            dmps_sd_y_data = []
+            aps_sd_y_data = []
             sd_default_y_data = []
             sd_meas = {
                 # 'primary': dict(),
@@ -477,7 +490,7 @@ class SizingSystem(Controller):
                         'DIAMETER': 'dmps_diameter_um',
                     }
                 }
-                sd_y_data.append('dmps_dndlogdp')
+                dmps_sd_y_data.append('dmps_dndlogdp')
 
                 primary_meas_2d['dmps_diameter_um'] = {
                     'dimensions': {
@@ -497,7 +510,7 @@ class SizingSystem(Controller):
                         'DIAMETER': 'dmps_diameter_um',
                     }
                 }
-                sd_y_data.append('dmps_diameter_um')
+                dmps_sd_y_data.append('dmps_diameter_um')
 
                 primary_meas['dmps_integral_concentration'] = {
                     'dimensions': {
@@ -535,7 +548,7 @@ class SizingSystem(Controller):
                         'DIAMETER': 'aps_diameter_um',
                     }
                 }
-                sd_y_data.append('aps_dndlogdp')
+                aps_sd_y_data.append('aps_dndlogdp')
 
                 primary_meas_2d['aps_diameter_um'] = {
                     'dimensions': {
@@ -555,7 +568,7 @@ class SizingSystem(Controller):
                         'DIAMETER': 'aps_diameter_um',
                     }
                 }
-                sd_y_data.append('aps_diameter_um')
+                aps_sd_y_data.append('aps_diameter_um')
 
                 primary_meas['aps_integral_concentration'] = {
                     'dimensions': {
@@ -583,7 +596,9 @@ class SizingSystem(Controller):
 
             ts1d_meas['primary'] = primary_meas
             ts1d_source_map[self.get_id()] = {
-                'y_data': ts1d_y_data,
+                'y_data': {
+                    'default': ts1d_y_data
+                },
                 'default_y_data': ts1d_default_y_data,
                 'alias': self.alias,
                 'measurement_meta': ts1d_meas
@@ -591,7 +606,10 @@ class SizingSystem(Controller):
 
             sd_meas['primary_2d'] = primary_meas_2d
             sd_source_map[self.get_id()] = {
-                'y_data': sd_y_data,
+                'y_data': {
+                    'dmps': dmps_sd_y_data,
+                    'aps': aps_sd_y_data
+                },
                 'default_y_data': sd_default_y_data,
                 'alias': self.alias,
                 'measurement_meta': sd_meas
@@ -879,14 +897,14 @@ class SizingSystem(Controller):
                 res = subprocess.run(
                     [inv],
                     stdout=subprocess.DEVNULL,
-                    cwd='../daq/controller/contrib/sizing/inversion'
+                    cwd='./daq/controller/contrib/sizing/inversion'
                 )
                 print(f'inversion process result: {res}')
 
                 # check res code
 
                 # read output file
-                fn = '../daq/controller/contrib/sizing/inversion/out.dat'
+                fn = './daq/controller/contrib/sizing/inversion/out.dat'
                 # out_dp = []
                 # out_dndlogdp = []
                 with open(fn, 'r') as f:
