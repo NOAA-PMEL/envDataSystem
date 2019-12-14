@@ -2,6 +2,11 @@
 
 Python based data system to be used for acquiring, visualizing and analyzing environmental data. Web based.
 
+## Initial Setup
+* Settings files: make local copies of settings from template files that will persist after updating form repo. Make all local configuration settings in local file
+
+  * UI (Django) settings: cp envdsys/envdsys/settings_orig.py envdsys/envdsys/settings.py
+  * Server settings: cp envdaq/server/daq_settings_orig.py envdaq/server/daq_settings.py
 ---
 ### Legal Disclaimer
 
