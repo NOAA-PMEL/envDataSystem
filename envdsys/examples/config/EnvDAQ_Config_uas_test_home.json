@@ -1,0 +1,95 @@
+{
+    "NAME": "DummyConfig",
+    "ENVDAQ_CONFIG": {
+        "CONT_LIST": {
+            "test_controller": {
+                "ALIAS": {
+                    "name": "test_controller",
+                    "prefix": "tc"
+                },
+                "CONTROLLER": {
+                    "MODULE": "daq.controller.controller",
+                    "CLASS": "DummyController"
+                },
+                "CONTCONFIG": {
+                    "LABEL": "Test Controller",
+                    "INST_LIST": {
+                        "cloudy_msems": {
+                            "ALIAS": {
+                                "name": "cloudy_msems",
+                                "prefix": "msems"
+                            },
+                            "INSTRUMENT": {
+                                "MODULE": "daq.instrument.contrib.brechtel.msems",
+                                "CLASS": "MSEMS"
+                            },
+                            "INSTCONFIG": {
+                                "DESCRIPTION": {
+                                    "LABEL": "MSEMS",
+                                    "SERIAL_NUMBER": "001",
+                                    "PROPERTY_NUMBER": "CD0001239"
+                                },
+                                "IFACE_LIST": {
+                                    "tcp_moxa4uas_4002": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "TCPPortInterface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "tcp_moxa4uas_4002",
+                                            "HOST": "192.168.86.37",
+                                            "PORT": "4002",
+                                            "SerialNumber": "0001"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "cloudy_pops": {
+                            "ALIAS": {
+                                "name": "cloudy_pops",
+                                "prefix": "pops"
+                            },
+                            "INSTRUMENT": {
+                                "MODULE": "daq.instrument.contrib.handix.handix",
+                                "CLASS": "POPS"
+                            },
+                            "INSTCONFIG": {
+                                "DESCRIPTION": {
+                                    "LABEL": "CLOUDY_POPS",
+                                    "SERIAL_NUMBER": "0097",
+                                    "PROPERTY_NUMBER": "CD0001300"
+                                },
+                                "IFACE_LIST": {
+                                    "tcp_moxa4uas_4001": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "TCPPortInterface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "tcp_moxa4uas_4001",
+                                            "HOST": "192.168.86.37",
+                                            "PORT": "4001",
+                                            "SerialNumber": "0001"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                          
+                    },
+                    "INST_MAP": {
+                        "GPS": {
+                            "LIST": [],
+                            "PRIMARY": ""
+                        },
+                        "DUMMY": {
+                            "LIST": []
+                        }
+                    },
+                    "AUTO_START": false
+                }
+            }
+        }
+    }
+}

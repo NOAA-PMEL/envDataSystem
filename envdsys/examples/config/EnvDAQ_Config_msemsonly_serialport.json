@@ -1,0 +1,50 @@
+{
+    "NAME": "DummyConfig",
+    "ENVDAQ_CONFIG": {
+        "CONT_LIST": {
+            "test_controller": {
+                "CONTROLLER": {
+                    "MODULE": "daq.controller.controller",
+                    "CLASS": "DummyController"
+                },
+                "CONTCONFIG": {
+                    "LABEL": "Test Controller",
+                    "INST_LIST": {
+                       "test_msems": {
+                            "ALIAS": {
+                                "name": "test_msems",
+                                "prefix": "msems"
+                            },
+                            "INSTRUMENT": {
+                                "MODULE": "daq.instrument.contrib.brechtel.msems",
+                                "CLASS": "MSEMS"
+                            },
+                            "INSTCONFIG": {
+                                "DESCRIPTION": {
+                                    "LABEL": "MSEMS",
+                                    "SERIAL_NUMBER": "000",
+                                    "PROPERTY_NUMBER": "CD0001239"
+                                },
+                                "IFACE_LIST": {
+                                    "serial_usb0": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "SerialPortInterface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "serial_usb0",
+                                            "ADDRESS": "/dev/ttyUSB0",
+                                            "baudrate": 230400,
+                                            "SerialNumber": "0001"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "AUTO_START": false
+                }
+            }
+        }
+    }
+}
