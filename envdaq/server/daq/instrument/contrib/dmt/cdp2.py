@@ -84,8 +84,8 @@ class CDP2(DMTInstrument):
         for msetsname, mset in meas_config.items():
             # self.data_record_template[msetname] = dict()
             for name, meas in mset.items():
-                parse_label = meas['parse_label']
-                self.parse_map[parse_label] = name
+                # parse_label = meas['parse_label']
+                # self.parse_map[parse_label] = name
                 # self.data_record_template[msetsname][name] = None
                 self.data_record_template[name] = {'VALUE': None}
 
@@ -98,6 +98,10 @@ class CDP2(DMTInstrument):
         # # self.clean_data_record()
         if self.is_polled:
             self.polling_task = asyncio.ensure_future(self.poll_loop())
+
+        # TODO: Send config string to unit and wait for ACK
+        print(f'self.status = SETUP')
+        print(f'send CDP2 config to unit')
 
         # self.current_read_cnt = 0
 

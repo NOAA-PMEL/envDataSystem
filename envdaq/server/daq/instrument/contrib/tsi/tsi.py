@@ -509,7 +509,8 @@ class APS3320(TSIInstrument):
             for n in cnts:
                 if sample_time > 0:
                     # convert counts(s-1) to conc (cm-3)
-                    dn = n * (60 * self.nominal_sample_flow / 1000)
+                    # dn = n * (60 * self.nominal_sample_flow / 1000)
+                    dn = (n / sample_time) / 16.67
                     conc.append(round(dn, 3))
 
             self.update_data_record(
@@ -530,7 +531,7 @@ class APS3320(TSIInstrument):
 
             self.update_data_record(
                 self.scan_start_time,
-                {'integral_concentration': intN}
+                {'integral_concentration': round(intN, 3)}
             )
 
             # populate these for now
@@ -1773,7 +1774,9 @@ class CPC3760A_DMPS(TSIInstrument):
         size_dist['default_y_data'] = ['bin_concentration']
         source_map = {
             'default': {
-                'y_data': dist_data,
+                'y_data': {
+                    'default': dist_data
+                },
                 'default_y_data': ['bin_concentration']
             },
         }
@@ -1785,7 +1788,9 @@ class CPC3760A_DMPS(TSIInstrument):
         time_series1d['default_y_data'] = ['integral_concentration']
         source_map = {
             'default': {
-                'y_data': y_data,
+                'y_data': {
+                    'default': y_data
+                },
                 'default_y_data': ['integral_concentration']
             },
         }
@@ -1797,224 +1802,3 @@ class CPC3760A_DMPS(TSIInstrument):
         definition['plot_config'] = plot_config
 
         return {'DEFINITION': definition}
-
-# ASDMA::CalculateHighVoltages(const ADDataArray* dp, ADDataArray* hv)
-# {
-# 	JFloat measT = GetTemp();
-# 	JFloat measP = GetPressure();
-# 	JFloat measQsh = GetSheathFlow();
-# //	JFloat measQin = GetInletFlow();
-
-# 	//cout << "calc hv 1 " << measT <<  " " << measP << " " << measQsh << " " << endl;
-
-# 	// calc lamba(P,T)
-# 	JFloat lambda = Lambda_ref * ((measT+CtoK)/Tref) * (Pref/measP) *
-# 				     (1.0+110.4/Tref)/(1.0+110.4/(measT+CtoK));
-
-# //	cout << "calc hv 2 " << lambda << endl;
-# 	JFloat visc = Visc_ref * pow(((measT+CtoK)/Tref),1.5) *
-# 					 (Tref + 110.4) / ((measT+CtoK)+110.4);
-
-# //	cout << "calc hv 3 " << visc << endl;
-# 	JSize steps = dp->GetElementCount();
-
-# //	cout << "calc hv 4 " << steps << endl;
-# 	for (JIndex step=1; step<=steps; step++) {
-
-# //	cout << "calc hv 5 " << step << endl;
-# 		JFloat diam = dp->GetElement(step) * 1000.0; // convert um->nm
-# 		ASDMA::CalculateHighVoltages(const ADDataArray* dp, ADDataArray* hv)
-# {
-# 	JFloat measT = GetTemp();
-# 	JFloat measP = GetPressure();
-# 	JFloat measQsh = GetSheathFlow();
-# //	JFloat measQin = GetInletFlow();
-
-# 	//cout << "calc hv 1 " << measT <<  " " << measP << " " << measQsh << " " << endl;
-
-# 	// calc lamba(P,T)
-# 	JFloat lambda = Lambda_ref * ((measT+CtoK)/Tref) * (Pref/measP) *
-# 				     (1.0+110.4/Tref)/(1.0+110.4/(measT+CtoK));
-
-# //	cout << "calc hv 2 " << lambda << endl;
-# 	JFloat visc = Visc_ref * pow(((measT+CtoK)/Tref),1.5) *
-# 					 (Tref + 110.4) / ((measT+CtoK)+110.4);
-
-# //	cout << "calc hv 3 " << visc << endl;
-# 	JSize steps = dp->GetElementCount();
-
-# //	cout << "calc hv 4 " << steps << endl;
-# 	for (JIndex step=1; step<=steps; step++) {
-
-# //	cout << "calc hv 5 " << step << endl;
-# 		JFloat diam = dp->GetElement(step) * 1000.0; // convert um->nm
-
-# //	cout << "calc hv 6 " << diam << endl;
-# 		JFloat cSlip = 1.0 + lambda/diam *
-# 				(2.514+0.8*exp(-0.55*diam/lambda));
-# //				(2.514+0.8*exp(-0.55*dp->GetElement(step)/lambda));
-
-# //	cout << "calc hv 7 " << cSlip << endl;
-# 		JFloat Zp = e_charge * cSlip * 100000000.0 /
-# 				(3.0 * kJPi * visc * diam * 0.000001);
-
-# //	cout << "calc hv 8 " << Zp << endl;
-# 		JFloat hVolt = measQsh*1000.0/60.0 * log(itsRout/itsRin) /
-# 				(Zp * 2.0 * kJPi * itsL * 100.0);
-
-# //	cout << "calc hv 9 " << diam << " " << hVolt << endl;
-# 		hv->SetElement(step, hVolt);
-# 	}
-# 	return kJTrue;
-# }
-
-# //	cout << "calc hv 6 " <<ASDMA::CalculateHighVoltages(const ADDataArray* dp, ADDataArray* hv)
-# {
-# 	JFloat measT = GetTemp();
-# 	JFloat measP = GetPressure();
-# 	JFloat measQsh = GetSheathFlow();
-# //	JFloat measQin = GetInletFlow();
-
-# 	//cout << "calc hv 1 " << measT <<  " " << measP << " " << measQsh << " " << endl;
-
-# 	// calc lamba(P,T)
-# 	JFloat lambda = Lambda_ref * ((measT+CtoK)/Tref) * (Pref/measP) *
-# 				     (1.0+110.4/Tref)/(1.0+110.4/(measT+CtoK));
-
-# //	cout << "calc hv 2 " << lambda << endl;
-# 	JFloat visc = Visc_ref * pow(((measT+CtoK)/Tref),1.5) *
-# 					 (Tref + 110.4) / ((measT+CtoK)+110.4);
-
-# //	cout << "calc hv 3 " << visc << endl;
-# 	JSize steps = dp->GetElementCount();
-
-# //	cout << "calc hv 4 " << steps << endl;
-# 	for (JIndex step=1; step<=steps; step++) {
-
-# //	cout << "calc hv 5 " << step << endl;
-# 		JFloat diam = dp->GetElement(step) * 1000.0; // convert um->nm
-
-# //	cout << "calc hv 6 " << diam << endl;
-# 		JFloat cSlip = 1.0 + lambda/diam *
-# 				(2.514+0.8*exp(-0.55*diam/lambda));
-# //				(2.514+0.8*exp(-0.55*dp->GetElement(step)/lambda));
-
-# //	cout << "calc hv 7 " << cSlip << endl;
-# 		JFloat Zp = e_charge * cSlip * 100000000.0 /
-# 				(3.0 * kJPi * visc * diam * 0.000001);
-
-# //	cout << "calc hv 8 " << Zp << endl;
-# 		JFloat hVolt = measQsh*1000.0/60.0 * log(itsRout/itsRin) /
-# 				(Zp * 2.0 * kJPi * itsL * 100.0);
-
-# //	cout << "calc hv 9 " << diam << " " << hVolt << endl;
-# 		hv->SetElement(step, hVolt);
-# 	}
-# 	return kJTrue;
-# }
-#  diam << endl;
-# 		JFloat cSlip = 1.0 ASDMA::CalculateHighVoltages(const ADDataArray* dp, ADDataArray* hv)
-# {
-# 	JFloat measT = GetTemp();
-# 	JFloat measP = GetPressure();
-# 	JFloat measQsh = GetSheathFlow();
-# //	JFloat measQin = GetInletFlow();
-
-# 	//cout << "calc hv 1 " << measT <<  " " << measP << " " << measQsh << " " << endl;
-
-# 	// calc lamba(P,T)
-# 	JFloat lambda = Lambda_ref * ((measT+CtoK)/Tref) * (Pref/measP) *
-# 				     (1.0+110.4/Tref)/(1.0+110.4/(measT+CtoK));
-
-# //	cout << "calc hv 2 " << lambda << endl;
-# 	JFloat visc = Visc_ref * pow(((measT+CtoK)/Tref),1.5) *
-# 					 (Tref + 110.4) / ((measT+CtoK)+110.4);
-
-# //	cout << "calc hv 3 " << visc << endl;
-# 	JSize steps = dp->GetElementCount();
-
-# //	cout << "calc hv 4 " << steps << endl;
-# 	for (JIndex step=1; step<=steps; step++) {
-
-# //	cout << "calc hv 5 " << step << endl;
-# 		JFloat diam = dp->GetElement(step) * 1000.0; // convert um->nm
-
-# //	cout << "calc hv 6 " << diam << endl;
-# 		JFloat cSlip = 1.0 + lambda/diam *
-# 				(2.514+0.8*exp(-0.55*diam/lambda));
-# //				(2.514+0.8*exp(-0.55*dp->GetElement(step)/lambda));
-
-# //	cout << "calc hv 7 " << cSlip << endl;
-# 		JFloat Zp = e_charge * cSlip * 100000000.0 /
-# 				(3.0 * kJPi * visc * diam * 0.000001);
-
-# //	cout << "calc hv 8 " << Zp << endl;
-# 		JFloat hVolt = measQsh*1000.0/60.0 * log(itsRout/itsRin) /
-# 				(Zp * 2.0 * kJPi * itsL * 100.0);
-
-# //	cout << "calc hv 9 " << diam << " " << hVolt << endl;
-# 		hv->SetElement(step, hVolt);
-# 	}
-# 	return kJTrue;
-# }
-# + lambda/diam *
-# 				(2.514+0.8*ASDMA::CalculateHighVoltages(const ADDataArray* dp, ADDataArray* hv)
-# {
-# 	JFloat measT = GetTemp();
-# 	JFloat measP = GetPressure();
-# 	JFloat measQsh = GetSheathFlow();
-# //	JFloat measQin = GetInletFlow();
-
-# 	//cout << "calc hv 1 " << measT <<  " " << measP << " " << measQsh << " " << endl;
-
-# 	// calc lamba(P,T)
-# 	JFloat lambda = Lambda_ref * ((measT+CtoK)/Tref) * (Pref/measP) *
-# 				     (1.0+110.4/Tref)/(1.0+110.4/(measT+CtoK));
-
-# //	cout << "calc hv 2 " << lambda << endl;
-# 	JFloat visc = Visc_ref * pow(((measT+CtoK)/Tref),1.5) *
-# 					 (Tref + 110.4) / ((measT+CtoK)+110.4);
-
-# //	cout << "calc hv 3 " << visc << endl;
-# 	JSize steps = dp->GetElementCount();
-
-# //	cout << "calc hv 4 " << steps << endl;
-# 	for (JIndex step=1; step<=steps; step++) {
-
-# //	cout << "calc hv 5 " << step << endl;
-# 		JFloat diam = dp->GetElement(step) * 1000.0; // convert um->nm
-
-# //	cout << "calc hv 6 " << diam << endl;
-# 		JFloat cSlip = 1.0 + lambda/diam *
-# 				(2.514+0.8*exp(-0.55*diam/lambda));
-# //				(2.514+0.8*exp(-0.55*dp->GetElement(step)/lambda));
-
-# //	cout << "calc hv 7 " << cSlip << endl;
-# 		JFloat Zp = e_charge * cSlip * 100000000.0 /
-# 				(3.0 * kJPi * visc * diam * 0.000001);
-
-# //	cout << "calc hv 8 " << Zp << endl;
-# 		JFloat hVolt = measQsh*1000.0/60.0 * log(itsRout/itsRin) /
-# 				(Zp * 2.0 * kJPi * itsL * 100.0);
-
-# //	cout << "calc hv 9 " << diam << " " << hVolt << endl;
-# 		hv->SetElement(step, hVolt);
-# 	}
-# 	return kJTrue;
-# }
-# exp(-0.55*diam/lambda));
-# //				(2.514+0.8*exp(-0.55*dp->GetElement(step)/lambda));
-
-# //	cout << "calc hv 7 " << cSlip << endl;
-# 		JFloat Zp = e_charge * cSlip * 100000000.0 /
-# 				(3.0 * kJPi * visc * diam * 0.000001);
-
-# //	cout << "calc hv 8 " << Zp << endl;
-# 		JFloat hVolt = measQsh*1000.0/60.0 * log(itsRout/itsRin) /
-# 				(Zp * 2.0 * kJPi * itsL * 100.0);
-
-# //	cout << "calc hv 9 " << diam << " " << hVolt << endl;
-# 		hv->SetElement(step, hVolt);
-# 	}
-# 	return kJTrue;
-# }

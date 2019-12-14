@@ -407,7 +407,11 @@ class SerialPortInterface(Interface):
     class_type = 'SERIALPORT_INTERFACE'
 
     def __init__(self, config, ui_config=None, **kwargs):
-        super(SerialPortInterface, self).__init__(config, ui_config=ui_config, **kwargs)
+        super(SerialPortInterface, self).__init__(
+            config,
+            ui_config=ui_config,
+            **kwargs
+        )
 
         # ifdev_config = json.loads('{"IFDEVICE": {"MODULE": "daq.interface.ifdevice", "CLASS": "DummyIFDevice"}, "IFDEVCONFIG": {"DESCRIPTION": {"LABEL": "Dummy IFDevice", "SERIAL_NUMBER": "1234", "PROPERTY_NUMBER": "CD0001234"}}}')
         # ui_config = dict()

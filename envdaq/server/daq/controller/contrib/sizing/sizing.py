@@ -979,7 +979,7 @@ class SizingSystem(Controller):
                         'VALUE': aps_dp
                     },
                     'aps_integral_concentration': {
-                        'VALUE': aps_intN
+                        'VALUE': round(aps_intN, 3)
                     }
                 }
 

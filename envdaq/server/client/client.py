@@ -73,6 +73,12 @@ class ClientConnection(abc.ABC):
     # def open_connection(self):
     #     self.keep_connected = True
 
+    def message_waiting(self):
+        resp = False
+        if self.readq and not self.readq.empty:
+            resp = True
+        return resp
+        
     async def run(self):
 
         timeout = 1  # seconds

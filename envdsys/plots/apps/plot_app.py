@@ -698,8 +698,9 @@ class TimeSeries1D(PlotApp):
         #     ("desc", "@desc"),
         # ]
         TOOLTIPS = [
-            # ("time", "$x"),
-            ("value", "$y")
+            ('name', '@name')
+            ("time", "@x"),
+            ("value", "@y")
             # ("(x,y)", "($x, $y)"),
             # ("desc", "@desc"),
         ]
@@ -1351,11 +1352,11 @@ class SizeDistribution(PlotApp):
             doc_layout.children[1] = fig
 
         TOOLTIPS = [
-            ("name", "$name"),
+            ("name", "@name"),
             # ("(x,y)", "($x, $y)"),
             # ("desc", "@desc"),
-            ("Dp", "$x um"),
-            ("N", "$y cm-3"),
+            ("Dp", "@x um"),
+            ("N", "@y cm-3"),
         ]
 
         fig = build_plot()

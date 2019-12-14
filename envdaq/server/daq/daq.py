@@ -99,6 +99,23 @@ class DAQ(abc.ABC):
         #     asyncio.ensure_future(self.open_ui_connection())
         # )
 
+    def get_datafile_config(self):
+        config = {
+            'base_path': self.get_base_filepath(),
+        }
+        return config
+
+    def get_base_filepath(self):
+        system_base = '/home/horton/derek/tmp/envDataSystem/'
+        inst_base = 'instrument/'
+        definition = self.get_definition_instance()
+        inst_base += definition['DEFINITION']['type']+'/'
+        inst_base += definition['DEFINITION']['mfg']+'/'
+        inst_base += definition['DEFINITION']['model']+'_'
+        inst_base += self.serial_number+'/'
+
+        return system_base+inst_base
+
     @abc.abstractmethod
     def setup(self):
         print(f'daq.setup')
