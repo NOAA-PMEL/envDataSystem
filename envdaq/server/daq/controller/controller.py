@@ -336,7 +336,11 @@ class Controller(DAQ):
         for k, icfg in self.config['INST_LIST'].items():
             # for instr in self.config['INST_LIST']:
             # inst = InstrumentFactory().create(icfg['INST_CONFIG'])
-            inst = InstrumentFactory().create(icfg, ui_config=self.ui_config)
+            inst = InstrumentFactory().create(
+                icfg,
+                base_file_path=self.get_base_filepath(),
+                ui_config=self.ui_config
+            )
             # inst.msg_buffer = self.inst_msg_buffer
             inst.to_parent_buf = self.from_child_buf
             self.instrument_map[inst.get_id()] = inst

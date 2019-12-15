@@ -129,22 +129,22 @@ class Instrument(DAQ):
 #            'IF_WRITE_Q': asyncio.Queue(loop=self.loop),
 #        }
 
-    def get_datafile_config(self):
-        config = {
-            'base_path': self.get_base_filepath(),
-        }
-        return config
+    # def get_datafile_config(self):
+    #     config = {
+    #         'base_path': self.get_base_filepath(),
+    #     }
+    #     return config
 
-    def get_base_filepath(self):
-        system_base = '/home/horton/derek/tmp/envDataSystem/'
-        inst_base = 'instrument/'
-        definition = self.get_definition_instance()
-        inst_base += definition['DEFINITION']['type']+'/'
-        inst_base += definition['DEFINITION']['mfg']+'/'
-        inst_base += definition['DEFINITION']['model']+'_'
-        inst_base += self.serial_number+'/'
+    # def get_base_filepath(self):
+    #     system_base = '/home/horton/derek/tmp/envDataSystem/'
+    #     inst_base = 'instrument/'
+    #     definition = self.get_definition_instance()
+    #     inst_base += definition['DEFINITION']['type']+'/'
+    #     inst_base += definition['DEFINITION']['mfg']+'/'
+    #     inst_base += definition['DEFINITION']['model']+'_'
+    #     inst_base += self.serial_number+'/'
 
-        return system_base+inst_base
+    #     return system_base+inst_base
 
     def setup(self):
         super().setup()
@@ -361,12 +361,13 @@ class Instrument(DAQ):
             )
         )
 
-        self.datafile = DataFile(
-            # base_path=self.get_base_filepath(),
-            config=self.get_datafile_config()
-        )
-        if self.datafile:
-            self.datafile.open()
+        self.open_datafile()
+        # self.datafile = DataFile(
+        #     # base_path=self.get_base_filepath(),
+        #     config=self.get_datafile_config()
+        # )
+        # if self.datafile:
+        #     self.datafile.open()
 
         # task = asyncio.ensure_future(self.from_child_loop())
         # self.task_list.append(task)

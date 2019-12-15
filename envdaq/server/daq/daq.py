@@ -40,6 +40,11 @@ class DAQ(abc.ABC):
 
         self.datafile = None
 
+        # set base file path for all file saves
+        # base_file_path = '/tmp'
+        if base_file_path:
+            self.base_file_path = base_file_path
+
         # self.daq_definition = dict()
         # self.daq_definition['DEFINITION'] = dict()
 
@@ -99,22 +104,41 @@ class DAQ(abc.ABC):
         #     asyncio.ensure_future(self.open_ui_connection())
         # )
 
+    def open_data_file(self):
+
+        cfg = self.get_datafile_config()
+        if cfg:
+            self.datafile = DataFile(
+                # base_path=self.get_base_filepath(),
+                config=self.get_datafile_config()
+            )
+            if self.datafile:
+                self.datafile.open()
+
+
     def get_datafile_config(self):
-        config = {
-            'base_path': self.get_base_filepath(),
-        }
-        return config
+        bfp = self.get_base_filepath()
+        if bfp:
+            config = {
+                'base_path': self.get_base_filepath(),
+            }
+            return config
+        return None
 
     def get_base_filepath(self):
-        system_base = '/home/horton/derek/tmp/envDataSystem/'
-        inst_base = 'instrument/'
-        definition = self.get_definition_instance()
-        inst_base += definition['DEFINITION']['type']+'/'
-        inst_base += definition['DEFINITION']['mfg']+'/'
-        inst_base += definition['DEFINITION']['model']+'_'
-        inst_base += self.serial_number+'/'
+        # system_base = '/home/horton/derek/tmp/envDataSystem/'
+        # inst_base = 'instrument/'
+        # definition = self.get_definition_instance()
+        # inst_base += definition['DEFINITION']['type']+'/'
+        # inst_base += definition['DEFINITION']['mfg']+'/'
+        # inst_base += definition['DEFINITION']['model']+'_'
+        # inst_base += self.serial_number+'/'
 
-        return system_base+inst_base
+        if self.base_file_path:
+            return self.base_file_path + self.alias['name']
+
+        return None
+        # return system_base+inst_base
 
     @abc.abstractmethod
     def setup(self):
