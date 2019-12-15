@@ -45,6 +45,11 @@ class DAQ(abc.ABC):
         if base_file_path:
             self.base_file_path = base_file_path
 
+        # parameters to include metadata in output
+        self.include_metadata = True
+        # set interval to 0 to always send metadata
+        self.include_metadata_interval = 60
+
         # self.daq_definition = dict()
         # self.daq_definition['DEFINITION'] = dict()
 
@@ -362,8 +367,37 @@ class DAQ(abc.ABC):
         self.message_to_ui_nowait(status)
         # self.message_to_ui_nowait(status)
 
+    async def send_metadata_loop(self):
+
+        while True:
+            if self.include_metadata_interval > 0:
+                # wt = utilities.util.time_to_next(
+                #     self.include_metadata_interval
+                # )
+                # print(f'wait time: {wt}')
+                await asyncio.sleep(
+                    utilities.util.time_to_next(
+                        self.include_metadata_interval
+                    )
+                )
+                self.include_metadata = True
+            else:
+                self.include_metadata = True
+                asyncio.sleep(1)
+
+
     def start(self, cmd=None):
         # self.create_msg_buffers()
+
+        # only need to start this, will be cancelled by
+        #   daq on stop
+        self.include_metadata = True
+        self.task_list.append(
+            asyncio.ensure_future(
+                self.send_metadata_loop()
+            )
+        )
+
         if self.status['run_status'] != 'STARTED':
             self.task_list.append(
                 asyncio.ensure_future(self.from_parent_loop())

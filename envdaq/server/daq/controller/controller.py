@@ -946,6 +946,8 @@ class DummyController(Controller):
                 # print(f'instrument data: {data.to_json()}')
 
                 await self.message_to_ui(data)
+                if self.datafile:
+                    await self.datafile.write_message(data)
                 # await asyncio.sleep(.1)
                 # await PlotManager.update_data(self.plot_name, data.to_json())
 

@@ -801,6 +801,8 @@ class SizingSystem(Controller):
                 # print(f'instrument data: {data.to_json()}')
 
                 await self.message_to_ui(data)
+                if self.datafile:
+                    await self.datafile.write_message(data)
                 # await PlotManager.update_data(self.plot_name, data.to_json())
 
             # print(f'data_json: {data.to_json()}\n')

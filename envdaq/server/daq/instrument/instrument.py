@@ -103,10 +103,10 @@ class Instrument(DAQ):
         # temporary
         self.last_entry = {'DATETIME': ''}
 
-        # parameters to include metadata in output
-        self.include_metadata = True
-        # set interval to 0 to always send metadata
-        self.include_metadata_interval = 60
+        # # parameters to include metadata in output
+        # self.include_metadata = True
+        # # set interval to 0 to always send metadata
+        # self.include_metadata_interval = 60
 
         # create read buffer and interfaces
         # self.create_msg_buffers(config=None)
@@ -333,9 +333,9 @@ class Instrument(DAQ):
 
         while True:
             if self.include_metadata_interval > 0:
-                wt = utilities.util.time_to_next(
-                    self.include_metadata_interval
-                )
+                # wt = utilities.util.time_to_next(
+                #     self.include_metadata_interval
+                # )
                 # print(f'wait time: {wt}')
                 await asyncio.sleep(
                     utilities.util.time_to_next(
@@ -352,14 +352,6 @@ class Instrument(DAQ):
         print(f'Starting Instrument {self}')
         super().start(cmd)
 
-        # only need to start this, will be cancelled by
-        #   daq on stop
-        self.include_metadata = True
-        self.task_list.append(
-            asyncio.ensure_future(
-                self.send_metadata_loop()
-            )
-        )
 
         self.open_datafile()
         # self.datafile = DataFile(

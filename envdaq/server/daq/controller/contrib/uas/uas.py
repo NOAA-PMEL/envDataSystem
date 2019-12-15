@@ -1042,6 +1042,8 @@ class UASCloudyPayload(Controller):
             #     # print(f'instrument data: {data.to_json()}')
 
             #     await self.message_to_ui(data)
+                # if self.datafile:
+                #     await self.datafile.write_message(data)
 
             # print(f'data_json: {data.to_json()}\n')
         elif type == 'FromUI':
