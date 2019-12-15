@@ -76,7 +76,7 @@ class WSClient(ClientConnection):
                 # print('after readq.put')
             except websockets.exceptions.ConnectionClosed:
                 print(f'ws connection closed')
-                self.client.close()
+                await self.client.close()
                 self.client = None
                 self.connect_state = ClientConnection.CLOSED
                 await asyncio.sleep(.5)
