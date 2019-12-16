@@ -109,7 +109,7 @@ class DAQ(abc.ABC):
         #     asyncio.ensure_future(self.open_ui_connection())
         # )
 
-    def open_data_file(self):
+    def open_datafile(self):
 
         cfg = self.get_datafile_config()
         if cfg:
@@ -140,7 +140,7 @@ class DAQ(abc.ABC):
         # inst_base += self.serial_number+'/'
 
         if self.base_file_path:
-            return self.base_file_path + self.alias['name']
+            return self.base_file_path + '/' + self.alias['name']
 
         return None
         # return system_base+inst_base

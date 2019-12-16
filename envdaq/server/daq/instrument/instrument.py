@@ -352,7 +352,6 @@ class Instrument(DAQ):
         print(f'Starting Instrument {self}')
         super().start(cmd)
 
-
         self.open_datafile()
         # self.datafile = DataFile(
         #     # base_path=self.get_base_filepath(),

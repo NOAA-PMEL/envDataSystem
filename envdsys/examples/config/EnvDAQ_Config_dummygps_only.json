@@ -1,0 +1,63 @@
+{
+    "NAME": "DummyConfig",
+    "ENVDAQ_CONFIG": {
+        "CONT_LIST": {
+            "test_controller": {
+                "ALIAS": {
+                    "name": "test_controller",
+                    "prefix": "tc"
+                },
+                "CONTROLLER": {
+                    "MODULE": "daq.controller.controller",
+                    "CLASS": "DummyController"
+                },
+                "CONTCONFIG": {
+                    "LABEL": "Test Controller",
+                    "INST_LIST": {
+                        "test_gps": {
+                            "ALIAS": {
+                                "name": "test_gps",
+                                "prefix": "gps"
+                            },
+                            "INSTRUMENT": {
+                                "MODULE": "daq.instrument.instrument",
+                                "CLASS": "DummyGPS"
+                            },
+                            "INSTCONFIG": {
+                                "DESCRIPTION": {
+                                    "LABEL": "Test GPS",
+                                    "SERIAL_NUMBER": "4567",
+                                    "PROPERTY_NUMBER": "CD0001239"
+                                },
+                                "IFACE_LIST": {
+                                    "test_interface": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "DummyInterface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "test_interface",
+                                            "ADDRESS": "DummyAddress",
+                                            "dummy_port": 1,
+                                            "SerialNumber": "1238"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "INST_MAP": {
+                        "GPS": {
+                            "LIST": [],
+                            "PRIMARY": ""
+                        },
+                        "DUMMY": {
+                            "LIST": []
+                        }
+                    },
+                    "AUTO_START": false
+                }
+            }
+        }
+    }
+}
