@@ -217,8 +217,8 @@ class RotronicsHC2(RotronicsInstrument):
 
         params = line.split(';')
 
-        temp = params[1]
-        rh = params[5]
+        rh = params[1]
+        temp = params[5]
         # dp is possible but have to program probe
         # dp = params[10]
         # sn = params[16]
@@ -302,20 +302,20 @@ class RotronicsHC2(RotronicsInstrument):
         }
         y_data.append('relative_humidity')
 
-        primary_meas['dewpoint'] = {
-            'dimensions': {
-                'axes': ['TIME'],
-                'unlimited': 'TIME',
-                'units': ['dateTime'],
-            },
-            'units': 'degC',  # should be cfunits or udunits
-            'uncertainty': 0.2,
-            'source': 'calculated',
-            'data_type': 'NUMERIC',
-            # 'short_name': 'rh',
-            'control': None,
-        }
-        y_data.append('dewpoint')
+        # primary_meas['dewpoint'] = {
+        #     'dimensions': {
+        #         'axes': ['TIME'],
+        #         'unlimited': 'TIME',
+        #         'units': ['dateTime'],
+        #     },
+        #     'units': 'degC',  # should be cfunits or udunits
+        #     'uncertainty': 0.2,
+        #     'source': 'calculated',
+        #     'data_type': 'NUMERIC',
+        #     # 'short_name': 'rh',
+        #     'control': None,
+        # }
+        # y_data.append('dewpoint')
 
         measurement_config['primary'] = primary_meas
 
