@@ -61,7 +61,7 @@ class RotronicsHC2(RotronicsInstrument):
         self.iface_options = {
             'read_method': 'readuntil',
             'read_terminator': '\r',
-            'decode_error': 'ignore'
+            'decode_errors': 'ignore'
         }
 
         self.setup()
