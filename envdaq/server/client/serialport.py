@@ -97,16 +97,16 @@ class SerialPortClient(ClientConnection):
         async def readline(self):
             if self.reader:
                 msg = await self.reader.readline()
-                return msg.decode(error=self.decode_error)
+                return msg.decode(errors=self.decode_error)
 
         async def readuntil(self, terminator='\n'):
             msg = await self.reader.readuntil(terminator.encode())
             # print(f'readuntil: {msg}')
-            return msg.decode(error=self.decode_error)
+            return msg.decode(errors=self.decode_error)
 
         async def read(self, num_bytes=1):
             msg = await self.reader.read(num_bytes)
-            return msg.decode(error=self.decode_error)
+            return msg.decode(errors=self.decode_error)
 
         async def write(self, msg):
             if self.writer:
