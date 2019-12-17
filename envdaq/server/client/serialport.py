@@ -20,6 +20,7 @@ class SerialPortClient(ClientConnection):
         read_method='readline',
         read_terminator='\n',
         read_num_bytes=1,
+        decode_error='strict',
         baudrate=9600,
         bytesize=8,
         parity=serial.PARITY_NONE,
@@ -38,6 +39,7 @@ class SerialPortClient(ClientConnection):
         self.read_method = read_method
         self.read_terminator = read_terminator
         self.read_num_bytes = read_num_bytes
+        self.decode_error = decode_error
         self.baudrate = baudrate
         self.bytesize = bytesize
         self.parity = parity
@@ -95,16 +97,16 @@ class SerialPortClient(ClientConnection):
         async def readline(self):
             if self.reader:
                 msg = await self.reader.readline()
-                return msg.decode()
+                return msg.decode(error=self.decode_error)
 
         async def readuntil(self, terminator='\n'):
             msg = await self.reader.readuntil(terminator.encode())
             # print(f'readuntil: {msg}')
-            return msg.decode()
+            return msg.decode(error=self.decode_error)
 
         async def read(self, num_bytes=1):
             msg = await self.reader.read(num_bytes)
-            return msg.decode()
+            return msg.decode(error=self.decode_error)
 
         async def write(self, msg):
             if self.writer:

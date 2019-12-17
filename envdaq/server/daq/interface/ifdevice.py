@@ -14,7 +14,7 @@ class IFDeviceFactory():
 
     @staticmethod
     def create(config, **kwargs):
-        print(config)
+        # print(config)
         create_cfg = config['IFDEVICE']
         ifdevconfig = config['IFDEVCONFIG']
         print("module: " + create_cfg['MODULE'])
@@ -109,7 +109,7 @@ class IFDevice(DAQ):
             self.stop()
 
     def get_ui_address(self):
-        print(self.label)
+        # print(self.label)
         address = 'envdaq/ifdevice/'+self.label+'/'
         # print(f'get_ui_address: {address}')
         return address
@@ -188,7 +188,7 @@ class DummyIFDevice(IFDevice):
 
     def __init__(self, config, **kwargs):
         # def __init__(self, config):
-        print(config)
+        # print(config)
         print('DummyIFDevice init')
         super(DummyIFDevice, self).__init__(config, **kwargs)
         # super().__init__(config)
@@ -270,7 +270,7 @@ class SerialPortIFDevice(IFDevice):
 
     def __init__(self, config, **kwargs):
         # def __init__(self, config):
-        print(config)
+        # print(config)
         print('SerialPortIFDevice init')
         super(SerialPortIFDevice, self).__init__(config, **kwargs)
         # super().__init__(config)
@@ -360,7 +360,7 @@ class TCPPortIFDevice(IFDevice):
 
     def __init__(self, config, **kwargs):
         # def __init__(self, config):
-        print(config)
+        # print(config)
         print('TCPPortIFDevice init')
         super(TCPPortIFDevice, self).__init__(config, **kwargs)
         # super().__init__(config)
@@ -444,7 +444,7 @@ class LabJackT7Device(IFDevice):
 
     def __init__(self, config, **kwargs):
         # def __init__(self, config):
-        print(config)
+        # print(config)
         print('LabJackT7Device init')
         super(LabJackT7Device, self).__init__(config, **kwargs)
         # super().__init__(config)

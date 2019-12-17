@@ -16,6 +16,7 @@ class TCPPortClient(ClientConnection):
         read_method='readline',
         read_terminator='\n',
         read_num_bytes=1,
+        decode_error='strict',
         **kwargs
     ):
         super(TCPPortClient, self).__init__(
@@ -34,6 +35,7 @@ class TCPPortClient(ClientConnection):
         self.read_method = read_method
         self.read_terminator = read_terminator
         self.read_num_bytes = read_num_bytes
+        self.decode_error = decode_error
 
     class _TCPPortClient():
         def __init__(self, address=None):
@@ -72,17 +74,17 @@ class TCPPortClient(ClientConnection):
                 # print(f'readline: {self.reader}')
                 msg = await self.reader.readline()
                 # print(f'{msg}')
-                return msg.decode()
+                return msg.decode(error=self.decode_error)
 
         async def readuntil(self, terminator='\n'):
             # print(f'readuntil')
             msg = await self.reader.readuntil(terminator.encode())
             # print(f'readmsg: {msg}')
-            return msg.decode()
+            return msg.decode(error=self.decode_error)
 
         async def read(self, num_bytes=1):
             msg = await self.reader.read(num_bytes)
-            return msg.decode()
+            return msg.decode(error=self.decode_error)
 
         async def write(self, msg):
             if self.writer:
@@ -102,7 +104,7 @@ class TCPPortClient(ClientConnection):
         if self.client:
             return self.client.connect_state
         else:
-            return super().ConnectionState() 
+            return super().ConnectionState()
 
     async def connect(self):
         # if self.is_connected:
