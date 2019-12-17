@@ -698,7 +698,7 @@ class TimeSeries1D(PlotApp):
         #     ("desc", "@desc"),
         # ]
         TOOLTIPS = [
-            ('name', '$name')
+            ('name', '$name'),
             ("time", "$x"),
             ("value", "$y")
             # ("(x,y)", "($x, $y)"),
