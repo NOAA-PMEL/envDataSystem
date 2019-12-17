@@ -217,8 +217,8 @@ class RotronicsHC2(RotronicsInstrument):
 
         params = line.split(';')
 
-        rh = params[1]
-        temp = params[5]
+        rh = float(params[1])
+        temp = float(params[5])
         # dp is possible but have to program probe
         # dp = params[10]
         # sn = params[16]

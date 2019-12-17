@@ -538,6 +538,7 @@ class TimeSeries1D(PlotApp):
                 toolbar_location='above',
                 tooltips=TOOLTIPS,
                 sizing_mode='stretch_width',
+                # y_range=DataRange1d()
                 # x_range=[0, 1],
                 # y_range=[0, 1],
 
@@ -585,7 +586,8 @@ class TimeSeries1D(PlotApp):
                             x='datetime',
                             y=y_data,
                             # legend=y_data,
-                            line_color=palette[trace_cnt]
+                            line_color=palette[trace_cnt],
+                            # bounds='auto'
                         )
                         legend_items.append((y_data, [new_line]))
                         trace_cnt += 1
@@ -617,7 +619,8 @@ class TimeSeries1D(PlotApp):
                         new_line = Line(
                             x='datetime',
                             y=y_data,
-                            line_color=palette[trace_cnt]
+                            line_color=palette[trace_cnt],
+                            # bounds='auto'
                         )
                         render = fig.add_glyph(
                             # source,
@@ -698,8 +701,8 @@ class TimeSeries1D(PlotApp):
         #     ("desc", "@desc"),
         # ]
         TOOLTIPS = [
-            ('name', '$name'),
-            ("time", "$x"),
+            # ('name', '@name'),
+            # ("time", "$x"),
             ("value", "$y")
             # ("(x,y)", "($x, $y)"),
             # ("desc", "@desc"),
