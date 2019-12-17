@@ -20,7 +20,7 @@ class SerialPortClient(ClientConnection):
         read_method='readline',
         read_terminator='\n',
         read_num_bytes=1,
-        decode_error='strict',
+        decode_errors='strict',
         baudrate=9600,
         bytesize=8,
         parity=serial.PARITY_NONE,
@@ -39,7 +39,7 @@ class SerialPortClient(ClientConnection):
         self.read_method = read_method
         self.read_terminator = read_terminator
         self.read_num_bytes = read_num_bytes
-        self.decode_error = decode_error
+        self.decode_errors = decode_errors
         self.baudrate = baudrate
         self.bytesize = bytesize
         self.parity = parity
@@ -94,19 +94,19 @@ class SerialPortClient(ClientConnection):
                 print(f'connect error: {e}')
                 self.connect_state = ClientConnection.CLOSED
 
-        async def readline(self):
+        async def readline(self, decode_errors='strict'):
             if self.reader:
                 msg = await self.reader.readline()
-                return msg.decode(errors=self.decode_error)
+                return msg.decode(errors=decode_errors)
 
-        async def readuntil(self, terminator='\n'):
+        async def readuntil(self, terminator='\n', decode_errors='strict'):
             msg = await self.reader.readuntil(terminator.encode())
             # print(f'readuntil: {msg}')
-            return msg.decode(errors=self.decode_error)
+            return msg.decode(errors=decode_errors)
 
-        async def read(self, num_bytes=1):
+        async def read(self, num_bytes=1, decode_errors='strict'):
             msg = await self.reader.read(num_bytes)
-            return msg.decode(errors=self.decode_error)
+            return msg.decode(errors=decode_errors)
 
         async def write(self, msg):
             if self.writer:
@@ -208,14 +208,18 @@ class SerialPortClient(ClientConnection):
             if self.ConnectionState() == ClientConnection.CONNECTED:
                 # print(f'read_loop: {websocket}')
                 if self.read_method == 'readline':
-                    msg = await serialport.readline()
+                    msg = await serialport.readline(
+                        decode_errors=self.decode_errors
+                    )
                 elif self.read_method == 'readuntil':
                     msg = await serialport.readuntil(
-                        self.read_terminator
+                        self.read_terminator,
+                        decode_errors=self.decode_errors
                     )
                 elif self.read_method == 'readbytes':
                     msg = await serialport.readuntil(
-                        self.read_num_bytes
+                        self.read_num_bytes,
+                        decode_errors=self.decode_errors
                     )
                 # print('read loop: {}'.format(msg))
                 # await self.readq.put(msg)

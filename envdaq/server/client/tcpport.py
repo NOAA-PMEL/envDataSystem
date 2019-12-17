@@ -16,7 +16,7 @@ class TCPPortClient(ClientConnection):
         read_method='readline',
         read_terminator='\n',
         read_num_bytes=1,
-        decode_error='strict',
+        decode_errors='strict',
         **kwargs
     ):
         super(TCPPortClient, self).__init__(
@@ -35,7 +35,7 @@ class TCPPortClient(ClientConnection):
         self.read_method = read_method
         self.read_terminator = read_terminator
         self.read_num_bytes = read_num_bytes
-        self.decode_error = decode_error
+        self.decode_errors = decode_errors
 
     class _TCPPortClient():
         def __init__(self, address=None):
@@ -68,23 +68,27 @@ class TCPPortClient(ClientConnection):
                 print(f'connect error:')
                 self.connect_state = ClientConnection.CLOSED
 
-        async def readline(self):
+        async def readline(self, decode_errors='strict'):
             # print('here')
             if self.reader:
                 # print(f'readline: {self.reader}')
                 msg = await self.reader.readline()
                 # print(f'{msg}')
-                return msg.decode(errors=self.decode_error)
+                return msg.decode(errors=decode_errors)
 
-        async def readuntil(self, terminator='\n'):
+        async def readuntil(
+            self,
+            terminator='\n',
+            decode_errors='strict'
+        ):
             # print(f'readuntil')
             msg = await self.reader.readuntil(terminator.encode())
             # print(f'readmsg: {msg}')
-            return msg.decode(errors=self.decode_error)
+            return msg.decode(errors=decode_errors)
 
-        async def read(self, num_bytes=1):
+        async def read(self, num_bytes=1, decode_errors='strict'):
             msg = await self.reader.read(num_bytes)
-            return msg.decode(errors=self.decode_error)
+            return msg.decode(errors=decode_errors)
 
         async def write(self, msg):
             if self.writer:
@@ -177,14 +181,18 @@ class TCPPortClient(ClientConnection):
             if self.ConnectionState() == ClientConnection.CONNECTED:
                 # print(f'read_loop: {tcpport}')
                 if self.read_method == 'readline':
-                    msg = await tcpport.readline()
+                    msg = await tcpport.readline(
+                        decode_errors=self.decode_errors
+                    )
                 elif self.read_method == 'readuntil':
                     msg = await tcpport.readuntil(
-                        self.read_terminator
+                        self.read_terminator,
+                        decode_errors=self.decode_errors
                     )
                 elif self.read_method == 'readbytes':
                     msg = await tcpport.readuntil(
-                        self.read_num_bytes
+                        self.read_num_bytes,
+                        decode_errors=self.decode_errors
                     )
                 # print('read loop: {}'.format(msg))
                 if msg:
