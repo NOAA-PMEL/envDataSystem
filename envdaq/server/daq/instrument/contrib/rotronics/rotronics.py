@@ -59,10 +59,10 @@ class RotronicsHC2(RotronicsInstrument):
 
         self.setup()
         # this instrument appears to work with readline
-        # self.iface_options = {
-        #     'read_method': 'readuntil',
-        #     'read_terminator': '\r',
-        # }
+        self.iface_options = {
+            'read_method': 'readuntil',
+            'read_terminator': '\r',
+        }
 
     # def get_datafile_config(self):
     #     config = super().get_datafile_config()
@@ -82,7 +82,7 @@ class RotronicsHC2(RotronicsInstrument):
         # add polling loop
         # if polled:
         self.is_polled = True
-        # self.poll_rate = 1  # every 5 minutes
+        self.poll_rate = 1  
 
         # create parse_map and empty data_record
         self.parse_map = dict()
