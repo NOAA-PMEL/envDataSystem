@@ -14,7 +14,7 @@
                 "CONTCONFIG": {
                     "LABEL": "Test Controller",
                     "INST_LIST": {
-                        "test_gps": {
+                        "ambient_trh": {
                             "ALIAS": {
                                 "name": "ambient_trh",
                                 "prefix": "trh"
@@ -30,16 +30,16 @@
                                     "PROPERTY_NUMBER": ""
                                 },
                                 "IFACE_LIST": {
-                                    "test_interface": {
+                                    "tcp_nb2_1_25": {
                                         "INTERFACE": {
                                             "MODULE": "daq.interface.interface",
-                                            "CLASS": "DummyInterface"
+                                            "CLASS": "TCPPortInterface"
                                         },
                                         "IFCONFIG": {
-                                            "LABEL": "test_interface",
-                                            "ADDRESS": "DummyAddress",
-                                            "dummy_port": 1,
-                                            "SerialNumber": "1238"
+                                            "LABEL": "tcp_nb2_1_24",
+                                            "HOST": "10.55.169.52",
+                                            "PORT": "24",
+                                            "SerialNumber": "0001"
                                         }
                                     }
                                 }
