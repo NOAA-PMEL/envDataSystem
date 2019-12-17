@@ -57,12 +57,13 @@ class RotronicsHC2(RotronicsInstrument):
         # override how often metadata is sent
         self.include_metadata_interval = 300
 
-        self.setup()
         # this instrument appears to work with readline
         self.iface_options = {
             'read_method': 'readuntil',
             'read_terminator': '\r',
         }
+
+        self.setup()
 
     # def get_datafile_config(self):
     #     config = super().get_datafile_config()
