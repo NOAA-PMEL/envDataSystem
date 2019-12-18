@@ -423,6 +423,15 @@ class TCPPortIFDevice(IFDevice):
             if msg.subject == 'SEND':
                 await self.client.send(msg.body)
                 # print(f'tcpportifdevice.handle: {msg.to_json()}')
+
+            # elif msg.subject == 'SEND_BINARY':
+            #     if 'return_packet_size' in msg.body:
+            #         self.client.set_binary_read_num_bytes(
+            #             read_num_bytes=msg.body['return_packet_size']
+            #         )
+            #     await self.client.send(msg.body)
+            #     # print(f'tcpportifdevice.handle: {msg.to_json()}')
+
         else:
             print('unkown msg')
         

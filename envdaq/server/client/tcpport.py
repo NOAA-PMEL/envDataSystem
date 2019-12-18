@@ -1,5 +1,6 @@
 import asyncio
 from client.client import ClientConnection
+from collections import deque
 
 
 class TCPPortClient(ClientConnection):
@@ -13,6 +14,7 @@ class TCPPortClient(ClientConnection):
         address=None,
         loop=None,
         auto_connect=True,
+        send_method='ascii',
         read_method='readline',
         read_terminator='\n',
         read_num_bytes=1,
@@ -32,10 +34,15 @@ class TCPPortClient(ClientConnection):
         else:
             return None
 
+        self.send_method = send_method
         self.read_method = read_method
         self.read_terminator = read_terminator
         self.read_num_bytes = read_num_bytes
         self.decode_errors = decode_errors
+
+        self.return_packet_bytes = deque(maxlen=25000)
+
+        self.binary_read_bytes_set = False
 
     class _TCPPortClient():
         def __init__(self, address=None):
@@ -89,6 +96,10 @@ class TCPPortClient(ClientConnection):
         async def read(self, num_bytes=1, decode_errors='strict'):
             msg = await self.reader.read(num_bytes)
             return msg.decode(errors=decode_errors)
+
+        async def readbinary(self, num_bytes=1, decode_errors='strict'):
+            msg = await self.reader.read(num_bytes)
+            return msg
 
         async def write(self, msg):
             if self.writer:
@@ -190,10 +201,16 @@ class TCPPortClient(ClientConnection):
                         decode_errors=self.decode_errors
                     )
                 elif self.read_method == 'readbytes':
-                    msg = await tcpport.readuntil(
+                    msg = await tcpport.read(
                         self.read_num_bytes,
                         decode_errors=self.decode_errors
                     )
+                elif self.read_method == 'readbinary':
+                    ret_packet_size = await self.get_return_packet_size()
+                    msg = await tcpport.readbinary(
+                        ret_packet_size
+                    )
+                    
                 # print('read loop: {}'.format(msg))
                 if msg:
                     await self.readq.put(msg)
@@ -207,6 +224,12 @@ class TCPPortClient(ClientConnection):
             else:
                 await asyncio.sleep(.1)
 
+    async def get_return_packet_size(self):
+        
+        while len(self.return_packet_bytes) == 0:
+            asyncio.sleep(.1)
+        return self.return_packet_bytes.popleft()
+
     async def send_loop(self, tcpport):
         # TODO: add try except loop to catch invalid state
         # print('starting send loop')
@@ -215,7 +238,11 @@ class TCPPortClient(ClientConnection):
             msg = await self.sendq.get()
             # print('send loop: {}'.format(msg))
             # print(f'websocket: {websocket}')
-            await tcpport.write(msg)
+            if self.send_method == 'binary':
+                self.return_packet_bytes.append(
+                    msg['return_packet_bytes']
+                )
+            await tcpport.write(msg['send_packet'])
 
     async def shutdown_complete(self):
 

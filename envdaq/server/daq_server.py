@@ -1,9 +1,5 @@
 import asyncio
 from importlib import import_module
-# import time
-# import math
-# from daq.interface.interface import InterfaceFactory, Interface
-# from daq.instrument.instrument import InstrumentFactory, Instrument
 from daq.manager.sys_manager import SysManager
 from daq.controller.controller import ControllerFactory  # , Controller
 from client.wsclient import WSClient
@@ -70,99 +66,11 @@ class DAQServer():
 
         self.ui_client = None
 
-        # gui_ws_address = f'ws://{gui_config["host"]}:{gui_config["port"]}/'
-        # gui_ws_address += 'ws/envdaq/daqserver/'
-        # # create gui client
-        # self.gui_client = WSClient(uri=gui_ws_address)
-
-        # self.to_gui_buf = asyncio.Queue(loop=asyncio.get_event_loop())
-        # task_list.append(
-        #     asyncio.ensure_future(self.send_gui_loop())
-        # )
-        # task_list.append(
-        #     asyncio.ensure_future(self.send_gui_loop())
-        # )
-
         # start managers
         SysManager.start()
 
         # Begin startup
         asyncio.ensure_future(self.open())
-
-        # if config is None:
-        #     # get config from gui
-        #     await self.to_gui_buf.put(
-        #         Message(
-        #             sender_id='daqserver',
-        #             msgtype='DAQServer',
-        #             subject='CONFIG',
-        #             body={
-        #                 'purpose': 'REQUEST',
-        #                 'type': 'ENVDAQ_CONFIG',
-        #             }
-        #         )
-        #     )
-        # else:
-        #     self.config = config
-
-        # print(config)
-
-        # TODO: Add id - hostname, label, ?
-
-        # self.create_msg_buffer()
-        # self.add_controllers()
-
-        # import config.dummy_cfg
-        # testcfg = config.dummy_cfg.dummycpc_inst_cfg
-        #
-        # inst1 = InstrumentFactory().create(testcfg)
-        # inst1.start()
-        #
-        # self.controller_list.append(inst1)
-
-        # task = asyncio.ensure_future(self.output_to_screen())
-        # self.task_list.append(task)
-        # self.to_gui_buf = asyncio.Queue(loop=asyncio.get_event_loop())
-
-        # SERVER_ADDRESS = ('127.0.0.1', 8299)
-        # server_factory = functools.partial(
-        #     FEServer,
-        #     sendq=self.sendq,
-        # )
-        # ws_factory =
-        #   WebSocketClientFactory('ws://localhost:8000/ws/data/lobby/')
-        # ws_factory.protocol = WSClientProtocol
-        # WSSERVER_ADDRESS = ('127.0.0.1', 8000)
-        # client_args = functools.partial(
-        #     WSClientProtocol,
-        #     sendq=self.sendq,
-        # )
-        # self.server =
-        #   asyncio.get_event_loop().create_server(server_factory, *SERVER_ADDRESS)
-        # asyncio.ensure_future(self.server)
-        # self.ws_client =
-        #   asyncio.get_event_loop().create_connection(client_args, *WSSERVER_ADDRESS)
-        # self.ws_client = websockets.connect(
-        #     'ws://localhost:8000/ws/data/lobby/',
-        #     create_protocol=WSClientProtocol,
-        #     )
-
-        # GOOD CONNECTION ****
-        # self.gui_client = WSClient(uri='ws://localhost:8001/ws/envdaq/daqserver/')
-        # asyncio.ensure_future(self.send_gui_data())
-
-        # get config from front end
-        # await self.send_gui_data
-        # self.gui_client = WSClient(uri='ws://localhost:8001/ws/envdaq/server/')
-        # asyncio.ensure_future(self.send_gui_data())
-        # asyncio.ensure_future(self.send_gui_data())
-        # # asyncio.ensure_future(self.ws_client())
-        # self.server = self.ws_client
-        # self.ws_client.open()
-        # ********************
-
-        # asyncio.get_event_loop().run_forever(self.server)
-        # server = event_loop.run_until_complete(factory)
 
     def create_msg_buffer(self):
         # if need config, use self.config
@@ -199,12 +107,6 @@ class DAQServer():
 
         print('send_gui_loop init')
         while True:
-            # body = 'fake message - {}'.format(datetime.utcnow().isoformat(timespec='seconds'))
-            # msg = {'message': body}
-            # message = Message(type='Test', sender_id='me', subject='test', body=msg)
-            # # print('send_data: {}'.format(msg))
-            # print('send_data: {}'.format(message.to_json))
-            # # await client.send(json.dumps(msg))
             message = await self.to_gui_buf.get()
             # print('send server message')
             await self.ui_client.send_message(message)
@@ -255,7 +157,6 @@ class DAQServer():
         print(f'Starting gui client: {gui_ws_address}')
 
         self.ui_client = WSClient(uri=gui_ws_address)
-        # print(f'self.ui_client = {self.ui_client}, {self.ui_client.isConnected()}')
         while self.ui_client.isConnected() is not True:
             # print(f'waiting for is_conncted {self.ui_client.isConnected()}')
             # self.gui_client = WSClient(uri=gui_ws_address)
@@ -416,11 +317,6 @@ class DAQServer():
         # asyncio.get_event_loop().stop()
 
         # self.server.close()
-
-# def time_to_next(sec):
-#     now = time.time()
-#     delta = sec - (math.fmod(now, sec))
-#     return delta
 
 
 async def heartbeat():

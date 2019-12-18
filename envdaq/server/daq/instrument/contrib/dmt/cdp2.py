@@ -1,13 +1,21 @@
-import json
+# import json
+import sys
 from daq.instrument.instrument import Instrument
 from daq.instrument.contrib.dmt.dmt import DMTInstrument
 from data.message import Message
-from daq.daq import DAQ
+# from daq.daq import DAQ
 import asyncio
 from utilities.util import time_to_next
 from daq.interface.interface import Interface
 # from plots.plots import PlotManager
 import math
+from struct import pack, unpack
+from struct import error as structerror
+
+try:
+    import RPi.GPIO as GPIO
+except ModuleNotFoundError:
+    print("error GPIO - might need sudo")
 
 
 class CDP2(DMTInstrument):
@@ -39,21 +47,54 @@ class CDP2(DMTInstrument):
         # self.current_poll_cmds = ['read\n', 'raw=2\n']
         # self.current_read_cnt = 0
 
-        self.scan_start_param = 'date'
-        self.scan_stop_param = 'mcpc_errs'
-        self.scan_ready = False
-        self.current_size_dist = []
-        self.scan_state = 999
+        # self.scan_start_param = 'date'
+        # self.scan_stop_param = 'mcpc_errs'
+        # self.scan_ready = False
+        # self.current_size_dist = []
+        # self.scan_state = 999
         self.scan_run_state = 'STOPPED'
+
+        # TODO: allow params to be passed in config
+        self.start_byte = 27  # Esc char
+        self.setup_command = 1
+        self.data_command = 2
+
+        self.adc_threshold = 60
+        self.bin_count = 30
+
+        # Sizes=<30>3,4,5,6,7,8,9,10,11,12,13,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50
+        self.lower_dp_bnd = [
+            2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+            12, 13, 14, 16, 18, 20, 22, 24, 26, 28,
+            30, 32, 34, 36, 38, 40, 42, 44, 46, 48
+        ]
+        self.uppder_dp_bnd = [
+            3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+            13, 14, 16, 18, 20, 22, 24, 26, 28,  30,
+            32, 34, 36, 38, 40, 42, 44, 46, 48, 50
+        ]
+
+        # Thresholds=<30>91,111,159,190,215,243,254,272,301,355,382,488,636,751,846,959,1070,1297,1452,1665,1851,2016,2230,2513,2771,3003,3220,3424,3660,4095
+        self.upper_bin_th = [
+            91, 111, 159, 190, 215, 243, 254, 272, 301, 355,
+            382, 488, 636, 751, 846, 959, 1070, 1297, 1452, 1665,
+            1851, 2016, 2230, 2513, 2771, 3003, 3220, 3424, 3660, 4095
+        ]
+
+        self.dof_reject = True
+        self.sample_area = 0.264  # (mm^2)
 
         # override how often metadata is sent
         self.include_metadata_interval = 300
 
         # this instrument appears to work with readline
-        # self.iface_options = {
-        #     'read_method': 'readuntil',
-        #     'read_terminator': '\r',
-        # }
+        self.iface_options = {
+            'send_method': 'binary',
+            'read_method': 'readbinary',
+        }
+
+        self.gpio_enable_ch = 31
+
         self.setup()
 
     # def get_datafile_config(self):
@@ -67,8 +108,8 @@ class CDP2(DMTInstrument):
         # only has one interface
         self.iface = next(iter(self.iface_map.values()))
 
-        # default coms: usb
-        #   230400 8-N-1
+        # default coms: RS-422
+        #   57600 8-N-1
 
         # TODO: this will depend on mode
         # add polling loop
@@ -91,17 +132,74 @@ class CDP2(DMTInstrument):
 
         # TODO: read config file to init probe
 
+    def get_cdp_command(self, cmd_type):
+
+        # universal start byte (Esc char)
+        cmd = pack('<B', self.start_byte)
+
+        if cmd_type == 'CONFIGURE':
+            cmd += pack('<B', self.setup_command)
+            cmd += pack('<H', self.adc_threshold)
+            cmd += pack('<H', 0)  # unused
+            cmd += pack('<H', self.bin_count)
+            cmd += pack('<H', self.dof_reject)
+
+            # unused bins
+            for i in range(0, 5):
+                cmd += pack('<H', 0)
+
+            # upper bin thresholds
+            for n in self.upper_bin_th:
+                cmd += pack('<H', n)
+
+            # fill last unused bins
+            for n in range(0, 10):
+                cmd += pack('<H', n)
+
+        elif cmd_type == 'SEND_DATA':
+            cmd += pack('B', self.data_command)
+
+        else:
+            return None
+
+        checksum = 0
+        for ch in cmd:
+            checksum += ch
+
+        cmd += pack('<H', checksum)
+        return cmd
+
     def start(self, cmd=None):
         super().start()
 
-        # self.mode = 'scanning'
-        # # self.clean_data_record()
+        # turn on 'enable' line via gpio
+        if 'RPi.GPIO' in sys.modules:
+            GPIO.setmode(GPIO.BOARD)
+            GPIO.setup(self.gpio_enable_ch, GPIO.OUT, initial=GPIO.LOW)
+            GPIO.output(self.gpio_enable_ch, GPIO.HIGH)
+
+        self.scan_run_state = 'CONFIGURE'
         if self.is_polled:
             self.polling_task = asyncio.ensure_future(self.poll_loop())
 
         # TODO: Send config string to unit and wait for ACK
-        print(f'self.status = SETUP')
-        print(f'send CDP2 config to unit')
+        # print(f'self.status = SETUP')
+        # print(f'send CDP2 config to unit')
+        # self.scan_run_state = 'CONFIGURE'
+
+        # cmd = self.get_cdp_command('CONFIGURE')
+        # if cmd:
+        #     msg = Message(
+        #         sender_id=self.get_id(),
+        #         msgtype=Instrument.class_type,
+        #         subject='SEND',
+        #         body={
+        #             'return_packet_bytes': 4,
+        #             'send_packet': cmd,
+        #         }
+        #     )
+        #     print(f'msg: {msg}')
+        #     await self.iface.message_from_parent(msg)
 
         # self.current_read_cnt = 0
 
@@ -110,8 +208,13 @@ class CDP2(DMTInstrument):
         #     pass
         # elif self.mode == 'scanning':
         #     asyncio.ensure_future(self.start_scanning())
-       
+
     def stop(self, cmd=None):
+        if 'RPi.GPIO' in sys.modules:
+            GPIO.output(self.gpio_enable_ch, GPIO.LOW)
+            GPIO.cleanup(self.gpio_enable_ch)
+
+        self.scan_run_state = 'STOPPED'
         if self.polling_task:
             self.polling_task.cancel()
 
@@ -119,6 +222,10 @@ class CDP2(DMTInstrument):
 
     async def poll_loop(self):
         print(f'polling loop started')
+
+        configure_cmd = self.get_cdp_command('CONFIGURE')
+        send_data_cmd = self.get_cdp_command('SEND_DATA')
+
         while True:
             # TODO: implement current_poll_cmds
             cmds = self.current_poll_cmds
@@ -126,28 +233,38 @@ class CDP2(DMTInstrument):
             # cmds = ['read\n']
 
             if self.iface:
-                self.current_read_cnt = 0
-                for cmd in cmds:
-                    msg = Message(
-                        sender_id=self.get_id(),
-                        msgtype=Instrument.class_type,
-                        subject='SEND',
-                        body=cmd,
-                    )
-                    print(f'msg: {msg}')
-                    await self.iface.message_from_parent(msg)
 
-            # for k, iface in self.iface_map.items():
-            #     for cmd in cmds:
-            #         msg = Message(
-            #             sender_id=self.get_id(),
-            #             msgtype=Instrument.class_type,
-            #             subject='SEND',
-            #             body=cmd,
-            #         )
-            #         print(f'msg: {msg}')
-            #         await iface.message_from_parent(msg)
-            
+                if self.scan_run_state == 'STOPPED':
+
+                    for cmd in cmds:
+                        msg = Message(
+                            sender_id=self.get_id(),
+                            msgtype=Instrument.class_type,
+                            subject='SEND',
+                            body={
+                                'return_packet_bytes': 4,
+                                'send_packet': configure_cmd,
+                            }
+                        )
+                        self.scan_run_state = 'CONFIGURE'
+                        print(f'msg: {msg}')
+                        await self.iface.message_from_parent(msg)
+
+                elif self.scan_run_state == 'RUN':
+
+                    for cmd in cmds:
+                        msg = Message(
+                            sender_id=self.get_id(),
+                            msgtype=Instrument.class_type,
+                            subject='SEND',
+                            body={
+                                'return_packet_bytes': 156,
+                                'send_packet': send_data_cmd,
+                            }
+                        )
+                        print(f'msg: {msg}')
+                        await self.iface.message_from_parent(msg)
+
             await asyncio.sleep(time_to_next(self.poll_rate))
 
     async def handle(self, msg, type=None):
@@ -155,7 +272,7 @@ class CDP2(DMTInstrument):
         # print(f'%%%%%Instrument.handle: {msg.to_json()}')
         # handle messages from multiple sources. What ID to use?
         if (type == 'FromChild' and msg.type == Interface.class_type):
-            id = msg.sender_id
+            # id = msg.sender_id
             dt = self.parse(msg)
             print(f'dt = {dt}')
             # print(f'last_entry: {self.last_entry}')
@@ -186,7 +303,7 @@ class CDP2(DMTInstrument):
                 data.update(subject='DATA', body=entry)
 
                 # reset read count
-                self.current_read_cnt = 0 
+                self.current_read_cnt = 0
 
                 # await self.msg_buffer.put(data)
                 # await self.to_parent_buf.put(data)
@@ -201,13 +318,23 @@ class CDP2(DMTInstrument):
                 print(f'msg: {msg.body}')
                 self.send_status()
 
-            elif msg.subject == 'CONTROLS' and msg.body['purpose'] == 'REQUEST':
+            elif (
+                msg.subject == 'CONTROLS' and
+                msg.body['purpose'] == 'REQUEST'
+            ):
                 print(f'msg: {msg.body}')
-                await self.set_control(msg.body['control'], msg.body['value'])
-            elif msg.subject == 'RUNCONTROLS' and msg.body['purpose'] == 'REQUEST':
+                await self.set_control(
+                    msg.body['control'], msg.body['value']
+                )
+
+            elif (
+                msg.subject == 'RUNCONTROLS' and
+                msg.body['purpose'] == 'REQUEST'
+            ):
                 print(f'msg: {msg.body}')
-                await self.handle_control_action(msg.body['control'], msg.body['value'])
-                # await self.set_control(msg.body['control'], msg.body['value'])
+                await self.handle_control_action(
+                    msg.body['control'], msg.body['value']
+                )
 
         # print("DummyInstrument:msg: {}".format(msg.body))
         # else:
@@ -221,9 +348,6 @@ class CDP2(DMTInstrument):
                 elif value == 'STOP':
                     self.stop()
 
-                # print(f'{self.iface_map}')
-                # await self.to_child_buf.put(cmd)
-                # await self.iface_map['DummyInterface:test_interface'].message_from_parent(cmd)
                 self.set_control_att(control, 'action_state', 'OK')
 
     def parse(self, msg):
@@ -235,49 +359,134 @@ class CDP2(DMTInstrument):
         # data['DATETIME'] = msg.body['DATETIME']
         dt = msg.body['DATETIME']
 
-        line = msg.body['DATA'].rstrip()
-        # if len(line) == 0:
-        #     self.current_read_cnt += 1
-        # else:
-        parts = line.split('=')
-        if len(parts) < 2:
-            return dt
+        packet = msg.body['DATA']
 
-        # self.scan_state = 999
-        # if self.scan_run_state == 'STOPPING':
-        #     if parts[0] == 'scan_state':
-        #         self.scan_state = int(parts[1])
+        if self.scan_run_state == 'CONFIGURE':
+            ack_fmt = '<4B'
+            data = unpack(ack_fmt, packet)
+            if data[0] == 6:
+                self.scan_run_state = 'RUN'
+                return None
 
-        # print(f'77777777777777{parts[0]} = {parts[1]}')
-        if parts[0] in self.parse_map:
+        elif self.scan_run_state == 'RUN':
+            data_format = '<8HI5HI30IH'
+            try:
+                data = unpack(data_format, packet)
+
+            except structerror:
+                print(f'bad packet {packet}')
+                return None
+
+            val = data[0]*0.061
             self.update_data_record(
                 dt,
-                {self.parse_map[parts[0]]: parts[1]},
+                {'laser_current': val}
             )
-            if self.scan_stop_param == parts[0]:
-                self.scan_ready = True
-            elif self.scan_start_param == parts[0]:
-                self.current_size_dist.clear()
-        elif parts[0].find('bin') >= 0:
-            self.current_size_dist.append(
-                float(parts[1])
+
+            val = 5*data[1]/4095
+            self.update_data_record(
+                dt,
+                {'dump_spot_monitor': val}
             )
-        # # TODO: how to limit to one/sec
-        # # check for new second
-        # # if data['DATETIME'] == self.last_entry['DATA']['DATETIME']:
-        # #     # don't duplicate timestamp for now
-        # #     return
-        # # self.last_entry['DATETIME'] = data['DATETIME']
 
-        # measurements = dict()
+            v = 5*data[2]/4095
+            degC = 1 / (((math.log((5/v) - 1))/3750) + 1/298) - 273
+            self.update_data_record(
+                dt,
+                {'wingboard_temperature': degC}
+            )
 
-       # controls_list = ['mcpc_power', 'mcpc_pump']
+            v = 5*data[3]/4095
+            degC = 1 / (((math.log((5/v) - 1))/3750) + 1/298) - 273
+            self.update_data_record(
+                dt,
+                {'laser_temperature': degC}
+            )
 
-        # for name in controls_list:
-        #     self.update_data_record(
-        #         dt,
-        #         {name: None},
-        #     )
+            val = 5*data[4]/4095
+            self.update_data_record(
+                dt,
+                {'sizer_baseline': val}
+            )
+
+            val = 5*data[5]/4095
+            self.update_data_record(
+                dt,
+                {'qualifier_baseline': val}
+            )
+
+            val = (5*data[6]/4095)*2
+            self.update_data_record(
+                dt,
+                {'5v_monitor': val}
+            )
+
+            v = 5*data[7]/4095
+            degC = 1 / (((math.log((5/v) - 1))/3750) + 1/298) - 273
+            self.update_data_record(
+                dt,
+                {'control_board_temperature': degC}
+            )
+
+            self.update_data_record(
+                dt,
+                {'reject_dof': data[8]}
+            )
+
+            self.update_data_record(
+                dt,
+                {'average_transit': data[9]}
+            )
+
+            self.update_data_record(
+                dt,
+                {'qual_bandwidth': data[10]}
+            )
+
+            self.update_data_record(
+                dt,
+                {'qual_threshold': data[11]}
+            )
+
+            self.update_data_record(
+                dt,
+                {'dt_bandwidth': data[12]}
+            )
+
+            self.update_data_record(
+                dt,
+                {'dynamic_threshold': data[13]}
+            )
+
+            self.update_data_record(
+                dt,
+                {'adc_overflow': data[14]}
+            )
+
+            bc = []
+            dp = []
+            intN = 0
+            for i in range(0, self.bin_count):
+                bc.append(data[15+i])
+                intN += data[15+i]
+                dp.append(
+                    (self.lower_dp_bnd[i] + self.uppder_dp_bnd)/2
+                )
+
+            self.update_data_record(
+                dt,
+                {'bin_counts': bc}
+            )
+
+            self.update_data_record(
+                dt,
+                {'diameter_um': dp}
+            )
+
+            self.update_data_record(
+                dt,
+                {'integral_counts': dp}
+            )
 
         return dt
 
@@ -291,10 +500,10 @@ class CDP2(DMTInstrument):
     def get_definition():
         # TODO: come up with static definition method
         definition = dict()
-        definition['module'] = MSEMS.__module__
-        definition['name'] = MSEMS.__name__
-        definition['mfg'] = 'Brechtel'
-        definition['model'] = 'MSEMS'
+        definition['module'] = CDP2.__module__
+        definition['name'] = CDP2.__name__
+        definition['mfg'] = 'DMT'
+        definition['model'] = 'CDP2'
         definition['type'] = 'SizeDistribution'
         definition['tags'] = [
             'concentration',
@@ -316,25 +525,25 @@ class CDP2(DMTInstrument):
 
         # TODO: add interface entry for each measurement
         primary_meas_2d = dict()
-        primary_meas_2d['size_distribution'] = {
+        primary_meas_2d['bin_counts'] = {
             'dimensions': {
                 'axes': ['TIME', 'diameter'],
                 'unlimited': 'TIME',
-                'units': ['dateTime', 'nm'],
+                'units': ['dateTime', 'um'],
             },
             'units': 'counts',  # should be cfunits or udunits
             'uncertainty': 0.1,
             'source': 'MEASURED',
             'data_type': 'NUMERIC',
-            'short_name': 'size_dist',
-            'parse_label': 'bin',
+            'short_name': 'bin_count',
+            # 'parse_label': 'bin',
             'control': None,
             'axes': {
                 # 'TIME', 'datetime',
                 'DIAMETER': 'diameter_um',
             }
         }
-        dist_data.append('size_distribution')
+        dist_data.append('bin_counts')
 
         primary_meas_2d['diameter_um'] = {
             'dimensions': {
@@ -352,55 +561,23 @@ class CDP2(DMTInstrument):
         }
         dist_data.append('diameter_um')
 
-        primary_meas_2d['diameter_nm'] = {
-            'dimensions': {
-                'axes': ['TIME', 'DIAMETER'],
-                'unlimited': 'TIME',
-                'units': ['dateTime', 'nm'],
-            },
-            'units': 'um',  # should be cfunits or udunits
-            'uncertainty': 0.1,
-            'source': 'MEASURED',
-            'data_type': 'CALCULATED',
-            'short_name': 'dp',
-            'parse_label': 'diameter',
-            'control': None,
-        }
-        dist_data.append('diameter_nm')
-
-
-        process _meas = dict()
-        process_meas['sems_date'] = {
+        primary_meas = dict()
+        primary_meas['integral_counts'] = {
             'dimensions': {
                 'axes': ['TIME'],
                 'unlimited': 'TIME',
                 'units': ['dateTime'],
             },
-            'units': 'date',  # should be cfunits or udunits
+            'units': 'counts',  # should be cfunits or udunits
             'uncertainty': 0.2,
             'source': 'MEASURED',
             'data_type': 'NUMERIC',
-            'short_name': 'sems_date',
-            'parse_label': 'date',
+            'short_name': 'int_counts',
             'control': None,
         }
-        # y_data.append('sems_date')
+        y_data.append('integral_counts')
 
-        process_meas['sems_time'] = {
-            'dimensions': {
-                'axes': ['TIME'],
-                'unlimited': 'TIME',
-                'units': ['dateTime'],
-            },
-            'units': 'dateTime',  # should be cfunits or udunits
-            'uncertainty': 0.2,
-            'source': 'MEASURED',
-            'data_type': 'NUMERIC',
-            'parse_label': 'time',
-            'control': None,
-        }
-        # y_data.append('counts')
-
+        raw_meas = dict()
         raw_meas['laser_current'] = {
             'dimensions': {
                 'axes': ['TIME'],
@@ -412,305 +589,222 @@ class CDP2(DMTInstrument):
             'source': 'CALCULATED',
             'data_type': 'NUMERIC',
             'short_name': 'laser_cur',
-            # 'parse_label': 'scan_direction',
             'control': None,
         }
         y_data.append('laser_current')
 
-        # process_meas['actual_max_dp'] = {
-        #     'dimensions': {
-        #         'axes': ['TIME'],
-        #         'unlimited': 'TIME',
-        #         'units': ['dateTime'],
-        #     },
-        #     'units': 'nm',  # should be cfunits or udunits
-        #     'uncertainty': 0.2,
-        #     'source': 'MEASURED',
-        #     'data_type': 'NUMERIC',
-        #     'short_name': 'max_dp',
-        #     'parse_label': 'actual_max_dia',
-        #     'control': None,
-        # }
-        # y_data.append('actual_max_dp')
+        raw_meas['dump_spot_monitor'] = {
+            'dimensions': {
+                'axes': ['TIME'],
+                'unlimited': 'TIME',
+                'units': ['dateTime'],
+            },
+            'units': 'V',  # should be cfunits or udunits
+            'uncertainty': 0.2,
+            'source': 'CALCULATED',
+            'data_type': 'NUMERIC',
+            'short_name': 'dump_sp_mon',
+            'control': None,
+        }
+        y_data.append('dump_spot_monitor')
 
-        # process_meas['max_volts'] = {
-        #     'dimensions': {
-        #         'axes': ['TIME'],
-        #         'unlimited': 'TIME',
-        #         'units': ['dateTime'],
-        #     },
-        #     'units': 'volts',  # should be cfunits or udunits
-        #     'uncertainty': 0.2,
-        #     'source': 'MEASURED',
-        #     'data_type': 'NUMERIC',
-        #     # 'short_name': 'sat_bot_temp',
-        #     'parse_label': 'scan_max_volts',
-        #     'control': None,
-        # }
-        # y_data.append('max_volts')
+        raw_meas['wingboard_temperature'] = {
+            'dimensions': {
+                'axes': ['TIME'],
+                'unlimited': 'TIME',
+                'units': ['dateTime'],
+            },
+            'units': 'degC',  # should be cfunits or udunits
+            'uncertainty': 0.2,
+            'source': 'CALCULATED',
+            'data_type': 'NUMERIC',
+            'short_name': 'wing_temp',
+            'control': None,
+        }
+        y_data.append('wingboard_temperature')
 
-        # process_meas['min_volts'] = {
-        #     'dimensions': {
-        #         'axes': ['TIME'],
-        #         'unlimited': 'TIME',
-        #         'units': ['dateTime'],
-        #     },
-        #     'units': 'volts',  # should be cfunits or udunits
-        #     'uncertainty': 0.2,
-        #     'source': 'MEASURED',
-        #     'data_type': 'NUMERIC',
-        #     # 'short_name': 'opt_temp',
-        #     'parse_label': 'scan_min_volts',
-        #     'control': None,
-        # }
-        # y_data.append('min_volts')
+        raw_meas['laser_temperature'] = {
+            'dimensions': {
+                'axes': ['TIME'],
+                'unlimited': 'TIME',
+                'units': ['dateTime'],
+            },
+            'units': 'degC',  # should be cfunits or udunits
+            'uncertainty': 0.2,
+            'source': 'CALCULATED',
+            'data_type': 'NUMERIC',
+            'short_name': 'laser_temp',
+            'control': None,
+        }
+        y_data.append('laser_temperature')
 
-        # process_meas['sheath_flow_avg'] = {
-        #     'dimensions': {
-        #         'axes': ['TIME'],
-        #         'unlimited': 'TIME',
-        #         'units': ['dateTime'],
-        #     },
-        #     'units': 'liters min-1',  # should be cfunits or udunits
-        #     'uncertainty': 0.2,
-        #     'source': 'MEASURED',
-        #     'data_type': 'NUMERIC',
-        #     'short_name': 'sheath_avg',
-        #     'parse_label': 'sheath_flw_avg',
-        #     'control': None,
-        # }
-        # y_data.append('sheath_flow_avg')
+        raw_meas['sizer_baseline'] = {
+            'dimensions': {
+                'axes': ['TIME'],
+                'unlimited': 'TIME',
+                'units': ['dateTime'],
+            },
+            'units': 'V',  # should be cfunits or udunits
+            'uncertainty': 0.2,
+            'source': 'CALCULATED',
+            'data_type': 'NUMERIC',
+            'short_name': 'sizer_base',
+            'control': None,
+        }
+        y_data.append('sizer_baseline')
 
-        # process_meas['sheath_flow_sd'] = {
-        #     'dimensions': {
-        #         'axes': ['TIME'],
-        #         'unlimited': 'TIME',
-        #         'units': ['dateTime'],
-        #     },
-        #     'units': 'liters min-1',  # should be cfunits or udunits
-        #     'uncertainty': 0.2,
-        #     'source': 'MEASURED',
-        #     'data_type': 'NUMERIC',
-        #     'short_name': 'sheath_sd',
-        #     'parse_label': 'sheath_flw_stdev',
-        #     'control': None,
-        # }
-        # y_data.append('sheath_flow_sd')
+        raw_meas['qualifier_baseline'] = {
+            'dimensions': {
+                'axes': ['TIME'],
+                'unlimited': 'TIME',
+                'units': ['dateTime'],
+            },
+            'units': 'V',  # should be cfunits or udunits
+            'uncertainty': 0.2,
+            'source': 'CALCULATED',
+            'data_type': 'NUMERIC',
+            'short_name': 'qual_base',
+            'control': None,
+        }
+        y_data.append('qualifier_baseline')
 
-        # process_meas['sample_flow_avg'] = {
-        #     'dimensions': {
-        #         'axes': ['TIME'],
-        #         'unlimited': 'TIME',
-        #         'units': ['dateTime'],
-        #     },
-        #     'units': 'liters min-1',  # should be cfunits or udunits
-        #     'uncertainty': 0.2,
-        #     'source': 'MEASURED',
-        #     'data_type': 'NUMERIC',
-        #     'short_name': 'sample_avg',
-        #     'parse_label': 'mcpc_smpf_avg',
-        #     'control': None,
-        # }
-        # y_data.append('sample_flow_avg')
+        raw_meas['5v_monitor'] = {
+            'dimensions': {
+                'axes': ['TIME'],
+                'unlimited': 'TIME',
+                'units': ['dateTime'],
+            },
+            'units': 'V',  # should be cfunits or udunits
+            'uncertainty': 0.2,
+            'source': 'CALCULATED',
+            'data_type': 'NUMERIC',
+            # 'short_name': 'sizer_base',
+            'control': None,
+        }
+        y_data.append('5v_monitor')
 
-        # process_meas['sample_flow_sd'] = {
-        #     'dimensions': {
-        #         'axes': ['TIME'],
-        #         'unlimited': 'TIME',
-        #         'units': ['dateTime'],
-        #     },
-        #     'units': 'liters min-1',  # should be cfunits or udunits
-        #     'uncertainty': 0.2,
-        #     'source': 'MEASURED',
-        #     'data_type': 'NUMERIC',
-        #     'short_name': 'sample_sd',
-        #     'parse_label': 'mcpc_smpf_stdev',
-        #     'control': None,
-        # }
-        # y_data.append('sample_flow_sd')
+        raw_meas['control_board_temperature'] = {
+            'dimensions': {
+                'axes': ['TIME'],
+                'unlimited': 'TIME',
+                'units': ['dateTime'],
+            },
+            'units': 'degC',  # should be cfunits or udunits
+            'uncertainty': 0.2,
+            'source': 'CALCULATED',
+            'data_type': 'NUMERIC',
+            'short_name': 'ctrl_brd_T',
+            'control': None,
+        }
+        y_data.append('control_board_temperature')
 
-        # process_meas['pressure_avg'] = {
-        #     'dimensions': {
-        #         'axes': ['TIME'],
-        #         'unlimited': 'TIME',
-        #         'units': ['dateTime'],
-        #     },
-        #     'units': 'mbar',  # should be cfunits or udunits
-        #     'uncertainty': 0.2,
-        #     'source': 'MEASURED',
-        #     'data_type': 'NUMERIC',
-        #     'short_name': 'press_avg',
-        #     'parse_label': 'press_avg',
-        #     'control': None,
-        # }
-        # y_data.append('pressure_avg')
+        raw_meas['reject_dof'] = {
+            'dimensions': {
+                'axes': ['TIME'],
+                'unlimited': 'TIME',
+                'units': ['dateTime'],
+            },
+            'units': 'counts',  # should be cfunits or udunits
+            'uncertainty': 0.2,
+            'source': 'CALCULATED',
+            'data_type': 'NUMERIC',
+            # 'short_name': 'sizer_base',
+            'control': None,
+        }
+        y_data.append('reject_dof')
 
-        # process_meas['pressure_sd'] = {
-        #     'dimensions': {
-        #         'axes': ['TIME'],
-        #         'unlimited': 'TIME',
-        #         'units': ['dateTime'],
-        #     },
-        #     'units': 'mbar',  # should be cfunits or udunits
-        #     'uncertainty': 0.2,
-        #     'source': 'MEASURED',
-        #     'data_type': 'NUMERIC',
-        #     'short_name': 'press_sd',
-        #     'parse_label': 'press_stdev',
-        #     'control': None,
-        # }
-        # y_data.append('pressure_sd')
+        raw_meas['average_transit'] = {
+            'dimensions': {
+                'axes': ['TIME'],
+                'unlimited': 'TIME',
+                'units': ['dateTime'],
+            },
+            'units': 'counts',  # should be cfunits or udunits
+            'uncertainty': 0.2,
+            'source': 'CALCULATED',
+            'data_type': 'NUMERIC',
+            'short_name': 'avg_trans',
+            'control': None,
+        }
+        y_data.append('average_transit')
 
-        # process_meas['temperature_avg'] = {
-        #     'dimensions': {
-        #         'axes': ['TIME'],
-        #         'unlimited': 'TIME',
-        #         'units': ['dateTime'],
-        #     },
-        #     'units': 'degC',  # should be cfunits or udunits
-        #     'uncertainty': 0.2,
-        #     'source': 'MEASURED',
-        #     'data_type': 'NUMERIC',
-        #     'short_name': 'temp_avg',
-        #     'parse_label': 'temp_avg',
-        #     'control': None,
-        # }
-        # y_data.append('temperature_avg')
+        raw_meas['qual_bandwidth'] = {
+            'dimensions': {
+                'axes': ['TIME'],
+                'unlimited': 'TIME',
+                'units': ['dateTime'],
+            },
+            'units': 'counts',  # should be cfunits or udunits
+            'uncertainty': 0.2,
+            'source': 'CALCULATED',
+            'data_type': 'NUMERIC',
+            # 'short_name': 'sizer_base',
+            'control': None,
+        }
+        y_data.append('qual_bandwidth')
 
-        # process_meas['temperature_sd'] = {
-        #     'dimensions': {
-        #         'axes': ['TIME'],
-        #         'unlimited': 'TIME',
-        #         'units': ['dateTime'],
-        #     },
-        #     'units': 'degC',  # should be cfunits or udunits
-        #     'uncertainty': 0.2,
-        #     'source': 'MEASURED',
-        #     'data_type': 'NUMERIC',
-        #     'short_name': 'temp_sd',
-        #     'parse_label': 'temp_stdev',
-        #     'control': None,
-        # }
-        # y_data.append('temperature_sd')
+        raw_meas['qual_threshold'] = {
+            'dimensions': {
+                'axes': ['TIME'],
+                'unlimited': 'TIME',
+                'units': ['dateTime'],
+            },
+            'units': 'counts',  # should be cfunits or udunits
+            'uncertainty': 0.2,
+            'source': 'CALCULATED',
+            'data_type': 'NUMERIC',
+            # 'short_name': 'sizer_base',
+            'control': None,
+        }
+        y_data.append('qual_threshold')
 
-        # process_meas['error'] = {
-        #     'dimensions': {
-        #         'axes': ['TIME'],
-        #         'unlimited': 'TIME',
-        #         'units': ['dateTime'],
-        #     },
-        #     'units': 'counts',  # should be cfunits or udunits
-        #     'uncertainty': 0.2,
-        #     'source': 'MEASURED',
-        #     'data_type': 'NUMERIC',
-        #     'parse_label': 'sems_errs',
-        #     'control': None,
-        # }
-        # y_data.append('error')
+        raw_meas['dt_bandwidth'] = {
+            'dimensions': {
+                'axes': ['TIME'],
+                'unlimited': 'TIME',
+                'units': ['dateTime'],
+            },
+            'units': 'counts',  # should be cfunits or udunits
+            'uncertainty': 0.2,
+            'source': 'CALCULATED',
+            'data_type': 'NUMERIC',
+            # 'short_name': 'sizer_base',
+            'control': None,
+        }
+        y_data.append('dt_bandwidth')
 
-        # process_meas['mcpc_sample_flow'] = {
-        #     'dimensions': {
-        #         'axes': ['TIME'],
-        #         'unlimited': 'TIME',
-        #         'units': ['dateTime'],
-        #     },
-        #     'units': 'cm3 min-1',  # should be cfunits or udunits
-        #     'uncertainty': 0.2,
-        #     'source': 'MEASURED',
-        #     'data_type': 'NUMERIC',
-        #     'short_name': 'mcpc_samp_flow',
-        #     'parse_label': 'mcpc_smpf',
-        #     'control': None,
-        # }
-        # y_data.append('mcpc_sample_flow')
+        raw_meas['dynamic_threshold'] = {
+            'dimensions': {
+                'axes': ['TIME'],
+                'unlimited': 'TIME',
+                'units': ['dateTime'],
+            },
+            'units': 'counts',  # should be cfunits or udunits
+            'uncertainty': 0.2,
+            'source': 'CALCULATED',
+            'data_type': 'NUMERIC',
+            # 'short_name': 'sizer_base',
+            'control': None,
+        }
+        y_data.append('dynamic_threshold')
 
-        # process_meas['mcpc_saturator_flow'] = {
-        #     'dimensions': {
-        #         'axes': ['TIME'],
-        #         'unlimited': 'TIME',
-        #         'units': ['dateTime'],
-        #     },
-        #     'units': 'cm3 min-1',  # should be cfunits or udunits
-        #     'uncertainty': 0.2,
-        #     'source': 'MEASURED',
-        #     'data_type': 'NUMERIC',
-        #     'short_name': 'mcpc_sat_flow',
-        #     'parse_label': 'mcpc_satf',
-        #     'control': None,
-        # }
-        # y_data.append('mcpc_saturator_flow')
-
-        # process_meas['mcpc_condenser_temp'] = {
-        #     'dimensions': {
-        #         'axes': ['TIME'],
-        #         'unlimited': 'TIME',
-        #         'units': ['dateTime'],
-        #     },
-        #     'units': 'counts',  # should be cfunits or udunits
-        #     'uncertainty': 0.2,
-        #     'source': 'MEASURED',
-        #     'data_type': 'NUMERIC',
-        #     'min_value': 0,
-        #     'max_value': 250,
-        #     'short_name': 'mcpc_cond_temp',
-        #     'parse_label': 'mcpc_cndt',
-        #     'control': None,
-        # }
-        # y_data.append('mcpc_condenser_temp')
-
-        # process_meas['mcpc_error'] = {
-        #     'dimensions': {
-        #         'axes': ['TIME'],
-        #         'unlimited': 'TIME',
-        #         'units': ['dateTime'],
-        #     },
-        #     'units': 'counts',  # should be cfunits or udunits
-        #     'uncertainty': 0.2,
-        #     'source': 'MEASURED',
-        #     'data_type': 'NUMERIC',
-        #     'parse_label': 'mcpc_errs',
-        #     'control': None,
-        # }
-        # y_data.append('mcpc_error')
-
-        # # TODO: add settings controls
-        # controls = dict()
-        # controls['sheath_flow_sp'] = {
-        #     'data_type': 'NUMERIC',
-        #     # units are tied to parameter this controls
-        #     'units': 'liters min-1',
-        #     'allowed_range': [0, 4],
-        #     'default_value': 2.5,
-        #     'label': 'Sheath Flow',
-        #     'parse_label': 'sheath_sp',
-        #     'control_group': 'Operation',
-        # }
-        # y_data.append('sheath_flow_sp')
-
-        # # TODO: add settings controls
-        # controls['number_bins'] = {
-        #     'data_type': 'NUMERIC',
-        #     # units are tied to parameter this controls
-        #     'units': 'counts',
-        #     'allowed_range': [0, 100],
-        #     'default_value': 30,
-        #     'label': 'Number of bins',
-        #     'parse_label': 'num_bins',
-        #     'control_group': 'Operation',
-        # }
-        # controls['bin_time'] = {
-        #     'data_type': 'NUMERIC',
-        #     # units are tied to parameter this controls
-        #     'units': 'sec',
-        #     'allowed_range': [0.25, 60],
-        #     'default_value': 1,
-        #     'label': 'Seconds per bin',
-        #     'parse_label': 'bin_time',
-        #     'control_group': 'Operation',
-        # }
+        raw_meas['adc_overflow'] = {
+            'dimensions': {
+                'axes': ['TIME'],
+                'unlimited': 'TIME',
+                'units': ['dateTime'],
+            },
+            'units': 'counts',  # should be cfunits or udunits
+            'uncertainty': 0.2,
+            'source': 'CALCULATED',
+            'data_type': 'NUMERIC',
+            # 'short_name': 'sizer_base',
+            'control': None,
+        }
+        y_data.append('adc_overflow')
 
         measurement_config['primary_2d'] = primary_meas_2d
-        # measurement_config['primary'] = primary_meas
+        measurement_config['primary'] = primary_meas
         measurement_config['raw'] = raw_meas
         # measurement_config['controls'] = controls
 
@@ -720,29 +814,27 @@ class CDP2(DMTInstrument):
 
         size_dist = dict()
         size_dist['app_type'] = 'SizeDistribution'
-        size_dist['y_data'] = ['size_distribution', 'diameter']
+        size_dist['y_data'] = ['bin_counts', 'diameter_um']
         size_dist['default_y_data'] = ['size_distribution']
         source_map = {
             'default': {
-                'y_data': ['size_distribution', 'diameter'],
-                'default_y_data': ['size_distribution']
+                'y_data': ['bin_counts', 'diameter_um'],
+                'default_y_data': ['bin_counts']
             },
         }
         size_dist['source_map'] = source_map
 
-
         time_series1d = dict()
         time_series1d['app_type'] = 'TimeSeries1D'
         time_series1d['y_data'] = y_data
-        time_series1d['default_y_data'] = ['concentration']
+        time_series1d['default_y_data'] = ['integral_counts']
         source_map = {
             'default': {
                 'y_data': y_data,
-                'default_y_data': ['concentration']
+                'default_y_data': ['integral_counts']
             },
         }
         time_series1d['source_map'] = source_map
-
 
         # size_dist['dist_data'] = dist_data
         # size_dist['default_dist_data'] = ['size_distribution']
