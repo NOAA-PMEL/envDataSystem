@@ -134,11 +134,9 @@ class TCPPortClient(ClientConnection):
         try:
             self.connect_state = ClientConnection.CONNECTING
             print(f'tcpport.connect.uri: {self.address}')
-            # self.client = await websockets.client.connect(self.uri)
-            # self.reader, self.writer = await serial_asyncio.open_serial_connection(
-            #     url=self.uri,
-            # )
-            self.client = self._TCPPortClient(address=self.address)
+            self.client = self._TCPPortClient(
+                address=self.address
+            )
 
             # self.is_connected = True
             # self.connect_state = ClientConnection.CONNECTING
@@ -157,11 +155,6 @@ class TCPPortClient(ClientConnection):
         # timeout = 10
         try:
             print(f'TCPPort.connect.uri: {self.address}')
-            # self.client = await websockets.client.connect(self.uri)
-            # self.reader, self.writer = await serial_asyncio.open_serial_connection(
-            #     url=self.uri,
-            # )
-            # self.client = self._TCPPortClient()
             self.client = self._TCPPortClient(address=self.address)
 
             # self.is_connected = True
@@ -210,7 +203,7 @@ class TCPPortClient(ClientConnection):
                     msg = await tcpport.readbinary(
                         ret_packet_size
                     )
-                    
+
                 # print('read loop: {}'.format(msg))
                 if msg:
                     await self.readq.put(msg)
@@ -251,5 +244,7 @@ class TCPPortClient(ClientConnection):
                 return
 
     async def close_client(self):
+
+        self.return_packet_bytes.clear()
 
         await self.client.close()

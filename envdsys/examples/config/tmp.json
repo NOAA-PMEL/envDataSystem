@@ -1,0 +1,63 @@
+{
+    "NAME": "DummyConfig",
+    "ENVDAQ_CONFIG": {
+        "CONT_LIST": {
+            "test_controller": {
+                "ALIAS": {
+                    "name": "test_controller",
+                    "prefix": "tc"
+                },
+                "CONTROLLER": {
+                    "MODULE": "daq.controller.controller",
+                    "CLASS": "DummyController"
+                },
+                "CONTCONFIG": {
+                    "LABEL": "Test Controller",
+                    "INST_LIST": {
+                        "ambient_trh": {
+                            "ALIAS": {
+                                "name": "ambient_trh",
+                                "prefix": "trh"
+                            },
+                            "INSTRUMENT": {
+                                "MODULE": "daq.instrument.contrib.rotronics.rotronics",
+                                "CLASS": "RotronicsHC2"
+                            },
+                            "INSTCONFIG": {
+                                "DESCRIPTION": {
+                                    "LABEL": "Ambient TandRH",
+                                    "SERIAL_NUMBER": "0060567131",
+                                    "PROPERTY_NUMBER": ""
+                                },
+                                "IFACE_LIST": {
+                                    "tcp_nb2_1_25": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "TCPPortInterface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "tcp_nb2_1_24",
+                                            "HOST": "10.55.169.52",
+                                            "PORT": "24",
+                                            "SerialNumber": "0001"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "INST_MAP": {
+                        "GPS": {
+                            "LIST": [],
+                            "PRIMARY": ""
+                        },
+                        "DUMMY": {
+                            "LIST": []
+                        }
+                    },
+                    "AUTO_START": false
+                }
+            }
+        }
+    }
+}

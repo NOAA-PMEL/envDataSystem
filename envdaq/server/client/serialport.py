@@ -2,6 +2,7 @@ import asyncio
 import serial
 import serial_asyncio
 from client.client import ClientConnection
+from collections import deque
 
 
 class SerialPortClient(ClientConnection):
@@ -40,6 +41,8 @@ class SerialPortClient(ClientConnection):
         self.read_terminator = read_terminator
         self.read_num_bytes = read_num_bytes
         self.decode_errors = decode_errors
+        self.return_packet_bytes = deque(maxlen=25000)
+
         self.baudrate = baudrate
         self.bytesize = bytesize
         self.parity = parity
@@ -108,6 +111,10 @@ class SerialPortClient(ClientConnection):
             msg = await self.reader.read(num_bytes)
             return msg.decode(errors=decode_errors)
 
+        async def readbinary(self, num_bytes=1, decode_errors='strict'):
+            msg = await self.reader.read(num_bytes)
+            return msg
+
         async def write(self, msg):
             if self.writer:
                 print(f'msg: {msg}')
@@ -139,10 +146,6 @@ class SerialPortClient(ClientConnection):
         try:
             self.connect_state = ClientConnection.CONNECTING
             print(f'SerialPort.connect.uri: {self.uri}')
-            # self.client = await websockets.client.connect(self.uri)
-            # self.reader, self.writer = await serial_asyncio.open_serial_connection(
-            #     url=self.uri,
-            # )
             self.client = self._SerialPortClient(
                 uri=self.uri,
                 baudrate=self.baudrate,
@@ -167,11 +170,6 @@ class SerialPortClient(ClientConnection):
         # timeout = 10
         try:
             print(f'SerialPort.connect.uri: {self.uri}')
-            # self.client = await websockets.client.connect(self.uri)
-            # self.reader, self.writer = await serial_asyncio.open_serial_connection(
-            #     url=self.uri,
-            # )
-            # self.client = self._SerialPortClient()
             self.client = self._SerialPortClient(
                 uri=self.uri,
                 baudrate=self.baudrate,
@@ -217,10 +215,16 @@ class SerialPortClient(ClientConnection):
                         decode_errors=self.decode_errors
                     )
                 elif self.read_method == 'readbytes':
-                    msg = await serialport.readuntil(
+                    msg = await serialport.read(
                         self.read_num_bytes,
                         decode_errors=self.decode_errors
                     )
+                elif self.read_method == 'readbinary':
+                    ret_packet_size = await self.get_return_packet_size()
+                    msg = await serialport.readbinary(
+                        ret_packet_size
+                    )
+
                 # print('read loop: {}'.format(msg))
                 # await self.readq.put(msg)
                 # print('after readq.put')
@@ -235,6 +239,12 @@ class SerialPortClient(ClientConnection):
                 # print('after readq.put')
             else:
                 await asyncio.sleep(.1)
+
+    async def get_return_packet_size(self):
+
+        while len(self.return_packet_bytes) == 0:
+            asyncio.sleep(.1)
+        return self.return_packet_bytes.popleft()
 
     async def send_loop(self, serialport):
         # TODO: add try except loop to catch invalid state
@@ -253,5 +263,7 @@ class SerialPortClient(ClientConnection):
                 return
 
     async def close_client(self):
+
+        self.return_packet_bytes.clear()
 
         await self.client.close()
