@@ -1,0 +1,63 @@
+{
+    "NAME": "DummyConfig",
+    "ENVDAQ_CONFIG": {
+        "CONT_LIST": {
+            "test_controller": {
+                "ALIAS": {
+                    "name": "test_controller",
+                    "prefix": "tc"
+                },
+                "CONTROLLER": {
+                    "MODULE": "daq.controller.controller",
+                    "CLASS": "DummyController"
+                },
+                "CONTCONFIG": {
+                    "LABEL": "Test Controller",
+                    "INST_LIST": {
+                        "cloud_probe": {
+                            "ALIAS": {
+                                "name": "cloud_probe",
+                                "prefix": "cdp"
+                            },
+                            "INSTRUMENT": {
+                                "MODULE": "daq.instrument.contrib.dmt.cdp2",
+                                "CLASS": "CDP2"
+                            },
+                            "INSTCONFIG": {
+                                "DESCRIPTION": {
+                                    "LABEL": "Cloud Probe",
+                                    "SERIAL_NUMBER": "1906-005",
+                                    "PROPERTY_NUMBER": ""
+                                },
+                                "IFACE_LIST": {
+                                    "tcp_nb2_1_23": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "TCPPortInterface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "tcp_nb2_1_23",
+                                            "HOST": "10.55.169.52",
+                                            "PORT": "23",
+                                            "SerialNumber": "0001"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "INST_MAP": {
+                        "GPS": {
+                            "LIST": [],
+                            "PRIMARY": ""
+                        },
+                        "DUMMY": {
+                            "LIST": []
+                        }
+                    },
+                    "AUTO_START": false
+                }
+            }
+        }
+    }
+}
