@@ -527,7 +527,7 @@ class CDP2(DMTInstrument):
         primary_meas_2d = dict()
         primary_meas_2d['bin_counts'] = {
             'dimensions': {
-                'axes': ['TIME', 'diameter'],
+                'axes': ['TIME', 'DIAMETER'],
                 'unlimited': 'TIME',
                 'units': ['dateTime', 'um'],
             },
@@ -558,6 +558,10 @@ class CDP2(DMTInstrument):
             'short_name': 'dp',
             'parse_label': 'diameter',
             'control': None,
+            'axes': {
+                # 'TIME', 'datetime',
+                'DIAMETER': 'diameter_um',
+            }
         }
         dist_data.append('diameter_um')
 
@@ -815,10 +819,12 @@ class CDP2(DMTInstrument):
         size_dist = dict()
         size_dist['app_type'] = 'SizeDistribution'
         size_dist['y_data'] = ['bin_counts', 'diameter_um']
-        size_dist['default_y_data'] = ['size_distribution']
+        size_dist['default_y_data'] = ['bin_counts']
         source_map = {
             'default': {
-                'y_data': ['bin_counts', 'diameter_um'],
+                'y_data': {
+                    'default': ['bin_counts', 'diameter_um']
+                },
                 'default_y_data': ['bin_counts']
             },
         }
@@ -830,7 +836,9 @@ class CDP2(DMTInstrument):
         time_series1d['default_y_data'] = ['integral_counts']
         source_map = {
             'default': {
-                'y_data': y_data,
+                'y_data': {
+                    'default': y_data
+                },
                 'default_y_data': ['integral_counts']
             },
         }
