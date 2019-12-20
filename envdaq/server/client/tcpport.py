@@ -79,9 +79,9 @@ class TCPPortClient(ClientConnection):
         async def readline(self, decode_errors='strict'):
             # print('here')
             if self.reader:
-                print(f'readline: {self.reader}')
+                # print(f'readline: {self.reader}')
                 msg = await self.reader.readline()
-                print(f'{msg}')
+                # print(f'{msg}')
                 return msg.decode(errors=decode_errors)
 
         async def readuntil(

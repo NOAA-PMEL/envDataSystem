@@ -26,19 +26,19 @@ class SyncManager():
                             controller = ControllerDef.objects.get(name=name)
                             # if force update, update current
                         except ControllerDef.DoesNotExist:
-                            print(f'**** new controller: {name}')
+                            # print(f'**** new controller: {name}')
                             controller = ControllerDef(name=name)
                             controller.update(cont_def)
                 elif def_type == 'INSTRUMENT_SYS_DEFS':
                     for name, inst_def in sys_def['INSTRUMENT_SYS_DEFS'].items():
                         try:
-                            print(f'3333333333inst_def: {name}')
+                            # print(f'3333333333inst_def: {name}')
                             instrument = InstrumentDef.objects.get(name=name)
                             # if force update, update current
                         except InstrumentDef.DoesNotExist:
-                            print(f'22222222222new inst def')
+                            # print(f'22222222222new inst def')
                             instrument = InstrumentDef(name=name)
-                            print(f'{instrument}: {inst_def}')
+                            # print(f'{instrument}: {inst_def}')
                             instrument.update(inst_def)
                 # elif def_type == 'INSTRUMENT_INSTANCE':
                 #     for name, inst_def in sys_def['INSTRUMENT_'].items():
@@ -72,9 +72,9 @@ class SyncManager():
                         definition=inst_def,
                         serial_number=config['SERIAL_NUMBER']
                     )
-                    print(f'44444444444existing inst: {inst}')
+                    # print(f'44444444444existing inst: {inst}')
                 except Instrument.DoesNotExist:
-                    print(f'^^^^^create new: {inst_def}, {config["SERIAL_NUMBER"]}')
+                    # print(f'^^^^^create new: {inst_def}, {config["SERIAL_NUMBER"]}')
                     inst = Instrument(
                         definition=inst_def,
                         serial_number=config['SERIAL_NUMBER'],
@@ -102,7 +102,7 @@ class SyncManager():
                     name=config['NAME'],
                     # model=config['MODEL'],
                 )
-                print(f'ControllerDef: {cont_def}')
+                # print(f'ControllerDef: {cont_def}')
 
                 try:
                     cont = Controller.objects.get(

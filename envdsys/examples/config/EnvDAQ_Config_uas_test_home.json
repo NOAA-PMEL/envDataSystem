@@ -1,18 +1,18 @@
 {
-    "NAME": "DummyConfig",
+    "NAME": "UASCloudyConfig",
     "ENVDAQ_CONFIG": {
         "CONT_LIST": {
-            "test_controller": {
+            "uas_cloudy": {
                 "ALIAS": {
-                    "name": "test_controller",
-                    "prefix": "tc"
+                    "name": "uas_cloudy",
+                    "prefix": "cld"
                 },
                 "CONTROLLER": {
-                    "MODULE": "daq.controller.controller",
-                    "CLASS": "DummyController"
+                    "MODULE": "daq.controller.contrib.uas.uas",
+                    "CLASS": "UASCloudyPayload"
                 },
                 "CONTCONFIG": {
-                    "LABEL": "Test Controller",
+                    "LABEL": "UAS Cloudy Payload",
                     "INST_LIST": {
                         "cloudy_msems": {
                             "ALIAS": {
@@ -30,15 +30,15 @@
                                     "PROPERTY_NUMBER": "CD0001239"
                                 },
                                 "IFACE_LIST": {
-                                    "tcp_moxa4uas_4002": {
+                                    "tcp_nb2_2_23": {
                                         "INTERFACE": {
                                             "MODULE": "daq.interface.interface",
                                             "CLASS": "TCPPortInterface"
                                         },
                                         "IFCONFIG": {
-                                            "LABEL": "tcp_moxa4uas_4002",
-                                            "HOST": "192.168.86.37",
-                                            "PORT": "4002",
+                                            "LABEL": "tcp_nb2_2_23",
+                                            "HOST": "10.55.169.53",
+                                            "PORT": "23",
                                             "SerialNumber": "0001"
                                         }
                                     }
@@ -61,30 +61,132 @@
                                     "PROPERTY_NUMBER": "CD0001300"
                                 },
                                 "IFACE_LIST": {
-                                    "tcp_moxa4uas_4001": {
+                                    "tcp_nb2_2_24": {
                                         "INTERFACE": {
                                             "MODULE": "daq.interface.interface",
                                             "CLASS": "TCPPortInterface"
                                         },
                                         "IFCONFIG": {
-                                            "LABEL": "tcp_moxa4uas_4001",
-                                            "HOST": "192.168.86.37",
-                                            "PORT": "4001",
+                                            "LABEL": "tcp_nb2_2_24",
+                                            "HOST": "10.55.169.53",
+                                            "PORT": "24",
                                             "SerialNumber": "0001"
                                         }
                                     }
                                 }
                             }
+                        },
+                        "cloudy_cdp": {
+                            "ALIAS": {
+                                "name": "cloudy_cdp",
+                                "prefix": "cdp"
+                            },
+                            "INSTRUMENT": {
+                                "MODULE": "daq.instrument.contrib.dmt.cdp2",
+                                "CLASS": "CDP2"
+                            },
+                            "INSTCONFIG": {
+                                "DESCRIPTION": {
+                                    "LABEL": "CLOUDY_CDP2",
+                                    "SERIAL_NUMBER": "1905-005",
+                                    "PROPERTY_NUMBER": "CD0001300"
+                                },
+                                "IFACE_LIST": {
+                                    "tcp_nb2_1_23": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "TCPPortInterface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "tcp_nb2_1_23",
+                                            "HOST": "10.55.169.52",
+                                            "PORT": "23",
+                                            "SerialNumber": "0001"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "ambient_trh": {
+                            "ALIAS": {
+                                "name": "ambient_trh",
+                                "prefix": "trh"
+                            },
+                            "INSTRUMENT": {
+                                "MODULE": "daq.instrument.contrib.rotronics.rotronics",
+                                "CLASS": "RotronicsHC2"
+                            },
+                            "INSTCONFIG": {
+                                "DESCRIPTION": {
+                                    "LABEL": "Ambient TandRH",
+                                    "SERIAL_NUMBER": "0060567131",
+                                    "PROPERTY_NUMBER": ""
+                                },
+                                "IFACE_LIST": {
+                                    "tcp_nb2_1_24": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "TCPPortInterface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "tcp_nb2_1_24",
+                                            "HOST": "10.55.169.52",
+                                            "PORT": "24",
+                                            "SerialNumber": "0001"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "test_gps": {
+                            "ALIAS": {
+                                "name": "test_gps",
+                                "prefix": "gps"
+                            },
+                            "INSTRUMENT": {
+                                "MODULE": "daq.instrument.instrument",
+                                "CLASS": "DummyGPS"
+                            },
+                            "INSTCONFIG": {
+                                "DESCRIPTION": {
+                                    "LABEL": "Test GPS",
+                                    "SERIAL_NUMBER": "4567",
+                                    "PROPERTY_NUMBER": "CD0001239"
+                                },
+                                "IFACE_LIST": {
+                                    "test_interface": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "DummyInterface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "test_interface",
+                                            "ADDRESS": "DummyAddress",
+                                            "dummy_port": 1,
+                                            "SerialNumber": "1238"
+                                        }
+                                    }
+                                }
+                            }
                         }
-                          
+ 
                     },
                     "INST_MAP": {
                         "GPS": {
-                            "LIST": [],
-                            "PRIMARY": ""
+                            "LIST": ["test_gps"],
+                            "PRIMARY": "test_gps"
                         },
-                        "DUMMY": {
-                            "LIST": []
+                        "trh": {
+                            "LIST": ["ambient_trh"]
+                        },
+                        "msems": {
+                            "LIST": ["cloudy_msems"]
+                        },
+                        "pops": {
+                            "LIST": ["cloudy_pops"]
+                        },
+                        "cdp": {
+                            "LIST": ["cloudy_cdp"]
                         }
                     },
                     "AUTO_START": false

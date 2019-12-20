@@ -41,7 +41,10 @@ class ConfigurationUtility():
         # daq = DAQServer.objects.get(pk=1)
         # # print(f'daq.config = {daq.configuration.config}')
         # return daq.configuration.get_config()
-        config = await self.get_config_sync(input)
+        config = await self.get_config_sync(
+            input=input,
+            name=name
+        )
         return config
 
     @database_sync_to_async
@@ -51,7 +54,7 @@ class ConfigurationUtility():
         name=None
     ):
         try:
-            if name and len(name)>0:
+            if name and len(name) > 0:
                 daq = DAQServer.objects.get(name=name)
             else:
                 daq = DAQServer.objects.get(pk=1)

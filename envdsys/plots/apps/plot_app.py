@@ -1446,6 +1446,7 @@ class GeoMapPlot(PlotApp):
             # source_entry = dict()
             # build map
             geo_map = dict()
+
             self.sync_buffer = dict()
             self.sync_buffer['DATETIME'] = []
             self.sync_buffer['GPS'] = dict()
@@ -1561,7 +1562,7 @@ class GeoMapPlot(PlotApp):
             if data:
                 # print(f'data: {data}')
                 # self.source.stream(data, rollover=self.rollover)
-                source = self.source_map['TimeSeries1D'][src_id]['source']
+                source = self.source_map['GeoMapPlot'][src_id]['source']
                 # print(f'909090  source: {source.data}, {src_id}, {data}')
                 source.stream(data, rollover=self.rollover)
                 # self.source_map['TimeSeries1D'][src_id]['source'].stream(
@@ -2038,16 +2039,17 @@ class GeoMapPlot(PlotApp):
 
         traces_options = []
         for src_id, src in source_map['GeoMapPlot'].items():
-            for name, val in src['source'].data.items():
-                if (
-                    name != "latitude" and
-                    name != 'longitude' and
-                    name != 'altitude' and
-                    name != 'datetime'
-                ):
-                    # traces_options.append(((src_id, name), name))
-                    option_val = encode_data_id(src_id, name)
-                    traces_options.append((option_val, name))
+            for ydata_id, ysrc in src['source'].items():
+                for name, val in ysrc.data.items():
+                    if (
+                        name != "latitude" and
+                        name != 'longitude' and
+                        name != 'altitude' and
+                        name != 'datetime'
+                    ):
+                        # traces_options.append(((src_id, name), name))
+                        option_val = encode_data_id(src_id, name)
+                        traces_options.append((option_val, name))
         traces_current = current_data['GeoMapPlot']['z_data']
         # traces_current = ['test_concentration']
         # print(f'options, current: {traces_options}, {traces_current}')

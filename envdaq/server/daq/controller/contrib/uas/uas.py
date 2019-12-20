@@ -1,11 +1,11 @@
-import asyncio
-from daq.daq import DAQ
+# import asyncio
+# from daq.daq import DAQ
 from daq.instrument.instrument import InstrumentFactory, Instrument
-from data.message import Message
+# from data.message import Message
 from daq.controller.controller import Controller, ControllerFactory
-import math
+# import math
 # import subprocess
-from datetime import datetime
+# from datetime import datetime
 
 
 class UASCloudyPayload(Controller):
@@ -567,37 +567,37 @@ class UASCloudyPayload(Controller):
                 cdp[inst_id]['measurement_meta']['primary'] = dict()
                 mm = cdp[inst_id]['measurement_meta']['primary']
                 for mtype, meas in inst_meas.items():
-                    if 'integral_concentration' in meas:
-                        mm['integral_concentration'] = (
-                            meas['integral_concentration']
+                    if 'integral_counts' in meas:
+                        mm['integral_counts'] = (
+                            meas['integral_counts']
                         )
 
-                        ts1d_y_data.append('integral_concentration')
-                        ts1d_meas['primary']['integral_concentration'] = (
-                            meas['integral_concentration']
+                        ts1d_y_data.append('integral_counts')
+                        ts1d_meas['primary']['integral_counts'] = (
+                            meas['integral_counts']
                         )
 
-                        geo_z_data.append('integral_concentration')
-                        geo_meas['primary']['integral_concentration'] = (
-                            meas['integral_concentration']
+                        geo_z_data.append('integral_counts')
+                        geo_meas['primary']['integral_counts'] = (
+                            meas['integral_counts']
                         )
 
-                        vp_x_data.append('integral_concentration')
-                        vp_meas['primary']['integral_concentration'] = (
-                            meas['integral_concentration']
+                        vp_x_data.append('integral_counts')
+                        vp_meas['primary']['integral_counts'] = (
+                            meas['integral_counts']
                         )
 
-                    if 'bin_concentration' in meas:
-                        mm['bin_concentration'] = (
-                            meas['bin_concentration']
+                    if 'bin_counts' in meas:
+                        mm['bin_counts'] = (
+                            meas['bin_counts']
                         )
                         # {
                         # # dummy[inst_id]['size_distribution'] = {
                         #     'measurement_meta': meas['size_distribution'],
                         # }
-                        sd_y_data.append('bin_concentration')
-                        sd_meas['primary']['bin_concentration'] = (
-                            meas['bin_concentration']
+                        sd_y_data.append('bin_counts')
+                        sd_meas['primary']['bin_counts'] = (
+                            meas['bin_counts']
                         )
                     if 'diameter_um' in meas:
                         mm['diameter_um'] = (
@@ -700,50 +700,45 @@ class UASCloudyPayload(Controller):
                 trh[inst_id]['measurement_meta']['primary'] = dict()
                 mm = trh[inst_id]['measurement_meta']['primary']
                 for mtype, meas in inst_meas.items():
-                    if 'integral_concentration' in meas:
-                        mm['integral_concentration'] = (
-                            meas['integral_concentration']
+                    if 'temperature' in meas:
+                        mm['temperature'] = (
+                            meas['temperature']
                         )
 
-                        ts1d_y_data.append('integral_concentration')
-                        ts1d_meas['primary']['integral_concentration'] = (
-                            meas['integral_concentration']
+                        ts1d_y_data.append('temperature')
+                        ts1d_meas['primary']['temperature'] = (
+                            meas['temperature']
                         )
 
-                        geo_z_data.append('integral_concentration')
-                        geo_meas['primary']['integral_concentration'] = (
-                            meas['integral_concentration']
+                        geo_z_data.append('temperature')
+                        geo_meas['primary']['temperature'] = (
+                            meas['temperature']
                         )
 
-                        vp_x_data.append('integral_concentration')
-                        vp_meas['primary']['integral_concentration'] = (
-                            meas['integral_concentration']
+                        vp_x_data.append('temperature')
+                        vp_meas['primary']['temperature'] = (
+                            meas['temperature']
                         )
 
-                    # if 'bin_concentration' in meas:
-                    #     mm['bin_concentration'] = (
-                    #         meas['bin_concentration']
-                    #     )
-                    #     # {
-                    #     # # dummy[inst_id]['size_distribution'] = {
-                    #     #     'measurement_meta': meas['size_distribution'],
-                    #     # }
-                    #     sd_y_data.append('bin_concentration')
-                    #     sd_meas['primary']['bin_concentration'] = (
-                    #         meas['bin_concentration']
-                    #     )
-                    # if 'diameter_um' in meas:
-                    #     mm['diameter_um'] = (
-                    #         meas['diameter_um']
-                    #     )
-                    #     # meas_meta[inst_id]['diameter'] = {
-                    #     # dummy[inst_id]['diameter'] = {
-                    #     #     'measurement_meta': meas['diameter'],
-                    #     # }
-                    #     sd_y_data.append('diameter_um')
-                    #     sd_meas['primary']['diameter_um'] = (
-                    #         meas['diameter_um']
-                    #     )
+                    if 'relative_humidity' in meas:
+                        mm['relative_humidity'] = (
+                            meas['relative_humidity']
+                        )
+
+                        ts1d_y_data.append('relative_humidity')
+                        ts1d_meas['primary']['relative_humidity'] = (
+                            meas['relative_humidity']
+                        )
+
+                        geo_z_data.append('relative_humidity')
+                        geo_meas['primary']['relative_humidity'] = (
+                            meas['relative_humidity']
+                        )
+
+                        vp_x_data.append('relative_humidity')
+                        vp_meas['primary']['relative_humidity'] = (
+                            meas['relative_humidity']
+                        )
 
                 ts1d_source_map[inst_id] = {
                     'y_data': {
@@ -1042,8 +1037,8 @@ class UASCloudyPayload(Controller):
             #     # print(f'instrument data: {data.to_json()}')
 
             #     await self.message_to_ui(data)
-                # if self.datafile:
-                #     await self.datafile.write_message(data)
+            # if self.datafile:
+            #     await self.datafile.write_message(data)
 
             # print(f'data_json: {data.to_json()}\n')
         elif type == 'FromUI':
@@ -1066,11 +1061,6 @@ class UASCloudyPayload(Controller):
                 await self.handle_control_action(
                     msg.body['control'], msg.body['value']
                 )
-                # await self.set_control(msg.body['control'], msg.body['value'])
-
-        # print("DummyInstrument:msg: {}".format(msg.body))
-        # else:
-        #     await asyncio.sleep(0.01)
 
     # def calculate_data(self, msg):
 

@@ -422,6 +422,7 @@ class TCPPortIFDevice(IFDevice):
         if (type == "FromParent"):
             if msg.subject == 'SEND':
                 await self.client.send(msg.body)
+                # print(f'msg.body: {msg.body}')
                 # print(f'tcpportifdevice.handle: {msg.to_json()}')
 
             # elif msg.subject == 'SEND_BINARY':
