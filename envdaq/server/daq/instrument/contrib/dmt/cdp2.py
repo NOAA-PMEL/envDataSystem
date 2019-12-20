@@ -223,47 +223,47 @@ class CDP2(DMTInstrument):
     async def poll_loop(self):
         print(f'polling loop started')
 
+        asyncio.sleep(2)
+
         configure_cmd = self.get_cdp_command('CONFIGURE')
         send_data_cmd = self.get_cdp_command('SEND_DATA')
 
         while True:
             # TODO: implement current_poll_cmds
-            cmds = self.current_poll_cmds
-            print(f'cmds: {cmds}')
+            # cmds = self.current_poll_cmds
+            # print(f'cmds: {cmds}')
             # cmds = ['read\n']
 
             if self.iface:
 
-                if self.scan_run_state == 'STOPPED':
+                if self.scan_run_state == 'CONFIGURE':
 
-                    for cmd in cmds:
-                        msg = Message(
-                            sender_id=self.get_id(),
-                            msgtype=Instrument.class_type,
-                            subject='SEND',
-                            body={
-                                'return_packet_bytes': 4,
-                                'send_packet': configure_cmd,
-                            }
-                        )
-                        self.scan_run_state = 'CONFIGURE'
-                        print(f'msg: {msg}')
-                        await self.iface.message_from_parent(msg)
+                    msg = Message(
+                        sender_id=self.get_id(),
+                        msgtype=Instrument.class_type,
+                        subject='SEND',
+                        body={
+                            'return_packet_bytes': 4,
+                            'send_packet': configure_cmd,
+                        }
+                    )
+                    self.scan_run_state = 'CONFIGURING'
+                    # print(f'msg: {msg.to_json()}')
+                    await self.iface.message_from_parent(msg)
 
                 elif self.scan_run_state == 'RUN':
 
-                    for cmd in cmds:
-                        msg = Message(
-                            sender_id=self.get_id(),
-                            msgtype=Instrument.class_type,
-                            subject='SEND',
-                            body={
-                                'return_packet_bytes': 156,
-                                'send_packet': send_data_cmd,
-                            }
-                        )
-                        print(f'msg: {msg}')
-                        await self.iface.message_from_parent(msg)
+                    msg = Message(
+                        sender_id=self.get_id(),
+                        msgtype=Instrument.class_type,
+                        subject='SEND',
+                        body={
+                            'return_packet_bytes': 156,
+                            'send_packet': send_data_cmd,
+                        }
+                    )
+                    # print(f'msg: {msg.to_json()}')
+                    await self.iface.message_from_parent(msg)
 
             await asyncio.sleep(time_to_next(self.poll_rate))
 
@@ -275,23 +275,8 @@ class CDP2(DMTInstrument):
             # id = msg.sender_id
             dt = self.parse(msg)
             print(f'dt = {dt}')
-            # print(f'last_entry: {self.last_entry}')
-            # if (
-            #     'DATETIME' in self.last_entry and
-            #     self.last_entry['DATETIME'] == entry['DATA']['DATETIME']
-            # ):
-            #     print(f'88888888888 skipped entry')
-            #     return
-            # self.last_entry['DATETIME'] = entry['DATA']['DATETIME']
-            # print('entry = \n{}'.format(entry))
-
-            # TODO: how to deal with record that crosses second bound?
-            if self.current_read_cnt == len(self.current_poll_cmds):
-
-                # entry['METADATA'] = self.get_metadata()
-
-                entry = self.get_data_entry(dt, add_meta=False)
-                # print(f'entry: {entry}')
+            if dt:
+                entry = self.get_data_entry(dt)
 
                 data = Message(
                     sender_id=self.get_id(),
@@ -302,17 +287,8 @@ class CDP2(DMTInstrument):
                 # data.update(subject='DATA', body=entry['DATA'])
                 data.update(subject='DATA', body=entry)
 
-                # reset read count
-                self.current_read_cnt = 0
-
-                # await self.msg_buffer.put(data)
-                # await self.to_parent_buf.put(data)
-                # print(f'instrument data: {data.to_json()}')
-                # await asyncio.sleep(.1)
                 await self.message_to_ui(data)
-                # await PlotManager.update_data(self.plot_name, data.to_json())
-            # print(f'data_json: {data.to_json()}\n')
-            # await asyncio.sleep(0.01)
+
         elif type == 'FromUI':
             if msg.subject == 'STATUS' and msg.body['purpose'] == 'REQUEST':
                 print(f'msg: {msg.body}')
@@ -361,134 +337,146 @@ class CDP2(DMTInstrument):
 
         packet = msg.body['DATA']
 
-        if self.scan_run_state == 'CONFIGURE':
+        if self.scan_run_state == 'CONFIGURING':
             ack_fmt = '<4B'
-            data = unpack(ack_fmt, packet)
-            if data[0] == 6:
-                self.scan_run_state = 'RUN'
-                return None
+            try:
+                data = unpack(ack_fmt, packet)
+                if data[0] == 6:
+                    print(f'ACK received')
+                    self.scan_run_state = 'RUN'
+            except structerror:
+                print(f' bad config packet: {packet}')
+                self.scan_run_state = 'CONFIGURE'
+            return None
 
         elif self.scan_run_state == 'RUN':
             data_format = '<8HI5HI30IH'
             try:
                 data = unpack(data_format, packet)
+                print(f'data: {data}')
 
             except structerror:
                 print(f'bad packet {packet}')
                 return None
 
-            val = data[0]*0.061
-            self.update_data_record(
-                dt,
-                {'laser_current': val}
-            )
-
-            val = 5*data[1]/4095
-            self.update_data_record(
-                dt,
-                {'dump_spot_monitor': val}
-            )
-
-            v = 5*data[2]/4095
-            degC = 1 / (((math.log((5/v) - 1))/3750) + 1/298) - 273
-            self.update_data_record(
-                dt,
-                {'wingboard_temperature': degC}
-            )
-
-            v = 5*data[3]/4095
-            degC = 1 / (((math.log((5/v) - 1))/3750) + 1/298) - 273
-            self.update_data_record(
-                dt,
-                {'laser_temperature': degC}
-            )
-
-            val = 5*data[4]/4095
-            self.update_data_record(
-                dt,
-                {'sizer_baseline': val}
-            )
-
-            val = 5*data[5]/4095
-            self.update_data_record(
-                dt,
-                {'qualifier_baseline': val}
-            )
-
-            val = (5*data[6]/4095)*2
-            self.update_data_record(
-                dt,
-                {'5v_monitor': val}
-            )
-
-            v = 5*data[7]/4095
-            degC = 1 / (((math.log((5/v) - 1))/3750) + 1/298) - 273
-            self.update_data_record(
-                dt,
-                {'control_board_temperature': degC}
-            )
-
-            self.update_data_record(
-                dt,
-                {'reject_dof': data[8]}
-            )
-
-            self.update_data_record(
-                dt,
-                {'average_transit': data[9]}
-            )
-
-            self.update_data_record(
-                dt,
-                {'qual_bandwidth': data[10]}
-            )
-
-            self.update_data_record(
-                dt,
-                {'qual_threshold': data[11]}
-            )
-
-            self.update_data_record(
-                dt,
-                {'dt_bandwidth': data[12]}
-            )
-
-            self.update_data_record(
-                dt,
-                {'dynamic_threshold': data[13]}
-            )
-
-            self.update_data_record(
-                dt,
-                {'adc_overflow': data[14]}
-            )
-
-            bc = []
-            dp = []
-            intN = 0
-            for i in range(0, self.bin_count):
-                bc.append(data[15+i])
-                intN += data[15+i]
-                dp.append(
-                    (self.lower_dp_bnd[i] + self.uppder_dp_bnd)/2
+            try:
+                val = data[0]*0.061
+                self.update_data_record(
+                    dt,
+                    {'laser_current': round(val, 2)}
                 )
 
-            self.update_data_record(
-                dt,
-                {'bin_counts': bc}
-            )
+                val = 5*data[1]/4095
+                self.update_data_record(
+                    dt,
+                    {'dump_spot_monitor': round(val, 2)}
+                )
 
-            self.update_data_record(
-                dt,
-                {'diameter_um': dp}
-            )
+                v = 5*data[2]/4095
+                degC = 1 / (((math.log((5/v) - 1))/3750) + 1/298) - 273
+                self.update_data_record(
+                    dt,
+                    {'wingboard_temperature': round(degC, 2)}
+                )
 
-            self.update_data_record(
-                dt,
-                {'integral_counts': dp}
-            )
+                v = 5*data[3]/4095
+                degC = 1 / (((math.log((5/v) - 1))/3750) + 1/298) - 273
+                self.update_data_record(
+                    dt,
+                    {'laser_temperature': round(degC, 2)}
+                )
 
-        return dt
+                val = 5*data[4]/4095
+                self.update_data_record(
+                    dt,
+                    {'sizer_baseline': round(val, 3)}
+                )
+
+                val = 5*data[5]/4095
+                self.update_data_record(
+                    dt,
+                    {'qualifier_baseline': round(val, 3)}
+                )
+
+                val = (5*data[6]/4095)*2
+                self.update_data_record(
+                    dt,
+                    {'5v_monitor': round(val, 2)}
+                )
+
+                v = 5*data[7]/4095
+                degC = 1 / (((math.log((5/v) - 1))/3750) + 1/298) - 273
+                self.update_data_record(
+                    dt,
+                    {'control_board_temperature': round(degC, 2)}
+                )
+
+                self.update_data_record(
+                    dt,
+                    {'reject_dof': data[8]}
+                )
+
+                self.update_data_record(
+                    dt,
+                    {'average_transit': data[9]}
+                )
+
+                self.update_data_record(
+                    dt,
+                    {'qual_bandwidth': data[10]}
+                )
+
+                self.update_data_record(
+                    dt,
+                    {'qual_threshold': data[11]}
+                )
+
+                self.update_data_record(
+                    dt,
+                    {'dt_bandwidth': data[12]}
+                )
+
+                self.update_data_record(
+                    dt,
+                    {'dynamic_threshold': data[13]}
+                )
+
+                self.update_data_record(
+                    dt,
+                    {'adc_overflow': data[14]}
+                )
+
+                bc = []
+                dp = []
+                intN = 0
+                for i in range(0, self.bin_count):
+                    bc.append(data[15+i])
+                    intN += data[15+i]
+                    dp.append(
+                        (self.lower_dp_bnd[i] + self.uppder_dp_bnd[i])/2
+                    )
+
+                self.update_data_record(
+                    dt,
+                    {'bin_counts': bc}
+                )
+
+                self.update_data_record(
+                    dt,
+                    {'diameter_um': dp}
+                )
+
+                self.update_data_record(
+                    dt,
+                    {'integral_counts': intN}
+                )
+
+                return dt
+
+            except Exception as e:
+                print(f'parsing error: {e}')
+
+        return None
 
     def get_definition_instance(self):
         # make sure it's good for json
