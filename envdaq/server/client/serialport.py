@@ -117,9 +117,16 @@ class SerialPortClient(ClientConnection):
 
         async def write(self, msg):
             if self.writer:
-                print(f'msg: {msg}')
+                # print(f'msg: {msg}')
                 self.writer.write(msg.encode())
                 await self.writer.drain()
+
+        async def writebinary(self, msg):
+            if self.writer:
+                # print(f'msg: {msg}')
+                sent_bytes = self.writer.write(msg)
+                await self.writer.drain()
+                # print(f'written {sent_bytes}')
 
         async def close(self):
             self.connect_state = ClientConnection.CLOSED
@@ -250,11 +257,22 @@ class SerialPortClient(ClientConnection):
         # TODO: add try except loop to catch invalid state
         # print('starting send loop')
         while True:
-            print(f'7777sendq: {self.sendq.qsize()}')
+            # print(f'7777sendq: {self.sendq.qsize()}')
             msg = await self.sendq.get()
-            print('8888send loop: {}'.format(msg))
+            # print('8888send loop: {}'.format(msg))
             # print(f'websocket: {websocket}')
-            await serialport.write(msg)
+            if self.send_method == 'binary':
+                self.return_packet_bytes.append(
+                    msg['return_packet_bytes']
+                )
+                try:
+                    await serialport.writebinary(
+                        msg['send_packet']
+                    )
+                except Exception as e:
+                    print(f'exception {e}')
+            else:
+                await serialport.write(msg)
 
     async def shutdown_complete(self):
 

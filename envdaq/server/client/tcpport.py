@@ -1,5 +1,5 @@
 import asyncio
-import json
+# import json
 from client.client import ClientConnection
 from collections import deque
 
@@ -43,7 +43,7 @@ class TCPPortClient(ClientConnection):
 
         self.return_packet_bytes = deque(maxlen=25000)
 
-        self.binary_read_bytes_set = False
+        # self.binary_read_bytes_set = False
 
     class _TCPPortClient():
         def __init__(self, address=None):
@@ -99,6 +99,7 @@ class TCPPortClient(ClientConnection):
             return msg.decode(errors=decode_errors)
 
         async def readbinary(self, num_bytes=1, decode_errors='strict'):
+            # print(f'readbinary {num_bytes}')
             msg = await self.reader.read(num_bytes)
             return msg
 
@@ -112,9 +113,9 @@ class TCPPortClient(ClientConnection):
         async def writebinary(self, msg):
             if self.writer:
                 # print(f'msg: {msg}')
-                self.writer.write(msg)
+                sent_bytes = self.writer.write(msg)
                 await self.writer.drain()
-                # print(f'written')
+                # print(f'written {sent_bytes}')
 
         async def close(self):
             self.connect_state = ClientConnection.CLOSED
@@ -240,13 +241,15 @@ class TCPPortClient(ClientConnection):
             # print('send loop: {}'.format(msg))
             # print(f'websocket: {websocket}')
             if self.send_method == 'binary':
-                
                 self.return_packet_bytes.append(
                     msg['return_packet_bytes']
                 )
-                await tcpport.write(
-                    msg['send_packet']
-                )
+                try:
+                    await tcpport.writebinary(
+                        msg['send_packet']
+                    )
+                except Exception as e:
+                    print(f'exception {e}')
             else:
                 await tcpport.write(msg)
 
