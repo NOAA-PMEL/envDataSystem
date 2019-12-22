@@ -135,3 +135,4 @@ envdaq/docs/envdaq_config_uas_test_home.json
 envdsys/envdsys/settings.py
 envdaq/server/daq_settings.py
 
+envdaq/server/connector/connector_settings.py

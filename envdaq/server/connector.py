@@ -6,6 +6,7 @@ from client.wsclient import WSClient
 # from client.serialport import SerialPortClient
 from daq.interface.interface import InterfaceFactory
 from data.message import Message
+from importlib import import_module
 
 
 class ConnectorMessage():
@@ -430,11 +431,35 @@ def main(connector_type):
             "IFCONFIG": {
                 "LABEL": "serial_usb0",
                 "ADDRESS": "/dev/ttyUSB0",
-                "baudrate": 230400,
+                "baudrate": 38400,
                 "SerialNumber": "0001"
             }
         }
     }
+
+    connector_config = None
+    try:
+        con_settings = import_module(
+            'connector.connector_settings'
+        )
+        connector_config = con_settings.connector_config
+
+        # if 'name' in connector_config:
+        #     self.server_name = connector_config['name']
+
+        # if 'ui_config' in server_config:
+        #     self.ui_config = server_config['ui_config']
+
+        # if 'base_file_path' in server_config:
+        #     self.base_file_path = (
+        #         server_config['base_file_path']
+        #     )
+
+    except ModuleNotFoundError:
+        print(f'settings file not found, using defaults')
+
+    if not connector_config:
+        connector_config = def_cfg
 
     if connector_type == 'server':
         con = WSConnectorServer(
@@ -449,7 +474,7 @@ def main(connector_type):
             # ui_address=('localhost', 8001)
         )
     con.start()
-    
+
     event_loop = asyncio.get_event_loop()
     asyncio.ensure_future(heartbeat())
     task_list = asyncio.Task.all_tasks()
@@ -472,9 +497,9 @@ def main(connector_type):
 
         event_loop.run_until_complete(con.shutdown())
         # event_loop.run_until_complete(asyncio.wait(asyncio.ensure_future(connector.shutdown())))
-        #server.close()
+        # server.close()
         # event_loop.run_forever()
-        #event_loop.run_until_complete(asyncio.wait(asyncio.ensure_future(shutdown)))
+        # event_loop.run_until_complete(asyncio.wait(asyncio.ensure_future(shutdown)))
 
     finally:
 
