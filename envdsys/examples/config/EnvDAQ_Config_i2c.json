@@ -14,10 +14,10 @@
                 "CONTCONFIG": {
                     "LABEL": "Test Controller",
                     "INST_LIST": {
-                        "ambient_trh": {
+                        "sheath_trh": {
                             "ALIAS": {
-                                "name": "ambient_trh",
-                                "prefix": "trh"
+                                "name": "sheath_trh",
+                                "prefix": "sh"
                             },
                             "INSTRUMENT": {
                                 "MODULE": "daq.instrument.contrib.i2c.sht",
@@ -36,6 +36,7 @@
                                             "CLASS": "NB_I2C_Interface"
                                         },
                                         "IFCONFIG": {
+                                            "LABEL": "i2c_nb2_1_26",
                                             "I2C_ADDRESS": "44",
                                             "HOST_IFACE": {
                                                 "tcp_nb2_1_26": {
