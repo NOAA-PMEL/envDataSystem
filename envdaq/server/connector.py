@@ -271,11 +271,12 @@ class WSConnectorServer(ConnectorServer):
             id='/a/b/c',
             body='test',
         )
+        body = f'{con_msg.to_json()}\n'
         test = Message(
                 sender_id=self.get_id(),
                 msgtype=Connector.class_type,
                 subject='SEND',
-                body=con_msg.to_json(),
+                body=body,
         )
         print(f'test msg: {test.to_json()}')
 
@@ -284,12 +285,12 @@ class WSConnectorServer(ConnectorServer):
         while True:
 
             con_msg = await self.to_ui_buf.get()
-
+            body = f'{con_msg.to_json()}\n'
             msg = Message(
                 sender_id=self.get_id(),
                 msgtype=Connector.class_type,
                 subject='SEND',
-                body=con_msg.to_json(),
+                body=body,
             )
             print(f'msg: {msg.to_json()}')
             await self.iface.message_from_parent(msg)
