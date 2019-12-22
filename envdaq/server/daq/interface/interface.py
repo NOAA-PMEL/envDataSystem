@@ -508,14 +508,14 @@ class SerialPortInterface(Interface):
                 # update could be done in base class
                 msg.update(msgtype=Interface.class_type)
                 msg.body['DATETIME'] = util.dt_to_string()
-                # print(f'Serial: {msg.to_json()}')
+                print(f'Serial: {msg.to_json()}')
                 # self.msg_buffer.put_nowait(msg)
                 # await self.msg_send_buffer.put(msg)
                 await self.message_to_parent(msg)
         elif type == 'FromParent':
             if msg.subject == 'SEND':
                 await self.ifdevice.message_from_parent(msg)
-                # print(f'55555message:{msg.subject}, {msg.body}')
+                print(f'55555message:{msg.subject}, {msg.body}')
         else:
             print(f'Unknown Message type: {msg.type}, {msg.to_json()}')
 
