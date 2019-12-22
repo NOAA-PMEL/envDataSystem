@@ -18,6 +18,7 @@ class SerialPortClient(ClientConnection):
         # address=None,
         loop=None,
         auto_connect=True,
+        send_method='ascii',
         read_method='readline',
         read_terminator='\n',
         read_num_bytes=1,
@@ -37,6 +38,7 @@ class SerialPortClient(ClientConnection):
             **kwargs,
         )
 
+        self.send_method = send_method
         self.read_method = read_method
         self.read_terminator = read_terminator
         self.read_num_bytes = read_num_bytes
