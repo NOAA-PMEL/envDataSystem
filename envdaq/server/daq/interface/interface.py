@@ -1,9 +1,9 @@
 import abc
-import asyncio
+# import asyncio
 import utilities.util as util
-import json
+# import json
 import importlib
-import sys
+# import sys
 from daq.daq import DAQ
 from daq.interface.ifdevice import IFDevice, DummyIFDevice, IFDeviceFactory
 from daq.manager.manager import Managers
@@ -406,30 +406,17 @@ class SerialPortInterface(Interface):
 
     class_type = 'SERIALPORT_INTERFACE'
 
-    def __init__(self, config, ui_config=None, **kwargs):
+    def __init__(
+        self,
+        config,
+        ui_config=None,
+        **kwargs
+    ):
         super(SerialPortInterface, self).__init__(
             config,
             ui_config=ui_config,
             **kwargs
         )
-
-        # ifdev_config = json.loads('{"IFDEVICE": {"MODULE": "daq.interface.ifdevice", "CLASS": "DummyIFDevice"}, "IFDEVCONFIG": {"DESCRIPTION": {"LABEL": "Dummy IFDevice", "SERIAL_NUMBER": "1234", "PROPERTY_NUMBER": "CD0001234"}}}')
-        # ui_config = dict()
-        # ui_config['do_ui_connection'] = False
-        # # self.dev_mananger
-        # print('DummyInterface init')
-        # # self.ifdevice = self.dev_mananger.create('DummyIFDevice', config)
-        # # print(self.dev_manager)
-        # self.ifdevice = self.ifdevice_manager.create('DummyIFDevice', ifdev_config, ui_config=ui_config)
-        # # self.idevice = IFDeviceFactory().create(ifdev_config, ui_config=None)
-        # # self.idevice = DummyIFDevice(ifdev_config, ui_config=None)
-        # # print(f'ifdevice: {self.ifdevice}')
-        # self.create_msg_buffers()
-        # # in order to make sense, child:send == parent:rcv
-        # # self.ifdevice.msg_send_buffer = self.ifdev_rcv_buffer
-        # # if self.ifdevice is not None:
-        # self.ifdevice.to_parent_buf = self.ifdev_rcv_buffer
-        # print(self.ifdevice.to_parent_buf)
 
         self.name = 'SerialPortInterface'
         self.label = config['LABEL']
@@ -466,17 +453,6 @@ class SerialPortInterface(Interface):
 
     def add_ifdevice(self):
         print('Add ifdevice')
-        # print(f'config = {self.config["IFACE_LIST"]}')
-        # for k, ifcfg in self.config['IFACE_LIST'].items():
-        #     # self.iface_map[iface.name] = iface
-        #     # print(ifcfg['IFACE_CONFIG'])
-        #     # print(ifcfg['INTERFACE'])
-        #     # iface = InterfaceFactory().create(ifcfg['IFACE_CONFIG'])
-        #     iface = InterfaceFactory().create(ifcfg)
-        #     print(f'iface: {iface}')
-        #     # iface.msg_buffer = self.iface_rcv_buffer
-        #     iface.msg_send_buffer = self.from_child_buf
-        #     self.iface_map[iface.get_id()] = iface
 
         # TODO: remove hardcode and use config
         # TODO: add baud rate, etc from config
@@ -554,26 +530,17 @@ class TCPPortInterface(Interface):
 
     class_type = 'TCPPORT_INTERFACE'
 
-    def __init__(self, config, ui_config=None, **kwargs):
-        super(TCPPortInterface, self).__init__(config, ui_config=ui_config, **kwargs)
-
-        # ifdev_config = json.loads('{"IFDEVICE": {"MODULE": "daq.interface.ifdevice", "CLASS": "DummyIFDevice"}, "IFDEVCONFIG": {"DESCRIPTION": {"LABEL": "Dummy IFDevice", "SERIAL_NUMBER": "1234", "PROPERTY_NUMBER": "CD0001234"}}}')
-        # ui_config = dict()
-        # ui_config['do_ui_connection'] = False
-        # # self.dev_mananger
-        # print('DummyInterface init')
-        # # self.ifdevice = self.dev_mananger.create('DummyIFDevice', config)
-        # # print(self.dev_manager)
-        # self.ifdevice = self.ifdevice_manager.create('DummyIFDevice', ifdev_config, ui_config=ui_config)
-        # # self.idevice = IFDeviceFactory().create(ifdev_config, ui_config=None)
-        # # self.idevice = DummyIFDevice(ifdev_config, ui_config=None)
-        # # print(f'ifdevice: {self.ifdevice}')
-        # self.create_msg_buffers()
-        # # in order to make sense, child:send == parent:rcv
-        # # self.ifdevice.msg_send_buffer = self.ifdev_rcv_buffer
-        # # if self.ifdevice is not None:
-        # self.ifdevice.to_parent_buf = self.ifdev_rcv_buffer
-        # print(self.ifdevice.to_parent_buf)
+    def __init__(
+        self,
+        config,
+        ui_config=None,
+        **kwargs
+    ):
+        super(TCPPortInterface, self).__init__(
+            config,
+            ui_config=ui_config,
+            **kwargs
+        )
 
         self.name = 'TCPPortInterface'
         self.label = config['LABEL']
@@ -653,9 +620,11 @@ class TCPPortInterface(Interface):
                 # print(f'TCP: {msg.to_json()}')
                 # self.msg_buffer.put_nowait(msg)
                 # await self.msg_send_buffer.put(msg)
+                # print(f'tcpif to parent: {msg}')
                 await self.message_to_parent(msg)
         elif type == 'FromParent':
             # print(f'message{msg.subject}, {msg.body}')
+            # print(f'tcpif from parent: {msg}')
             await self.ifdevice.message_from_parent(msg)
         else:
             print(f'Unknown Message type: {msg.type}, {msg.to_json()}')

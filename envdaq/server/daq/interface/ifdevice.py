@@ -69,6 +69,9 @@ class IFDevice(DAQ):
         self.parent_map = dict()
         self.started = False
 
+        self.host_interface_cfg = None
+        self.host_ui_cfg = None
+        self.iface = None
         self.iface_map = dict()
         # self.add_interfaces()
 
@@ -411,6 +414,7 @@ class TCPPortIFDevice(IFDevice):
                 }
             )
             # print(f'tcpportread: {data}')
+            # print(f'tcpid to parent:{msg}')
             await self.message_to_parents(msg)
 
     # async def write_data(self, msg):
@@ -421,6 +425,7 @@ class TCPPortIFDevice(IFDevice):
     async def handle(self, msg, type=None):
         if (type == "FromParent"):
             if msg.subject == 'SEND':
+                # print(f'tcpid from parent: {msg.body}')
                 await self.client.send(msg.body)
                 # print(f'msg.body: {msg.body}')
                 # print(f'tcpportifdevice.handle: {msg.to_json()}')
