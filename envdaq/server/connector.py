@@ -121,7 +121,7 @@ class Connector(abc.ABC):
                 asyncio.ensure_future(self.to_server_loop())
             )
 
-            self.start_local_loops()
+            asyncio.ensure_future(self.start_local_loops())
 
             self.status['run_status'] = 'STARTED'
 
@@ -240,7 +240,7 @@ class WSConnectorServer(ConnectorServer):
         self.add_client(path, ws)
 
         msg = await ws.recv()
-
+        print(f'read_ws: {msg}')
         con_msg = ConnectorMessage(
             address=self.ui_address,
             id=path,
@@ -261,7 +261,7 @@ class WSConnectorServer(ConnectorServer):
                 subject='SEND',
                 body=con_msg.to_json(),
             )
-            print(f'msg: {msg}')
+            print(f'msg: {msg.to_json()}')
             await self.iface.message_from_parent(msg)
 
     async def to_server_loop(self):
@@ -322,6 +322,7 @@ class ConnectorUI(Connector):
                         id=path,
                         body=msg,
                     )
+                    print(f'read_client_loop: {con_msg.to_json()}')
                     self.from_ui_buf.put(con_msg)
                 await asyncio.sleep(.1)
 
