@@ -279,7 +279,7 @@ class WSConnectorServer(ConnectorServer):
         )
         print(f'test msg: {test.to_json()}')
 
-        await self.iface.message_from_parent(f'{test}\n')
+        await self.iface.message_from_parent(test)
             
         while True:
 
@@ -306,7 +306,8 @@ class WSConnectorServer(ConnectorServer):
             if id in con_msg:
                 client = self.get_client(con_msg['id'])
                 if client:
-                    await client.send(con_msg['body'])
+                    msg = f'{con_msg["body"]}\n'
+                    await client.send(msg)
 
 
 class ConnectorUI(Connector):
