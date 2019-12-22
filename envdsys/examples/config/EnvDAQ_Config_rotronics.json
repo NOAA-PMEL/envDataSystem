@@ -14,10 +14,10 @@
                 "CONTCONFIG": {
                     "LABEL": "Test Controller",
                     "INST_LIST": {
-                        "ambient_trh": {
+                        "sheath_trh": {
                             "ALIAS": {
-                                "name": "ambient_trh",
-                                "prefix": "trh"
+                                "name": "sheat_trh",
+                                "prefix": "sh"
                             },
                             "INSTRUMENT": {
                                 "MODULE": "daq.instrument.contrib.rotronics.rotronics",
