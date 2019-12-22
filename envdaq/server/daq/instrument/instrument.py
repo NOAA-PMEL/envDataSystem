@@ -428,7 +428,7 @@ class Instrument(DAQ):
         # print(f'config = {self.config["IFACE_LIST"]}')
         if 'IFACE_MAP' in self.config:
             cfg_comps = self.config['IFACE_MAP']
-
+        print(f'self.iface_options = {self.iface_options}')
         for k, ifcfg in self.config['IFACE_LIST'].items():
             # self.iface_map[iface.name] = iface
             # print(ifcfg['IFACE_CONFIG'])

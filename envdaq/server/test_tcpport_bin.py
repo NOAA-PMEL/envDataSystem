@@ -10,6 +10,7 @@ from datetime import datetime
 async def send_data(client):
 
     while True:
+        reset_cmd = '#RE\n'
         meas_cmd = '#WW44022C06\n'
         read_cmd = '#RR4406\n'
         # msg = {'message': body}
@@ -30,6 +31,11 @@ async def send_data(client):
         #     'send_packet': meas_cmd,
         # }
         # print(f'send meas cmd: {meas_cmd}')
+        await client.send(reset_cmd)
+        # await ok_to_send()
+
+        await asyncio.sleep(.1)
+
         await client.send(meas_cmd)
         # await ok_to_send()
 

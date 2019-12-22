@@ -4,6 +4,8 @@ from client.wsclient import WSClient
 from plots.apps.plot_app import PlotApp
 from data.message import Message
 from data.datafile import DataFile
+from utilities.util import time_to_next, dt_to_string
+
 
 # from urllib.parse import quote
 
@@ -120,7 +122,6 @@ class DAQ(abc.ABC):
             if self.datafile:
                 self.datafile.open()
 
-
     def get_datafile_config(self):
         bfp = self.get_base_filepath()
         if bfp:
@@ -164,7 +165,7 @@ class DAQ(abc.ABC):
             asyncio.ensure_future(self.run_ui_connection())
         )
 
-    # TODO: convert all to_parent_buffers to 
+    # TODO: convert all to_parent_buffers to
     #       registration process
     def register_parent(
         self,
@@ -178,12 +179,12 @@ class DAQ(abc.ABC):
         }
 
     def deregister_parent(self, parent_id):
-        
+
         try:
             del self.parent_map[parent_id]
         except KeyError:
             pass
-        
+
     def register_data_request(self, entry):
         if (
             entry and
@@ -201,7 +202,7 @@ class DAQ(abc.ABC):
 
     def get_controls(self):
         return self.controls
-    
+
     def get_control(self, control):
         if control:
             controls = self.get_controls()
@@ -225,7 +226,7 @@ class DAQ(abc.ABC):
 
         # TODO: setting control should trigger action
         print(f'set_control[{control}] = {value}')
-        
+
     # TODO: implement this as an abstract method
     # @abc.abstractmethod
     async def handle_control_action(self, control, value):
@@ -255,7 +256,9 @@ class DAQ(abc.ABC):
         cnt = 0
         while cnt < timeout:
             try:
-                print(f'success; {self.get_control_att(control, "action_state")}')
+                print(
+                    f'success; {self.get_control_att(control, "action_state")}'
+                )
                 if self.get_control_att(control, 'action_state') == 'OK':
                     self.set_control_att(control, 'action_state', 'IDLE')
                     return True
@@ -295,14 +298,11 @@ class DAQ(abc.ABC):
     async def connect_to_ui(self):
         print(f'connecting to ui: {self}')
         # build ui_address
-        # ui_address = 'ws://localhost:8001/ws/'+quote(self.get_ui_address())
-        # ui_address = 'ws://localhost:8001/ws/'+self.get_ui_address().replace(" ", "")
         ui_address = f'ws://{self.ui_config["host"]}'
         ui_address += f':{self.ui_config["port"]}'
         ui_address += '/ws/'+self.get_ui_address().replace(" ", "")
         # ui_address.replace(" ", "")
         print(f'ui_address: {ui_address}')
-        # ui_address = 'ws://localhost:8001/ws/envdaq/data_test/'
 
         # self.ui_client = WSClient(uri=quote(ui_address))
         self.ui_client = WSClient(uri=ui_address)
@@ -322,7 +322,6 @@ class DAQ(abc.ABC):
         # )
 
         while True:
-            # print(f'1111111111 run_connect: {self.do_ui_connection}, {self.ui_client}')
             if (
                 self.do_ui_connection and (
                     self.ui_client is None or not self.ui_client.isConnected()
@@ -376,7 +375,7 @@ class DAQ(abc.ABC):
                 # )
                 # print(f'wait time: {wt}')
                 await asyncio.sleep(
-                    utilities.util.time_to_next(
+                    time_to_next(
                         self.include_metadata_interval
                     )
                 )
@@ -384,7 +383,6 @@ class DAQ(abc.ABC):
             else:
                 self.include_metadata = True
                 asyncio.sleep(1)
-
 
     def start(self, cmd=None):
         # self.create_msg_buffers()
@@ -485,9 +483,10 @@ class DAQ(abc.ABC):
 
     async def message_to_parents(self, msg):
         # while True:
-        # print(f'message_to_parent: {self.get_id()}, {msg.to_json()}')
+        # print(f'message_to_parents: {self.get_id()}, {msg.to_json()}')
         for id, parent in self.parent_map.items():
             if parent['to_parent_buffer']:
+                # print(f'mtp: {msg.to_json()}')
                 await parent['to_parent_buffer'].put(msg)
 
     def message_to_ui_nowait(self, msg):
