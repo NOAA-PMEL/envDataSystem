@@ -464,13 +464,13 @@ def main(connector_type):
 
     if connector_type == 'server':
         con = WSConnectorServer(
-            connector_cfg,
+            connector_config,
             # connector_address=('localhost', 9001),
             # ui_address=('localhost', 8001)
         )
     elif connector_type == 'ui':
         con = WSConnectorUI(
-            connector_cfg,
+            connector_config,
             # connector_address=('localhost', 9001),
             # ui_address=('localhost', 8001)
         )
