@@ -112,7 +112,12 @@ class Connector(abc.ABC):
         pass
 
     def start(self):
+
         if self.status['run_status'] != 'STARTED':
+
+            if self.iface:
+                self.iface.start()
+
             self.task_list.append(
                 asyncio.ensure_future(self.to_ui_loop())
             )
@@ -129,6 +134,9 @@ class Connector(abc.ABC):
 
         for t in self.task_list:
             t.cancel()
+
+        if self.iface:
+            self.iface.stop()
 
         self.status['run_status'] = 'STOPPED'
 
@@ -251,6 +259,16 @@ class WSConnectorServer(ConnectorServer):
 
     async def to_ui_loop(self):
 
+        # test = Message(
+        #         sender_id=self.get_id(),
+        #         msgtype=Connector.class_type,
+        #         subject='SEND',
+        #         body='test',
+        # ) 
+        # print(f'test msg: {test.to_json()}')
+
+        # await self.iface.message_from_parent(test)
+            
         while True:
 
             con_msg = await self.to_ui_buf.get()
@@ -509,4 +527,5 @@ def main(connector_type):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    # main(sys.argv[1])
+    main('server')
