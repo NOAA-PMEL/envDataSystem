@@ -1,6 +1,7 @@
 import sys
 import abc
 import asyncio
+import json
 import websockets
 from client.wsclient import WSClient
 # from client.serialport import SerialPortClient
@@ -31,15 +32,21 @@ class ConnectorMessage():
             'path': self.path,
             'msg': self.body
         }
-        return msg
+        return json.dumps(msg)
 
     def from_json(self, message):
-        if 'address' in message:
-            self.address = message['address']
-        if 'path' in message:
-            self.path = message['path']
-        if 'msg' in message:
-            self.body = message['msg']
+        try:
+            msg = json.loads(message)
+        except json.JSONDecodeError:
+            print(f'invalid json message')
+            return
+
+        if 'address' in msg:
+            self.address = msg['address']
+        if 'path' in msg:
+            self.path = msg['path']
+        if 'msg' in msg:
+            self.body = msg['msg']
 
 
 class Connector(abc.ABC):
@@ -259,15 +266,20 @@ class WSConnectorServer(ConnectorServer):
 
     async def to_ui_loop(self):
 
-        # test = Message(
-        #         sender_id=self.get_id(),
-        #         msgtype=Connector.class_type,
-        #         subject='SEND',
-        #         body='test',
-        # ) 
-        # print(f'test msg: {test.to_json()}')
+        con_msg = ConnectorMessage(
+            address=self.ui_address,
+            id='/a/b/c',
+            body='test',
+        )
+        test = Message(
+                sender_id=self.get_id(),
+                msgtype=Connector.class_type,
+                subject='SEND',
+                body=con_msg.to_json(),
+        )
+        print(f'test msg: {test.to_json()}')
 
-        # await self.iface.message_from_parent(test)
+        await self.iface.message_from_parent(test)
             
         while True:
 
