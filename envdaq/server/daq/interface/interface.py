@@ -478,7 +478,7 @@ class SerialPortInterface(Interface):
         #     '{"IFDEVICE": {"MODULE": "daq.interface.ifdevice", "CLASS": "SerialPortIFDevice"},'
         #     ' "IFDEVCONFIG": {"DESCRIPTION": {"LABEL": "SerialPort IFDevice", "DEVPATH": "/dev/ttyUSB0"}}}'
         # )
-        ui_config = dict()
+        # ui_config = dict()
         # ui_config['do_ui_connection'] = False
 
         self.ifdevice = self.ifdevice_manager.create(
@@ -501,6 +501,7 @@ class SerialPortInterface(Interface):
         # check header to see if data to be sent to instrument
         #   - if yes, add timestamp
         # print('type: {}'.format(msg.type))
+        print(f'SerialPort.handle: {msg.to_json()}')
         if (type == 'FromChild' and msg.type == IFDevice.class_type):
             msg.type = Interface.class_type
             msg.sender_id = self.get_id()
