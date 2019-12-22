@@ -279,7 +279,7 @@ class WSConnectorServer(ConnectorServer):
         )
         print(f'test msg: {test.to_json()}')
 
-        await self.iface.message_from_parent(test)
+        await self.iface.message_from_parent(f'{test}\n')
             
         while True:
 
