@@ -47,7 +47,7 @@ class ConnectorMessage():
             self.path = msg['path']
         if 'msg' in msg:
             self.body = msg['msg']
-
+        return self
 
 class Connector(abc.ABC):
 
@@ -133,7 +133,11 @@ class Connector(abc.ABC):
                 asyncio.ensure_future(self.to_server_loop())
             )
 
-            asyncio.ensure_future(self.start_local_loops())
+            self.task_list.append(
+                asyncio.ensure_future(self.from_iface_loop())
+            )
+
+            # asyncio.ensure_future(self.start_local_loops())
 
             self.status['run_status'] = 'STARTED'
 
@@ -176,6 +180,8 @@ class Connector(abc.ABC):
 
         while True:
             msg = await self.from_iface_buf.get()
+            print(f'from_iface_loop: {msg.to_json()}')
+            # await self.handle_iface2(msg, type='FromIFace')
             await self.handle_iface(msg, type="FromIFace")
 
     @abc.abstractmethod
@@ -194,7 +200,7 @@ class ConnectorServer(Connector):
         connector_address=('localhost', 9001),
         ui_address=('localhost', 8001)
     ):
-        super().__init__(config)
+        super(ConnectorServer, self).__init__(config)
 
         if 'CONNECTOR_CFG' in config:
             cfg = config['CONNECTOR_CFG']
@@ -266,21 +272,21 @@ class WSConnectorServer(ConnectorServer):
 
     async def to_ui_loop(self):
 
-        con_msg = ConnectorMessage(
-            address=self.ui_address,
-            id='/a/b/c',
-            body='test',
-        )
-        body = f'{con_msg.to_json()}\n'
-        test = Message(
-                sender_id=self.get_id(),
-                msgtype=Connector.class_type,
-                subject='SEND',
-                body=body,
-        )
-        print(f'test msg: {test.to_json()}')
+        # con_msg = ConnectorMessage(
+        #     address=self.ui_address,
+        #     id='/a/b/c',
+        #     body='test',
+        # )
+        # body = f'{con_msg.to_json()}\n'
+        # test = Message(
+        #         sender_id=self.get_id(),
+        #         msgtype=Connector.class_type,
+        #         subject='SEND',
+        #         body=body,
+        # )
+        # print(f'test msg: {test.to_json()}')
 
-        await self.iface.message_from_parent(test)
+        # await self.iface.message_from_parent(test)
             
         while True:
 
@@ -318,7 +324,7 @@ class ConnectorUI(Connector):
         # connector_address=('localhost', 9001),
         ui_address=('localhost', 8001)
     ):
-        super().__init__(config)
+        super(ConnectorUI, self).__init__(config)
 
         if 'CONNECTOR_CFG' in config:
             cfg = config['CONNECTOR_CFG']
@@ -359,13 +365,18 @@ class ConnectorUI(Connector):
                 await asyncio.sleep(.1)
 
     async def handle_iface(self, msg, type=None):
+        # super().handle_iface(msg, type)
+        print(f'handle iface ui: {msg}')
         if (type == 'FromIFace'):
             if (msg.subject == 'DATA'):
-                con_msg = msg.body['DATA']
+                con_msg = ConnectorMessage().from_json(
+                    msg.body['DATA']
+                )
+                print(f'con_message: {msg}, {con_msg}')
                 await self.to_ui_buf.put(con_msg)
 
 
-class WSConnectorUI(ConnectorServer):
+class WSConnectorUI(ConnectorUI):
 
     def __init__(
         self,
@@ -410,17 +421,18 @@ class WSConnectorUI(ConnectorServer):
         while True:
 
             con_msg = await self.to_ui_buf.get()
-
-            if 'address' in con_msg and 'path' in con_msg:
-                path = con_msg['path']
+            print(f'to_ui_loop: {con_msg}')
+            
+            if con_msg.address and con_msg.path:
+                path = con_msg.path
                 uri = self.get_uri(
-                    con_msg['address'],
+                    con_msg.address,
                     path
                 )
                 if path not in self.clients:
                     self.clients[path] = WSClient(uri=uri)
 
-                await self.clients[path].send(con_msg['body'])
+                await self.clients[path].send(con_msg.body)
 
     async def to_server_loop(self):
 
@@ -542,4 +554,4 @@ def main(connector_type):
 
 if __name__ == "__main__":
     # main(sys.argv[1])
-    main('server')
+    main('ui')

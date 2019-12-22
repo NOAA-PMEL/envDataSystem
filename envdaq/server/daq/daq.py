@@ -479,7 +479,7 @@ class DAQ(abc.ABC):
 
     async def message_to_parent(self, msg):
         # while True:
-        # print(f'message_to_parent: {self.get_id()}, {msg.to_json()}')
+        print(f'message_to_parent: {self.get_id()}, {msg.to_json()}')
         await self.to_parent_buf.put(msg)
 
     async def message_to_parents(self, msg):
