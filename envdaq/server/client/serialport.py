@@ -120,7 +120,7 @@ class SerialPortClient(ClientConnection):
 
         async def write(self, msg):
             if self.writer:
-                print(f'msg: {msg}, {type(msg)}')
+                print(f'write msg: {msg.encode()}, {type(msg)}')
                 self.writer.write(msg.encode())
                 await self.writer.drain()
 

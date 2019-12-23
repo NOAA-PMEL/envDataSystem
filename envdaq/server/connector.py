@@ -49,6 +49,7 @@ class ConnectorMessage():
             self.body = msg['msg']
         return self
 
+
 class Connector(abc.ABC):
 
     class_type = 'Connector'
@@ -115,15 +116,12 @@ class Connector(abc.ABC):
     async def to_server_loop(self):
         pass
 
-    async def start_local_loops(self):
+    def start_local_loops(self):
         pass
 
     def start(self):
 
         if self.status['run_status'] != 'STARTED':
-
-            if self.iface:
-                self.iface.start()
 
             self.task_list.append(
                 asyncio.ensure_future(self.to_ui_loop())
@@ -137,7 +135,10 @@ class Connector(abc.ABC):
                 asyncio.ensure_future(self.from_iface_loop())
             )
 
-            # asyncio.ensure_future(self.start_local_loops())
+            self.start_local_loops()
+
+            if self.iface:
+                self.iface.start()
 
             self.status['run_status'] = 'STARTED'
 
@@ -167,6 +168,9 @@ class Connector(abc.ABC):
         # only one interface allowed, only first is used
         for k, ifcfg in self.config['IFACE_LIST'].items():
             ui_config = dict()
+            ui_config['host'] = self.config['CONNECTOR_CFG']['ui_address'][0]
+            ui_config['port'] = self.config['CONNECTOR_CFG']['ui_address'][1]
+            # ui_config = dict()
             self.iface = InterfaceFactory().create(
                 ifcfg,
                 ui_config=ui_config,
@@ -335,6 +339,7 @@ class ConnectorUI(Connector):
         else:
             self.ui_address = ui_address
 
+        print(f'self.ui_address: {self.ui_address}')
         # self.connector_address = connector_address
         # self.ui_address = ui_address
         # self.server = None
@@ -399,7 +404,7 @@ class WSConnectorUI(ConnectorUI):
 
         uri = f'ws://{address[0]}'
         uri += f':{address[1]}'
-        uri += '/ws/'+path.replace(" ", "")
+        uri += path.replace(" ", "")
         return uri
 
     async def read_ws(self, ws, path):
@@ -553,5 +558,5 @@ def main(connector_type):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
-    # main('ui')
+    # main(sys.argv[1])
+    main('ui')
