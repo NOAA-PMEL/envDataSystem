@@ -558,5 +558,5 @@ def main(connector_type):
 
 
 if __name__ == "__main__":
-    # main(sys.argv[1])
-    main('ui')
+    main(sys.argv[1])
+    # main('ui')
