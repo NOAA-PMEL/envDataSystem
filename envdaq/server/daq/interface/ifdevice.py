@@ -327,7 +327,7 @@ class SerialPortIFDevice(IFDevice):
     async def read_data(self):
         while True:
             data = await self.client.read()
-            print(f'read_data: {data}')
+            # print(f'read_data: {data}')
             msg = Message(
                 sender_id=self.get_id(),
                 msgtype=IFDevice.class_type,
@@ -347,7 +347,7 @@ class SerialPortIFDevice(IFDevice):
     async def handle(self, msg, type=None):
         if (type == "FromParent"):
             if msg.subject == 'SEND':
-                print(f'serial handle: {msg.body}')
+                # print(f'serial handle: {msg.body}')
                 await self.client.send(msg.body)
                 # print(f'66666serialportifdevice.handle: {msg}')
         await asyncio.sleep(.1)

@@ -102,7 +102,7 @@ class SerialPortClient(ClientConnection):
         async def readline(self, decode_errors='strict'):
             if self.reader:
                 msg = await self.reader.readline()
-                print(f'readline: {msg}')
+                # print(f'readline: {msg}')
                 return msg.decode(errors=decode_errors)
 
         async def readuntil(self, terminator='\n', decode_errors='strict'):
@@ -120,7 +120,7 @@ class SerialPortClient(ClientConnection):
 
         async def write(self, msg):
             if self.writer:
-                print(f'write msg: {msg.encode()}, {type(msg)}')
+                # print(f'write msg: {msg.encode()}, {type(msg)}')
                 self.writer.write(msg.encode())
                 await self.writer.drain()
 

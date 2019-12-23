@@ -51,7 +51,7 @@ class ClientConnection(abc.ABC):
             self.keep_connected = True
 
         print(f'auto_connect={auto_connect}, '
-              'keep_connected={self.keep_connected}'
+              f'keep_connected={self.keep_connected}'
               )
         self.loop = loop
         if loop is None:
@@ -62,7 +62,9 @@ class ClientConnection(abc.ABC):
 
         self.run_task_list = []
         self.task_list = []
+        # task = asyncio.ensure_future(self.run())
         self.task_list.append(
+            # task
             # asyncio.ensure_future(self.open())
             asyncio.ensure_future(self.run())
         )
@@ -79,11 +81,12 @@ class ClientConnection(abc.ABC):
             resp = True
         return resp
         
+
     async def run(self):
 
         timeout = 1  # seconds
 
-        # print('run...')
+        print('run...')
 
         while True:
 

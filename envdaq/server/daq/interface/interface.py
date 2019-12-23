@@ -501,7 +501,7 @@ class SerialPortInterface(Interface):
         # check header to see if data to be sent to instrument
         #   - if yes, add timestamp
         # print('type: {}'.format(msg.type))
-        print(f'SerialPort.handle: {msg.to_json()}')
+        # print(f'SerialPort.handle: {msg.to_json()}')
         if (type == 'FromChild' and msg.type == IFDevice.class_type):
             msg.type = Interface.class_type
             msg.sender_id = self.get_id()
@@ -509,14 +509,14 @@ class SerialPortInterface(Interface):
                 # update could be done in base class
                 msg.update(msgtype=Interface.class_type)
                 msg.body['DATETIME'] = util.dt_to_string()
-                print(f'Serial: {msg.to_json()}')
+                # print(f'Serial: {msg.to_json()}')
                 # self.msg_buffer.put_nowait(msg)
                 # await self.msg_send_buffer.put(msg)
                 await self.message_to_parent(msg)
         elif type == 'FromParent':
             if msg.subject == 'SEND':
                 await self.ifdevice.message_from_parent(msg)
-                print(f'55555message:{msg.subject}, {msg.body}')
+                # print(f'55555message:{msg.subject}, {msg.body}')
         else:
             print(f'Unknown Message type: {msg.type}, {msg.to_json()}')
 
