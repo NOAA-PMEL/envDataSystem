@@ -170,6 +170,8 @@ class Controller(DAQ):
         print('Starting Controller')
         super().start(cmd)
 
+        self.open_datafile()
+
         # start instruments
         for k, v in self.instrument_map.items():
             self.instrument_map[k].start()
