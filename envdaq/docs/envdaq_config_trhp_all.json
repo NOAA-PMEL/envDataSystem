@@ -1,0 +1,183 @@
+{
+    "NAME": "SampleTRHConfig",
+    "ENVDAQ_CONFIG": {
+        "CONT_LIST": {
+            "sample_trh": {
+                "ALIAS": {
+                    "name": "sample_trh",
+                    "prefix": "trh"
+                },
+                "CONTROLLER": {
+                    "MODULE": "daq.controller.contrib.trhp.trhp",
+                    "CLASS": "TRHPController"
+                },
+                "CONTCONFIG": {
+                    "LABEL": "SampleTRHP",
+                    "INST_LIST": {
+                        "ccn_smps_sheath": {
+                            "ALIAS": {
+                                "name": "ccn_smps_sheath",
+                                "prefix": "ccn_smps_sh"
+                            },
+                            "INSTRUMENT": {
+                                "MODULE": "daq.instrument.contrib.inhouse.trhp",
+                                "CLASS": "OmegaTRHP"
+                            },
+                            "INSTCONFIG": {
+                                "DESCRIPTION": {
+                                    "LABEL": "OmegaTRHP",
+                                    "SERIAL_NUMBER": "13",
+                                    "PROPERTY_NUMBER": "CD0001239"
+                                },
+                                "IFACE_LIST": {
+                                    "tcp_10_55_169_113_8199": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "TCPPortInterface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "tcp_10_55_169_113_8199",
+                                            "HOST": "10.55.169.113",
+                                            "PORT": "8199",
+                                            "SerialNumber": "0001"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "ccn_cpc_inlet": {
+                            "ALIAS": {
+                                "name": "ccn_cpc_inlet",
+                                "prefix": "ccn_cpc"
+                            },
+                            "INSTRUMENT": {
+                                "MODULE": "daq.instrument.contrib.inhouse.trhp",
+                                "CLASS": "OmegaTRHP"
+                            },
+                            "INSTCONFIG": {
+                                "DESCRIPTION": {
+                                    "LABEL": "OmegaTRHP",
+                                    "SERIAL_NUMBER": "17",
+                                    "PROPERTY_NUMBER": "CD0001239"
+                                },
+                                "IFACE_LIST": {
+                                    "tcp_10_55_169_117_8199": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "TCPPortInterface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "tcp_10_55_169_117_8199",
+                                            "HOST": "10.55.169.117",
+                                            "PORT": "8199",
+                                            "SerialNumber": "0001"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "mart_smps_sheath": {
+                            "ALIAS": {
+                                "name": "mart_smps_sheath",
+                                "prefix": "mart_smps_sh"
+                            },
+                            "INSTRUMENT": {
+                                "MODULE": "daq.instrument.contrib.inhouse.trhp",
+                                "CLASS": "OmegaTRHP"
+                            },
+                            "INSTCONFIG": {
+                                "DESCRIPTION": {
+                                    "LABEL": "OmegaTRHP",
+                                    "SERIAL_NUMBER": "19",
+                                    "PROPERTY_NUMBER": "CD0001239"
+                                },
+                                "IFACE_LIST": {
+                                    "tcp_10_55_169_119_8199": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "TCPPortInterface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "tcp_10_55_169_119_8199",
+                                            "HOST": "10.55.169.119",
+                                            "PORT": "8199",
+                                            "SerialNumber": "0001"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "th_cpc_inlet": {
+                            "ALIAS": {
+                                "name": "th_cpc_inlet",
+                                "prefix": "th_cpc"
+                            },
+                            "INSTRUMENT": {
+                                "MODULE": "daq.instrument.contrib.inhouse.trhp",
+                                "CLASS": "OmegaTRHP"
+                            },
+                            "INSTCONFIG": {
+                                "DESCRIPTION": {
+                                    "LABEL": "OmegaTRHP",
+                                    "SERIAL_NUMBER": "15",
+                                    "PROPERTY_NUMBER": "CD0001239"
+                                },
+                                "IFACE_LIST": {
+                                    "tcp_10_55_169_115_8199": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "TCPPortInterface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "tcp_10_55_169_115_8199",
+                                            "HOST": "10.55.169.115",
+                                            "PORT": "8199",
+                                            "SerialNumber": "0001"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "nafion4_out": {
+                            "ALIAS": {
+                                "name": "nafion4_out",
+                                "prefix": "naf4"
+                            },
+                            "INSTRUMENT": {
+                                "MODULE": "daq.instrument.contrib.inhouse.trhp",
+                                "CLASS": "OmegaTRHP"
+                            },
+                            "INSTCONFIG": {
+                                "DESCRIPTION": {
+                                    "LABEL": "OmegaTRHP",
+                                    "SERIAL_NUMBER": "12",
+                                    "PROPERTY_NUMBER": "CD0001239"
+                                },
+                                "IFACE_LIST": {
+                                    "tcp_10_55_169_112_8199": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "TCPPortInterface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "tcp_10_55_169_112_8199",
+                                            "HOST": "10.55.169.112",
+                                            "PORT": "8199",
+                                            "SerialNumber": "0001"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "INST_MAP": {
+                        "trhp": {
+                            "LIST": ["ccn_cpc_inlet", "ccn_smps_sheath", "th_cpc_inlet", "mart_smps_sheath", "nafion4_out"]
+                        }
+                    },
+                    "AUTO_START": false
+                }
+            }
+        }
+    }
+}

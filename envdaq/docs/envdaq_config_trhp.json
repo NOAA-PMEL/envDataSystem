@@ -1,0 +1,59 @@
+{
+    "NAME": "SampleTRHConfig",
+    "ENVDAQ_CONFIG": {
+        "CONT_LIST": {
+            "sample_trh": {
+                "ALIAS": {
+                    "name": "sample_trh",
+                    "prefix": "trh"
+                },
+                "CONTROLLER": {
+                    "MODULE": "daq.controller.contrib.trhp.trhp",
+                    "CLASS": "TRHPController"
+                },
+                "CONTCONFIG": {
+                    "LABEL": "Sample T, RH and P",
+                    "INST_LIST": {
+                        "ccn_smps_sheath": {
+                            "ALIAS": {
+                                "name": "ccn_smps_sheath",
+                                "prefix": "ccn_smps_sh"
+                            },
+                            "INSTRUMENT": {
+                                "MODULE": "daq.instrument.contrib.inhouse.trhp",
+                                "CLASS": "OmegaTRHP"
+                            },
+                            "INSTCONFIG": {
+                                "DESCRIPTION": {
+                                    "LABEL": "OmegaTRHP",
+                                    "SERIAL_NUMBER": "13",
+                                    "PROPERTY_NUMBER": "CD0001239"
+                                },
+                                "IFACE_LIST": {
+                                    "tcp_10_55_169_113_8199": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "TCPPortInterface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "tcp_10_55_169_113_8199",
+                                            "HOST": "10.55.169.113",
+                                            "PORT": "8199",
+                                            "SerialNumber": "0001"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "INST_MAP": {
+                        "trhp": {
+                            "LIST": ["ccn_smps_sheath"]
+                        }
+                    },
+                    "AUTO_START": false
+                }
+            }
+        }
+    }
+}
