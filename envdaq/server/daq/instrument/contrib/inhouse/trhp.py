@@ -247,13 +247,13 @@ class OmegaTRHP(InHouseInstrument):
                 val = data['DATA']['Pressure']['value']
                 self.update_data_record(
                     dt,
-                    {'Pressure': round(val, 2)}
+                    {'pressure': round(val, 2)}
                 )
 
             except KeyError:
                 self.update_data_record(
                     dt,
-                    {'Pressure': -999.0}
+                    {'pressure': -999.0}
                 )
                   
         return dt

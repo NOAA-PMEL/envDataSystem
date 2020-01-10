@@ -137,7 +137,7 @@
                                 if (inst_alias['prefix'].length >0) {
                                     name = inst_alias['prefix'] + "_" + meas_name
                                 }
-                                cell_name = name.replace('_', '-')
+                                cell_name = name.replace(/_/g, '-')
                                 row = table.insertRow(-1);
                                 cell = row.insertCell(0);
                                 cell.setAttribute('id', (cell_name+'-name'));
@@ -185,6 +185,7 @@
 
             var message = data['message']['BODY']['DATA'];
             var prefix = data['message']['BODY']['alias']['prefix'];
+            
             //document.querySelector('#data-window').value = (JSON.stringify(data['message']['BODY']['DATA']) + '\n');
 
             // do time-stamp if there is data we want?
@@ -203,10 +204,12 @@
                     continue
                 }
                 //cell_id = "#"+meas+"-value"
-                cell_id = prefix+"-"+meas+"-value"
+                cell_id = (prefix+"-"+meas+"-value").replace(/_/g, "-")
                 //document.querySelector(cell_id).innerHTML = message['MEASUREMENTS'][meas]['VALUE'];
                 //document.getElementById(cell_id).innerHTML = message['MEASUREMENTS'][meas]['VALUE'];
                 var val_cell = document.getElementById(cell_id)
+                //console.log(cell_id)
+                //console.log(message['MEASUREMENTS'][meas]['VALUE'])
                 if (val_cell) {
                     val_cell.innerHTML = message['MEASUREMENTS'][meas]['VALUE'];
                 }

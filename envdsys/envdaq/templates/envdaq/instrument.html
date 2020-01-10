@@ -208,17 +208,18 @@
                         if (meas_prefix) {
                             name = meas_prefix + "_" + meas
                         }
+                        meas_id = meas.replace(/_/g, "-")
                         row = table.insertRow(-1);
                         cell = row.insertCell(0);
-                        cell.setAttribute('id', (meas+'-name'));
+                        cell.setAttribute('id', (meas_id+'-name'));
                         cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center')
                         cell.innerHTML = name
                         cell = row.insertCell(1);
-                        cell.setAttribute('id', (meas+'-value'));
+                        cell.setAttribute('id', (meas_id+'-value'));
                         cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
                         cell.innerHTML = '';         
                         cell = row.insertCell(2);           
-                        cell.setAttribute('id', (meas+'-units'));
+                        cell.setAttribute('id', (meas_id+'-units'));
                         cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
                         cell.innerHTML = mtype[meas]['units']                    
                     }
@@ -298,24 +299,26 @@
                         if (meas_prefix) {
                             name = meas_prefix + "_" + meas
                         }
+                        meas_id = meas.replace(/_/g, "-")
+                        prefix_id = prefix.replace(/_/g, "-")
                         row = table.insertRow(-1);
                         cell = row.insertCell(0);
-                        cell.setAttribute('id', (meas+'-name'));
+                        cell.setAttribute('id', (meas_id+'-name'));
                         cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center')
                         cell.innerHTML = name
                         cell = row.insertCell(1);
-                        cell.setAttribute('id', (meas+'-value'));
+                        cell.setAttribute('id', (meas_id+'-value'));
                         cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
                         cell.innerHTML = '';         
                         cell = row.insertCell(2);           
-                        cell.setAttribute('id', (meas+'-input'));
+                        cell.setAttribute('id', (meas_id+'-input'));
                         cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
-                        cell.innerHTML = '<input id='+meas+'-setting-input type=number min="0" max="65000">'                                
+                        cell.innerHTML = '<input id='+meas_id+'-setting-input type=number min="0" max="65000">'                                
                         cell = row.insertCell(3);           
-                        cell.setAttribute('id', (meas+'-setting-set'));
+                        cell.setAttribute('id', (meas_id+'-setting-set'));
                         cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
                         cell.innerHTML = 
-                            '<input id='+meas+'-setting-button type=button value="apply" onclick="apply_setting(this)">'                  
+                            '<input id='+meas_id+'-setting-button type=button value="apply" onclick="apply_setting(this)">'                  
                     }
                 }
             }
@@ -378,7 +381,7 @@
                             continue
                         }
                         //cell_id = "#"+meas+"-value"
-                        cell_id = meas+"-value"
+                        cell_id = (meas+"-value").replace(/_/g, "-")
                         //document.querySelector(cell_id).innerHTML = message['MEASUREMENTS'][meas]['VALUE'];
                         document.getElementById(cell_id).innerHTML = message['MEASUREMENTS'][meas]['VALUE'];
                         // document.getElementById(cell_id).innerHTML = cell_value;
