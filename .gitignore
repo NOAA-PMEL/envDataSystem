@@ -127,15 +127,16 @@ envdsys/envdaq/templates/envdaq/controller_orig.html
 
 # inversion code
 inversion/IfT/*
-envdaq/server/inversion/out.dat
-envdaq/server/inversion/ein.dat
-envdaq/docs/tmp_config sizing_system.json
-envdaq/docs/envdaq_config_uas_test_home.json
+daq_server/inversion/out.dat
+daq_server/inversion/ein.dat
+daq_server/docs/tmp_config sizing_system.json
+daq_server/docs/envdaq_config_uas_test_home.json
+daq_server/docs/brechtel
 
 envdsys/envdsys/settings.py
-envdaq/server/daq_settings.py
+daq_server/daq_settings.py
 
-envdaq/server/connector/connector_settings.py
+daq_server/connector/connector_settings.py
 
 # static files
 staticfiles

@@ -1,0 +1,64 @@
+{
+    "NAME": "DummyConfig",
+    "ENVDAQ_CONFIG": {
+        "CONT_LIST": {
+            "test_controller": {
+                "ALIAS": {
+                    "name": "test_controller",
+                    "prefix": "tc"
+                },
+                "CONTROLLER": {
+                    "MODULE": "daq.controller.controller",
+                    "CLASS": "DummyController"
+                },
+                "CONTCONFIG": {
+                    "LABEL": "Test Controller",
+                    "INST_LIST": {
+                        "rh60_aps": {
+                            "ALIAS": {
+                                "name": "rh60_aps",
+                                "prefix": "aps"
+                            },
+                            "INSTRUMENT": {
+                                "MODULE": "daq.instrument.contrib.tsi.tsi",
+                                "CLASS": "APS3320"
+                            },
+                            "INSTCONFIG": {
+                                "DESCRIPTION": {
+                                    "LABEL": "RH60 APS",
+                                    "SERIAL_NUMBER": "5656",
+                                    "PROPERTY_NUMBER": "CD0001266"
+                                },
+                                "IFACE_LIST": {
+                                    "tcp_moxa16chem2_4016": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "TCPPortInterface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "tcp_moxa16phys1_4013",
+                                            "HOST": "moxa16phys1",
+                                            "PORT": "4013",
+                                            "SerialNumber": "0003"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                          
+                    },
+                    "INST_MAP": {
+                        "GPS": {
+                            "LIST": [],
+                            "PRIMARY": ""
+                        },
+                        "DUMMY": {
+                            "LIST": []
+                        }
+                    },
+                    "AUTO_START": false
+                }
+            }
+        }
+    }
+}

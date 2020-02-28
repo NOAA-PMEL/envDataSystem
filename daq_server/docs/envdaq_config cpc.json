@@ -1,0 +1,86 @@
+{
+    "NAME": "DummyConfig",
+    "ENVDAQ_CONFIG": {
+        "CONT_LIST": {
+            "test_controller": {
+                "ALIAS": {
+                    "name": "test_controller",
+                    "prefix": "tc"
+                },
+                "CONTROLLER": {
+                    "MODULE": "daq.controller.controller",
+                    "CLASS": "DummyController"
+                },
+                "CONTCONFIG": {
+                    "LABEL": "Test Controller",
+                    "INST_LIST": {
+                        "rh60_aps": {
+                            "ALIAS": {
+                                "name": "rh60_aitken_dmps",
+                                "prefix": "aitken"
+                            },
+                            "INSTRUMENT": {
+                                "MODULE": "daq.instrument.contrib.tsi.tsi",
+                                "CLASS": "CPC3760A_DMPS"
+                            },
+                            "INSTCONFIG": {
+                                "DESCRIPTION": {
+                                    "LABEL": "RH60 DMPS_AITKEN",
+                                    "SERIAL_NUMBER": "5657",
+                                    "PROPERTY_NUMBER": "CD0001267",
+                                    "dp_steps": 10,
+                                    "first_dp": 0.020,
+                                    "last_dp": 0.200,
+                                    "purge_time": 15,
+                                    "step_direction": "down",
+                                    "dma_type": "HaukeShort"
+                                },
+                                "IFACE_LIST": {
+                                    "tcp_moxa16chem2_4013": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "TCPPortInterface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "tcp_moxa16phys1_4013",
+                                            "HOST": "moxa16phys1",
+                                            "PORT": "4013",
+                                            "SerialNumber": "0003"
+                                        }
+                                    },
+                                    "serial_usb0": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "SerialPortInterface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "serial_usb0",
+                                            "ADDRESS": "/dev/ttyUSB0",
+                                            "baudrate": 230400,
+                                            "SerialNumber": "0001"
+                                        }
+                                    }
+                                },
+                                "IFACE_MAP": {
+                                     "cpc": "tcp_moxa16chem2_4013",
+                                     "hv": "serial_usb0"
+                                }
+                            }
+                        }
+                          
+                    },
+                    "INST_MAP": {
+                        "GPS": {
+                            "LIST": [],
+                            "PRIMARY": ""
+                        },
+                        "DUMMY": {
+                            "LIST": []
+                        }
+                    },
+                    "AUTO_START": false
+                }
+            }
+        }
+    }
+}
