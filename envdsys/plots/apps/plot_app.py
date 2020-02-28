@@ -1,14 +1,14 @@
 from plots.plot_buffer import PlotBufferManager, PlotBuffer
 from asyncio.queues import Queue
-from collections import deque
-import asyncio
+# from collections import deque
+# import asyncio
 import abc
 import copy
-import time
+# import time
 import math
 
 # import utilities.util
-from datetime import datetime
+# from datetime import datetime
 from bokeh.models import Line, Circle, Legend
 from bokeh.plotting import figure, ColumnDataSource
 from bokeh.models.widgets import TextInput, MultiSelect
@@ -22,8 +22,9 @@ from bokeh.tile_providers import get_provider, Vendors
 # from bokeh.palettes import brewer as palette_brewer
 # from bokeh.palettes import Category20_20 as palette
 from bokeh.palettes import Category10_10 as palette
-import json
-import envdaq.util.util
+# import json
+# import envdaq.util.util
+import shared.utilities.util as time_util
 
 
 class PlotApp(abc.ABC):
@@ -107,7 +108,6 @@ class PlotApp(abc.ABC):
                 buf_size=self.buf_size
             )
         )
-        # print(f'plot_app_buffer: {PlotBufferManager}, {PlotBufferManager.get_buffer(self.name)}')
         # print('here')
 
     async def update_data(self, msg):
@@ -321,7 +321,7 @@ class TimeSeries1D(PlotApp):
                         if 'datetime' not in data[y_id]:
                             data[y_id]['datetime'] = []
                             data[y_id]['datetime'].append(
-                                envdaq.util.util.string_to_dt(dt_string),
+                                time_util.string_to_dt(dt_string),
                             )
 
                         # print(f'        {name}: {meas["VALUE"]}')
@@ -489,7 +489,7 @@ class TimeSeries1D(PlotApp):
                             if 'datetime' not in data[y_id]:
                                 data[y_id]['datetime'] = []
                                 data[y_id]['datetime'].append(
-                                    envdaq.util.util.string_to_dt(dt_string),
+                                    time_util.string_to_dt(dt_string),
                                 )
 
                             # print(f'        {name}: {meas["VALUE"]}')
@@ -1664,7 +1664,7 @@ class GeoMapPlot(PlotApp):
                         if 'datetime' not in data[y_id]:
                             data[y_id]['datetime'] = []
                             data[y_id]['datetime'].append(
-                                envdaq.util.util.string_to_dt(dt_string),
+                                time_util.string_to_dt(dt_string),
                             )
 
                         # print(f'        {name}: {meas["VALUE"]}')
@@ -1770,7 +1770,6 @@ class GeoMapPlot(PlotApp):
                 self.server_id,
                 self.name,
             )
-            # print(f'plot buffer = {plot_buffer}, {self.server_id}, {self.name}')
             if plot_buffer and plot_buffer.has_message():
                 # print(f'name: {id}, {self.name}')
 
@@ -1791,7 +1790,6 @@ class GeoMapPlot(PlotApp):
                         data,
                         rollover=rollover
                     )
-                    # print(f' update test: {source_map["TimeSeries1D"][src_id]["source"].data}')
                 # print(f'update_test: {source.data["datetime"]}')
 
         def merc(lat, lon):
@@ -1813,11 +1811,10 @@ class GeoMapPlot(PlotApp):
                 body = msg['message']['BODY']
                 data = dict()
                 dt_string = body['DATA']['DATETIME']
-                # print(f'*****pandas: {pd.to_datetime(dt_string, format=isofmt)}')
                 data['datetime'] = []
                 data['datetime'].append(
                     # utilities.util.string_to_dt(dt_string).replace(tzinfo=None)
-                    envdaq.util.util.string_to_dt(dt_string)
+                    time_util.string_to_dt(dt_string)
 
                 )
                 # print(data['datetime'])
