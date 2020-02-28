@@ -1,14 +1,19 @@
+import os
+import sys
 import asyncio
 from importlib import import_module
-from daq.manager.sys_manager import SysManager
-from daq.controller.controller import ControllerFactory  # , Controller
-from client.wsclient import WSClient
-from data.message import Message
-# import websockets
-import utilities.util as util
 from datetime import datetime
-# import functools
 import json
+
+# These are now imported below after path is set
+
+# from daq.manager.sys_manager import SysManager
+# from daq.controller.controller import ControllerFactory  # , Controller
+# from client.wsclient import WSClient
+# # from data.message import Message
+# # import websockets
+# import utilities.util as util
+# import functools
 # from plots.plots import PlotManager
 
 
@@ -351,6 +356,16 @@ def shutdown(server):
 
 
 if __name__ == "__main__":
+
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    # print(BASE_DIR)
+    sys.path.append(os.path.join(BASE_DIR, 'envdsys/shared'))
+
+    from daq.manager.sys_manager import SysManager
+    from daq.controller.controller import ControllerFactory  # , Controller
+    from client.wsclient import WSClient
+    import utilities.util as util
+    from data.message import Message
 
     iface_config = {
         'test_interface': {

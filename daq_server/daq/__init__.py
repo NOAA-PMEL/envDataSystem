@@ -4,4 +4,4 @@
 # @Last modified time: 2018-12-13T13:57:14-08:00
 
 
-__all__ = ['controller', 'instrument', 'interface']
+__all__ = ['controller', 'instrument', 'interface', 'manager']

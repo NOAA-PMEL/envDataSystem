@@ -4,7 +4,8 @@ import channels.db
 import json
 import asyncio
 from envdaq.util.daq import ConfigurationUtility
-import envdaq.util.util as time_util
+# import envdaq.util.util as time_util
+import shared.utilities.util as time_util
 from envdaq.util.sync_manager import SyncManager
 from plots.plots import PlotManager
 

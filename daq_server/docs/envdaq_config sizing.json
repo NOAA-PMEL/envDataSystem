@@ -1,0 +1,178 @@
+{
+    "NAME": "DummyConfig",
+    "ENVDAQ_CONFIG": {
+        "CONT_LIST": {
+            "test_controller": {
+                "ALIAS": {
+                    "name": "test_controller",
+                    "prefix": "tc"
+                },
+                "CONTROLLER": {
+                    "MODULE": "daq.controller.controller",
+                    "CLASS": "DummyController"
+                },
+                "CONTCONFIG": {
+                    "LABEL": "Test Controller",
+                    "INST_LIST": {
+                        "rh60_aitken_dmps": {
+                            "ALIAS": {
+                                "name": "rh60_aitken_dmps",
+                                "prefix": "aitken"
+                            },
+                            "INSTRUMENT": {
+                                "MODULE": "daq.instrument.contrib.tsi.tsi",
+                                "CLASS": "CPC3760A_DMPS"
+                            },
+                            "INSTCONFIG": {
+                                "DESCRIPTION": {
+                                    "LABEL": "RH60 DMPS_AITKEN",
+                                    "SERIAL_NUMBER": "5657",
+                                    "PROPERTY_NUMBER": "CD0001267",
+                                    "dp_steps": 10,
+                                    "first_dp": 0.020,
+                                    "last_dp": 0.200,
+                                    "purge_time": 15,
+                                    "step_direction": "down",
+                                    "dma_type": "HaukeShort",
+                                    "hv_channel": "AIN0",
+                                    "hv_sp_channel": "TDAC0",
+                                    "sheath_flow": 9.0,
+                                    "sample_flow": 0.9
+                                },
+                                "IFACE_LIST": {
+                                    "tcp_moxa16chem2_4013": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "TCPPortInterface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "tcp_moxa16phys1_4013",
+                                            "HOST": "moxa16phys1",
+                                            "PORT": "4013",
+                                            "SerialNumber": "0003"
+                                        }
+                                    },
+                                    "labjack_dmps": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "LabJackT7Interface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "labjack_dmps",
+                                            "ADDRESS": "470013841",
+                                            "connection_type": "ANY",
+                                            "serial_number": "470013841"
+                                       }
+                                    }
+                                },
+                                "IFACE_MAP": {
+                                     "cpc": "tcp_moxa16chem2_4013",
+                                     "hv": "labjack_dmps"
+                                }
+                            }
+                        },
+                        "rh60_accum_dmps": {
+                            "ALIAS": {
+                                "name": "rh60_accum_dmps",
+                                "prefix": "accum"
+                            },
+                            "INSTRUMENT": {
+                                "MODULE": "daq.instrument.contrib.tsi.tsi",
+                                "CLASS": "CPC3760A_DMPS"
+                            },
+                            "INSTCONFIG": {
+                                "DESCRIPTION": {
+                                    "LABEL": "RH60 DMPS_ACCUM",
+                                    "SERIAL_NUMBER": "5658",
+                                    "PROPERTY_NUMBER": "CD0001268",
+                                    "dp_steps": 7,
+                                    "first_dp": 0.200,
+                                    "last_dp": 0.800,
+                                    "purge_time": 15,
+                                    "step_direction": "up",
+                                    "dma_type": "HaukeMed",
+                                    "hv_channel": "AIN1",
+                                    "hv_sp_channel": "TDAC1",
+                                    "sheath_flow": 5.0,
+                                    "sample_flow": 0.5
+                                },
+                                "IFACE_LIST": {
+                                    "tcp_moxa16chem2_4012": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "TCPPortInterface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "tcp_moxa16phys1_4012",
+                                            "HOST": "moxa16phys1",
+                                            "PORT": "4012",
+                                            "SerialNumber": "0004"
+                                        }
+                                    },
+                                    "labjack_dmps": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "LabJackT7Interface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "labjack_dmps",
+                                            "ADDRESS": "470013841",
+                                            "connection_type": "ANY",
+                                            "serial_number": "470013841"
+                                       }
+                                    }
+                                },
+                                "IFACE_MAP": {
+                                     "cpc": "tcp_moxa16chem2_4012",
+                                     "hv": "labjack_dmps"
+                                }
+                            }
+                        },
+                        "rh60_aps": {
+                            "ALIAS": {
+                                "name": "rh60_aps",
+                                "prefix": "aps"
+                            },
+                            "INSTRUMENT": {
+                                "MODULE": "daq.instrument.contrib.tsi.tsi",
+                                "CLASS": "APS3320"
+                            },
+                            "INSTCONFIG": {
+                                "DESCRIPTION": {
+                                    "LABEL": "RH60 APS",
+                                    "SERIAL_NUMBER": "5656",
+                                    "PROPERTY_NUMBER": "CD0001266"
+                                },
+                                "IFACE_LIST": {
+                                    "tcp_moxa16chem2_4014": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "TCPPortInterface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "tcp_moxa16phys1_4014",
+                                            "HOST": "moxa16phys1",
+                                            "PORT": "4014",
+                                            "SerialNumber": "0002"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                      
+                    },
+                    "INST_MAP": {
+                        "GPS": {
+                            "LIST": [],
+                            "PRIMARY": ""
+                        },
+                        "DUMMY": {
+                            "LIST": []
+                        }
+                    },
+                    "AUTO_START": false
+                }
+            }
+        }
+    }
+}
