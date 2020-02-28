@@ -65,6 +65,8 @@ class PlotServer():
 
         # add django server to ws_origin
         ws_origin.append('localhost:8001')
+        # this is hardcoded at the moment for proxy server used in production
+        ws_origin.append('localhost:8002')
 
         # add extra ws_origin
         if add_ws_origin:
