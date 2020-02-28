@@ -1,0 +1,360 @@
+{
+    "NAME": "ATOMIC_CONFIG",
+    "ENVDAQ_CONFIG": {
+        "CONT_LIST": {
+            "rh60_sizing": {
+                "ALIAS": {
+                    "name": "rh60_sizing",
+                    "prefix": "rh60"
+                },
+                "CONTROLLER": {
+                    "MODULE": "daq.controller.contrib.sizing.sizing",
+                    "CLASS": "SizingSystem"
+                },
+                "CONTCONFIG": {
+                    "LABEL": "RH60 Sizing System",
+                    "INST_LIST": {
+                        "rh60_aitken_dmps": {
+                            "ALIAS": {
+                                "name": "rh60_aitken_dmps",
+                                "prefix": "aitken"
+                            },
+                            "INSTRUMENT": {
+                                "MODULE": "daq.instrument.contrib.tsi.tsi",
+                                "CLASS": "CPC3760A_DMPS"
+                            },
+                            "INSTCONFIG": {
+                                "DESCRIPTION": {
+                                    "LABEL": "RH60 DMPS_AITKEN",
+                                    "SERIAL_NUMBER": "5657",
+                                    "PROPERTY_NUMBER": "CD0001267",
+                                    "scan_length": 300,
+                                    "dp_steps": 10,
+                                    "first_dp": 0.020,
+                                    "last_dp": 0.200,
+                                    "purge_time": 15,
+                                    "step_direction": "down",
+                                    "dma_type": "HaukeShort",
+                                    "hv_channel": "AIN0",
+                                    "hv_sp_channel": "TDAC0",
+                                    "sheath_flow": 9.0,
+                                    "sample_flow": 0.9
+                                },
+                                "IFACE_LIST": {
+                                    "tcp_moxa16phys2_4002": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "TCPPortInterface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "tcp_moxa16phys2_4002",
+                                            "HOST": "moxa16phys2",
+                                            "PORT": "4002",
+                                            "SerialNumber": "0003"
+                                        }
+                                    },
+                                    "labjack_dmps": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "LabJackT7Interface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "labjack_dmps",
+                                            "ADDRESS": "470013841",
+                                            "connection_type": "ANY",
+                                            "serial_number": "470013841"
+                                       }
+                                    }
+                                },
+                                "IFACE_MAP": {
+                                     "cpc": "tcp_moxa16phys2_4002",
+                                     "hv": "labjack_dmps"
+                                }
+                            }
+                        },
+                        "rh60_accum_dmps": {
+                            "ALIAS": {
+                                "name": "rh60_accum_dmps",
+                                "prefix": "accum"
+                            },
+                            "INSTRUMENT": {
+                                "MODULE": "daq.instrument.contrib.tsi.tsi",
+                                "CLASS": "CPC3760A_DMPS"
+                            },
+                            "INSTCONFIG": {
+                                "DESCRIPTION": {
+                                    "LABEL": "RH60 DMPS_ACCUM",
+                                    "SERIAL_NUMBER": "5658",
+                                    "PROPERTY_NUMBER": "CD0001268",
+                                    "scan_length": 300,
+                                    "dp_steps": 7,
+                                    "first_dp": 0.200,
+                                    "last_dp": 0.800,
+                                    "purge_time": 15,
+                                    "step_direction": "up",
+                                    "dma_type": "HaukeMed",
+                                    "hv_channel": "AIN1",
+                                    "hv_sp_channel": "TDAC1",
+                                    "sheath_flow": 5.0,
+                                    "sample_flow": 0.5
+                                },
+                                "IFACE_LIST": {
+                                    "tcp_moxa16phys2_4003": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "TCPPortInterface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "tcp_moxa16phys2_4003",
+                                            "HOST": "moxa16phys2",
+                                            "PORT": "4003",
+                                            "SerialNumber": "0004"
+                                        }
+                                    },
+                                    "labjack_dmps": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "LabJackT7Interface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "labjack_dmps",
+                                            "ADDRESS": "470013841",
+                                            "connection_type": "ANY",
+                                            "serial_number": "470013841"
+                                       }
+                                    }
+                                },
+                                "IFACE_MAP": {
+                                     "cpc": "tcp_moxa16phys2_4003",
+                                     "hv": "labjack_dmps"
+                                }
+                            }
+                        },
+                        "rh60_aps": {
+                            "ALIAS": {
+                                "name": "rh60_aps",
+                                "prefix": "aps"
+                            },
+                            "INSTRUMENT": {
+                                "MODULE": "daq.instrument.contrib.tsi.tsi",
+                                "CLASS": "APS3320"
+                            },
+                            "INSTCONFIG": {
+                                "DESCRIPTION": {
+                                    "LABEL": "RH60 APS",
+                                    "SERIAL_NUMBER": "5656",
+                                    "PROPERTY_NUMBER": "CD0001266",
+                                    "scan_length": 300
+                                },
+                                "IFACE_LIST": {
+                                    "tcp_moxa16phys2_4005": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "TCPPortInterface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "tcp_moxa16phys2_4005",
+                                            "HOST": "moxa16phys2",
+                                            "PORT": "4005",
+                                            "SerialNumber": "0002"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                      
+                    },
+                    "INST_MAP": {
+                        "aitken_dmps": {
+                            "LIST": ["rh60_aitken_dmps"],
+                            "PRIMARY": ""
+                        },
+                        "accum_dmps": {
+                            "LIST": ["rh60_accum_dmps"]
+                        },
+                        "aps": {
+                            "LIST": ["rh60_aps"]
+                        }
+                    },
+                    "AUTO_START": false
+                }
+            },
+            "sample_trh": {
+                "ALIAS": {
+                    "name": "sample_trh",
+                    "prefix": "trh"
+                },
+                "CONTROLLER": {
+                    "MODULE": "daq.controller.contrib.trhp.trhp",
+                    "CLASS": "TRHPController"
+                },
+                "CONTCONFIG": {
+                    "LABEL": "SampleTRHP",
+                    "INST_LIST": {
+                        "ccn_smps_sheath": {
+                            "ALIAS": {
+                                "name": "ccn_smps_sheath",
+                                "prefix": "ccn_smps_sh"
+                            },
+                            "INSTRUMENT": {
+                                "MODULE": "daq.instrument.contrib.inhouse.trhp",
+                                "CLASS": "OmegaTRHP"
+                            },
+                            "INSTCONFIG": {
+                                "DESCRIPTION": {
+                                    "LABEL": "OmegaTRHP13",
+                                    "SERIAL_NUMBER": "13",
+                                    "PROPERTY_NUMBER": "CD0001239"
+                                },
+                                "IFACE_LIST": {
+                                    "tcp_10_55_169_113_8199": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "TCPPortInterface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "tcp_10_55_169_113_8199",
+                                            "HOST": "10.55.169.113",
+                                            "PORT": "8199",
+                                            "SerialNumber": "0001"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "ccn_cpc_inlet": {
+                            "ALIAS": {
+                                "name": "ccn_cpc_inlet",
+                                "prefix": "ccn_cpc"
+                            },
+                            "INSTRUMENT": {
+                                "MODULE": "daq.instrument.contrib.inhouse.trhp",
+                                "CLASS": "OmegaTRHP"
+                            },
+                            "INSTCONFIG": {
+                                "DESCRIPTION": {
+                                    "LABEL": "OmegaTRHP17",
+                                    "SERIAL_NUMBER": "17",
+                                    "PROPERTY_NUMBER": "CD0001239"
+                                },
+                                "IFACE_LIST": {
+                                    "tcp_10_55_169_117_8199": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "TCPPortInterface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "tcp_10_55_169_117_8199",
+                                            "HOST": "10.55.169.117",
+                                            "PORT": "8199",
+                                            "SerialNumber": "0001"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "mart_smps_sheath": {
+                            "ALIAS": {
+                                "name": "mart_smps_sheath",
+                                "prefix": "mart_smps_sh"
+                            },
+                            "INSTRUMENT": {
+                                "MODULE": "daq.instrument.contrib.inhouse.trhp",
+                                "CLASS": "OmegaTRHP"
+                            },
+                            "INSTCONFIG": {
+                                "DESCRIPTION": {
+                                    "LABEL": "OmegaTRHP19",
+                                    "SERIAL_NUMBER": "19",
+                                    "PROPERTY_NUMBER": "CD0001239"
+                                },
+                                "IFACE_LIST": {
+                                    "tcp_10_55_169_119_8199": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "TCPPortInterface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "tcp_10_55_169_119_8199",
+                                            "HOST": "10.55.169.119",
+                                            "PORT": "8199",
+                                            "SerialNumber": "0001"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "th_cpc_inlet": {
+                            "ALIAS": {
+                                "name": "th_cpc_inlet",
+                                "prefix": "th_cpc"
+                            },
+                            "INSTRUMENT": {
+                                "MODULE": "daq.instrument.contrib.inhouse.trhp",
+                                "CLASS": "OmegaTRHP"
+                            },
+                            "INSTCONFIG": {
+                                "DESCRIPTION": {
+                                    "LABEL": "OmegaTRHP15",
+                                    "SERIAL_NUMBER": "15",
+                                    "PROPERTY_NUMBER": "CD0001239"
+                                },
+                                "IFACE_LIST": {
+                                    "tcp_10_55_169_115_8199": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "TCPPortInterface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "tcp_10_55_169_115_8199",
+                                            "HOST": "10.55.169.115",
+                                            "PORT": "8199",
+                                            "SerialNumber": "0001"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "nafion4_out": {
+                            "ALIAS": {
+                                "name": "nafion4_out",
+                                "prefix": "naf4"
+                            },
+                            "INSTRUMENT": {
+                                "MODULE": "daq.instrument.contrib.inhouse.trhp",
+                                "CLASS": "OmegaTRHP"
+                            },
+                            "INSTCONFIG": {
+                                "DESCRIPTION": {
+                                    "LABEL": "OmegaTRHP12",
+                                    "SERIAL_NUMBER": "12",
+                                    "PROPERTY_NUMBER": "CD0001239"
+                                },
+                                "IFACE_LIST": {
+                                    "tcp_10_55_169_112_8199": {
+                                        "INTERFACE": {
+                                            "MODULE": "daq.interface.interface",
+                                            "CLASS": "TCPPortInterface"
+                                        },
+                                        "IFCONFIG": {
+                                            "LABEL": "tcp_10_55_169_112_8199",
+                                            "HOST": "10.55.169.112",
+                                            "PORT": "8199",
+                                            "SerialNumber": "0001"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "INST_MAP": {
+                        "trhp": {
+                            "LIST": ["ccn_cpc_inlet", "ccn_smps_sheath", "th_cpc_inlet", "mart_smps_sheath", "nafion4_out"]
+                        }
+                    },
+                    "AUTO_START": false
+                }
+            }
+        }
+    }
+}
