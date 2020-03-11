@@ -22,4 +22,6 @@ urlpatterns = [
     path('envtags/', include('envtags.urls')),
     path('admin/', admin.site.urls),
     path('envdsys/', include('django.contrib.auth.urls')),
+    # eventually, this will be in its own "app" 
+    path('', include('envdaq.urls'))
 ]

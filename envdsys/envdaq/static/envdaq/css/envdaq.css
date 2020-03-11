@@ -29,6 +29,8 @@
   .topnav {
     overflow: hidden;
     background-color: #333;
+    border-radius: 5px;
+    width: 100%;
   }
   
   /* Style the topnav links */
@@ -46,7 +48,40 @@
     background-color: #ddd;
     color: black;
   }
-  
+ 
+ /* Style the top navigation bar */
+ .leftnav {
+  margin: 0;
+  margin-top: 20px;
+  padding: 0;
+  border: solid;
+  border-width: 2px;
+  border-radius: 5px;
+  border-color: rgb(167, 166, 166);
+  width: 200px;
+  /* background-color: #333; */
+  height: 100%;
+  overflow: auto;
+  position: absolute;
+}
+
+/* Style the topnav links */
+.leftnav a {
+  /* float: left; */
+  display: block;
+  /* color: #f2f2f2; */
+  /* text-align: center; */
+  padding-left: 10px;
+  padding-top: 5px;
+  text-decoration: none;
+}
+
+/* Change color on hover */
+.leftnav a:hover {
+  background-color: #ddd;
+  color: black;
+}
+ 
   /* Create two unequal columns that floats next to each other */
   /* Left column */
   .leftcolumn {   
@@ -96,6 +131,7 @@
     text-align: left;
     background: #ddd;
     margin-top: 2px;
+    margin-left: 200px;
   }
 
   /* Footer */

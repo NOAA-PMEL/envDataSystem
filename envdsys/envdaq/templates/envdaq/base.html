@@ -37,7 +37,15 @@
         {% endblock %}
     </div>
 
-    <div class="row">
+    <div class="leftnav">
+        <a href="http://pmel.noaa.gov">PMEL</a>
+        <a href="http://saga.pmel.noaa.gov">Saga</a>
+        <a href="http://erwin2.pmel.noaa.gov">erwin</a>
+        {% block leftnav %}
+        {% endblock %}
+    </div>
+
+    <div class="row" style="margin-left:200px">
         <div class="leftcolumn">
             <div class="data">
                 {% block data %}
@@ -49,7 +57,7 @@
             </div>
         </div>
         <div class="rightcolumn">
-             <div class="plots">
+            <div class="plots">
                 {% block plots %}
                 {% endblock %}
             </div>        
@@ -60,10 +68,9 @@
         </div>
     </div>
     </div class="row">
-       </div class="leftcolumn">
+    </div class="leftcolumn">
         </div>
-     </div>
-
+    </div>
 
     <div class="rawdata">
         {% block rawdata %}

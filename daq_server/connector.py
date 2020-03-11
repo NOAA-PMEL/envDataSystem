@@ -1,12 +1,13 @@
 import sys
+import os
 import abc
 import asyncio
 import json
 import websockets
-from client.wsclient import WSClient
+# from client.wsclient import WSClient
 # from client.serialport import SerialPortClient
-from daq.interface.interface import InterfaceFactory
-from data.message import Message
+# from daq.interface.interface import InterfaceFactory
+# from data.message import Message
 from importlib import import_module
 
 
@@ -560,5 +561,17 @@ def main(connector_type):
 
 
 if __name__ == "__main__":
-    # main(sys.argv[1])
-    main('ui')
+    
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    # print(BASE_DIR)
+    sys.path.append(os.path.join(BASE_DIR, 'envdsys/shared'))
+
+    # from daq.manager.sys_manager import SysManager
+    # from daq.controller.controller import ControllerFactory  # , Controller
+    from client.wsclient import WSClient
+    # import utilities.util as util
+    from daq.interface.interface import InterfaceFactory
+    from data.message import Message
+
+    # main('ui')
+    main(sys.argv[1])
