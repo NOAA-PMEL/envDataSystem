@@ -12,4 +12,8 @@ admin.site.register(Controller)
 admin.site.register(InstrumentAlias)
 admin.site.register(Measurement)
 # admin.site.register(Configuration)
-admin.site.register(DAQServer)
+
+class DAQServerAdmin(admin.ModelAdmin):
+    readonly_fields = ('uniqueID',)
+
+admin.site.register(DAQServer, DAQServerAdmin)
