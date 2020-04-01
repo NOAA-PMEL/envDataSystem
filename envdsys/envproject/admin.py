@@ -2,7 +2,7 @@ from django.contrib import admin
 
 # Register your models here.
 from envproject.models import Project, ProjectEvent  # , Configuration
-from envproject.models import ProjectPlatformEvent
+from envproject.models import ProjectPlatformEvent, Platform
 from envtags.models import Tag
 # from envtags.models import Tag  #, Configuration
 
@@ -21,6 +21,7 @@ class EnvprojectAdmin(admin.ModelAdmin):
                 'description',
                 'website',
                 'logo',
+                'platforms',
                 # 'tags',
                 # 'event_type',
                 # 'uniqueID'
@@ -61,3 +62,4 @@ class EnvprojectAdmin(admin.ModelAdmin):
 admin.site.register(Project, EnvprojectAdmin)
 admin.site.register(ProjectEvent)
 admin.site.register(ProjectPlatformEvent)
+admin.site.register(Platform)

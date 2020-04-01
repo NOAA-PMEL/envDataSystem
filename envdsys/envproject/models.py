@@ -1,10 +1,86 @@
 from django.db import models
-from django.urls import reverse
+# from django.urls import reverse
 import uuid
 from envtags.models import Tag
 from envproject.utilities.event import BaseEvent
 
 # Create your models here.
+
+
+class Platform(models.Model):
+
+    name = models.CharField(max_length=50)
+    long_name = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True
+    )
+
+    description = models.TextField(
+        blank=True,
+        null=True
+    )
+
+    platform_id = models.CharField(
+        verbose_name='Identifier',
+        max_length=20,
+        default='default_id'
+    )
+
+    parent_platform = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    website = models.URLField(
+        verbose_name='Platform Website',
+        blank=True,
+        null=True
+    )
+
+    # logo = models.ImageField(
+    #     verbose_name='Logo Image',
+    #     upload_to='projects/',
+    #     blank=True,
+    #     null=True
+    # )
+
+    uniqueID = models.UUIDField(default=uuid.uuid1, editable=False)
+
+    class Meta:
+        # verbose_name = 'DAQ Server
+        verbose_name_plural = 'Platforms'
+
+    tags = models.ManyToManyField(
+        Tag,
+        blank=True,
+        related_name='platform_tags',
+    )
+
+    # instrument_list = get_instruments()
+
+    # def get_instruments(self):
+
+    #     aliases = InstrumentAlias.objects.filter(
+    #         controller=self
+    #     )
+    #     return aliases
+
+    # inst_list = models.ManyToManyField(
+    #     'InstrumentEntry',
+    #     help_text='Select instruments to control'
+    # )
+
+    # inst_class = ManyToManyField(InstrumentClass)
+
+    def __str__(self):
+        '''String representation of Platform object. '''
+        return self.name
+
+    def __repr__(self):
+        return (f'{self.name} ({self.platform_id})')
 
 
 # class Project(models.Model):
@@ -40,12 +116,12 @@ class Project(BaseEvent):
         null=True
     )
 
-    # platforms = models.ManyToManyField(
-    #     Platform,
-    #     blank=True,
-    #     # related_name='event_tags',
-    #     related_name='project_platforms',
-    # )
+    platforms = models.ManyToManyField(
+        Platform,
+        blank=True,
+        # related_name='event_tags',
+        related_name='project_platforms',
+    )
 
     class Meta:
         # verbose_name = 'DAQ Server
@@ -115,25 +191,39 @@ class ProjectPlatformEvent(BaseEvent):
     )
 
     # this will be changed to ForeignKey
-    platform = models.CharField(
-        max_length=50,
-        null=True,
-        blank=True
-    )
+    # platform = models.CharField(
+    #     max_length=50,
+    #     null=True,
+    #     blank=True
+    # )
     # platform = models.ForeignKey(
     #     Platform,
     #     on_delete=models.CASCADE,
     #     related_name='projectplatformevent_platform',
     # )
 
+    platforms = models.ManyToManyField(
+        Platform,
+        blank=True,
+        # null=True,
+        # related_name='event_tags',
+        related_name='projectplatformevent_platforms',
+    )
+
     description = models.TextField(blank=True)
 
     def __str__(self):
         '''String representation of ProjectPlatformEvent object. '''
-        return (f'{self.project.name}-{self.platform}-{self.name}')
+        return (f'{self.project.name}-{self.name}')
 
     def __repr__(self):
-        return (f'{self.project}-{self.platform}-{self.name}')
+        pforms = ''
+        for p in self.platforms.all():
+            if pforms == '':
+                pforms += f'{p}'
+            else:
+                pforms += f',{p}'
+        return (f'{self.project}-{pforms}-{self.name}')
 
 
 # class ProjectDataSource(models.Model):
@@ -142,66 +232,3 @@ class ProjectPlatformEvent(BaseEvent):
     # Platform
     # Organization
     # Controller ??
-
-
-class Platform(models.Model):
-
-    name = models.CharField(max_length=50)
-    long_name = models.CharField(max_length=200, blank=True)
-
-    description = models.TextField(blank=True)
-
-    # parent_platform = models.ForeignKey(
-    #     'self',
-    #     on_delete=models.SET_NULL,
-    #     null=True,
-    #     blank=True
-    # )
-
-    website = models.URLField(
-        verbose_name='Platform Website',
-        blank=True,
-        null=True
-    )
-
-    # logo = models.ImageField(
-    #     verbose_name='Logo Image',
-    #     upload_to='projects/',
-    #     blank=True,
-    #     null=True
-    # )
-
-    uniqueID = models.UUIDField(default=uuid.uuid1, editable=False)
-
-    class Meta:
-        # verbose_name = 'DAQ Server
-        verbose_name_plural = 'Platforms'
-
-    tags = models.ManyToManyField(
-        Tag,
-        blank=True,
-        related_name='platform_tags',
-    )
-
-    # instrument_list = get_instruments()
-
-    # def get_instruments(self):
-
-    #     aliases = InstrumentAlias.objects.filter(
-    #         controller=self
-    #     )
-    #     return aliases
-
-    # inst_list = models.ManyToManyField(
-    #     'InstrumentEntry',
-    #     help_text='Select instruments to control'
-    # )
-
-    # inst_class = ManyToManyField(InstrumentClass)
-
-    def __str__(self):
-        '''String representation of Controller object. '''
-        return self.name
-
-    def __repr__(self):
-        return (f'{self.name} ({self.long_name})')
