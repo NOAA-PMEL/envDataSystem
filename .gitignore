@@ -140,3 +140,4 @@ daq_server/connector/connector_settings.py
 
 # static files
 staticfiles
+envdsys/media/

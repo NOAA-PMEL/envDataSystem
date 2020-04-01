@@ -254,7 +254,7 @@ class InstrumentDef(InventoryDef):
 
 
 class Instrument(Inventory):
-    # name = models.CharField(max_length=30, help_text="Enter name for this instrument")
+
     nickname = models.CharField(max_length=50, null=True, default=None)
     definition = models.ForeignKey(
         'InstrumentDef',
@@ -262,8 +262,14 @@ class Instrument(Inventory):
         # null=True,
         # blank=True
     )
+
     uniqueID = models.UUIDField(
-        default=uuid.uuid1, editable=False, null=True, blank=True)
+        default=uuid.uuid1,
+        editable=False,
+        null=True,
+        blank=True
+    )
+
     # inst_list = models.ManyToManyField('Instrument', 'Select insruments to control')
     serial_number = models.CharField(
         max_length=30,
