@@ -1216,12 +1216,12 @@ class DummyGPS(Instrument):
                 dt,
                 {'gps_time': dt}
             )
-            val = 42 + round(random.random()*1, 3)
+            val = 42 + round(random.random()*10, 3)
             self.update_data_record(
                 dt,
                 {'latitude': val}
             )
-            val = -120 + round(random.random()*1, 3)
+            val = -50 + round(random.random()*10, 3)
             self.update_data_record(
                 dt,
                 {'longitude': val}

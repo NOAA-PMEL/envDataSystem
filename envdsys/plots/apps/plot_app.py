@@ -11,12 +11,12 @@ import math
 # from datetime import datetime
 from bokeh.models import Line, Circle, Legend
 from bokeh.plotting import figure, ColumnDataSource
-from bokeh.models.widgets import TextInput, MultiSelect
+from bokeh.models.widgets import TextInput, Select, MultiSelect
 from bokeh.layouts import layout, column
 from bokeh.models import LinearAxis, Range1d, DataRange1d
 from bokeh.models import DatetimeTickFormatter, ColorBar
 from bokeh.palettes import Spectral6
-from bokeh.transform import linear_cmap
+from bokeh.transform import linear_cmap, LinearColorMapper
 from bokeh.tile_providers import get_provider, Vendors
 # from bokeh.palettes import Dark2_5 as palette_Dark2_5
 # from bokeh.palettes import brewer as palette_brewer
@@ -312,7 +312,7 @@ class TimeSeries1D(PlotApp):
                 for y_id, ysrc in source_data.items():
                     # if name in source_data.data:
                     if name in ysrc.data:
-                        
+
                         # create src data for y_id
                         if y_id not in data:
                             data[y_id] = dict()
@@ -436,13 +436,13 @@ class TimeSeries1D(PlotApp):
                 # print(f' update_source: {src_id}, {data}')
                 if data:
                     for y_id, y_data in data.items():
-                    # print(f'data[datetime] = {data["datetime"]}')
-                    # print(f'232323 data: {data}')
-                    # source.stream(data, rollover=self.rollover)
-                    # source = source_map['TimeSeries1D'][src_id]['source']
-                    # print(f' {source.data}')
-                    # source.stream(data, rollover=rollover)
-                    # print(f'    {source.data}')
+                        # print(f'data[datetime] = {data["datetime"]}')
+                        # print(f'232323 data: {data}')
+                        # source.stream(data, rollover=self.rollover)
+                        # source = source_map['TimeSeries1D'][src_id]['source']
+                        # print(f' {source.data}')
+                        # source.stream(data, rollover=rollover)
+                        # print(f'    {source.data}')
                         sm = source_map['TimeSeries1D'][src_id]['source'][y_id]
                         sm.stream(
                             y_data,
@@ -477,7 +477,7 @@ class TimeSeries1D(PlotApp):
                     if len(prefix_map[src_id]) > 0:
                         name = prefix_map[src_id] + '_' + name
                     # print(f'{name} in {source_data.data}')
-                    
+
                     for y_id, ysrc in source_data.items():
                         if name in ysrc.data:
 
@@ -496,7 +496,7 @@ class TimeSeries1D(PlotApp):
                             data[y_id][name] = []
                             data[y_id][name].append(meas['VALUE'])
                             # data[name] = meas['VALUE']
-                    
+
                     # if name in source_data.data:
                     #     data[name] = []
                     #     data[name].append(meas['VALUE'])
@@ -528,6 +528,16 @@ class TimeSeries1D(PlotApp):
 
         def build_plot():
             # doc.clear()
+
+            TOOLTIPS = [
+                # ('name', '$name'),
+                # ("time", "$x"),
+                # ("value", "@$name"),
+                ("value", "@y"),
+                # ("$name", "@$name"),
+                # ("(x,y)", "($x, $y)"),
+                # ("desc", "@desc"),
+            ]
 
             fig = figure(
                 # title=self.title,
@@ -700,13 +710,13 @@ class TimeSeries1D(PlotApp):
         #     ("(x,y)", "($x, $y)"),
         #     ("desc", "@desc"),
         # ]
-        TOOLTIPS = [
-            # ('name', '@name'),
-            # ("time", "$x"),
-            ("value", "$y")
-            # ("(x,y)", "($x, $y)"),
-            # ("desc", "@desc"),
-        ]
+        # TOOLTIPS = [
+        #     ('name', '$name'),
+        #     # ("time", "$x"),
+        #     ("value", "@$name")
+        #     # ("(x,y)", "($x, $y)"),
+        #     # ("desc", "@desc"),
+        # ]
 
         # fig = figure(
         #     title=self.title,
@@ -747,7 +757,7 @@ class TimeSeries1D(PlotApp):
         # for name, val in source.data.items():
         for src_id, src in source_map['TimeSeries1D'].items():
             for ydata_id, ysrc in src['source'].items():
-            # for name, val in src['source'].data.items():
+                # for name, val in src['source'].data.items():
                 for name, val in ysrc.data.items():
                     if name != "datetime":
                         # traces_options.append(((src_id, name), name))
@@ -825,7 +835,6 @@ class SizeDistribution(PlotApp):
 
                 sd_map[src_id] = dict()
                 sd_map[src_id]['source'] = dict()
-                
 
                 # data['datetime'] = []
                 # for y in sd_config['y_data']:
@@ -1475,12 +1484,29 @@ class GeoMapPlot(PlotApp):
                         #     name = self.prefix + '_' + y
                         data[name] = []
 
-                    if 'latitude' not in data:
-                        data['latitude'] = []
-                    if 'longitude' not in data:
-                        data['longitude'] = []
-                    if 'altitude' not in data:
-                        data['altitude'] = []
+                    # add lat/lon and x/y unit arrays
+                    param_list = [
+                        'latitude',
+                        'latitude_y',
+                        'longitude',
+                        'longitude_x',
+                        'altitude'
+                    ]
+                    for par in param_list:
+                        # par_name = prefix+par
+                        if par not in data:
+                            data[par] = []
+
+                    # if 'latitude' not in data:
+                    #     data['latitude'] = []
+                    # if 'latitude_y' not in data:
+                    #     data['latitude_y'] = []
+                    # if 'longitude' not in data:
+                    #     data['longitude'] = []
+                    # if 'longitude_x' not in data:
+                    #     data['longitude_x'] = []
+                    # if 'altitude' not in data:
+                    #     data['altitude'] = []
 
                     cds = ColumnDataSource(data=data)
                     geo_map[src_id]['source'][ydata_id] = cds
@@ -1535,6 +1561,7 @@ class GeoMapPlot(PlotApp):
                 if 'primary_gps' in src:
                     # primary_gps = src_id
                     # self.sync_buffer['GPS'][src_id] = deque(maxlen=10)
+                    geo_map[src_id]['primary_gps'] = src['primary_gps']
                     self.sync_buffer['GPS'][src_id] = dict()
                 else:
                     # self.sync_buffer['DATA'][src_id] = deque(maxlen=10)
@@ -1554,36 +1581,37 @@ class GeoMapPlot(PlotApp):
         # msg = await self.main_buffer.get()
         # print(f'TS1D: update_main_source')
         if msg:
-            # src_id, data = self.handle_main(msg)
-            data_list = self.handle_main(msg)
-            # print(f' {data_list}')
-            # print(f'    {src_id}: {data}')
-            return
+            src_id, data = self.handle_main(msg)
+
             if data:
-                # print(f'data: {data}')
-                # self.source.stream(data, rollover=self.rollover)
-                source = self.source_map['GeoMapPlot'][src_id]['source']
-                # print(f'909090  source: {source.data}, {src_id}, {data}')
-                source.stream(data, rollover=self.rollover)
-                # self.source_map['TimeSeries1D'][src_id]['source'].stream(
-                #     data,
-                #     rollover=self.rollover
-                # )
-                # print(f'source: {source.data}')
+                for y_id, y_data in data.items():
+                    # print(f'data: {data}')
+                    # self.source.stream(data, rollover=self.rollover)
+                    source = (
+                        self.source_map['GeoMapPlot'][src_id]['source'][y_id]
+                    )
+                    # print(f'909090  source: {source.data}, {src_id}, {y_data}')
+                    source.stream(y_data, rollover=self.rollover)
+                    # self.source_map['TimeSeries1D'][src_id]['source'].stream(
+                    #     data,
+                    #     rollover=self.rollover
+                    # )
+                    # print(f'source: {source.data}')
             # print(f'update_main_source: {self.source.data["datetime"]}')
 
-    def get_sync_data(self, src_id, dt_string, msg):
+    def get_sync_data_main(self, src_id, dt_string, msg_body):
 
         max_size = 120
 
         # check to see if src_id is gps
         if src_id in self.sync_buffer['GPS']:
-            self.sync_buffer['GPS'][src_id][dt_string] = msg
+            self.sync_buffer['GPS'][src_id][dt_string] = msg_body
         elif src_id in self.sync_buffer['DATA']:
-            self.sync_buffer['DATA'][src_id][dt_string] = msg
+            self.sync_buffer['DATA'][src_id][dt_string] = msg_body
         self.sync_buffer['DATETIME'].append(dt_string)
 
-        msg_list = []
+        # msg_list = []
+        msg_map = dict()
         gps_id = next(iter(self.sync_buffer['GPS']))
         gps_data = self.sync_buffer['GPS'][gps_id]
         for src_id, data in self.sync_buffer['DATA'].items():
@@ -1591,20 +1619,19 @@ class GeoMapPlot(PlotApp):
                 dt_string in data and
                 dt_string in gps_data
             ):
-                msg_list.append(
-                    {
-                        dt_string: {
-                            'GPS': {
-                                'src_id': gps_id,
-                                'msg': gps_data
-                            },
-                            'DATA': {
-                                'src_id': src_id,
-                                'msg': data
-                            }
-                        }
+                # msg_list.append(
+                #     {
+                #         dt_string: {
+                msg_map[dt_string] = {
+                    'GPS': {
+                        'src_id': gps_id,
+                        'body': gps_data
+                    },
+                    'DATA': {
+                        'src_id': src_id,
+                        'body': data
                     }
-                )
+                }
 
         # check for dt buffer length and trim if necessary
         if len(self.sync_buffer['DATETIME']) > max_size:
@@ -1620,7 +1647,8 @@ class GeoMapPlot(PlotApp):
 
             self.sync_buffer['DATETIME'].pop(0)
 
-        return msg_list
+        # return msg_list
+        return msg_map
 
     def handle_main(self, msg):
         data = None
@@ -1630,12 +1658,13 @@ class GeoMapPlot(PlotApp):
         if 'message' in msg:
             # print(f'here:1')
             src_id = msg['message']['SENDER_ID']
-            body = msg['message']['BODY']
+            msg_body = msg['message']['BODY']
             data = dict()
-            dt_string = body['DATA']['DATETIME']
-            msg_list = self.get_sync_data(src_id, dt_string, msg)
+            dt_string = msg_body['DATA']['DATETIME']
+            msg_map = self.get_sync_data_main(src_id, dt_string, msg_body)
             # print(f'msg_list: {msg_list}')
-            return None
+            if not msg_map:
+                return None, None
 
             # data['datetime'] = []
             # data['datetime'].append(
@@ -1647,11 +1676,37 @@ class GeoMapPlot(PlotApp):
             # print(f'here:1')
             source_data = self.source_map['GeoMapPlot'][src_id]['source']
             # print(f'here:2 {source_data}')
-            for name, meas in body['DATA']['MEASUREMENTS'].items():
-                if len(self.prefix_map[src_id]) > 0:
-                    name = self.prefix_map[src_id] + '_' + name
-                # if name in self.source.data:
-                # print(f'    {source_data.data}')
+
+            # add gps data
+            # gps_src_id = msg_map[dt_string]['GPS']['src_id']
+            gps_body = msg_map[dt_string]['GPS']['body']
+
+            lon = None
+            lat = None
+            alt = None
+            # lon_x_name = 'longitude_x'
+            # lat_y_name = 'latitude_y'
+
+            for name, meas in (
+                gps_body[dt_string]['DATA']['MEASUREMENTS'].items()
+            ):
+
+                if name == 'longitude':
+                    lon = meas['VALUE']
+                elif name == 'latitude':
+                    lat = meas['VALUE']
+                elif name == 'altitude':
+                    alt = meas['VALUE']
+
+            data_src_id = msg_map[dt_string]['DATA']['src_id']
+            data_body = msg_map[dt_string]['DATA']['body']
+            for name, meas in (
+                data_body[dt_string]['DATA']['MEASUREMENTS'].items()
+            ):
+
+                if len(self.prefix_map[data_src_id]) > 0:
+                    name = self.prefix_map[data_src_id] + '_' + name
+
                 for y_id, ysrc in source_data.items():
 
                     if name in ysrc.data:
@@ -1670,14 +1725,40 @@ class GeoMapPlot(PlotApp):
                         # print(f'        {name}: {meas["VALUE"]}')
                         data[y_id][name] = []
                         data[y_id][name].append(meas['VALUE'])
-                        # data[name] = []
-                        # data[name].append(meas['VALUE'])
-                        # data[name] = meas['VALUE']
+
+                        if lat and lon:
+
+                            lon_x, lat_y = self.main_merc(lat, lon)
+                            if 'latitude' not in data[y_id]:
+                                data[y_id]['latitude'] = []
+                                data[y_id]['latitude'].append(lat)
+                            if 'latitude_y' not in data[y_id]:
+                                data[y_id]['latitude_y'] = []
+                                data[y_id]['latitude_y'].append(lat_y)
+                            if 'longitude' not in data[y_id]:
+                                data[y_id]['longitude'] = []
+                                data[y_id]['longitude'].append(lon)
+                            if 'longitude_y' not in data[y_id]:
+                                data[y_id]['longitude_x'] = []
+                                data[y_id]['longitude_x'].append(lon_x)
+                            if 'altitude' not in data[y_id]:
+                                data[y_id]['altitude'] = []
+                                data[y_id]['altitude'].append(alt)
+
             if len(data) == 0:
                 data = None
                 src_id = None
 
         return src_id, data
+
+    def main_merc(self, lat, lon):
+        r_major = 6378137.000
+        x = r_major * math.radians(lon)
+        scale = x/lon
+        y = 180.0/math.pi * \
+            math.log(math.tan(math.pi/4.0 + lat *
+                              (math.pi/180.0)/2.0)) * scale
+        return (x, y)
 
     def get_measurement_config(self, src_id, meas_name):
 
@@ -1727,6 +1808,11 @@ class GeoMapPlot(PlotApp):
         #     data=self.get_source_data()
         # )
 
+        sync_buffer = dict()
+        sync_buffer['DATETIME'] = []
+        sync_buffer['GPS'] = dict()
+        sync_buffer['DATA'] = dict()
+
         # TODO: instantiate ColDatSrc here
         current_data, source_map = self.get_source_meta()
 
@@ -1734,12 +1820,23 @@ class GeoMapPlot(PlotApp):
         #   versions instantiated here. Works when deepcopy doesn't
         for src_id, src in source_map['GeoMapPlot'].items():
             for ydata_id, ysrc in src['source'].items():
- 
+
                 source_map['GeoMapPlot'][src_id]['source'][ydata_id] = (
                     ColumnDataSource(
                         data=ysrc.data
                     )
                 )
+
+            # setup sources to mate gps and other data
+            if 'primary_gps' in src:
+                # primary_gps = src_id
+                # self.sync_buffer['GPS'][src_id] = deque(maxlen=10)
+                sync_buffer['GPS'][src_id] = dict()
+            else:
+                # self.sync_buffer['DATA'][src_id] = deque(maxlen=10)
+                sync_buffer['DATA'][src_id] = dict()
+
+
             #  if 'source' not in src:
             #     continue
 
@@ -1779,17 +1876,24 @@ class GeoMapPlot(PlotApp):
                 src_id, data = handle(data_msg)
                 # print(f' update_source: {src_id}, {data}')
                 if data:
-                    # print(f'data[datetime] = {data["datetime"]}')
-                    # print(f'232323 data: {data}')
-                    # source.stream(data, rollover=self.rollover)
-                    # source = source_map['TimeSeries1D'][src_id]['source']
-                    # print(f' {source.data}')
-                    # source.stream(data, rollover=rollover)
-                    # print(f'    {source.data}')
-                    source_map['GeoMapPlot'][src_id]['source'].stream(
-                        data,
-                        rollover=rollover
-                    )
+                    for y_id, y_data in data.items():
+                        # print(f'data[datetime] = {data["datetime"]}')
+                        # print(f'232323 data: {data}')
+                        # source.stream(data, rollover=self.rollover)
+                        # source = source_map['TimeSeries1D'][src_id]['source']
+                        # print(f' {source.data}')
+                        # source.stream(data, rollover=rollover)
+                        # print(f'    {source.data}')
+                        sm = source_map['GeoMapPlot'][src_id]['source'][y_id]
+                        sm.stream(
+                            y_data,
+                            rollover=rollover
+                        )
+
+                    # source_map['GeoMapPlot'][src_id]['source'].stream(
+                    #     data,
+                    #     rollover=rollover
+                    # )
                 # print(f'update_test: {source.data["datetime"]}')
 
         def merc(lat, lon):
@@ -1801,6 +1905,57 @@ class GeoMapPlot(PlotApp):
                                   (math.pi/180.0)/2.0)) * scale
             return (x, y)
 
+        def get_sync_data(src_id, dt_string, msg_body):
+
+            max_size = 120
+
+            # check to see if src_id is gps
+            if src_id in sync_buffer['GPS']:
+                sync_buffer['GPS'][src_id][dt_string] = msg_body
+            elif src_id in sync_buffer['DATA']:
+                sync_buffer['DATA'][src_id][dt_string] = msg_body
+            sync_buffer['DATETIME'].append(dt_string)
+
+            # msg_list = []
+            msg_map = dict()
+            gps_id = next(iter(sync_buffer['GPS']))
+            gps_data = sync_buffer['GPS'][gps_id]
+            for src_id, data in sync_buffer['DATA'].items():
+                if (
+                    dt_string in data and
+                    dt_string in gps_data
+                ):
+                    # msg_list.append(
+                    #     {
+                    #         dt_string: {
+                    msg_map[dt_string] = {
+                        'GPS': {
+                            'src_id': gps_id,
+                            'body': gps_data
+                        },
+                        'DATA': {
+                            'src_id': src_id,
+                            'body': data
+                        }
+                    }
+
+            # check for dt buffer length and trim if necessary
+            if len(sync_buffer['DATETIME']) > max_size:
+                dt = sync_buffer['DATETIME'][0]
+                gps_id = next(iter(sync_buffer['GPS']))
+
+                if dt in sync_buffer['GPS'][gps_id]:
+                    sync_buffer['GPS'][gps_id].pop(dt)
+
+                for src_id, data in sync_buffer['DATA'].items():
+                    if dt in data:
+                        data.pop(dt)
+
+                sync_buffer['DATETIME'].pop(0)
+
+            # return msg_list
+            return msg_map
+
         def handle(msg):
             data = None
             src_id = None
@@ -1808,26 +1963,107 @@ class GeoMapPlot(PlotApp):
             # time.tzset()
             if 'message' in msg:
                 src_id = msg['message']['SENDER_ID']
-                body = msg['message']['BODY']
+                msg_body = msg['message']['BODY']
                 data = dict()
-                dt_string = body['DATA']['DATETIME']
-                data['datetime'] = []
-                data['datetime'].append(
-                    # utilities.util.string_to_dt(dt_string).replace(tzinfo=None)
-                    time_util.string_to_dt(dt_string)
+                dt_string = msg_body['DATA']['DATETIME']
 
-                )
-                # print(data['datetime'])
+                msg_map = get_sync_data(src_id, dt_string, msg_body)
+                # print(f'msg_list: {msg_list}')
+                if not msg_map:
+                    return None, None
+
                 source_data = source_map['GeoMapPlot'][src_id]['source']
-                # print(f'******  app update: {source_data.data}')
-                for name, meas in body['DATA']['MEASUREMENTS'].items():
+
+                gps_body = msg_map[dt_string]['GPS']['body']
+                lon = None
+                lat = None
+                alt = None
+
+                for name, meas in (
+                    gps_body[dt_string]['DATA']['MEASUREMENTS'].items()
+                ):
+
+                    if name == 'longitude':
+                        lon = meas['VALUE']
+                    elif name == 'latitude':
+                        lat = meas['VALUE']
+                    elif name == 'altitude':
+                        alt = meas['VALUE']
+
+                data_src_id = msg_map[dt_string]['DATA']['src_id']
+                data_body = msg_map[dt_string]['DATA']['body']
+                for name, meas in (
+                    data_body[dt_string]['DATA']['MEASUREMENTS'].items()
+                ):
+
                     # print(f' {name}: {meas}')
-                    if len(prefix_map[src_id]) > 0:
-                        name = prefix_map[src_id] + '_' + name
-                    # print(f'{name} in {source_data.data}')
-                    if name in source_data.data:
-                        data[name] = []
-                        data[name].append(meas['VALUE'])
+                    if len(prefix_map[data_src_id]) > 0:
+                        name = prefix_map[data_src_id] + '_' + name
+
+                    for y_id, ysrc in source_data.items():
+
+                        if name in ysrc.data:
+                            # if name in source_data.data:
+                            # create src data for y_id
+                            if y_id not in data:
+                                data[y_id] = dict()
+
+                            # add datetime to y_id just once
+                            if 'datetime' not in data[y_id]:
+                                data[y_id]['datetime'] = []
+                                data[y_id]['datetime'].append(
+                                    time_util.string_to_dt(dt_string),
+                                )
+
+                            data[y_id][name] = []
+                            data[y_id][name].append(meas['VALUE'])
+
+                            if lat and lon:
+
+                                lon_x, lat_y = merc(lat, lon)
+                                print(f'lat: {lat}, {lat_y}, lon: {lon}, {lon_x}')
+                                if 'latitude' not in data[y_id]:
+                                    data[y_id]['latitude'] = []
+                                    data[y_id]['latitude'].append(lat)
+                                if 'latitude_y' not in data[y_id]:
+                                    data[y_id]['latitude_y'] = []
+                                    data[y_id]['latitude_y'].append(lat_y)
+                                if 'longitude' not in data[y_id]:
+                                    data[y_id]['longitude'] = []
+                                    data[y_id]['longitude'].append(lon)
+                                if 'longitude_x' not in data[y_id]:
+                                    data[y_id]['longitude_x'] = []
+                                    data[y_id]['longitude_x'].append(lon_x)
+                                if 'altitude' not in data[y_id]:
+                                    data[y_id]['altitude'] = []
+                                    data[y_id]['altitude'].append(alt)
+
+
+                    #     # print(f'{name} in {source_data.data}')
+                    #     if name in source_data.data:
+                    #         data[name] = []
+                    #         data[name].append(meas['VALUE'])
+                    # if len(data) == 0:
+                    #     data = None
+                    #     src_id = None
+
+                    # data['datetime'] = []
+                    # data['datetime'].append(
+                    #     # utilities.util.string_to_dt(dt_string).replace(tzinfo=None)
+                    #     time_util.string_to_dt(dt_string)
+
+                    # )
+                    # # print(data['datetime'])
+                    # source_data = source_map['GeoMapPlot'][src_id]['source']
+                    # # print(f'******  app update: {source_data.data}')
+                    # for name, meas in body['DATA']['MEASUREMENTS'].items():
+                    #     # print(f' {name}: {meas}')
+                    #     if len(prefix_map[src_id]) > 0:
+                    #         name = prefix_map[src_id] + '_' + name
+                    #     # print(f'{name} in {source_data.data}')
+                    #     if name in source_data.data:
+                    #         data[name] = []
+                    #         data[name].append(meas['VALUE'])
                 if len(data) == 0:
                     data = None
                     src_id = None
@@ -1864,6 +2100,54 @@ class GeoMapPlot(PlotApp):
             x_min, y_min = merc(default_lat_range[0], default_lon_range[0])
             x_max, y_max = merc(default_lat_range[1], default_lon_range[1])
 
+            # fig = figure(
+            #     # title=self.title,
+            #     x_range=(x_min, x_max),
+            #     y_range=(y_min, y_max),
+            #     x_axis_type='mercator',
+            #     y_axis_type='mercator',
+            #     # x_axis_label="DateTime",
+            #     # x_axis_type="datetime",
+            #     # plot_width=500,
+            #     plot_height=500,
+            #     toolbar_location='above',
+            #     tooltips=TOOLTIPS,
+            #     # sizing_mode='stretch_width',
+            #     # x_range=[0, 1],
+            #     # y_range=[0, 1],
+
+            # )
+            # fig.add_tile(tile_provider)
+
+            axes_map = dict()
+            current_trace = ''
+            for trace in current_data['GeoMapPlot']['z_data']:
+                # src_id = trace[0]
+                # y_name = trace[1]
+                src_id, y_name = decode_data_id(trace)
+                current_trace = y_name
+                # print(f'trace: {trace}, {src_id}, {y_name}')
+                sm = source_map['GeoMapPlot'][src_id]
+                # print(f"here1: {sm}")
+                if y_name in sm['info_map']:
+                    # print("here2")
+                    info_map = sm['info_map'][y_name]
+                    # print("here3")
+                    units = info_map['units']
+                    # print("here4")
+                    if units not in axes_map:
+                        axes_map[units] = []
+                    # print("here5")
+                    axes_map[units].append(trace)
+                    # print("here6")
+
+            TOOLTIPS = [
+                # ("index", "$index"),
+                ("(lat,lon)", "(@latitude, @longitude)"),
+                # ("desc", "@desc"),
+                (current_trace, f'@{current_trace}')
+            ]
+
             fig = figure(
                 # title=self.title,
                 x_range=(x_min, x_max),
@@ -1875,7 +2159,7 @@ class GeoMapPlot(PlotApp):
                 # plot_width=500,
                 plot_height=500,
                 toolbar_location='above',
-                # tooltips=TOOLTIPS,
+                tooltips=TOOLTIPS,
                 # sizing_mode='stretch_width',
                 # x_range=[0, 1],
                 # y_range=[0, 1],
@@ -1883,101 +2167,129 @@ class GeoMapPlot(PlotApp):
             )
             fig.add_tile(tile_provider)
 
-            # axes_map = dict()
-            # for trace in current_data['GeoPlotMap']['z_data']:
-            #     # src_id = trace[0]
-            #     # y_name = trace[1]
-            #     src_id, y_name = decode_data_id(trace)
-            #     # print(f'trace: {trace}, {src_id}, {y_name}')
-            #     sm = source_map['GeoMapPlot'][src_id]
-            #     # print(f"here1: {sm}")
-            #     if y_name in sm['info_map']:
-            #         # print("here2")
-            #         info_map = sm['info_map'][y_name]
-            #         # print("here3")
-            #         units = info_map['units']
-            #         # print("here4")
-            #         if units not in axes_map:
-            #             axes_map[units] = []
-            #         # print("here5")
-            #         axes_map[units].append(trace)
-            #         # print("here6")
+            first = True
+            legend_items = []
+            color_bar = None
+            trace_cnt = 0
+            for axis, data in axes_map.items():
+                # if first:
+                for id_y in data:
+                    # print(f'id_y: {id_y}')
+                    # src_id = id_y[0]
+                    # y_data = id_y[1]
+                    src_id, z_data = decode_data_id(id_y)
 
-            # first = True
-            # legend_items = []
-            # for axis, data in axes_map.items():
-            #     if first:
-            #         for id_y in data:
-            #             # print(f'id_y: {id_y}')
-            #             # src_id = id_y[0]
-            #             # y_data = id_y[1]
-            #             src_id, z_data = decode_data_id(id_y)
-            #             z_source = source_map['GeoMapPlot'][src_id]['source']
-            #             # print(f'y_source: {y_source.data}')
-            #             new_line = fig.line(
-            #                 # source=source,
-            #                 source=z_source,
-            #                 x='longitude',
-            #                 y='latitude',
-            #                 line_color=mapper,
-            #                 color=mapper,
-            #                 # size=z_data,
-            #                 # legend=y_data,
-            #             )
-            #             legend_items.append((z_data, [new_line]))
-            #         # fig.yaxis.axis_label = axis
-            #         # fig.xaxis.formatter = DatetimeTickFormatter(
-            #         #     days="%F",
-            #         #     hours="%F %H:%M",
-            #         #     minutes="%F %H:%M",
-            #         #     minsec="%T",
-            #         #     seconds="%T"
-            #         # )
-            #     # else:
-            #     #     # renders = []
-            #     #     # for y_data in data:
-            #     #     for id_y in data:
-            #     #         # src_id = id_y[0]
-            #     #         # y_data = id_y[1]
-            #     #         src_id, y_data = decode_data_id(id_y)
-            #     #         y_source = source_map['TimeSeries1D'][src_id]['source']
+                    sm = source_map['GeoMapPlot'][src_id]['source']
+                    for zdata_id, zsrc in sm.items():
+                        if z_data in zsrc.data:
+                            z_data_id = zdata_id
+                    z_source = sm[z_data_id]
 
-            #     #         fig.extra_y_ranges[axis] = DataRange1d()
-            #     #         # axis: Range1d()}
-            #     #         new_line = Line(
-            #     #             x='datetime',
-            #     #             y=y_data,
-            #     #         )
-            #     #         render = fig.add_glyph(
-            #     #             # source,
-            #     #             y_source,
-            #     #             new_line,
-            #     #             y_range_name=axis
-            #     #         )
-            #     #         fig.extra_y_ranges[axis].renderers.append(render)
-            #     #         legend_items.append((y_data, [render]))
+                    low = 0
+                    high = 1000
+                    if z_source.data[z_data]:
+                        low = min(z_source.data[z_data])
+                        high = max(z_source.data[z_data])
 
-            #     #         # line = fig.line(
-            #     #         #     source=source,
-            #     #         #     x='datetime',
-            #     #         #     y=y_data,
-            #     #         #     # legend=y_data,
-            #     #         #     y_range_name=axis
-            #     #         # )
-            #     #         # renders.append(line)
-            #     #     # fig.xaxis.axis_label = axis
-            #     #     fig.add_layout(LinearAxis(
-            #     #         y_range_name=axis, axis_label=axis), 'left')
+                    mapper = linear_cmap(
+                        field_name=z_data,
+                        palette=Spectral6,
+                        low=low,
+                        high=high,
+                        # low=0,
+                        # high=1000,
+                    )
 
-            #     first = False
-            # legend = Legend(
-            #     items=legend_items,
-            #     location='center',
-            #     # location=(0, -30)
+                    # z_source = source_map['GeoMapPlot'][src_id]['source']
+                    # print(f'y_source: {y_source.data}')
+                    # new_line = fig.line(
+                    #     # source=source,
+                    #     source=z_source,
+                    #     x='longitude',
+                    #     y='latitude',
+                    #     line_color=mapper,
+                    #     # color=mapper,
+                    #     # size=z_data,
+                    #     # legend=y_data,
+                    # )
+                    # color_bar = ColorBar(
+                    #     color_mapper=mapper
+                    # )
+
+                    new_pt = fig.circle(
+                        # source=source,
+                        source=z_source,
+                        x='longitude_x',
+                        y='latitude_y',
+                        # line_color=['black', ],
+                        color=mapper,
+                        # size=z_data,
+                        # legend=y_data,
+                    )
+                    color_bar = ColorBar(
+                        color_mapper=mapper['transform'],
+                    )
+                    # legend_items.append((z_data, [new_line]))
+                    # legend_items.append((z_data, [new_line, new_pt]))
+
+        #         # fig.yaxis.axis_label = axis
+        #         # fig.xaxis.formatter = DatetimeTickFormatter(
+        #         #     days="%F",
+        #         #     hours="%F %H:%M",
+        #         #     minutes="%F %H:%M",
+        #         #     minsec="%T",
+        #         #     seconds="%T"
+        #         # )
+        #     # else:
+        #     #     # renders = []
+        #     #     # for y_data in data:
+        #     #     for id_y in data:
+        #     #         # src_id = id_y[0]
+        #     #         # y_data = id_y[1]
+        #     #         src_id, y_data = decode_data_id(id_y)
+        #     #         y_source = source_map['TimeSeries1D'][src_id]['source']
+
+        #     #         fig.extra_y_ranges[axis] = DataRange1d()
+        #     #         # axis: Range1d()}
+        #     #         new_line = Line(
+        #     #             x='datetime',
+        #     #             y=y_data,
+        #     #         )
+        #     #         render = fig.add_glyph(
+        #     #             # source,
+        #     #             y_source,
+        #     #             new_line,
+        #     #             y_range_name=axis
+        #     #         )
+        #     #         fig.extra_y_ranges[axis].renderers.append(render)
+        #     #         legend_items.append((y_data, [render]))
+
+        #     #         # line = fig.line(
+        #     #         #     source=source,
+        #     #         #     x='datetime',
+        #     #         #     y=y_data,
+        #     #         #     # legend=y_data,
+        #     #         #     y_range_name=axis
+        #     #         # )
+        #     #         # renders.append(line)
+        #     #     # fig.xaxis.axis_label = axis
+        #     #     fig.add_layout(LinearAxis(
+        #     #         y_range_name=axis, axis_label=axis), 'left')
+
+                # first = False
+            legend = Legend(
+                items=legend_items,
+                location='center',
+                # location=(0, -30)
+            )
+
+            # color_bar = ColorBar(
+            #     color_mapper=mapper
             # )
 
             # # colorbar = ColorBar(color_mapper=mapper['transform'], width=8, location=(0,0))
-            # # fig.add_layout(colorbar, 'right')
+            if color_bar:
+                fig.add_layout(color_bar, 'right')
             # # fig.add_layout(legend, 'right')
 
             return fig
@@ -1986,7 +2298,11 @@ class GeoMapPlot(PlotApp):
             trace_list = traces.value
             print(f'update_traces: {trace_list}')
 
-            current_data['GeoMapPlot']['z_data'] = traces.value
+            if current_data['GeoMapPlot']['z_data']:
+                current_data['GeoMapPlot']['z_data'][0] = traces.value
+            else:
+                current_data['GeoMapPlot']['z_data'].append(traces.value)
+                
             fig = build_plot()
             # doc.title = self.title
             # doc.add_periodic_callback(update_source, 1000)
@@ -2024,15 +2340,16 @@ class GeoMapPlot(PlotApp):
             #     print(f'stream: {self.source}')
             #     self.source.stream(data, rollover=10)
 
-        TOOLTIPS = [
-            ("index", "$index"),
-            ("(x,y)", "($x, $y)"),
-            ("desc", "@desc"),
-        ]
+        # TOOLTIPS = [
+        #     # ("index", "$index"),
+        #     ("(lat,lon)", "(@latitude, @longitude)"),
+        #     # ("desc", "@desc"),
+        #     ("value", "@$name")
+        # ]
 
         fig = build_plot()
         doc.title = self.title
-        # doc.add_periodic_callback(update_source, 250)
+        doc.add_periodic_callback(update_source, 250)
 
         traces_options = []
         for src_id, src in source_map['GeoMapPlot'].items():
@@ -2042,21 +2359,28 @@ class GeoMapPlot(PlotApp):
                         name != "latitude" and
                         name != 'longitude' and
                         name != 'altitude' and
+                        name != "latitude_y" and
+                        name != 'longitude_x' and
                         name != 'datetime'
                     ):
                         # traces_options.append(((src_id, name), name))
                         option_val = encode_data_id(src_id, name)
                         traces_options.append((option_val, name))
-        traces_current = current_data['GeoMapPlot']['z_data']
+        # traces_current = current_data['GeoMapPlot']['z_data']
+        trace_current = ''
+        if current_data['GeoMapPlot']['z_data']:
+            trace_current = current_data['GeoMapPlot']['z_data'][0]
         # traces_current = ['test_concentration']
         # print(f'options, current: {traces_options}, {traces_current}')
-        traces = MultiSelect(
+        # traces = MultiSelect(
+        traces = Select(
             title='Select data to plot',
-            value=traces_current,
+            # value=traces_current,
+            value=trace_current,
             options=traces_options,
         )
 
-        # traces.on_change('value', update_traces)
+        traces.on_change('value', update_traces)
 
         doc_layout = layout(
             [
