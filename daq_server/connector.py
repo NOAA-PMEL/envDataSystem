@@ -267,15 +267,16 @@ class WSConnectorServer(ConnectorServer):
 
         self.add_client(path, ws)
 
-        msg = await ws.recv()
-        print(f'read_ws: {msg}')
-        con_msg = ConnectorMessage(
-            address=self.ui_address,
-            id=path,
-            body=msg,
-        )
+        # msg = await ws.recv()
+        async for msg in ws:
+            print(f'read_ws: {msg}')
+            con_msg = ConnectorMessage(
+                address=self.ui_address,
+                id=path,
+                body=msg,
+            )
 
-        await self.to_ui_buf.put(con_msg)
+            await self.to_ui_buf.put(con_msg)
 
     async def to_ui_loop(self):
 
