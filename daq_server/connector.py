@@ -320,6 +320,7 @@ class WSConnectorServer(ConnectorServer):
 
         while True:
             print(f'to_server_loop...')
+            # con_msg = await self.from_ui_buf.get()
             con_msg = await self.from_ui_buf.get()
             # msg = ConnectorMessage()
             # msg.from_json(con_msg)
@@ -327,9 +328,9 @@ class WSConnectorServer(ConnectorServer):
             # con_msg = msg.body
             print(f'()() to server loop: {con_msg.to_json()} ')
             # if id in con_msg:
-            if "path" in con_msg:
+            if con_msg.path:
                 # client = self.get_client(con_msg['id'])
-                client = self.get_client(con_msg['path'])
+                client = self.get_client(con_msg.path)
                 print(f'()() client: {client}')
                 if client:
                     # msg = f'{con_msg["body"]}\n'
