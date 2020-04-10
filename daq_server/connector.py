@@ -39,6 +39,7 @@ class ConnectorMessage():
 
     def from_json(self, message):
         try:
+            print(f'con message: {message}')
             msg = json.loads(message)
         except json.JSONDecodeError:
             print(f'invalid json message')
@@ -230,9 +231,9 @@ class ConnectorServer(Connector):
 
     async def handle_iface(self, msg, type=None):
         if (type == 'FromIFace'):
-            if (msg.subject == 'DATA'):
-                con_msg = msg.body['DATA']
-                await self.from_ui_buf.put(con_msg)
+            # if (msg.subject == 'DATA'):
+            con_msg = msg.body['DATA']
+            await self.from_ui_buf.put(con_msg)
 
 
 class WSConnectorServer(ConnectorServer):
@@ -362,7 +363,7 @@ class ConnectorUI(Connector):
             # loop through ws clients and read if
             #   messages are ready
             for path, client in self.clients.items():
-                if client.message_ready():
+                if client.message_waiting():
                     msg = await client.read()
                     con_msg = ConnectorMessage(
                         address=self.ui_address,
@@ -370,19 +371,19 @@ class ConnectorUI(Connector):
                         body=msg,
                     )
                     print(f'read_client_loop: {con_msg.to_json()}')
-                    self.from_ui_buf.put(con_msg)
-                await asyncio.sleep(.1)
+                    await self.from_ui_buf.put(con_msg)
+            await asyncio.sleep(.1)
 
     async def handle_iface(self, msg, type=None):
         # super().handle_iface(msg, type)
-        print(f'handle iface ui: {msg}')
+        print(f'handle iface ui: {msg.to_json()}')
         if (type == 'FromIFace'):
-            if (msg.subject == 'DATA'):
-                con_msg = ConnectorMessage().from_json(
-                    msg.body['DATA']
-                )
-                print(f'con_message: {msg}, {con_msg}')
-                await self.to_ui_buf.put(con_msg)
+            # if (msg.subject == 'DATA'):
+            con_msg = ConnectorMessage().from_json(
+                msg.body['DATA']
+            )
+            print(f'con_message: {msg.to_json()}, {con_msg.to_json()}')
+            await self.to_ui_buf.put(con_msg)
 
 
 class WSConnectorUI(ConnectorUI):
@@ -416,7 +417,7 @@ class WSConnectorUI(ConnectorUI):
         self.add_client(path, ws)
 
         msg = await ws.recv()
-
+        # async for msg in ws:
         con_msg = ConnectorMessage(
             address=self.ui_address,
             id=path,
@@ -574,5 +575,5 @@ if __name__ == "__main__":
     from daq.interface.interface import InterfaceFactory
     from data.message import Message
 
-    # main('ui')
-    main(sys.argv[1])
+    main('ui')
+    # main(sys.argv[1])
