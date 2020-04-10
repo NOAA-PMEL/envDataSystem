@@ -217,11 +217,12 @@ class SerialPortClient(ClientConnection):
         print('starting read loop')
         while True:
             if self.ConnectionState() == ClientConnection.CONNECTED:
-                # print(f'read_loop: {websocket}')
+                # print(f'read_loop: {serialport}')
                 if self.read_method == 'readline':
                     msg = await serialport.readline(
                         decode_errors=self.decode_errors
                     )
+                    # print(f'*** serial port msg: {msg}')
                 elif self.read_method == 'readuntil':
                     msg = await serialport.readuntil(
                         self.read_terminator,
@@ -238,7 +239,7 @@ class SerialPortClient(ClientConnection):
                         ret_packet_size
                     )
 
-                # print('read loop: {}'.format(msg))
+                print(' ^^^^ read loop: {}'.format(msg))
                 # await self.readq.put(msg)
                 # print('after readq.put')
                 if msg:
