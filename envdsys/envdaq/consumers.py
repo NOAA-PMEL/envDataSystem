@@ -845,7 +845,7 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
         # text_data_json = json.loads(text_data)
         data = json.loads(text_data)
         message = data['message']
-        # print(f'999999 message: {message}')
+        print(f'999999 message: {message}')
 
         if (message['SUBJECT'] == 'CONFIG'):
             body = message['BODY']

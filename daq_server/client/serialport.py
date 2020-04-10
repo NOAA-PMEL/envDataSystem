@@ -38,6 +38,7 @@ class SerialPortClient(ClientConnection):
             **kwargs,
         )
 
+        print("serial port client init")
         self.send_method = send_method
         self.read_method = read_method
         self.read_terminator = read_terminator
@@ -80,6 +81,7 @@ class SerialPortClient(ClientConnection):
         async def connect(self, uri):
             self.connect_state = ClientConnection.CONNECTING
             try:
+                print(f'connecting...serial')
                 self.reader, self.writer = (
                     await serial_asyncio.open_serial_connection(
                         url=uri,
@@ -102,16 +104,17 @@ class SerialPortClient(ClientConnection):
         async def readline(self, decode_errors='strict'):
             if self.reader:
                 msg = await self.reader.readline()
-                # print(f'readline: {msg}')
+                print(f'readline: {msg}')
                 return msg.decode(errors=decode_errors)
 
         async def readuntil(self, terminator='\n', decode_errors='strict'):
             msg = await self.reader.readuntil(terminator.encode())
-            # print(f'readuntil: {msg}')
+            print(f'readuntil: {msg}')
             return msg.decode(errors=decode_errors)
 
         async def read(self, num_bytes=1, decode_errors='strict'):
             msg = await self.reader.read(num_bytes)
+            print(f'read: {msg}')
             return msg.decode(errors=decode_errors)
 
         async def readbinary(self, num_bytes=1, decode_errors='strict'):
@@ -120,7 +123,7 @@ class SerialPortClient(ClientConnection):
 
         async def write(self, msg):
             if self.writer:
-                # print(f'write msg: {msg.encode()}, {type(msg)}')
+                print(f'write msg: {msg.encode()}, {type(msg)}')
                 self.writer.write(msg.encode())
                 await self.writer.drain()
 

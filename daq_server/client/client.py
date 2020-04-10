@@ -68,6 +68,7 @@ class ClientConnection(abc.ABC):
             # asyncio.ensure_future(self.open())
             asyncio.ensure_future(self.run())
         )
+        print(self.task_list)
         print('ClientConnection: done with init')
         # print(self.task_list)
         # self.is_running = False
@@ -77,11 +78,10 @@ class ClientConnection(abc.ABC):
 
     def message_waiting(self):
         resp = False
-        if self.readq and not self.readq.empty:
+        if self.readq and not self.readq.empty():
             resp = True
         return resp
         
-
     async def run(self):
 
         timeout = 1  # seconds

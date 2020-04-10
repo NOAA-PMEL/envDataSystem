@@ -312,7 +312,7 @@ class SerialPortIFDevice(IFDevice):
             rtscts=self.rtscts,
             **self.kwargs,
         )
-        # print(f'serial port: {self.client}')
+        print(f'serial port: {self.client}')
 
         # # start dummy data loop
         # task = asyncio.ensure_future(self.data_loop())
