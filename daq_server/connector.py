@@ -324,7 +324,7 @@ class WSConnectorServer(ConnectorServer):
             # con_msg = msg.body
 
             # if id in con_msg:
-            if path in con_msg:
+            if "path" in con_msg:
                 # client = self.get_client(con_msg['id'])
                 client = self.get_client(con_msg['path'])
                 if client:
