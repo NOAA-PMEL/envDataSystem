@@ -575,5 +575,5 @@ if __name__ == "__main__":
     from daq.interface.interface import InterfaceFactory
     from data.message import Message
 
-    main('ui')
-    # main(sys.argv[1])
+    # main('ui')
+    main(sys.argv[1])
