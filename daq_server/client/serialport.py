@@ -104,7 +104,7 @@ class SerialPortClient(ClientConnection):
         async def readline(self, decode_errors='strict'):
             if self.reader:
                 msg = await self.reader.readline()
-                print(f'readline: {msg}')
+                print(f'81818181 readline: {msg}')
                 return msg.decode(errors=decode_errors)
 
         async def readuntil(self, terminator='\n', decode_errors='strict'):
@@ -222,7 +222,7 @@ class SerialPortClient(ClientConnection):
                     msg = await serialport.readline(
                         decode_errors=self.decode_errors
                     )
-                    # print(f'*** serial port msg: {msg}')
+                    print(f'*** serial port msg: {msg}')
                 elif self.read_method == 'readuntil':
                     msg = await serialport.readuntil(
                         self.read_terminator,
