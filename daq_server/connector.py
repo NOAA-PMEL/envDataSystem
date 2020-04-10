@@ -230,6 +230,7 @@ class ConnectorServer(Connector):
         return 'ConnectorServer'
 
     async def handle_iface(self, msg, type=None):
+        print(f'msg: {msg}, type={type}')
         if (type == 'FromIFace'):
             # if (msg.subject == 'DATA'):
             con_msg = msg.body['DATA']
@@ -322,7 +323,8 @@ class WSConnectorServer(ConnectorServer):
             if id in con_msg:
                 client = self.get_client(con_msg['id'])
                 if client:
-                    msg = f'{con_msg["body"]}\n'
+                    # msg = f'{con_msg["body"]}\n'
+                    msg = f'{con_msg["body"]}'
                     await client.send(msg)
 
 
@@ -412,19 +414,19 @@ class WSConnectorUI(ConnectorUI):
         uri += path.replace(" ", "")
         return uri
 
-    async def read_ws(self, ws, path):
+    # async def read_ws(self, ws, path):
 
-        self.add_client(path, ws)
+    #     self.add_client(path, ws)
 
-        msg = await ws.recv()
-        # async for msg in ws:
-        con_msg = ConnectorMessage(
-            address=self.ui_address,
-            id=path,
-            body=msg,
-        )
+    #     msg = await ws.recv()
+    #     # async for msg in ws:
+    #     con_msg = ConnectorMessage(
+    #         address=self.ui_address,
+    #         id=path,
+    #         body=msg,
+    #     )
 
-        await self.to_ui_buf.put(con_msg)
+    #     await self.to_ui_buf.put(con_msg)
 
     async def to_ui_loop(self):
 
@@ -443,6 +445,7 @@ class WSConnectorUI(ConnectorUI):
                     self.clients[path] = WSClient(uri=uri)
 
                 await self.clients[path].send(con_msg.body)
+            # await asyncio.sleep(.1)
 
     async def to_server_loop(self):
 
@@ -452,15 +455,16 @@ class WSConnectorUI(ConnectorUI):
             # msg.from_json(con_msg)
 
             # con_msg = msg.body
-
+            body = f'{con_msg.to_json()}\n'
             msg = Message(
                 sender_id=self.get_id(),
                 msgtype=Connector.class_type,
                 subject='SEND',
-                body=con_msg.to_json(),
+                body=body,
             )
-            print(f'msg: {msg}')
+            print(f'msg: {msg.to_json()}')
             await self.iface.message_from_parent(msg)
+            # await asyncio.sleep(0.1)
 
 
 async def heartbeat():
