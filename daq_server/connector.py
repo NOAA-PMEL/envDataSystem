@@ -335,7 +335,7 @@ class WSConnectorServer(ConnectorServer):
                 print(f'()() client: {client}')
                 if client:
                     # msg = f'{con_msg["body"]}\n'
-                    msg = f'{con_msg["body"]}'
+                    msg = f'{con_msg.body}'
                     print(f'()() msg = {msg}')
                     await client.send(msg)
 
