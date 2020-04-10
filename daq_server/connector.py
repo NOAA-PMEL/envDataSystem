@@ -322,14 +322,16 @@ class WSConnectorServer(ConnectorServer):
             # msg.from_json(con_msg)
 
             # con_msg = msg.body
-
+            print(f'()() to server loop: {con_msg.to_json()} ')
             # if id in con_msg:
             if "path" in con_msg:
                 # client = self.get_client(con_msg['id'])
                 client = self.get_client(con_msg['path'])
+                print(f'()() client: {client}')
                 if client:
                     # msg = f'{con_msg["body"]}\n'
                     msg = f'{con_msg["body"]}'
+                    print(f'()() msg = {msg}')
                     await client.send(msg)
 
 
