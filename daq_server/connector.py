@@ -328,6 +328,7 @@ class WSConnectorServer(ConnectorServer):
             # con_msg = msg.body
             print(f'()() to server loop: {con_msg.to_json()} ')
             # if id in con_msg:
+            print(f'\n\n con_msg: {con_msg.path}, {con_msg.address}\n\n')
             if con_msg.path:
                 # client = self.get_client(con_msg['id'])
                 client = self.get_client(con_msg.path)
