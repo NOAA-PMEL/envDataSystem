@@ -230,10 +230,13 @@ class ConnectorServer(Connector):
         return 'ConnectorServer'
 
     async def handle_iface(self, msg, type=None):
-        print(f'msg: {msg}, type={type}')
+        print(f'!!! msg: {msg}, type={type}')
         if (type == 'FromIFace'):
             # if (msg.subject == 'DATA'):
-            con_msg = msg.body['DATA']
+            con_msg = ConnectorMessage().from_json(
+                msg.body['DATA']
+            )
+            print(f'!!! con_message: {msg.to_json()}, {con_msg.to_json()}')
             await self.from_ui_buf.put(con_msg)
 
 
