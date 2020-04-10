@@ -238,6 +238,8 @@ class ConnectorServer(Connector):
             )
             print(f'!!! con_message: {msg.to_json()}, {con_msg.to_json()}')
             await self.from_ui_buf.put(con_msg)
+            print(f'\n --- \n --- \n message sent')
+            print(f'{self.from_ui_buf.empty()}')
 
 
 class WSConnectorServer(ConnectorServer):
