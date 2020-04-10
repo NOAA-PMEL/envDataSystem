@@ -319,10 +319,11 @@ class WSConnectorServer(ConnectorServer):
     async def to_server_loop(self):
 
         while True:
+            print(f'to_server_loop...')
             con_msg = await self.from_ui_buf.get()
             # msg = ConnectorMessage()
             # msg.from_json(con_msg)
-
+            print(f'rcvd message: {con_msg}')
             # con_msg = msg.body
             print(f'()() to server loop: {con_msg.to_json()} ')
             # if id in con_msg:
