@@ -153,6 +153,8 @@ class DAQServer():
         # task = asyncio.ensure_future(self.read_loop())
         # self.task_list.append(task)
 
+        cfg_fetch_freq = 10  # seconds
+
         # for k, v in self.inst_map.items():
         #     self.inst_map[k].start()
         gui_config = self.ui_config
@@ -206,7 +208,7 @@ class DAQServer():
                 }
             )
             await self.to_gui_buf.put(req)
-            await asyncio.sleep(2)
+            await asyncio.sleep(cfg_fetch_freq)
 
         # print('Waiting for config...')
         # while self.config is None:
