@@ -639,7 +639,7 @@ class DummyInstrument(Instrument):
             # # print('entry = \n{}'.format(entry))
 
             dt = self.parse(msg)
-            print(f'dt = {dt}')
+            # print(f'dt = {dt}')
             # entry = {
             #     'METADATA': self.get_metadata(),
             #     'DATA': {
@@ -647,7 +647,7 @@ class DummyInstrument(Instrument):
             #         'MEASUREMENTS': self.get_data_record(dt)
             #     }
             entry = self.get_data_entry(dt)
-            print(f'entry: {entry}')
+            # print(f'entry: {entry}')
             # data = dict()
             # data['DATETIME'] = dt
             # data['MEASUREMENTS'] = self.get_data_record(dt)
@@ -664,7 +664,7 @@ class DummyInstrument(Instrument):
 
             # await self.msg_buffer.put(data)
             # await self.to_parent_buf.put(data)
-            print(f'instrument data: {data.to_json()}')
+            # print(f'instrument data: {data.to_json()}')
 
             await self.message_to_ui(data)
             await self.to_parent_buf.put(data)

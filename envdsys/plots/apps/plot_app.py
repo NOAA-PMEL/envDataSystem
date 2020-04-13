@@ -2021,7 +2021,7 @@ class GeoMapPlot(PlotApp):
                             if lat and lon:
 
                                 lon_x, lat_y = merc(lat, lon)
-                                print(f'lat: {lat}, {lat_y}, lon: {lon}, {lon_x}')
+                                # print(f'lat: {lat}, {lat_y}, lon: {lon}, {lon_x}')
                                 if 'latitude' not in data[y_id]:
                                     data[y_id]['latitude'] = []
                                     data[y_id]['latitude'].append(lat)

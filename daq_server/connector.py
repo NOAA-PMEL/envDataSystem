@@ -11,8 +11,6 @@ import websockets
 from importlib import import_module
 
 
-## serial client not entering run()?
-
 class ConnectorMessage():
 
     def __init__(
