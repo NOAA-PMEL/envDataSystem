@@ -448,7 +448,7 @@ class DAQ(abc.ABC):
     async def from_parent_loop(self):
         while True:
             msg = await self.from_parent_buf.get()
-            print(f'daq from parent: {msg.to_json()}')
+            # print(f'daq from parent: {msg.to_json()}')
             await self.handle(msg, type="FromParent")
             # await asyncio.sleep(.1)
 
@@ -479,7 +479,7 @@ class DAQ(abc.ABC):
 
     async def message_to_parent(self, msg):
         # while True:
-        print(f'message_to_parent: {self.get_id()}, {msg.to_json()}')
+        # print(f'message_to_parent: {self.get_id()}, {msg.to_json()}')
         await self.to_parent_buf.put(msg)
 
     async def message_to_parents(self, msg):
