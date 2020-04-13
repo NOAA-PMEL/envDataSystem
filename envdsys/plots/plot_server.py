@@ -1,11 +1,10 @@
 from bokeh.server.server import Server
 from bokeh.application import Application
 from bokeh.application.handlers.function import FunctionHandler
-import asyncio
+# import asyncio
 
 
 class PlotServer():
-
     def __init__(self, server_id, app_list=[]):
 
         print(f'plotserver.init')
@@ -55,13 +54,12 @@ class PlotServer():
         for app in app_list:
             app.start(self.id)
             self.apps[app.name] = Application(
-                FunctionHandler(app.make_document)
-            )
+                FunctionHandler(app.make_document))
 
         ws_origin = []
-        ws_origin.append(self.address+':'+str(self.port))
+        ws_origin.append(self.address + ':' + str(self.port))
         if self.address != 'localhost' and self.address != '127.0.0.1':
-            ws_origin.append('localhost:'+str(self.port))
+            ws_origin.append('localhost:' + str(self.port))
 
         # add django server to ws_origin
         ws_origin.append('localhost:8001')

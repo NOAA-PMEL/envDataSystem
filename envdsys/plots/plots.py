@@ -1,6 +1,6 @@
-import asyncio
-import json
-from asyncio.queues import Queue
+# import asyncio
+# import json
+# from asyncio.queues import Queue
 from .plot_server import PlotServer
 from plots.apps.plot_app import TimeSeries1D, SizeDistribution, GeoMapPlot
 from django.conf import settings
@@ -17,7 +17,7 @@ class PlotManager():
     __app_source_map = dict()
 
     # TODO: add get_default_id()
-    
+
     # DEFAULT_ID = ('localhost', 5001)
     DEFAULT_ID = settings.PLOT_SERVER['server_id']
 
@@ -25,10 +25,7 @@ class PlotManager():
     def add_apps(config):
         # PlotManager.start_server()
         print(f'##### add_apps -> {config}')
-        if (
-            'plot_meta' in config and
-            'plots' in config['plot_meta']
-        ):
+        if ('plot_meta' in config and 'plots' in config['plot_meta']):
             app_list = []
             for plot_name, plot_def in config['plot_meta']['plots'].items():
                 print(f'####### add_plots: {plot_name} - {plot_def}')
@@ -89,9 +86,8 @@ class PlotManager():
                     PlotManager().__app_source_map[src_id] = []
                 app_name = plot_def['app_name']
                 if app_name not in PlotManager().__app_source_map[src_id]:
-                    PlotManager().__app_source_map[src_id].append(
-                        app_name
-                    )
+                    PlotManager().__app_source_map[src_id].append(app_name)
+
     @staticmethod
     def get_app_list(key):
         print(f'get_app_list: {key}, {PlotManager().__app_list_map}')
@@ -106,11 +102,7 @@ class PlotManager():
     #     server_id=None,
     #     start_after_add=False
     # ):
-    def add_app(
-        app,
-        server_id=None,
-        start_after_add=True
-    ):
+    def add_app(app, server_id=None, start_after_add=True):
 
         # # if not in map, create app
         # print(f'add_app: {name}')
@@ -144,12 +136,10 @@ class PlotManager():
     @staticmethod
     def add_server(config=None, server_id=None, app_list=[], update=False):
         print(f'server_id: {server_id}')
-        PlotManager.update_server(
-            config=config,
-            server_id=server_id,
-            app_list=app_list,
-            force=True
-        )
+        PlotManager.update_server(config=config,
+                                  server_id=server_id,
+                                  app_list=app_list,
+                                  force=True)
 
     @staticmethod
     def update_server(config=None, server_id=None, app_list=None, force=False):
@@ -165,9 +155,7 @@ class PlotManager():
         print(f'server_id = {server_id}, {PlotManager().__server_map}')
         if (server_id in PlotManager().__server_map) or force:
             PlotManager().__server_map[server_id] = PlotServer(
-                server_id,
-                app_list
-            )
+                server_id, app_list)
         print(f'server_id = {server_id}, {PlotManager().__server_map}')
 
     @staticmethod

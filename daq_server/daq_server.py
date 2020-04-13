@@ -18,19 +18,13 @@ import json
 
 
 class DAQServer():
-
-    def __init__(
-        self,
-        config=None,
-        server_name=None,
-        ui_config=None
-    ):
+    def __init__(self, config=None, server_name=None, ui_config=None):
         self.controller_list = []
         self.controller_map = dict()
         self.task_list = []
         self.last_data = {}
         self.run_flag = False
-        
+
         # defaults
         self.server_name = ''
         self.ui_config = {
@@ -38,24 +32,22 @@ class DAQServer():
             'port': 8001,
         }
         self.base_file_path = '/tmp'
-        
+
         self.loop = asyncio.get_event_loop()
 
         # try to import config from daq_settings.py
         try:
             daq_settings = import_module('daq_settings')
             server_config = daq_settings.server_config
-            
+
             if 'name' in server_config:
                 self.server_name = server_config['name']
-            
+
             if 'ui_config' in server_config:
                 self.ui_config = server_config['ui_config']
 
             if 'base_file_path' in server_config:
-                self.base_file_path = (
-                    server_config['base_file_path']
-                )
+                self.base_file_path = (server_config['base_file_path'])
 
         except ModuleNotFoundError:
             print(f'settings file not found, using defaults')
@@ -97,8 +89,7 @@ class DAQServer():
             controller = ControllerFactory().create(
                 icfg,
                 ui_config=self.ui_config,
-                base_file_path=self.base_file_path
-            )
+                base_file_path=self.base_file_path)
             print(controller)
             controller.to_parent_buf = self.from_child_buf
             self.controller_map[controller.get_id()] = controller
@@ -141,7 +132,7 @@ class DAQServer():
             data = {
                 'message': msgstr,
             }
-            print('data msg: {}'.format(data))
+            # print('data msg: {}'.format(data))
             await self.to_gui_buf.put(json.dumps(data))
             # FEServer.send_to_clients(data)
 
@@ -180,33 +171,28 @@ class DAQServer():
         print('sync DAQ')
         # system_def = SysManager.get_definitions_all()
         # print(f'system_def: {system_def}')
-        sys_def = Message(
-            sender_id='daqserver',
-            msgtype='DAQServer',
-            subject='CONFIG',
-            body={
-                'purpose': 'SYNC',
-                'type': 'SYSTEM_DEFINITION',
-                'data': SysManager.get_definitions_all()
-
-            }
-        )
+        sys_def = Message(sender_id='daqserver',
+                          msgtype='DAQServer',
+                          subject='CONFIG',
+                          body={
+                              'purpose': 'SYNC',
+                              'type': 'SYSTEM_DEFINITION',
+                              'data': SysManager.get_definitions_all()
+                          })
         await self.to_gui_buf.put(sys_def)
 
         print('set self.config')
         while self.config is None:
             # get config from gui
             print(f'Getting config from gui')
-            req = Message(
-                sender_id='daqserver',
-                msgtype='DAQServer',
-                subject='CONFIG',
-                body={
-                    'purpose': 'REQUEST',
-                    'type': 'ENVDAQ_CONFIG',
-                    'server_name': self.server_name
-                }
-            )
+            req = Message(sender_id='daqserver',
+                          msgtype='DAQServer',
+                          subject='CONFIG',
+                          body={
+                              'purpose': 'REQUEST',
+                              'type': 'ENVDAQ_CONFIG',
+                              'server_name': self.server_name
+                          })
             await self.to_gui_buf.put(req)
             await asyncio.sleep(cfg_fetch_freq)
 
@@ -239,8 +225,7 @@ class DAQServer():
                 'purpose': 'STATUS',
                 'status': 'READY',
                 # 'note': note,
-            }
-        )
+            })
         print(f'_____ send no wait _____: {status.to_json()}')
         await self.to_gui_buf.put(status)
 
@@ -429,7 +414,7 @@ if __name__ == "__main__":
     task = asyncio.ensure_future(heartbeat())
     # task = asyncio.ensure_future(output_to_screen())
     task_list = asyncio.Task.all_tasks()
-#
+    #
     try:
         event_loop.run_until_complete(asyncio.wait(task_list))
         # event_loop.run_forever()

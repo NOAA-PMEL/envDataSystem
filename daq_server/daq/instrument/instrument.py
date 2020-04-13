@@ -685,7 +685,7 @@ class DummyInstrument(Instrument):
 
             elif msg.subject == 'CONTROLS' and msg.body['purpose'] == 'REQUEST':
 
-                print(f'msg: {msg.body}')
+                # print(f'msg: {msg.body}')
                 await self.set_control(msg.body['control'], msg.body['value'])
 
             elif (
@@ -693,7 +693,7 @@ class DummyInstrument(Instrument):
                 msg.body['purpose'] == 'REQUEST'
             ):
 
-                print(f'msg: {msg.body}')
+                # print(f'msg: {msg.body}')
                 await self.handle_control_action(
                     msg.body['control'], msg.body['value']
                 )
@@ -823,7 +823,7 @@ class DummyInstrument(Instrument):
                 dt,
                 {name: self.get_control_att(name, 'value')}
             )
-            print(f'controls: {name} = {self.get_control_att(name, "value")}')
+            # print(f'controls: {name} = {self.get_control_att(name, "value")}')
 
         # for meas_name in self.meas_map['LIST']:
         #     meas_def = self.meas_map['DEFINITION'][meas_name]
@@ -1209,7 +1209,7 @@ class DummyGPS(Instrument):
             # # print('entry = \n{}'.format(entry))
 
             dt = self.parse(msg)
-            print(f'dt = {dt}')
+            # print(f'dt = {dt}')
 
             # add fake gps data
             self.update_data_record(
@@ -1239,7 +1239,7 @@ class DummyGPS(Instrument):
             #         'MEASUREMENTS': self.get_data_record(dt)
             #     }
             entry = self.get_data_entry(dt)
-            print(f'entry: {entry}')
+            # print(f'entry: {entry}')
             # data = dict()
             # data['DATETIME'] = dt
             # data['MEASUREMENTS'] = self.get_data_record(dt)
@@ -1357,7 +1357,7 @@ class DummyGPS(Instrument):
                 dt,
                 {name: self.get_control_att(name, 'value')}
             )
-            print(f'controls: {name} = {self.get_control_att(name, "value")}')
+            # print(f'controls: {name} = {self.get_control_att(name, "value")}')
 
         return dt
 

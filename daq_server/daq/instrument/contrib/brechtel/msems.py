@@ -1,4 +1,4 @@
-import json
+# import json
 from daq.instrument.instrument import Instrument
 from daq.instrument.contrib.brechtel.brechtel import BrechtelInstrument
 from data.message import Message
@@ -116,7 +116,7 @@ class MSEMS(BrechtelInstrument):
                 subject='SEND',
                 body=cmd,
             )
-            print(f'msg: {msg}')
+            # print(f'msg: {msg}')
             # await self.iface.message_from_parent(msg)
             await self.iface_map[if_id].message_from_parent(msg)
             self.scan_state = 'RUNNING'
@@ -180,7 +180,7 @@ class MSEMS(BrechtelInstrument):
                         subject='SEND',
                         body=cmd,
                     )
-                    print(f'msg: {msg}')
+                    # print(f'msg: {msg}')
                     # await self.iface.message_from_parent(msg)
                     await self.iface_map[if_id].message_from_parent(msg)
 
@@ -247,7 +247,6 @@ class MSEMS(BrechtelInstrument):
                         dt,
                         {'integral_concentration': intN}
                     )
-                   
 
                     # calculate diameters
                     min_dp = 10
@@ -308,20 +307,27 @@ class MSEMS(BrechtelInstrument):
                 # await PlotManager.update_data(self.plot_name, data.to_json())
                 if self.datafile:
                     await self.datafile.write_message(data)
-           # print(f'data_json: {data.to_json()}\n')
+            # print(f'data_json: {data.to_json()}\n')
             # await asyncio.sleep(0.01)
         elif type == 'FromUI':
             if msg.subject == 'STATUS' and msg.body['purpose'] == 'REQUEST':
-                print(f'msg: {msg.body}')
+                # print(f'msg: {msg.body}')
                 self.send_status()
 
-            elif msg.subject == 'CONTROLS' and msg.body['purpose'] == 'REQUEST':
-                print(f'msg: {msg.body}')
+            elif msg.subject == (
+                'CONTROLS' and msg.body['purpose'] == 'REQUEST'
+            ):
+                # print(f'msg: {msg.body}')
                 await self.set_control(msg.body['control'], msg.body['value'])
-            elif msg.subject == 'RUNCONTROLS' and msg.body['purpose'] == 'REQUEST':
-                print(f'msg: {msg.body}')
-                await self.handle_control_action(msg.body['control'], msg.body['value'])
-                # await self.set_control(msg.body['control'], msg.body['value'])
+
+            elif msg.subject == (
+                'RUNCONTROLS' and msg.body['purpose'] == 'REQUEST'
+            ):
+                # print(f'msg: {msg.body}')
+                await self.handle_control_action(
+                    msg.body['control'],
+                    msg.body['value']
+                )
 
         # print("DummyInstrument:msg: {}".format(msg.body))
         # else:
@@ -335,9 +341,6 @@ class MSEMS(BrechtelInstrument):
                 elif value == 'STOP':
                     self.stop()
 
-                # print(f'{self.iface_map}')
-                # await self.to_child_buf.put(cmd)
-                # await self.iface_map['DummyInterface:test_interface'].message_from_parent(cmd)
                 self.set_control_att(control, 'action_state', 'OK')
 
     def parse(self, msg):
