@@ -312,7 +312,7 @@ class SerialPortIFDevice(IFDevice):
             rtscts=self.rtscts,
             **self.kwargs,
         )
-        print(f'serial port: {self.client}')
+        # print(f'serial port: {self.client}')
 
         # # start dummy data loop
         # task = asyncio.ensure_future(self.data_loop())
@@ -327,7 +327,7 @@ class SerialPortIFDevice(IFDevice):
     async def read_data(self):
         while True:
             data = await self.client.read()
-            print(f'vvvvv read_data: {data}')
+            # print(f'vvvvv read_data: {data}')
             msg = Message(
                 sender_id=self.get_id(),
                 msgtype=IFDevice.class_type,
@@ -347,9 +347,9 @@ class SerialPortIFDevice(IFDevice):
     async def handle(self, msg, type=None):
         if (type == "FromParent"):
             if msg.subject == 'SEND':
-                print(f'serial handle: {msg.body}')
+                # print(f'serial handle: {msg.body}')
                 await self.client.send(msg.body)
-                print(f'66666serialportifdevice.handle: {msg}')
+                # print(f'66666serialportifdevice.handle: {msg}')
         await asyncio.sleep(.1)
 
     def get_definition_instance(self):

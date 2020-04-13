@@ -188,7 +188,7 @@ class Connector(abc.ABC):
 
         while True:
             msg = await self.from_iface_buf.get()
-            print(f'from_iface_loop: {msg.to_json()}')
+            # print(f'from_iface_loop: {msg.to_json()}')
             # await self.handle_iface2(msg, type='FromIFace')
             await self.handle_iface(msg, type="FromIFace")
 
@@ -230,16 +230,16 @@ class ConnectorServer(Connector):
         return 'ConnectorServer'
 
     async def handle_iface(self, msg, type=None):
-        print(f'!!! msg: {msg}, type={type}')
+        # print(f'!!! msg: {msg}, type={type}')
         if (type == 'FromIFace'):
             # if (msg.subject == 'DATA'):
             con_msg = ConnectorMessage().from_json(
                 msg.body['DATA']
             )
-            print(f'!!! con_message: {msg.to_json()}, {con_msg.to_json()}')
+            # print(f'!!! con_message: {msg.to_json()}, {con_msg.to_json()}')
             await self.from_ui_buf.put(con_msg)
-            print(f'\n --- \n --- \n message sent')
-            print(f'{self.from_ui_buf.empty()}')
+            # print(f'\n --- \n --- \n message sent')
+            # print(f'{self.from_ui_buf.empty()}')
 
 
 class WSConnectorServer(ConnectorServer):
@@ -276,7 +276,7 @@ class WSConnectorServer(ConnectorServer):
 
         # msg = await ws.recv()
         async for msg in ws:
-            print(f'read_ws: {msg}')
+            # print(f'read_ws: {msg}')
             con_msg = ConnectorMessage(
                 address=self.ui_address,
                 id=path,
@@ -313,30 +313,30 @@ class WSConnectorServer(ConnectorServer):
                 subject='SEND',
                 body=body,
             )
-            print(f'msg: {msg.to_json()}')
+            # print(f'msg: {msg.to_json()}')
             await self.iface.message_from_parent(msg)
 
     async def to_server_loop(self):
 
         while True:
-            print(f'to_server_loop...')
+            # print(f'to_server_loop...')
             # con_msg = await self.from_ui_buf.get()
             con_msg = await self.from_ui_buf.get()
             # msg = ConnectorMessage()
             # msg.from_json(con_msg)
-            print(f'rcvd message: {con_msg}')
+            # print(f'rcvd message: {con_msg}')
             # con_msg = msg.body
-            print(f'()() to server loop: {con_msg.to_json()} ')
+            # print(f'()() to server loop: {con_msg.to_json()} ')
             # if id in con_msg:
-            print(f'\n\n con_msg: {con_msg.path}, {con_msg.address}\n\n')
+            # print(f'\n\n con_msg: {con_msg.path}, {con_msg.address}\n\n')
             if con_msg.path:
                 # client = self.get_client(con_msg['id'])
                 client = self.get_client(con_msg.path)
-                print(f'()() client: {client}')
+                # print(f'()() client: {client}')
                 if client:
                     # msg = f'{con_msg["body"]}\n'
                     msg = f'{con_msg.body}'
-                    print(f'()() msg = {msg}')
+                    # print(f'()() msg = {msg}')
                     await client.send(msg)
 
 
@@ -384,19 +384,19 @@ class ConnectorUI(Connector):
                         id=path,
                         body=msg,
                     )
-                    print(f'read_client_loop: {con_msg.to_json()}')
+                    # print(f'read_client_loop: {con_msg.to_json()}')
                     await self.from_ui_buf.put(con_msg)
             await asyncio.sleep(.1)
 
     async def handle_iface(self, msg, type=None):
         # super().handle_iface(msg, type)
-        print(f'handle iface ui: {msg.to_json()}')
+        # print(f'handle iface ui: {msg.to_json()}')
         if (type == 'FromIFace'):
             # if (msg.subject == 'DATA'):
             con_msg = ConnectorMessage().from_json(
                 msg.body['DATA']
             )
-            print(f'con_message: {msg.to_json()}, {con_msg.to_json()}')
+            # print(f'con_message: {msg.to_json()}, {con_msg.to_json()}')
             await self.to_ui_buf.put(con_msg)
 
 
@@ -445,7 +445,7 @@ class WSConnectorUI(ConnectorUI):
         while True:
 
             con_msg = await self.to_ui_buf.get()
-            print(f'to_ui_loop: {con_msg}')
+            # print(f'to_ui_loop: {con_msg}')
             
             if con_msg.address and con_msg.path:
                 path = con_msg.path

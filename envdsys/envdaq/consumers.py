@@ -845,7 +845,7 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
         # text_data_json = json.loads(text_data)
         data = json.loads(text_data)
         message = data['message']
-        print(f'999999 message: {message}')
+        # print(f'999999 message: {message}')
 
         if (message['SUBJECT'] == 'CONFIG'):
             body = message['BODY']
@@ -876,7 +876,7 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
                     # send config data to syncmanager
                     await SyncManager.sync_data(body['data'])
         elif message['SUBJECT'] == 'READY_STATE':
-            print('$$$$$$$ READY_STATE')
+            # print('$$$$$$$ READY_STATE')
             if message['BODY']['status'] == 'READY':
                 print(f'___ READY TO GO ___: {message}')
                 print(f'hostname: {self.hostname}')

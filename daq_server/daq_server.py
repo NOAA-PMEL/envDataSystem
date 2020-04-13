@@ -161,7 +161,7 @@ class DAQServer():
         gui_ws_address = f'ws://{gui_config["host"]}:{gui_config["port"]}/'
         gui_ws_address += 'ws/envdaq/daqserver/'
         # create gui client
-        print(f'Starting gui client: {gui_ws_address}')
+        print(f'Starting ui client: {gui_ws_address}')
 
         self.ui_client = WSClient(uri=gui_ws_address)
         while self.ui_client.isConnected() is not True:

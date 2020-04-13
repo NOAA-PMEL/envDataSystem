@@ -104,17 +104,17 @@ class SerialPortClient(ClientConnection):
         async def readline(self, decode_errors='strict'):
             if self.reader:
                 msg = await self.reader.readline()
-                print(f'81818181 readline: {msg}')
+                # print(f'81818181 readline: {msg}')
                 return msg.decode(errors=decode_errors)
 
         async def readuntil(self, terminator='\n', decode_errors='strict'):
             msg = await self.reader.readuntil(terminator.encode())
-            print(f'readuntil: {msg}')
+            # print(f'readuntil: {msg}')
             return msg.decode(errors=decode_errors)
 
         async def read(self, num_bytes=1, decode_errors='strict'):
             msg = await self.reader.read(num_bytes)
-            print(f'read: {msg}')
+            # print(f'read: {msg}')
             return msg.decode(errors=decode_errors)
 
         async def readbinary(self, num_bytes=1, decode_errors='strict'):
@@ -123,7 +123,7 @@ class SerialPortClient(ClientConnection):
 
         async def write(self, msg):
             if self.writer:
-                print(f'write msg: {msg.encode()}, {type(msg)}')
+                # print(f'write msg: {msg.encode()}, {type(msg)}')
                 self.writer.write(msg.encode())
                 await self.writer.drain()
 
@@ -222,7 +222,7 @@ class SerialPortClient(ClientConnection):
                     msg = await serialport.readline(
                         decode_errors=self.decode_errors
                     )
-                    print(f'*** serial port msg: {msg}')
+                    # print(f'*** serial port msg: {msg}')
                 elif self.read_method == 'readuntil':
                     msg = await serialport.readuntil(
                         self.read_terminator,
@@ -239,7 +239,7 @@ class SerialPortClient(ClientConnection):
                         ret_packet_size
                     )
 
-                print(' ^^^^ read loop: {}'.format(msg))
+                # print(' ^^^^ read loop: {}'.format(msg))
                 # await self.readq.put(msg)
                 # print('after readq.put')
                 if msg:
