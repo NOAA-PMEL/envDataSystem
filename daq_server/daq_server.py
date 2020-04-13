@@ -213,7 +213,7 @@ class DAQServer():
         # for now...sleep for a set amount of time to allow
         #   everything to get set up
         print(f'Waiting for setup...')
-        await asyncio.sleep(5)
+        await asyncio.sleep(10)
         print(f'Waiting for setup...done.')
 
         # PlotManager.get_server().start()
