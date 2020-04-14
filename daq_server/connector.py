@@ -281,6 +281,7 @@ class WSConnectorServer(ConnectorServer):
                 body=msg,
             )
 
+            print(f'server.read_ws: {self.ui_address} - {path}')
             await self.to_ui_buf.put(con_msg)
 
     async def to_ui_loop(self):
@@ -383,6 +384,7 @@ class ConnectorUI(Connector):
                         body=msg,
                     )
                     # print(f'read_client_loop: {con_msg.to_json()}')
+                    print(f'ui.read_client: {self.ui_address} - {path}')
                     await self.from_ui_buf.put(con_msg)
             await asyncio.sleep(.1)
 
@@ -472,7 +474,7 @@ class WSConnectorUI(ConnectorUI):
                 subject='SEND',
                 body=body,
             )
-            print(f'msg: {msg.to_json()}')
+            # print(f'msg: {msg.to_json()}')
             await self.iface.message_from_parent(msg)
             # await asyncio.sleep(0.1)
 

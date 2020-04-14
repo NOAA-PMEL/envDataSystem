@@ -48,7 +48,11 @@ class DataConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         # print(text_data)
         # await self.data_message({'message': 'hi again'})
-        text_data_json = json.loads(text_data)
+        try:
+            text_data_json = json.loads(text_data)
+        except json.JSONDecodeError as e:
+            print(f'DataConsumer error {e}')
+            return
         # message = text_data_json['BODY']
         message = text_data_json['message']
         # message = text_data_json
@@ -134,7 +138,12 @@ class ControllerConsumer(AsyncWebsocketConsumer):
         # if status, pass to socket
 
         # print(text_data)
-        data = json.loads(text_data)
+        try:
+            data = json.loads(text_data)
+        except json.JSONDecodeError as e:
+            print(f'ControllerConsumer error {e}')
+            return
+
         message = data['message']
 
         if (message['SUBJECT'] == 'DATA'):
@@ -318,7 +327,12 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
 
         # print(text_data)
         # text_data_json = json.loads(text_data)
-        data = json.loads(text_data)
+        try:
+            data = json.loads(text_data)
+        except json.JSONDecodeError as e:
+            print(f'InstrumentConsumer error {e}')
+            return
+
         message = data['message']
         # print(f'message: {message}')
         if (message['SUBJECT'] == 'DATA'):
@@ -339,7 +353,7 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
                 'BODY' in message and
                 'DATA_REQUEST_LIST' in message['BODY']
             ):
-            # TODO: make this a utility function
+                # TODO: make this a utility function
                 for dr in message['BODY']['DATA_REQUEST_LIST']:
                     if dr['class'] == 'CONTROLLER':
                         group_name = f'controller_{dr["alias"]["name"]}'
@@ -507,7 +521,12 @@ class InterfaceConsumer(AsyncWebsocketConsumer):
         # if status, pass to socket
 
         # print(text_data)
-        text_data_json = json.loads(text_data)
+        try:
+            text_data_json = json.loads(text_data)
+        except json.JSONDecodeError as e:
+            print(f'InterfaceConsumer error {e}')
+            return
+
         message = text_data_json['message']
 
         # Send message to room group
@@ -673,7 +692,12 @@ class IFDeviceConsumer(AsyncWebsocketConsumer):
 
         # if status, pass to socket
 
-        text_data_json = json.loads(text_data)
+        try:
+            text_data_json = json.loads(text_data)
+        except json.JSONDecodeError as e:
+            print(f'IFDeviceConsumer error {e}')
+            return
+
         message = text_data_json['message']
 
         # await self.channel_layer.group_send(
@@ -843,7 +867,13 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         # print(text_data)
         # text_data_json = json.loads(text_data)
-        data = json.loads(text_data)
+
+        try:
+            data = json.loads(text_data)
+        except json.JSONDecodeError as e:
+            print(f'DAQServerConsumer error {e}')
+            return
+        
         message = data['message']
         # print(f'999999 message: {message}')
 
