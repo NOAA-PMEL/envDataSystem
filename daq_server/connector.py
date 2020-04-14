@@ -37,7 +37,7 @@ class ConnectorMessage():
 
     def from_json(self, message):
         try:
-            print(f'con message: {message}')
+            # print(f'con message: {message}')
             msg = json.loads(message)
         except json.JSONDecodeError:
             print(f'invalid json message')
