@@ -109,6 +109,19 @@ class MSEMS(BrechtelInstrument):
         if self.iface_components['default']:
             if_id = self.iface_components['default']
             self.current_read_cnt = 0
+
+            # TODO: make this into a control eventually
+            cmd = 'bin_time=1.0\n'
+            msg = Message(
+                sender_id=self.get_id(),
+                msgtype=Instrument.class_type,
+                subject='SEND',
+                body=cmd,
+            )
+            # print(f'msg: {msg}')
+            # await self.iface.message_from_parent(msg)
+            await self.iface_map[if_id].message_from_parent(msg)
+
             cmd = 'sems_mode=2\n'
             msg = Message(
                 sender_id=self.get_id(),
@@ -145,6 +158,7 @@ class MSEMS(BrechtelInstrument):
         if self.polling_task:
             self.polling_task.cancel()
 
+        # TODO: add function that waits for scanning to actually stop
         if self.mode == 'mono':
             pass
         elif self.mode == 'scanning':
