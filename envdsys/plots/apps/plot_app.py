@@ -15,6 +15,7 @@ from bokeh.models.widgets import TextInput, Select, MultiSelect
 from bokeh.layouts import layout, column
 from bokeh.models import LinearAxis, Range1d, DataRange1d
 from bokeh.models import DatetimeTickFormatter, ColorBar
+from bokeh.models import HoverTool, PanTool, ResetTool, WheelZoomTool
 from bokeh.palettes import Spectral6
 from bokeh.transform import linear_cmap, LinearColorMapper
 from bokeh.tile_providers import get_provider, Vendors
@@ -530,15 +531,26 @@ class TimeSeries1D(PlotApp):
             # doc.clear()
 
             TOOLTIPS = [
-                # ('name', '$name'),
+                ('name', '$name'),
                 # ("time", "$x"),
-                # ("value", "@$name"),
-                ("value", "@y"),
+                ("value", "@$name"),
+                # ("value", "@y"),
                 # ("$name", "@$name"),
                 # ("(x,y)", "($x, $y)"),
                 # ("desc", "@desc"),
             ]
 
+            # hover_tool = HoverTool(
+            #     tooltips=[
+            #         ('name', '$name'),
+            #         # ("time", "$x"),
+            #         ("value", "@$name"),
+            #         # ('col', '@x'),('row', '@y')
+            #     ]
+            # )
+
+            # tools = [HoverTool(), WheelZoomTool(), PanTool(), ResetTool()]
+            tools = "pan,wheel_zoom,box_zoom,reset,hover,save"
             fig = figure(
                 # title=self.title,
                 x_axis_label="DateTime",
@@ -548,6 +560,8 @@ class TimeSeries1D(PlotApp):
                 toolbar_location='above',
                 tooltips=TOOLTIPS,
                 sizing_mode='stretch_width',
+                # tools=tools,
+                # tools=tools,
                 # y_range=DataRange1d()
                 # x_range=[0, 1],
                 # y_range=[0, 1],
@@ -597,11 +611,12 @@ class TimeSeries1D(PlotApp):
                             y=y_data,
                             # legend=y_data,
                             line_color=palette[trace_cnt],
-                            # bounds='auto'
+                            # bounds='auto',
+                            name=y_data,
                         )
                         legend_items.append((y_data, [new_line]))
                         trace_cnt += 1
-
+                        # hover_tool.renderers.append(new_line)
                     fig.yaxis.axis_label = axis
                     fig.xaxis.formatter = DatetimeTickFormatter(
                         days="%F",
@@ -630,17 +645,20 @@ class TimeSeries1D(PlotApp):
                             x='datetime',
                             y=y_data,
                             line_color=palette[trace_cnt],
-                            # bounds='auto'
+                            # bounds='auto',
+                            name=y_data,
                         )
                         render = fig.add_glyph(
                             # source,
                             y_source,
                             new_line,
-                            y_range_name=axis
+                            y_range_name=axis,
+                            name=y_data,
                         )
                         fig.extra_y_ranges[axis].renderers.append(render)
                         legend_items.append((y_data, [render]))
                         trace_cnt += 1
+                        # hover_tool.renderers.append(render)
 
                         # line = fig.line(
                         #     source=source,
@@ -655,12 +673,29 @@ class TimeSeries1D(PlotApp):
                         y_range_name=axis, axis_label=axis), 'left')
 
                 first = False
+
+            # hover_tool = HoverTool(
+            # hover = fig.select(dict(type=HoverTool))
+            # hover.tooltips = [
+            #         ('name', '$name'),
+            #         # ("time", "$x"),
+            #         ("value", "@$name"),
+            #         # ('col', '@x'),('row', '@y')
+            #     ]
+            # )
+
             legend = Legend(
                 items=legend_items,
                 location='center',
                 # location=(0, -30)
             )
             fig.add_layout(legend, 'right')
+
+            # hover = fig.select(dict(type=HoverTool))
+            # hover.tooltips = [
+
+            # ]
+
             return fig
 
         def update_traces(attrname, old, new):
@@ -1207,6 +1242,14 @@ class SizeDistribution(PlotApp):
         def build_plot():
             # doc.clear()
 
+            TOOLTIPS = [
+                ("name", "$name"),
+                # ("(x,y)", "($x, $y)"),
+                # ("desc", "@desc"),
+                ("Dp", "$x um"),
+                ("N", "$y cm-3"),
+            ]
+
             fig = figure(
                 # title=self.title,
                 x_axis_label="Diameter",
@@ -1240,6 +1283,7 @@ class SizeDistribution(PlotApp):
             legend_items = []
             trace_cnt = 0
             # print(f'11111111111 source: {source.column_names}')
+
             for axis, data in axes_map.items():
                 if first:
                     for id_y in data:
@@ -1261,7 +1305,9 @@ class SizeDistribution(PlotApp):
                             # y='test_size_distribution',
                             y=y_data,
                             # legend=y_data,
-                            line_color=palette[trace_cnt]
+                            line_color=palette[trace_cnt],
+                            name=y_data,
+
                         )
                         new_circle = fig.circle(
                             source=y_source,
@@ -1271,7 +1317,8 @@ class SizeDistribution(PlotApp):
                             # y='test_size_distribution',
                             y=y_data,
                             # legend=y_data,
-                            color=palette[trace_cnt]
+                            color=palette[trace_cnt],
+                            name=y_data,
                         )
                         legend_items.append((y_data, [new_line, new_circle]))
                         trace_cnt += 1
@@ -1304,7 +1351,9 @@ class SizeDistribution(PlotApp):
                             x=sm['info_map'][y_data]['x_axis'],
                             # x=source_map['SizeDistribution'][y_data]['x_axis'],
                             y=y_data,
-                            line_color=palette[trace_cnt]
+                            line_color=palette[trace_cnt],
+                            name=y_data,
+
                         )
                         render_line = fig.add_glyph(
                             # source,
@@ -1317,7 +1366,8 @@ class SizeDistribution(PlotApp):
                             x=sm['info_map'][y_data]['x_axis'],
                             # x=source_map['SizeDistribution'][y_data]['x_axis'],
                             y=y_data,
-                            line_color=palette[trace_cnt]
+                            line_color=palette[trace_cnt],
+                            name=y_data,
                         )
                         render_circle = fig.add_glyph(
                             # source,
@@ -1345,6 +1395,7 @@ class SizeDistribution(PlotApp):
                         y_range_name=axis, axis_label=axis), 'left')
 
                 first = False
+
             legend = Legend(
                 items=legend_items,
                 location='center',
@@ -1363,13 +1414,13 @@ class SizeDistribution(PlotApp):
             # doc.add_periodic_callback(update_source, 1000)
             doc_layout.children[1] = fig
 
-        TOOLTIPS = [
-            ("name", "@name"),
-            # ("(x,y)", "($x, $y)"),
-            # ("desc", "@desc"),
-            ("Dp", "$x um"),
-            ("N", "$y cm-3"),
-        ]
+        # TOOLTIPS = [
+        #     ("name", "@name"),
+        #     # ("(x,y)", "($x, $y)"),
+        #     # ("desc", "@desc"),
+        #     ("Dp", "$x um"),
+        #     ("N", "$y cm-3"),
+        # ]
 
         fig = build_plot()
         doc.title = self.title

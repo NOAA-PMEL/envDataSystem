@@ -142,6 +142,7 @@ class ControllerConsumer(AsyncWebsocketConsumer):
             data = json.loads(text_data)
         except json.JSONDecodeError as e:
             print(f'ControllerConsumer error {e}')
+            print(f'text_data: {text_data}')
             return
 
         message = data['message']
@@ -331,6 +332,7 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
             data = json.loads(text_data)
         except json.JSONDecodeError as e:
             print(f'InstrumentConsumer error {e}')
+            print(f'text_data: {text_data}')
             return
 
         message = data['message']

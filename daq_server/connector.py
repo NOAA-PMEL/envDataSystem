@@ -377,15 +377,26 @@ class ConnectorUI(Connector):
             #   messages are ready
             for path, client in self.clients.items():
                 if client.message_waiting():
-                    msg = await client.read()
-                    con_msg = ConnectorMessage(
-                        address=self.ui_address,
-                        id=path,
-                        body=msg,
-                    )
-                    # print(f'read_client_loop: {con_msg.to_json()}')
-                    print(f'ui.read_client: {self.ui_address} - {path}')
-                    await self.from_ui_buf.put(con_msg)
+                    json_msg = await client.read()
+                    # print(f'read_client_loop: msg = {json_msg}')
+                    try:
+                        msg = json.loads(json_msg)
+                        if (
+                            'message' in msg and
+                            msg['message']['SUBJECT'] != 'DATA'
+                        ):
+                            print(f'msg["SUBJECT"] = {msg["message"]["SUBJECT"]}')
+                            con_msg = ConnectorMessage(
+                                address=self.ui_address,
+                                id=path,
+                                body=json_msg,
+                            )
+                            # print(f'read_client_loop: {con_msg.to_json()}')
+                            print(f'ui.read_client: {self.ui_address} - {path}')
+                            await self.from_ui_buf.put(con_msg)
+                    except json.JSONDecodeError:
+                        print(f'bad message')
+                        pass
             await asyncio.sleep(.1)
 
     async def handle_iface(self, msg, type=None):

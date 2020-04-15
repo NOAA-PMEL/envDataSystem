@@ -157,6 +157,14 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 STATIC_URL = '/static/'
+# use something like below for production server
+# -------
+# STATIC_URL = '/staticfiles/'
+# STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# MEDIA_URL = '/media/'
+# MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# -------
 
 # mysite/settings.py
 # Channels
@@ -166,6 +174,9 @@ CHANNEL_LAYERS = {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
             "hosts": [('127.0.0.1', 6379)],
+            # in case you run into over capacity errors
+            # 'capacity': 1500,  # added due to over capacity bug
+            # 'expiry': 10,      # workaround
         },
     },
 }
