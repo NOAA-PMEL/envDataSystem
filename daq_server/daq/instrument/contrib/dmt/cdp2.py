@@ -236,6 +236,7 @@ class CDP2(DMTInstrument):
 
             if self.iface:
 
+                print(f'run state {self.scan_run_state}')
                 if self.scan_run_state == 'CONFIGURE':
 
                     msg = Message(
@@ -357,6 +358,7 @@ class CDP2(DMTInstrument):
 
             except structerror:
                 print(f'bad packet {packet}')
+                self.scan_run_state = 'CONFIGURE'
                 return None
 
             try:
