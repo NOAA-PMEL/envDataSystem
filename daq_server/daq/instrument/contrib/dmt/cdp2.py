@@ -223,7 +223,7 @@ class CDP2(DMTInstrument):
     async def poll_loop(self):
         print(f'polling loop started')
 
-        asyncio.sleep(2)
+        await asyncio.sleep(2)
 
         configure_cmd = self.get_cdp_command('CONFIGURE')
         send_data_cmd = self.get_cdp_command('SEND_DATA')
