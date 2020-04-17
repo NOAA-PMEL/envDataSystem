@@ -345,6 +345,8 @@ class CDP2(DMTInstrument):
                 if data[0] == 6:
                     print(f'ACK received')
                     self.scan_run_state = 'RUN'
+                else:
+                    self.scan_run_state = 'CONFIGURE'
             except structerror:
                 print(f' bad config packet: {packet}')
                 self.scan_run_state = 'CONFIGURE'
@@ -354,11 +356,12 @@ class CDP2(DMTInstrument):
             data_format = '<8HI5HI30IH'
             try:
                 data = unpack(data_format, packet)
+                print(f'packet: {packet}')
                 print(f'data: {data}')
 
             except structerror:
                 print(f'bad packet {packet}')
-                self.scan_run_state = 'CONFIGURE'
+                # self.scan_run_state = 'CONFIGURE'
                 return None
 
             try:
