@@ -409,12 +409,12 @@ class MSEMS(BrechtelInstrument):
                 # self.current_size_dist.clear()
                 self.current_bin_counts.clear()
         elif parts[0].find('bin') >= 0:
-            # self.current_size_dist.append(
-            self.current_bin_counts.append(
+            # self.current_bin_counts.append(
+            self.current_size_dist.append(
                 float(parts[1])
             )
             print(f'{parts[0]}={parts[1]}')
-            print(f'{self.current_bin_counts}')
+            print(f'{self.current_size_dist}')
         # # TODO: how to limit to one/sec
         # # check for new second
         # # if data['DATETIME'] == self.last_entry['DATA']['DATETIME']:
