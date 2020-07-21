@@ -264,37 +264,45 @@ class MSEMS(BrechtelInstrument):
                     #     for n in cnts:
                     #         conc.append(round(n/flow, 4))
 
-                    flow = self.get_data_record_param(dt, 'mcpc_sample_flow')
-                    bin_time = self.get_data_record_param(dt, 'bin_time')
+                    # flow = self.get_data_record_param(dt, 'mcpc_sample_flow')
+                    # bin_time = self.get_data_record_param(dt, 'bin_time')
                     print(f'flow: {flow}, bin_time: {bin_time}')
                     try:
-                        # print(type(flow))
-                        # print(type(bin_time))
-                        intN = 0
-                        conc = []
-                        if flow and bin_time:
-                            cm3 = float(flow) * 1000.0 / 60.0 / float(bin_time)
-                            # conc = [n/cm3 for n in self.current_bin_counts]
-                            for cnt in self.current_size_dist:
-                                n = cnt / cm3
-                                conc.append(round(n, 3))
-                                intN += n
-                        else:
-                            conc = [0 for n in self.current_size_dist]
-                            intN = 0
-
-                        self.update_data_record(
-                            dt,
-                            # {'bin_concentration': self.current_size_dist}
-                            {'bin_concentration': conc}
-                        )
-
-                        self.update_data_record(
-                            dt,
-                            {'integral_concentration': round(intN, 3)}
-                        )
+                        flow = float(self.get_data_record_param(dt, 'mcpc_sample_flow'))
+                        bin_time = float(self.get_data_record_param(dt, 'bin_time'))
                     except Exception as e:
                         print(f'Exception! {e}')
+                        flow = 0.35
+                        bin_time = 1.0
+                    
+                    print(f'flow: {flow}, bin_time: {bin_time}')
+                        # print(type(flow))
+                        # print(type(bin_time))
+                    intN = 0
+                    conc = []
+                    # if flow and bin_time:
+                    cm3 = float(flow) * 1000.0 / 60.0 / float(bin_time)
+                        # conc = [n/cm3 for n in self.current_bin_counts]
+                    for cnt in self.current_size_dist:
+                        n = cnt / cm3
+                        conc.append(round(n, 3))
+                        intN += n
+                    # else:
+                        # conc = [0 for n in self.current_size_dist]
+                        # intN = 0
+
+                    self.update_data_record(
+                        dt,
+                        # {'bin_concentration': self.current_size_dist}
+                        {'bin_concentration': conc}
+                    )
+
+                    self.update_data_record(
+                        dt,
+                        {'integral_concentration': round(intN, 3)}
+                    )
+                    # except Exception as e:
+                    #     print(f'Exception! {e}')
                     # if flow is None:
                     #     flow = 0.35
                     # if bin_time is None:
