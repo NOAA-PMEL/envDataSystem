@@ -267,6 +267,8 @@ class MSEMS(BrechtelInstrument):
                     flow = self.get_data_record_param(dt, 'mcpc_sample_flow')
                     bin_time = self.get_data_record_param(dt, 'bin_time')
                     print(f'flow: {flow}, bin_time: {bin_time}')
+                    print(type(flow))
+                    print(type(bin_time))
                     try:
                         intN = 0
                         conc = []
