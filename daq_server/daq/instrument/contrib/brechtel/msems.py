@@ -277,7 +277,7 @@ class MSEMS(BrechtelInstrument):
                             # conc = [n/cm3 for n in self.current_bin_counts]
                             for cnt in self.current_size_dist:
                                 n = cnt / cm3
-                                conc.append(n)
+                                conc.append(round(n,3))
                                 intN += n
                         else:
                             conc = [None for n in self.current_size_dist]
@@ -291,7 +291,7 @@ class MSEMS(BrechtelInstrument):
 
                         self.update_data_record(
                             dt,
-                            {'integral_concentration': intN}
+                            {'integral_concentration': round(intN, 3)}
                         )
                     except Exception as e:
                         print(f'Exception! {e}')
