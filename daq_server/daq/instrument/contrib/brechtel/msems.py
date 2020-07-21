@@ -41,6 +41,7 @@ class MSEMS(BrechtelInstrument):
         self.scan_start_param = 'date'
         self.scan_stop_param = 'mcpc_errs'
         self.scan_ready = False
+        self.current_bin_counts = []
         self.current_size_dist = []
         self.scan_state = 999
         self.scan_run_state = 'STOPPED'
@@ -248,14 +249,28 @@ class MSEMS(BrechtelInstrument):
                     {'bin_time': 1},
                 )
 
-                if len(self.current_size_dist) == 30:
+                # if len(self.current_size_dist) == 30:
+                if len(self.current_bin_counts) == 30:
+                    flow = self.get_data_record_param(dt, 'mcpc_sample_flow')
+                    bin_time = self.get_data_record_param(dt, 'bin_time')
+                    if not flow:
+                        flow = 0.35
+                    if not bin_time:
+                        bin_time = 1
+                    cm3 = flow*1000./60/bin_time
+                    print(f'flow: {flow}, bin_time: {bin_time}, cm3: {cm3}')
+                    # dist = [n/cm3 for n in self.current_size_dist]
+                    self.current_size_dist.clear()
+                    for n in self.current_bin_counts:
+                        self.current_size_dist.append(n/cm3)
                     self.update_data_record(
                         dt,
                         {'bin_concentration': self.current_size_dist}
                     )
 
                     intN = 0
-                    for n in self.current_size_dist:
+                    # for n in self.current_size_dist:
+                    for n in dist:
                         intN += n
                         print(f'{n} - {intN}')
                     self.update_data_record(
@@ -389,13 +404,15 @@ class MSEMS(BrechtelInstrument):
             if self.scan_stop_param == parts[0]:
                 self.scan_ready = True
             elif self.scan_start_param == parts[0]:
-                self.current_size_dist.clear()
+                # self.current_size_dist.clear()
+                self.current_bin_counts.clear()
         elif parts[0].find('bin') >= 0:
-            self.current_size_dist.append(
+            # self.current_size_dist.append(
+            self.current_bin_counts.append(
                 float(parts[1])
             )
             print(f'{parts[0]}={parts[1]}')
-            print(f'{self.current_size_dist}')
+            print(f'{self.current_bin_counts}')
         # # TODO: how to limit to one/sec
         # # check for new second
         # # if data['DATETIME'] == self.last_entry['DATA']['DATETIME']:
@@ -449,6 +466,26 @@ class MSEMS(BrechtelInstrument):
 
         # TODO: add interface entry for each measurement
         primary_meas_2d = dict()
+        primary_meas_2d['bin_counts'] = {
+            'dimensions': {
+                'axes': ['TIME', 'DIAMETER'],
+                'unlimited': 'TIME',
+                'units': ['dateTime', 'um'],
+            },
+            'units': 'count',  # should be cfunits or udunits
+            'uncertainty': 0.1,
+            'source': 'MEASURED',
+            'data_type': 'NUMERIC',
+            'short_name': 'bin_cnt',
+            'parse_label': 'bin',
+            'control': None,
+            'axes': {
+                # 'TIME', 'datetime',
+                'DIAMETER': 'diameter_um',
+            }
+        }
+        dist_data.append('bin_counts')
+
         primary_meas_2d['bin_concentration'] = {
             'dimensions': {
                 'axes': ['TIME', 'DIAMETER'],
@@ -457,10 +494,10 @@ class MSEMS(BrechtelInstrument):
             },
             'units': 'cm-3',  # should be cfunits or udunits
             'uncertainty': 0.1,
-            'source': 'MEASURED',
+            'source': 'CALCULATED',
             'data_type': 'NUMERIC',
             'short_name': 'bin_conc',
-            'parse_label': 'bin',
+            # 'parse_label': 'bin',
             'control': None,
             'axes': {
                 # 'TIME', 'datetime',
