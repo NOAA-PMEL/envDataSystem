@@ -268,12 +268,12 @@ class MSEMS(BrechtelInstrument):
                     bin_time = self.get_data_record_param(dt, 'bin_time')
                     print(f'flow: {flow}, bin_time: {bin_time}')
                     try:
-                        print(type(flow))
-                        print(type(bin_time))
+                        # print(type(flow))
+                        # print(type(bin_time))
                         intN = 0
                         conc = []
                         if flow and bin_time:
-                            cm3 = flow * 1000.0 / 60.0 / bin_time
+                            cm3 = float(flow) * 1000.0 / 60.0 / float(bin_time)
                             # conc = [n/cm3 for n in self.current_bin_counts]
                             for cnt in self.current_size_dist:
                                 n = cnt / cm3
