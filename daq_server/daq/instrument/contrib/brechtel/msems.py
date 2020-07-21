@@ -277,11 +277,11 @@ class MSEMS(BrechtelInstrument):
                             # conc = [n/cm3 for n in self.current_bin_counts]
                             for cnt in self.current_size_dist:
                                 n = cnt / cm3
-                                conc.append(round(n,3))
+                                conc.append(round(n, 3))
                                 intN += n
                         else:
-                            conc = [None for n in self.current_size_dist]
-                            intN = None
+                            conc = [0 for n in self.current_size_dist]
+                            intN = 0
 
                         self.update_data_record(
                             dt,
