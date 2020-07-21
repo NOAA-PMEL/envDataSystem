@@ -84,10 +84,11 @@ class MSEMS(BrechtelInstrument):
         for msetsname, mset in meas_config.items():
             # self.data_record_template[msetname] = dict()
             for name, meas in mset.items():
-                parse_label = meas['parse_label']
-                self.parse_map[parse_label] = name
-                # self.data_record_template[msetsname][name] = None
-                self.data_record_template[name] = {'VALUE': None}
+                if 'parse_label' in meas:
+                    parse_label = meas['parse_label']
+                    self.parse_map[parse_label] = name
+                    # self.data_record_template[msetsname][name] = None
+                    self.data_record_template[name] = {'VALUE': None}
 
     def start(self, cmd=None):
         super().start()
@@ -212,7 +213,7 @@ class MSEMS(BrechtelInstrument):
 
     async def handle(self, msg, type=None):
 
-        print(f'%%%%%Instrument.handle: {msg.to_json()}')
+        # print(f'%%%%%Instrument.handle: {msg.to_json()}')
         # handle messages from multiple sources. What ID to use?
         if (type == 'FromChild' and msg.type == Interface.class_type):
             # id = msg.sender_id
@@ -232,7 +233,7 @@ class MSEMS(BrechtelInstrument):
             # if self.current_read_cnt == len(self.current_poll_cmds):
             if self.mode == 'scanning' and self.scan_ready:
                 bin_time = 1
-                print(f'dt = {dt}')
+                # print(f'dt = {dt}')
                 # entry['METADATA'] = self.get_metadata()
                 self.update_data_record(
                     dt,
@@ -247,13 +248,12 @@ class MSEMS(BrechtelInstrument):
                     {'bin_time': bin_time},
                 )
 
-                # if len(self.current_bin_counts) == 30:
-                if len(self.current_size_dist) == 30:
-                    # self.update_data_record(
-                    #     dt,
-                    #     {'bin_concentration': self.current_size_dist}
-                    #     # {'bin_counts': self.current_bin_counts}
-                    # )
+                # if len(self.current_size_dist) == 30:
+                if len(self.current_bin_counts) == 30:
+                    self.update_data_record(
+                        dt,
+                        # {'bin_concentration': self.current_size_dist}
+                        {'bin_counts': self.current_bin_counts})
 
                     # flow = self.get_data_record_param(dt, 'mcpc_sample_flow')
                     # bin_time = self.get_data_record_param(dt, 'bin_time')
@@ -269,7 +269,7 @@ class MSEMS(BrechtelInstrument):
                         bin_time = 1.0
 
                     try:
-                        print(f'flow: {flow}, bin_time: {bin_time}')
+                        # print(f'flow: {flow}, bin_time: {bin_time}')
                         # print(type(flow))
                         # print(type(bin_time))
                         intN = 0
@@ -277,13 +277,14 @@ class MSEMS(BrechtelInstrument):
                         # if flow and bin_time:
                         cm3 = float(flow) * 1000.0 / 60.0 / float(bin_time)
                         # conc = [n/cm3 for n in self.current_bin_counts]
-                        for cnt in self.current_size_dist:
-                            print(f'cnt: {cnt}, cm3: {cm3}')
+                        # for cnt in self.current_size_dist:
+                        for cnt in self.current_bin_counts:
+                            # print(f'cnt: {cnt}, cm3: {cm3}')
                             n = cnt / cm3
-                            print(f'n: {n}')
+                            # print(f'n: {n}')
                             conc.append(round(n, 3))
                             intN += n
-                            print(f'intN: {intN}')
+                            # print(f'intN: {intN}')
                         # else:
                         # conc = [0 for n in self.current_size_dist]
                         # intN = 0
@@ -355,7 +356,7 @@ class MSEMS(BrechtelInstrument):
                     )
 
                 entry = self.get_data_entry(dt)
-                print(f'entry: {entry}')
+                # print(f'entry: {entry}')
 
                 data = Message(
                     sender_id=self.get_id(),
@@ -386,13 +387,14 @@ class MSEMS(BrechtelInstrument):
                 print(f'msg: {msg.body}')
                 self.send_status()
 
-            elif msg.subject == ('CONTROLS'
-                                 and msg.body['purpose'] == 'REQUEST'):
+            elif (msg.subject == 'CONTROLS'
+                  and msg.body['purpose'] == 'REQUEST'):
                 print(f'msg: {msg.body}')
                 await self.set_control(msg.body['control'], msg.body['value'])
 
-            elif msg.subject == ('RUNCONTROLS'
-                                 and msg.body['purpose'] == 'REQUEST'):
+            elif (msg.subject == 'RUNCONTROLS'
+                  and msg.body['purpose'] == 'REQUEST'):
+
                 print(f'msg: {msg.body}')
                 await self.handle_control_action(msg.body['control'],
                                                  msg.body['value'])
@@ -445,10 +447,11 @@ class MSEMS(BrechtelInstrument):
                 # self.current_size_dist.clear()
                 self.current_bin_counts.clear()
         elif parts[0].find('bin') >= 0:
-            # self.current_bin_counts.append(
-            self.current_size_dist.append(float(parts[1]))
+            self.current_bin_counts.append(float(parts[1]))
+            # self.current_size_dist.append(float(parts[1]))
             print(f'{parts[0]}={parts[1]}')
-            print(f'{self.current_size_dist}')
+            # print(f'{self.current_size_dist}')
+            print(f'{self.current_bin_counts}')
         # # TODO: how to limit to one/sec
         # # check for new second
         # # if data['DATETIME'] == self.last_entry['DATA']['DATETIME']:
@@ -496,25 +499,25 @@ class MSEMS(BrechtelInstrument):
 
         # TODO: add interface entry for each measurement
         primary_meas_2d = dict()
-        # primary_meas_2d['bin_counts'] = {
-        #     'dimensions': {
-        #         'axes': ['TIME', 'DIAMETER'],
-        #         'unlimited': 'TIME',
-        #         'units': ['dateTime', 'um'],
-        #     },
-        #     'units': 'count',  # should be cfunits or udunits
-        #     'uncertainty': 0.1,
-        #     'source': 'MEASURED',
-        #     'data_type': 'NUMERIC',
-        #     'short_name': 'bin_cnt',
-        #     'parse_label': 'bin',
-        #     'control': None,
-        #     'axes': {
-        #         # 'TIME', 'datetime',
-        #         'DIAMETER': 'diameter_um',
-        #     }
-        # }
-        # dist_data.append('bin_counts')
+        primary_meas_2d['bin_counts'] = {
+            'dimensions': {
+                'axes': ['TIME', 'DIAMETER'],
+                'unlimited': 'TIME',
+                'units': ['dateTime', 'um'],
+            },
+            'units': 'count',  # should be cfunits or udunits
+            'uncertainty': 0.1,
+            'source': 'MEASURED',
+            'data_type': 'NUMERIC',
+            'short_name': 'bin_cnt',
+            'parse_label': 'bin',
+            'control': None,
+            'axes': {
+                # 'TIME', 'datetime',
+                'DIAMETER': 'diameter_um',
+            }
+        }
+        dist_data.append('bin_counts')
 
         primary_meas_2d['bin_concentration'] = {
             'dimensions': {
@@ -527,7 +530,7 @@ class MSEMS(BrechtelInstrument):
             'source': 'CALCULATED',
             'data_type': 'NUMERIC',
             'short_name': 'bin_conc',
-            'parse_label': 'bin',
+            # 'parse_label': 'bin',
             'control': None,
             'axes': {
                 # 'TIME', 'datetime',
@@ -944,7 +947,9 @@ class MSEMS(BrechtelInstrument):
 
         size_dist = dict()
         size_dist['app_type'] = 'SizeDistribution'
-        size_dist['y_data'] = ['bin_concentration', 'diameter_um']
+        size_dist['y_data'] = [
+            'bin_concentration', 'bin_counts', 'diameter_um'
+        ]
         size_dist['default_y_data'] = ['bin_concentration']
         source_map = {
             'default': {

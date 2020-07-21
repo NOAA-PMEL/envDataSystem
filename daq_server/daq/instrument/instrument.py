@@ -326,7 +326,7 @@ class Instrument(DAQ):
             try:
                 self.data_record.pop(least)
             except Exception:
-                print(f'update exception')
+                print('update exception')
                 pass
 
     async def send_metadata_loop(self):
