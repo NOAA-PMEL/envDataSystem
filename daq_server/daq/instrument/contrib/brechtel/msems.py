@@ -258,8 +258,9 @@ class MSEMS(BrechtelInstrument):
                     #     flow = 0.35
                     # if bin_time is None:
                     #     bin_time = 1
-                    print(f'here: {type(flow)}, {type(bin_time)}')
-                    cm3 = flow*1000./60./bin_time
+                    # print(f'here: {type(flow)}, {type(bin_time)}')
+                    # cm3 = flow*1000./60./bin_time
+                    cm3 = 0.35 * 1000. / 60.0 / 1
                     print(f'flow: {flow}, bin_time: {bin_time}, cm3: {cm3}')
                     dist = [n/cm3 for n in self.current_size_dist]
                     # self.current_size_dist.clear()
