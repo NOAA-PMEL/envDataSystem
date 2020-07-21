@@ -269,8 +269,8 @@ class MSEMS(BrechtelInstrument):
                     )
 
                     intN = 0
-                    # for n in self.current_size_dist:
-                    for n in dist:
+                    # for n in dist:
+                    for n in self.current_size_dist:
                         intN += n
                         print(f'{n} - {intN}')
                     self.update_data_record(
@@ -422,7 +422,7 @@ class MSEMS(BrechtelInstrument):
 
         # measurements = dict()
 
-       # controls_list = ['mcpc_power', 'mcpc_pump']
+        # controls_list = ['mcpc_power', 'mcpc_pump']
 
         # for name in controls_list:
         #     self.update_data_record(
