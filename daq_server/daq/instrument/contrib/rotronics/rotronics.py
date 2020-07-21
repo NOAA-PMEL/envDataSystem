@@ -84,7 +84,7 @@ class RotronicsHC2(RotronicsInstrument):
         # add polling loop
         # if polled:
         self.is_polled = True
-        self.poll_rate = 1  
+        self.poll_rate = 1
 
         # create parse_map and empty data_record
         self.parse_map = dict()
@@ -114,7 +114,7 @@ class RotronicsHC2(RotronicsInstrument):
         super().stop()
 
     async def poll_loop(self):
-        print(f'polling loop started')
+        print('polling loop started')
 
         # wait for start of next scan period
         # print(f'Starting scan in {time_to_next(scan_time)} seconds')
@@ -149,7 +149,7 @@ class RotronicsHC2(RotronicsInstrument):
         if (type == 'FromChild' and msg.type == Interface.class_type):
             # print(f'aps scan: {msg.to_json()}')
 
-            id = msg.sender_id
+            # id = msg.sender_id
 
             dt = self.parse(msg)
 
@@ -164,7 +164,7 @@ class RotronicsHC2(RotronicsInstrument):
             # to controller
             data.update(subject='DATA', body=entry)
 
-            # send data to user interface    
+            # send data to user interface
             await self.message_to_ui(data)
             # send data to controller
             await self.to_parent_buf.put(data)
@@ -184,9 +184,11 @@ class RotronicsHC2(RotronicsInstrument):
             elif msg.subject == 'CONTROLS' and msg.body['purpose'] == 'REQUEST':
                 # print(f'msg: {msg.body}')
                 await self.set_control(msg.body['control'], msg.body['value'])
-            elif msg.subject == 'RUNCONTROLS' and msg.body['purpose'] == 'REQUEST':
+            elif msg.subject == 'RUNCONTROLS' and msg.body[
+                    'purpose'] == 'REQUEST':
                 # print(f'msg: {msg.body}')
-                await self.handle_control_action(msg.body['control'], msg.body['value'])
+                await self.handle_control_action(msg.body['control'],
+                                                 msg.body['value'])
                 # await self.set_control(msg.body['control'], msg.body['value'])
 
         # print("DummyInstrument:msg: {}".format(msg.body))
@@ -210,10 +212,10 @@ class RotronicsHC2(RotronicsInstrument):
         # print(f'parse: {msg.to_json()}')
 
         dt = msg.body['DATETIME']
-        # print(f'msg[DATETIME]: {dt}')
+        print(f'msg[DATETIME]: {dt}')
 
         line = msg.body['DATA'].strip()
-        # print(f'line = {line}')
+        print(f'line = {line}')
 
         params = line.split(';')
 
@@ -228,15 +230,9 @@ class RotronicsHC2(RotronicsInstrument):
         #     5423 * (1/273 - 1/(temp+273))
         # )
 
-        self.update_data_record(
-            dt,
-            {'temperature': temp}
-        )
+        self.update_data_record(dt, {'temperature': temp})
 
-        self.update_data_record(
-            dt,
-            {'relative_humidity': rh}
-        )
+        self.update_data_record(dt, {'relative_humidity': rh})
 
         return dt
 

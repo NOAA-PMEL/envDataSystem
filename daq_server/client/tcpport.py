@@ -47,7 +47,7 @@ class TCPPortClient(ClientConnection):
 
     class _TCPPortClient():
         def __init__(self, address=None):
-            print(f'_TCPPortClient')
+            print('_TCPPortClient')
             self.address = address
             self.reader = None
             self.writer = None
@@ -73,7 +73,7 @@ class TCPPortClient(ClientConnection):
             except (asyncio.TimeoutError, ConnectionRefusedError):
                 self.reader = None
                 self.writer = None
-                print(f'connect error:')
+                print('connect error:')
                 self.connect_state = ClientConnection.CLOSED
 
         async def readline(self, decode_errors='strict'):
@@ -113,7 +113,7 @@ class TCPPortClient(ClientConnection):
         async def writebinary(self, msg):
             if self.writer:
                 # print(f'msg: {msg}')
-                sent_bytes = self.writer.write(msg)
+                # sent_bytes = self.writer.write(msg)
                 await self.writer.drain()
                 # print(f'written {sent_bytes}')
 
@@ -121,7 +121,7 @@ class TCPPortClient(ClientConnection):
             self.connect_state = ClientConnection.CLOSED
             self.writer.close()
             await self.writer.wait_closed()
-            print(f'tcp client done closing')
+            print('tcp client done closing')
 
     # override client.Connectionstate to use inner class
     def ConnectionState(self):
@@ -217,7 +217,7 @@ class TCPPortClient(ClientConnection):
                 if msg:
                     await self.readq.put(msg)
                 else:
-                    print(f'server appears to have closed...closing')
+                    print('server appears to have closed...closing')
                     await self.client.close()
                     self.client = None
                     self.connect_state = ClientConnection.CLOSED

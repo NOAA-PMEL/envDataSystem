@@ -221,7 +221,7 @@ class CDP2(DMTInstrument):
         super().stop()
 
     async def poll_loop(self):
-        print(f'polling loop started')
+        print('polling loop started')
 
         await asyncio.sleep(2)
 
