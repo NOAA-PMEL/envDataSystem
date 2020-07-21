@@ -248,9 +248,9 @@ class MSEMS(BrechtelInstrument):
                     dt,
                     {'bin_time': 1},
                 )
-
-                # if len(self.current_size_dist) == 30:
-                if len(self.current_bin_counts) == 30:
+                
+                # if len(self.current_bin_counts) == 30:
+                if len(self.current_size_dist) == 30:
                     flow = self.get_data_record_param(dt, 'mcpc_sample_flow')
                     bin_time = self.get_data_record_param(dt, 'bin_time')
                     if not flow:
@@ -259,18 +259,19 @@ class MSEMS(BrechtelInstrument):
                         bin_time = 1
                     cm3 = flow*1000./60/bin_time
                     print(f'flow: {flow}, bin_time: {bin_time}, cm3: {cm3}')
-                    # dist = [n/cm3 for n in self.current_size_dist]
-                    self.current_size_dist.clear()
-                    for n in self.current_bin_counts:
-                        self.current_size_dist.append(n/cm3)
+                    dist = [n/cm3 for n in self.current_size_dist]
+                    # self.current_size_dist.clear()
+                    # for n in self.current_bin_counts:
+                    #     self.current_size_dist.append(n/cm3)
                     self.update_data_record(
                         dt,
-                        {'bin_concentration': self.current_size_dist}
+                        # {'bin_concentration': self.current_size_dist}
+                        {'bin_concentration': dist}
                     )
 
                     intN = 0
-                    # for n in dist:
-                    for n in self.current_size_dist:
+                    # for n in self.current_size_dist:
+                    for n in dist:
                         intN += n
                         print(f'{n} - {intN}')
                     self.update_data_record(
@@ -466,25 +467,25 @@ class MSEMS(BrechtelInstrument):
 
         # TODO: add interface entry for each measurement
         primary_meas_2d = dict()
-        primary_meas_2d['bin_counts'] = {
-            'dimensions': {
-                'axes': ['TIME', 'DIAMETER'],
-                'unlimited': 'TIME',
-                'units': ['dateTime', 'um'],
-            },
-            'units': 'count',  # should be cfunits or udunits
-            'uncertainty': 0.1,
-            'source': 'MEASURED',
-            'data_type': 'NUMERIC',
-            'short_name': 'bin_cnt',
-            'parse_label': 'bin',
-            'control': None,
-            'axes': {
-                # 'TIME', 'datetime',
-                'DIAMETER': 'diameter_um',
-            }
-        }
-        dist_data.append('bin_counts')
+        # primary_meas_2d['bin_counts'] = {
+        #     'dimensions': {
+        #         'axes': ['TIME', 'DIAMETER'],
+        #         'unlimited': 'TIME',
+        #         'units': ['dateTime', 'um'],
+        #     },
+        #     'units': 'count',  # should be cfunits or udunits
+        #     'uncertainty': 0.1,
+        #     'source': 'MEASURED',
+        #     'data_type': 'NUMERIC',
+        #     'short_name': 'bin_cnt',
+        #     'parse_label': 'bin',
+        #     'control': None,
+        #     'axes': {
+        #         # 'TIME', 'datetime',
+        #         'DIAMETER': 'diameter_um',
+        #     }
+        # }
+        # dist_data.append('bin_counts')
 
         primary_meas_2d['bin_concentration'] = {
             'dimensions': {
@@ -497,7 +498,7 @@ class MSEMS(BrechtelInstrument):
             'source': 'CALCULATED',
             'data_type': 'NUMERIC',
             'short_name': 'bin_conc',
-            # 'parse_label': 'bin',
+            'parse_label': 'bin',
             'control': None,
             'axes': {
                 # 'TIME', 'datetime',
