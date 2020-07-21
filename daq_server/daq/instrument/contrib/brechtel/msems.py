@@ -254,11 +254,12 @@ class MSEMS(BrechtelInstrument):
                     flow = self.get_data_record_param(dt, 'mcpc_sample_flow')
                     bin_time = self.get_data_record_param(dt, 'bin_time')
                     print(f'flow: {flow}, bin_time: {bin_time}')
-                    if not flow:
+                    if flow is None:
                         flow = 0.35
-                    if not bin_time:
+                    if bin_time is None:
                         bin_time = 1
-                    cm3 = flow*1000./60/bin_time
+                    print(f'here: {type(flow)}, {type(bin_time)}')
+                    cm3 = flow*1000./60./bin_time
                     print(f'flow: {flow}, bin_time: {bin_time}, cm3: {cm3}')
                     dist = [n/cm3 for n in self.current_size_dist]
                     # self.current_size_dist.clear()
