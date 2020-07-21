@@ -138,7 +138,7 @@ class MSEMS(BrechtelInstrument):
     async def stop_scanning(self):
         if self.iface_components['default']:
             if_id = self.iface_components['default']
-        # if self.iface:
+            # if self.iface:
             self.current_read_cnt = 0
             cmd = 'sems_mode=0\n'
             msg = Message(
@@ -170,9 +170,7 @@ class MSEMS(BrechtelInstrument):
             #         )
             #     )
             # )
-            asyncio.ensure_future(
-                self.stop_scanning()
-            )
+            asyncio.ensure_future(self.stop_scanning())
         # TODO: add delay while scanning is stopped
         super().stop()
 
@@ -214,7 +212,7 @@ class MSEMS(BrechtelInstrument):
 
     async def handle(self, msg, type=None):
 
-        # print(f'%%%%%Instrument.handle: {msg.to_json()}')
+        print(f'%%%%%Instrument.handle: {msg.to_json()}')
         # handle messages from multiple sources. What ID to use?
         if (type == 'FromChild' and msg.type == Interface.class_type):
             # id = msg.sender_id
@@ -234,7 +232,7 @@ class MSEMS(BrechtelInstrument):
             # if self.current_read_cnt == len(self.current_poll_cmds):
             if self.mode == 'scanning' and self.scan_ready:
                 bin_time = 1
-                # print(f'dt = {dt}')
+                print(f'dt = {dt}')
                 # entry['METADATA'] = self.get_metadata()
                 self.update_data_record(
                     dt,
@@ -257,33 +255,28 @@ class MSEMS(BrechtelInstrument):
                     #     # {'bin_counts': self.current_bin_counts}
                     # )
 
-                    # conc = []
-                    # cnts = self.get_data_record_param(dt, 'bin_counts')
-                    # flow = self.get_data_record_param(dt, 'mcpc_sample_flow')
-                    # if cnts and flow:
-                    #     for n in cnts:
-                    #         conc.append(round(n/flow, 4))
-
                     # flow = self.get_data_record_param(dt, 'mcpc_sample_flow')
                     # bin_time = self.get_data_record_param(dt, 'bin_time')
                     # print(f'flow: {flow}, bin_time: {bin_time}')
                     try:
-                        flow = float(self.get_data_record_param(dt, 'mcpc_sample_flow'))
-                        bin_time = float(self.get_data_record_param(dt, 'bin_time'))
+                        flow = float(
+                            self.get_data_record_param(dt, 'mcpc_sample_flow'))
+                        bin_time = float(
+                            self.get_data_record_param(dt, 'bin_time'))
                     except Exception as e:
                         print(f'Exception! {e}')
                         flow = 0.35
                         bin_time = 1.0
-                    
+
                     try:
                         print(f'flow: {flow}, bin_time: {bin_time}')
-                            # print(type(flow))
-                            # print(type(bin_time))
+                        # print(type(flow))
+                        # print(type(bin_time))
                         intN = 0
                         conc = []
                         # if flow and bin_time:
                         cm3 = float(flow) * 1000.0 / 60.0 / float(bin_time)
-                            # conc = [n/cm3 for n in self.current_bin_counts]
+                        # conc = [n/cm3 for n in self.current_bin_counts]
                         for cnt in self.current_size_dist:
                             print(f'cnt: {cnt}, cm3: {cm3}')
                             n = cnt / cm3
@@ -292,19 +285,16 @@ class MSEMS(BrechtelInstrument):
                             intN += n
                             print(f'intN: {intN}')
                         # else:
-                            # conc = [0 for n in self.current_size_dist]
-                            # intN = 0
+                        # conc = [0 for n in self.current_size_dist]
+                        # intN = 0
 
                         self.update_data_record(
                             dt,
                             # {'bin_concentration': self.current_size_dist}
-                            {'bin_concentration': conc}
-                        )
+                            {'bin_concentration': conc})
 
                         self.update_data_record(
-                            dt,
-                            {'integral_concentration': round(intN, 3)}
-                        )
+                            dt, {'integral_concentration': round(intN, 3)})
                     except Exception as e:
                         print(f'Exception2! {e}')
                     # if flow is None:
@@ -337,27 +327,22 @@ class MSEMS(BrechtelInstrument):
 
                     # calculate diameters
                     min_dp = 10
-                    param = self.get_data_record_param(
-                        dt,
-                        'actual_max_dp'
-                    )
+                    param = self.get_data_record_param(dt, 'actual_max_dp')
                     if not param:
                         max_dp = 300
                     else:
                         max_dp = float(param)
-                    dlogdp = math.pow(
-                        10,
-                        math.log10(max_dp/min_dp)/(30-1)
-                    )
+                    dlogdp = math.pow(10,
+                                      math.log10(max_dp / min_dp) / (30 - 1))
                     # dlogdp = dlogdp / (30-1)
                     diam = []
                     diam_um = []
                     diam.append(10)
-                    diam_um.append(10/1000)
+                    diam_um.append(10 / 1000)
                     for x in range(1, 30):
-                        dp = round(diam[x-1] * dlogdp, 2)
+                        dp = round(diam[x - 1] * dlogdp, 2)
                         diam.append(dp)
-                        diam_um.append(round(dp/1000, 3))
+                        diam_um.append(round(dp / 1000, 3))
 
                     self.update_data_record(
                         dt,
@@ -370,7 +355,7 @@ class MSEMS(BrechtelInstrument):
                     )
 
                 entry = self.get_data_entry(dt)
-                # print(f'entry: {entry}')
+                print(f'entry: {entry}')
 
                 data = Message(
                     sender_id=self.get_id(),
@@ -401,20 +386,16 @@ class MSEMS(BrechtelInstrument):
                 print(f'msg: {msg.body}')
                 self.send_status()
 
-            elif msg.subject == (
-                'CONTROLS' and msg.body['purpose'] == 'REQUEST'
-            ):
+            elif msg.subject == ('CONTROLS'
+                                 and msg.body['purpose'] == 'REQUEST'):
                 print(f'msg: {msg.body}')
                 await self.set_control(msg.body['control'], msg.body['value'])
 
-            elif msg.subject == (
-                'RUNCONTROLS' and msg.body['purpose'] == 'REQUEST'
-            ):
+            elif msg.subject == ('RUNCONTROLS'
+                                 and msg.body['purpose'] == 'REQUEST'):
                 print(f'msg: {msg.body}')
-                await self.handle_control_action(
-                    msg.body['control'],
-                    msg.body['value']
-                )
+                await self.handle_control_action(msg.body['control'],
+                                                 msg.body['value'])
 
         # print("DummyInstrument:msg: {}".format(msg.body))
         # else:
@@ -465,9 +446,7 @@ class MSEMS(BrechtelInstrument):
                 self.current_bin_counts.clear()
         elif parts[0].find('bin') >= 0:
             # self.current_bin_counts.append(
-            self.current_size_dist.append(
-                float(parts[1])
-            )
+            self.current_size_dist.append(float(parts[1]))
             print(f'{parts[0]}={parts[1]}')
             print(f'{self.current_size_dist}')
         # # TODO: how to limit to one/sec
@@ -505,14 +484,8 @@ class MSEMS(BrechtelInstrument):
         definition['model'] = 'MSEMS'
         definition['type'] = 'SizeDistribution'
         definition['tags'] = [
-            'concentration',
-            'particle',
-            'aerosol',
-            'physics',
-            'brechtel',
-            'bmi',
-            'sizing',
-            'size distribution'
+            'concentration', 'particle', 'aerosol', 'physics', 'brechtel',
+            'bmi', 'sizing', 'size distribution'
         ]
 
         measurement_config = dict()
@@ -996,7 +969,6 @@ class MSEMS(BrechtelInstrument):
             },
         }
         time_series1d['source_map'] = source_map
-
 
         # size_dist['dist_data'] = dist_data
         # size_dist['default_dist_data'] = ['size_distribution']
