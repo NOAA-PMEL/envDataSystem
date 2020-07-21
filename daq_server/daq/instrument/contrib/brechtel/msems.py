@@ -285,9 +285,12 @@ class MSEMS(BrechtelInstrument):
                         cm3 = float(flow) * 1000.0 / 60.0 / float(bin_time)
                             # conc = [n/cm3 for n in self.current_bin_counts]
                         for cnt in self.current_size_dist:
+                            print(f'cnt: {cnt}, cm3: {cm3}')
                             n = cnt / cm3
+                            print(f'n: {n}')
                             conc.append(round(n, 3))
                             intN += n
+                            print(f'intN: {intN}')
                         # else:
                             # conc = [0 for n in self.current_size_dist]
                             # intN = 0
