@@ -253,6 +253,7 @@ class MSEMS(BrechtelInstrument):
                 if len(self.current_size_dist) == 30:
                     flow = self.get_data_record_param(dt, 'mcpc_sample_flow')
                     bin_time = self.get_data_record_param(dt, 'bin_time')
+                    print(f'flow: {flow}, bin_time: {bin_time}')
                     if not flow:
                         flow = 0.35
                     if not bin_time:
