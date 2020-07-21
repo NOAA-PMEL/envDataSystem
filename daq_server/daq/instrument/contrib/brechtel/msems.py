@@ -257,6 +257,7 @@ class MSEMS(BrechtelInstrument):
                     intN = 0
                     for n in self.current_size_dist:
                         intN += n
+                        print(f'{n} - {intN}')
                     self.update_data_record(
                         dt,
                         {'integral_concentration': intN}
@@ -325,19 +326,19 @@ class MSEMS(BrechtelInstrument):
             # await asyncio.sleep(0.01)
         elif type == 'FromUI':
             if msg.subject == 'STATUS' and msg.body['purpose'] == 'REQUEST':
-                # print(f'msg: {msg.body}')
+                print(f'msg: {msg.body}')
                 self.send_status()
 
             elif msg.subject == (
                 'CONTROLS' and msg.body['purpose'] == 'REQUEST'
             ):
-                # print(f'msg: {msg.body}')
+                print(f'msg: {msg.body}')
                 await self.set_control(msg.body['control'], msg.body['value'])
 
             elif msg.subject == (
                 'RUNCONTROLS' and msg.body['purpose'] == 'REQUEST'
             ):
-                # print(f'msg: {msg.body}')
+                print(f'msg: {msg.body}')
                 await self.handle_control_action(
                     msg.body['control'],
                     msg.body['value']
@@ -393,6 +394,8 @@ class MSEMS(BrechtelInstrument):
             self.current_size_dist.append(
                 float(parts[1])
             )
+            print(f'{parts[0]}={parts[1]}')
+            print(f'{self.current_size_dist}')
         # # TODO: how to limit to one/sec
         # # check for new second
         # # if data['DATETIME'] == self.last_entry['DATA']['DATETIME']:
@@ -818,7 +821,7 @@ class MSEMS(BrechtelInstrument):
                 'unlimited': 'TIME',
                 'units': ['dateTime'],
             },
-            'units': 'counts',  # should be cfunits or udunits
+            'units': 'degC',  # should be cfunits or udunits
             'uncertainty': 0.2,
             'source': 'MEASURED',
             'data_type': 'NUMERIC',
