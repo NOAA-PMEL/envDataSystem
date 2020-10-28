@@ -328,7 +328,7 @@ class CDP2(DMTInstrument):
                 self.set_control_att(control, 'action_state', 'OK')
 
     def parse(self, msg):
-        print(f'parse: {msg.to_json()}')
+        print(f'parse: {msg}')
         # entry = dict()
         # entry['METADATA'] = self.get_metadata()
 
@@ -343,7 +343,7 @@ class CDP2(DMTInstrument):
             try:
                 data = unpack(ack_fmt, packet)
                 if data[0] == 6:
-                    print(f'ACK received')
+                    print('ACK received')
                     self.scan_run_state = 'RUN'
                 else:
                     self.scan_run_state = 'CONFIGURE'

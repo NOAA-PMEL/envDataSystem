@@ -415,8 +415,8 @@ class TCPPortIFDevice(IFDevice):
                     'DATA': data
                 }
             )
-            # print(f'tcpportread: {data}')
-            # print(f'tcpid to parent:{msg}')
+            print(f'tcpportread: {data}')
+            print(f'tcpid to parent:{msg}')
             await self.message_to_parents(msg)
 
     # async def write_data(self, msg):
