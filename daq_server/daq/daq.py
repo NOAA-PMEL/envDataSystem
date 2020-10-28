@@ -448,7 +448,7 @@ class DAQ(abc.ABC):
     async def from_parent_loop(self):
         while True:
             msg = await self.from_parent_buf.get()
-            # print(f'daq from parent: {msg.to_json()}')
+            print(f'daq from parent: {msg.to_json()}')
             await self.handle(msg, type="FromParent")
             # await asyncio.sleep(.1)
 
@@ -459,8 +459,8 @@ class DAQ(abc.ABC):
 
         while True:
             msg = await self.from_child_buf.get()
-            # print(f'****from_child_loop: {msg.to_json()}')
-            # print(f'from_child: {self.get_id()}')
+            print(f'****from_child_loop: {msg.to_json()}')
+            print(f'from_child: {self.get_id()}')
             await self.handle(msg, type="FromChild")
             # await asyncio.sleep(.1)
 
@@ -479,12 +479,12 @@ class DAQ(abc.ABC):
 
     async def message_to_parent(self, msg):
         # while True:
-        # print(f'message_to_parent: {self.get_id()}, {msg.to_json()}')
+        print(f'message_to_parent: {self.get_id()}, {msg.to_json()}')
         await self.to_parent_buf.put(msg)
 
     async def message_to_parents(self, msg):
         # while True:
-        # print(f'message_to_parents: {self.get_id()}, {msg.to_json()}')
+        print(f'message_to_parents: {self.get_id()}, {msg.to_json()}')
         for id, parent in self.parent_map.items():
             if parent['to_parent_buffer']:
                 # print(f'mtp: {msg.to_json()}')
