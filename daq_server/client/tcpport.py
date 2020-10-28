@@ -112,7 +112,7 @@ class TCPPortClient(ClientConnection):
 
         async def writebinary(self, msg):
             if self.writer:
-                print(f'msg: {msg}')
+                print(f'msg: {msg}, {self.writer}')
                 sent_bytes = self.writer.write(msg)
                 await self.writer.drain()
                 print(f'written {sent_bytes}')
