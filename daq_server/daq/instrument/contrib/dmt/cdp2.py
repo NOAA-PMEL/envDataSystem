@@ -270,7 +270,7 @@ class CDP2(DMTInstrument):
 
     async def handle(self, msg, type=None):
 
-        # print(f'%%%%%Instrument.handle: {msg.to_json()}')
+        print(f'%%%%%CDP2.handle: {msg.to_json()}')
         # handle messages from multiple sources. What ID to use?
         if (type == 'FromChild' and msg.type == Interface.class_type):
             # id = msg.sender_id
@@ -328,7 +328,7 @@ class CDP2(DMTInstrument):
                 self.set_control_att(control, 'action_state', 'OK')
 
     def parse(self, msg):
-        # print(f'parse: {msg.to_json()}')
+        print(f'parse: {msg.to_json()}')
         # entry = dict()
         # entry['METADATA'] = self.get_metadata()
 

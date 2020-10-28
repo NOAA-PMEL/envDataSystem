@@ -99,7 +99,7 @@ class TCPPortClient(ClientConnection):
             return msg.decode(errors=decode_errors)
 
         async def readbinary(self, num_bytes=1, decode_errors='strict'):
-            # print(f'readbinary {num_bytes}')
+            print(f'readbinary {num_bytes}')
             msg = await self.reader.read(num_bytes)
             return msg
 
@@ -112,10 +112,10 @@ class TCPPortClient(ClientConnection):
 
         async def writebinary(self, msg):
             if self.writer:
-                # print(f'msg: {msg}')
-                # sent_bytes = self.writer.write(msg)
+                print(f'msg: {msg}')
+                sent_bytes = self.writer.write(msg)
                 await self.writer.drain()
-                # print(f'written {sent_bytes}')
+                print(f'written {sent_bytes}')
 
         async def close(self):
             self.connect_state = ClientConnection.CLOSED
@@ -192,7 +192,7 @@ class TCPPortClient(ClientConnection):
         while True:
             # print(f'read_loop: {self.ConnectionState()}')
             if self.ConnectionState() == ClientConnection.CONNECTED:
-                # print(f'read_loop: {tcpport}')
+                print(f'read_loop: {tcpport}')
                 if self.read_method == 'readline':
                     msg = await tcpport.readline(
                         decode_errors=self.decode_errors

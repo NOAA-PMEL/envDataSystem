@@ -147,7 +147,7 @@ class RotronicsHC2(RotronicsInstrument):
         # print(f'%%%%%Instrument.handle: {msg.to_json()}')
         # handle messages from multiple sources. What ID to use?
         if (type == 'FromChild' and msg.type == Interface.class_type):
-            # print(f'aps scan: {msg.to_json()}')
+            # print(f'rotronics scan: {msg.to_json()}')
 
             # id = msg.sender_id
 
@@ -212,10 +212,10 @@ class RotronicsHC2(RotronicsInstrument):
         # print(f'parse: {msg.to_json()}')
 
         dt = msg.body['DATETIME']
-        print(f'msg[DATETIME]: {dt}')
+        # print(f'msg[DATETIME]: {dt}')
 
         line = msg.body['DATA'].strip()
-        print(f'line = {line}')
+        # print(f'line = {line}')
 
         params = line.split(';')
 
