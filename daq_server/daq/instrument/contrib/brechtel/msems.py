@@ -124,7 +124,7 @@ class MSEMS(BrechtelInstrument):
             # await self.iface.message_from_parent(msg)
             await self.iface_map[if_id].message_from_parent(msg)
 
-            cmd = 'sems_mode=2\n'
+            cmd = 'msems_mode=2\n'
             msg = Message(
                 sender_id=self.get_id(),
                 msgtype=Instrument.class_type,
