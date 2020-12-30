@@ -1,8 +1,10 @@
-from client.tcpport import TCPPortClient
 import asyncio
 import json
 import time
-from data.message import Message
+import os
+import sys
+# from client.tcpport import TCPPortClient
+# from data.message import Message
 from datetime import datetime
 
 
@@ -10,8 +12,14 @@ from datetime import datetime
 async def send_data(client):
 
     while True:
+        # T and RH sensor
         meas_cmd = '#WW44022C06\n'
         read_cmd = '#RR4406\n'
+
+        # GPS
+        # meas_cmd = '#WB100a\n'
+        # read_cmd = '#RR1032\n'
+
         # msg = {'message': body}
         # message = Message(msgtype='Test', sender_id='me',
         #                   subject='cmd', body=msg)
@@ -49,30 +57,57 @@ async def send_data(client):
         #     'send_packet': read_cmd,
         # }
         # print(f'read data cmd: {read_cmd}')
+
+        # T and RH
         await client.send(read_cmd)
- 
+
+        # GPS
+        # await client.send('#RR1016\n')
+        # await asyncio.sleep(.2)
+        # await client.send('#RR1032\n')
+        # await asyncio.sleep(.2)
+        # await client.send('#RR1031\n')
+
         # print('send_data: {}'.format(message.to_json()))
         # # await client.send(json.dumps(msg))
         # # await client.send('rtclck\n')
         # await client.send('read\n')
         # await client.send('raw=2\n')
         # # await client.send_message(message)
+
         await asyncio.sleep(1)
+        # await asyncio.sleep(.2)
 
 
 async def read_data(client):
+    import binascii
+    import struct
 
     while True:
         # json_msg = await client.read()
         # msg = json.loads(json_msg)
         msg = await client.read()
         print(f'response: {msg}')
+        msg = msg.strip()
         # if msg == 'OK':
         #     global send_ok = 'True'
         # eol = len(msg.rstrip())
         # print(f'read_loop: {datetime.utcnow()} {msg.rstrip()} {eol}')
         # parse(msg)
+        if msg[:2] == '0x':
+            # print(f'msg: {msg}, {msg[2:]}, {len(msg)}')
+            unhexdata = binascii.unhexlify(msg[2:])
+            print(f'{unhexdata}')
 
+            # T and RH sensor
+            try:
+                data = struct.unpack('<6B', unhexdata)
+                temp = data[0] * 256 + data[1]
+                cTemp = -45 + (175 * temp / 65535.0)
+                humidity = 100 * (data[3] * 256 + data[4]) / 65535.0
+                print(f'T = {round(cTemp, 2)}C, RH = {round(humidity, 2)}%')
+            except Exception as e:
+                print(f'{e}')
     # to parse:
     # hexdata = '0x60eace84e859'
     # >>> import binascii
@@ -126,7 +161,14 @@ def shutdown(serialport):
 # send_ok = False
 
 if __name__ == "__main__":
-    
+
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    # print(BASE_DIR)
+    sys.path.append(os.path.join(BASE_DIR, 'envdsys/shared'))
+
+    from client.tcpport import TCPPortClient
+    from data.message import Message
+
     kw = {
         # 'send_method': 'binary',
         # 'read_method': 'readbinary',
@@ -140,13 +182,14 @@ if __name__ == "__main__":
     tcp = TCPPortClient(
         # host='moxa16chem2',
         # port=4016,
-        address=('10.55.169.52', 26),
+        address=('10.55.169.52', 26), # T and RH
+        # address=('10.55.169.53', 26), # GPS
         # read_method='readuntil',
         # read_terminator='\r'
         **kw
     )
 
-    i2c = NB_
+    # i2c = NB_
 
     loop = asyncio.get_event_loop()
 

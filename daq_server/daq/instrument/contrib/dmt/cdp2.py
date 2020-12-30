@@ -62,6 +62,9 @@ class CDP2(DMTInstrument):
         self.adc_threshold = 60
         self.bin_count = 30
 
+        self.reconfigure_limit = 10
+        self.reconfigure_count = 0
+
         # Sizes=<30>3,4,5,6,7,8,9,10,11,12,13,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50
         self.lower_dp_bnd = [
             2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
@@ -228,6 +231,8 @@ class CDP2(DMTInstrument):
         configure_cmd = self.get_cdp_command('CONFIGURE')
         send_data_cmd = self.get_cdp_command('SEND_DATA')
 
+        self.reconfigure_count = 0
+
         while True:
             # TODO: implement current_poll_cmds
             # cmds = self.current_poll_cmds
@@ -251,6 +256,14 @@ class CDP2(DMTInstrument):
                     self.scan_run_state = 'CONFIGURING'
                     # print(f'msg: {msg.to_json()}')
                     await self.iface.message_from_parent(msg)
+
+                elif self.scan_run_state == 'CONFIGURING':
+
+                    if self.reconfigure_count > self.reconfigure_limit:
+                        self.scan_run_state = "CONFIGURE"
+                        self.reconfigure_count = 0
+                    else:
+                        self.reconfigure_count += 1
 
                 elif self.scan_run_state == 'RUN':
 
