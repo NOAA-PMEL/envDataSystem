@@ -1,5 +1,5 @@
 # chat/routing.py
-from django.conf.urls import url
+# from django.conf.urls import url
 from django.urls import path
 from . import consumers
 
@@ -13,7 +13,7 @@ from . import consumers
 # ]
 
 websocket_urlpatterns = [
-    path('ws/envdaq/daqserver/', consumers.DAQServerConsumer),
+    path('ws/envdaq/daqserver/<daq_id>', consumers.DAQServerConsumer.as_asgi()),
     path('ws/envdaq/data_test/', consumers.DataConsumer),
     path(
         'ws/envdaq/controller/<controller_name>/',
