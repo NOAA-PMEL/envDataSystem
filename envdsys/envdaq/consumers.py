@@ -8,6 +8,7 @@ from envdaq.util.daq import ConfigurationUtility
 import shared.utilities.util as time_util
 from envdaq.util.sync_manager import SyncManager
 from plots.plots import PlotManager
+from envdaq.util.registration import RegistrationManager
 
 
 class DataConsumer(AsyncWebsocketConsumer):
@@ -826,14 +827,26 @@ class IFDeviceConsumer(AsyncWebsocketConsumer):
 class DAQServerConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
-        
+
+        print(f'scope: {self.scope}')
+        try:
+            self.daqserver_name = (
+                self.scope['url_route']['kwargs']['daq_id']
+            )
+            self.daqserver_group_name = (
+                f"daqserver_{self.scope['url_route']['kwargs']['daq_id']}_messages"
+            )
+        except KeyError:
+            self.daqserver_name = "default"
+            self.daqserver_group_name = "daq_default_messages"
+
         # self.server_name = (
         #     self.scope['url_route']['kwargs']['server_name']
         # )
         self.hostname = self.scope['server'][0]
         self.port = self.scope['server'][1]
         # print(f'hostname:port : {self.hostname}:{self.port}')
-        self.daqserver_group_name = 'daq_messages'
+        # self.daqserver_group_name = 'daq_messages'
 
         # Join room group
         await self.channel_layer.group_add(
@@ -867,7 +880,7 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
 
     # Receive message from WebSocket
     async def receive(self, text_data):
-        # print(text_data)
+        print(text_data)
         # text_data_json = json.loads(text_data)
 
         try:
@@ -879,7 +892,58 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
         message = data['message']
         # print(f'999999 message: {message}')
 
-        if (message['SUBJECT'] == 'CONFIG'):
+        if (message['SUBJECT'] == 'REGISTRATION'):
+            body = message['BODY']
+            if (body['purpose'] == 'ADD'):
+                print('add')
+
+                registration = RegistrationManager.get(body['id'])
+                if registration:  # reg exists - UI running, unknown daq state
+                    # if daq_server has key, check against current registration
+                    if body['regkey']:  # daq running (likely a reconnect)
+                        # same: daq_server config takes precedence
+                        if body['regkey'] == registration['regkey']:
+                            registration['config'] = body['config']
+                            RegistrationManager.update(body['id'], registration)
+                    
+                else:  # no reg, no connection to daq since UI start
+                    if body['regkey']:  # daq has been running
+                        registration = {
+                            "regkey": body['regkey'],
+                            "config": body['config'],
+                        }
+                        RegistrationManager.update(body['id'], registration)
+                    else:  # daq has started
+                        registration = RegistrationManager.add(body['id'])
+
+                print("before reply")    
+                reply = {
+                    'TYPE': 'UI',
+                    'SENDER_ID': 'DAQServerConsumer',
+                    'TIMESTAMP': time_util.dt_to_string(),
+                    'SUBJECT': 'REGISTRATION',
+                    'BODY': {
+                        'purpose': 'SUCCESS',
+                        'regkey': registration['regkey'],
+                        'config': registration['config'],
+                    }
+                }
+                print(f"reply: {reply}")
+                print(json.dumps(reply))
+                await self.data_message({'message': reply})
+
+                # body={
+                #     "purpose": "ADD",
+                #     "key": self.registration_key,
+                #     "id": self.daq_id, 
+                #     "config": self.config,
+                # },
+
+            if (body['purpose'] == 'REMOVE'):
+                print('remove')
+                RegistrationManager.remove(body['id'])
+
+        elif (message['SUBJECT'] == 'CONFIG'):
             body = message['BODY']
             if (body['purpose'] == 'REQUEST'):
                 if (body['type'] == 'ENVDAQ_CONFIG'):
@@ -890,7 +954,7 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
                     )
 
                     reply = {
-                        'TYPE': 'GUI',
+                        'TYPE': 'UI',
                         'SENDER_ID': 'DAQServerConsumer',
                         'TIMESTAMP': time_util.dt_to_string(),
                         'SUBJECT': 'CONFIG',
@@ -930,7 +994,7 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
     # Receive message from room group
     async def data_message(self, event):
         message = event['message']
-        # print(f'data_message: {json.dumps(message)}')
+        print(f'data_message: {json.dumps(message)}')
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
             'message': message

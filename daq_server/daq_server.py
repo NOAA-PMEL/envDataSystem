@@ -24,6 +24,8 @@ class DAQServer:
         self.task_list = []
         self.last_data = {}
         self.run_flag = False
+        self.registration_key = None
+        self.run_state = "STOPPED"
 
         # defaults
         self.server_name = ""
@@ -32,6 +34,9 @@ class DAQServer:
             "port": 8001,
         }
         self.base_file_path = "/tmp"
+
+        # daq_id: used by ui to delineate between different daq_servers - {nodename}-{namespace}
+        self.daq_id = f"localhost-default"
 
         self.loop = asyncio.get_event_loop()
 
@@ -49,6 +54,11 @@ class DAQServer:
             if "base_file_path" in server_config:
                 self.base_file_path = server_config["base_file_path"]
 
+            if "daq_id" in server_config:
+                fqdn = server_config['daq_id']['fqdn']
+                namespace = server_config['daq_id']['namespace']
+                self.daq_id = f"{fqdn.split('.')[0]}-{namespace}"
+
         except ModuleNotFoundError:
             print("settings file not found, using defaults")
             self.server_name = ""
@@ -61,6 +71,7 @@ class DAQServer:
 
         self.config = config
 
+        self.reg_client = None
         self.ui_client = None
 
         # start managers
@@ -96,24 +107,24 @@ class DAQServer:
     async def send_message(self, message):
         # TODO: Do I need queues? Message and string methods?
         # await self.sendq.put(message.to_json())
-        await self.to_gui_buf.put(message)
+        await self.to_ui_buf.put(message)
 
-    async def send_gui_loop(self):
+    async def send_ui_loop(self):
 
-        print("send_gui_loop init")
+        print("send_ui_loop init")
         while True:
-            message = await self.to_gui_buf.get()
+            message = await self.to_ui_buf.get()
             # print('send server message')
             await self.ui_client.send_message(message)
             # await asyncio.sleep(1)
 
-    async def read_gui_loop(self):
+    async def read_ui_loop(self):
 
-        # print('read_gui_loop init')
+        # print('read_ui_loop init')
         while True:
             msg = await self.ui_client.read_message()
             # print(f'msg = {msg.to_json()}')
-            await self.handle(msg, src="FromGUI")
+            await self.handle(msg, src="FromUI")
             # print(msg)
             # print('read_loop: {}'.format(msg))
 
@@ -132,12 +143,41 @@ class DAQServer:
                 "message": msgstr,
             }
             # print('data msg: {}'.format(data))
-            await self.to_gui_buf.put(json.dumps(data))
+            await self.to_ui_buf.put(json.dumps(data))
             # FEServer.send_to_clients(data)
 
             await asyncio.sleep(util.time_to_next(1))
 
     # TODO: add run() to check for broken connections
+
+    async def register_with_UI(self):
+
+        # ui_config = self.ui_config
+        # ui_ws_address = f'ws://{ui_config["host"]}:{ui_config["port"]}/'
+        # ui_ws_address += "ws/envdaq/daqserver/register"
+
+        # self.reg_client = WSClient(uri=ui_ws_address)
+        # while self.reg_client.isConnected() is not True:
+        #     # print(f'waiting for is_conncted {self.ui_client.isConnected()}')
+        #     # self.gui_client = WSClient(uri=gui_ws_address)
+        #     # print(f"gui client: {self.gui_client.isConnected()}")
+        #     await asyncio.sleep(1)
+
+        req = Message(
+            sender_id="daq_server",
+            msgtype="DAQServer",
+            subject="REGISTRATION",
+            body={
+                "purpose": "ADD",
+                "regkey": self.registration_key,
+                "id": self.daq_id, 
+                "config": self.config,
+            },
+        )
+        print(f'Registering with UI server: {self.daq_id}')
+        await self.to_ui_buf.put(req)
+        self.run_state = "REGISTERING"
+        # await reg_client.close()
 
     async def open(self):
         # task = asyncio.ensure_future(self.read_loop())
@@ -147,91 +187,111 @@ class DAQServer:
 
         # for k, v in self.inst_map.items():
         #     self.inst_map[k].start()
-        gui_config = self.ui_config
-        gui_ws_address = f'ws://{gui_config["host"]}:{gui_config["port"]}/'
-        gui_ws_address += "ws/envdaq/daqserver/"
-        # create gui client
-        print(f"Starting ui client: {gui_ws_address}")
+        ui_config = self.ui_config
+        ui_ws_address = f'ws://{ui_config["host"]}:{ui_config["port"]}/'
 
-        self.ui_client = WSClient(uri=gui_ws_address)
+        ui_ws_address += f"ws/envdaq/daqserver/{self.daq_id}"
+
+        # await self.register_with_UI()
+
+        # # wait for registration
+        # while self.run_state != "READY_TO_CONNECT":
+        #     await asyncio.sleep(1)
+
+        # create gui client
+        print(f"Starting ui client: {ui_ws_address}")
+
+        self.ui_client = WSClient(uri=ui_ws_address)
         while self.ui_client.isConnected() is not True:
             # print(f'waiting for is_conncted {self.ui_client.isConnected()}')
             # self.gui_client = WSClient(uri=gui_ws_address)
             # print(f"gui client: {self.gui_client.isConnected()}")
             await asyncio.sleep(1)
 
-        print(f"gui client is connected: {self.ui_client.isConnected()}")
+        print(f"UI client is connected: {self.ui_client.isConnected()}")
 
         print("Creating message loops")
-        self.to_gui_buf = asyncio.Queue(loop=self.loop)
-        self.task_list.append(asyncio.ensure_future(self.send_gui_loop()))
-        self.task_list.append(asyncio.ensure_future(self.read_gui_loop()))
+        self.to_ui_buf = asyncio.Queue()
+        self.task_list.append(asyncio.ensure_future(self.send_ui_loop()))
+        self.task_list.append(asyncio.ensure_future(self.read_ui_loop()))
 
-        print("sync DAQ")
-        # system_def = SysManager.get_definitions_all()
-        # print(f'system_def: {system_def}')
-        sys_def = Message(
-            sender_id="daqserver",
-            msgtype="DAQServer",
-            subject="CONFIG",
-            body={
-                "purpose": "SYNC",
-                "type": "SYSTEM_DEFINITION",
-                "data": SysManager.get_definitions_all(),
-            },
-        )
-        await self.to_gui_buf.put(sys_def)
+        await self.register_with_UI()
 
-        print("set self.config")
-        while self.config is None:
-            # get config from gui
-            print("Getting config from gui")
-            req = Message(
+        # wait for registration
+        while self.run_state != "READY_TO_CONNECT":
+            await asyncio.sleep(1)
+
+        if False:
+
+            # This should only be done on request
+            print("sync DAQ")
+            # system_def = SysManager.get_definitions_all()
+            # print(f'system_def: {system_def}')
+            sys_def = Message(
                 sender_id="daqserver",
                 msgtype="DAQServer",
                 subject="CONFIG",
                 body={
-                    "purpose": "REQUEST",
-                    "type": "ENVDAQ_CONFIG",
-                    "server_name": self.server_name,
+                    "purpose": "SYNC",
+                    "type": "SYSTEM_DEFINITION",
+                    "data": SysManager.get_definitions_all(),
                 },
             )
-            await self.to_gui_buf.put(req)
-            await asyncio.sleep(cfg_fetch_freq)
+            await self.to_ui_buf.put(sys_def)
 
-        # print('Waiting for config...')
-        # while self.config is None:
-        #     pass
+            print("set self.config")
+            while self.config is None:
+                # get config from gui
+                print("Getting config from gui")
+                req = Message(
+                    sender_id="daqserver",
+                    msgtype="DAQServer",
+                    subject="CONFIG",
+                    body={
+                        "purpose": "REQUEST",
+                        "type": "ENVDAQ_CONFIG",
+                        "server_name": self.server_name,
+                    },
+                )
+                await self.to_ui_buf.put(req)
+                await asyncio.sleep(cfg_fetch_freq)
 
-        # print(self.config)
-        print("Create message buffers...")
-        self.create_msg_buffer()
-        print("Add controllers...")
-        self.add_controllers()
+            # print('Waiting for config...')
+            # while self.config is None:
+            #     pass
 
-        # TODO: Create 'health monitor' to check for status
-        #       this should allow for all components to register
-        #       so we know when things are ready, broken, etc
+            # print(self.config)
+            print("Create message buffers...")
+            self.create_msg_buffer()
+            print("Add controllers...")
+            self.add_controllers()
 
-        # for now...sleep for a set amount of time to allow
-        #   everything to get set up
-        print("Waiting for setup...")
-        await asyncio.sleep(10)
-        print("Waiting for setup...done.")
+            # TODO: Create 'health monitor' to check for status
+            #       this should allow for all components to register
+            #       so we know when things are ready, broken, etc
 
-        # PlotManager.get_server().start()
-        status = Message(
-            sender_id="DAQ_SERVER",
-            msgtype="GENERIC",
-            subject="READY_STATE",
-            body={
-                "purpose": "STATUS",
-                "status": "READY",
-                # 'note': note,
-            },
-        )
-        print(f"_____ send no wait _____: {status.to_json()}")
-        await self.to_gui_buf.put(status)
+            # for now...sleep for a set amount of time to allow
+            #   everything to get set up
+            print("Waiting for setup...")
+            await asyncio.sleep(10)
+            print("Waiting for setup...done.")
+
+
+            # PlotManager.get_server().start()
+            status = Message(
+                sender_id="DAQ_SERVER",
+                msgtype="GENERIC",
+                subject="READY_STATE",
+                body={
+                    "purpose": "STATUS",
+                    "status": "READY",
+                    # 'note': note,
+                },
+            )
+            print(f"_____ send no wait _____: {status.to_json()}")
+            await self.to_ui_buf.put(status)
+
+            # end tmp if statement
 
     def start(self):
         pass
@@ -274,7 +334,7 @@ class DAQServer:
     async def handle(self, msg, src=None):
         print(f"****controller handle: {src} - {msg.to_json()}")
 
-        if src == "FromGUI":
+        if src == "FromUI":
             d = msg.to_dict()
             if "message" in d:
                 content = d["message"]
@@ -351,6 +411,8 @@ def shutdown(server):
 
 if __name__ == "__main__":
 
+    print(f"args: {sys.argv[1:]}")
+   
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     # print(BASE_DIR)
     sys.path.append(os.path.join(BASE_DIR, "envdsys/shared"))

@@ -156,11 +156,11 @@ class DAQ(abc.ABC):
         pass
 
     def start_connections(self):
-        print(f'start_connections')
+        print('start_connections')
         self.start_ui_connection()
 
     def start_ui_connection(self):
-        print(f'start_ui_connection')
+        print('start_ui_connection')
         self.task_list.append(
             asyncio.ensure_future(self.run_ui_connection())
         )
