@@ -220,6 +220,9 @@ class Instrument(DAQ):
         self.message_to_ui_nowait(msg)
         # print(f'setup: {msg.body}')
 
+        # Ready to start
+        self.status['ready_to_start'] = True
+        
     # def add_plot_app(self, plot_typ):
 
     #     meta = self.get_metadata()

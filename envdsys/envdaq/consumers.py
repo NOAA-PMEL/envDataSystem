@@ -880,7 +880,7 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
 
     # Receive message from WebSocket
     async def receive(self, text_data):
-        print(text_data)
+        # print(text_data)
         # text_data_json = json.loads(text_data)
 
         try:
@@ -892,11 +892,14 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
         message = data['message']
         # print(f'999999 message: {message}')
 
-        if (message['SUBJECT'] == 'REGISTRATION'):
+        if (message['SUBJECT'] == 'PING'):
+            RegistrationManager.ping(message['BODY']['id'])
+    
+        elif (message['SUBJECT'] == 'REGISTRATION'):
             body = message['BODY']
             if (body['purpose'] == 'ADD'):
-                print('add')
-
+                # print('add')
+                print(f'add: {self.scope}')
                 registration = RegistrationManager.get(body['id'])
                 if registration:  # reg exists - UI running, unknown daq state
                     # if daq_server has key, check against current registration
@@ -914,9 +917,12 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
                         }
                         RegistrationManager.update(body['id'], registration)
                     else:  # daq has started
-                        registration = RegistrationManager.add(body['id'])
+                        registration = RegistrationManager.add(
+                            body['id'],
+                            config=body['config']
+                        )
 
-                print("before reply")    
+                # print("before reply")
                 reply = {
                     'TYPE': 'UI',
                     'SENDER_ID': 'DAQServerConsumer',
@@ -977,9 +983,10 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
                 print(f'___ READY TO GO ___: {message}')
                 print(f'hostname: {self.hostname}')
                 ws_origin = f'{self.hostname}:{self.port}'
-                PlotManager.get_server().start(
-                    add_ws_origin=ws_origin
-                )
+
+                # PlotManager.get_server().start(
+                #     add_ws_origin=ws_origin
+                # )
 
         # message = text_data_json['BODY']
 

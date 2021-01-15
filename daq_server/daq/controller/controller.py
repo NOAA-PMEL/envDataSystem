@@ -117,7 +117,7 @@ class Controller(DAQ):
         # self.add_signals()
         # print(f'id = {self.get_id()}')
 
-        meta = self.get_metadata()
+        # meta = self.get_metadata()
 
         # TODO: move this to actual instrument
         # # add plots to PlotServer
@@ -151,8 +151,23 @@ class Controller(DAQ):
         self.message_to_ui_nowait(msg)
         # print(f'setup: {msg.body}')
 
+        # check to see if all instruments are ready
+        asyncio.create_task(self.check_ready_to_run())
+
+        # tell UI to start plot_server for this controller
+
         if self.config["AUTO_START"]:
             self.start()
+
+    async def check_ready_to_run(self):
+        ready = True
+        while not ready:
+            for k, v in self.instrument_map.items():
+                if not v.status['ready_to_start']:
+                    ready = False
+                    break
+            await asyncio.sleep(1)
+        self.status['ready_to_run'] = True
 
     def configure_components(self):
         pass

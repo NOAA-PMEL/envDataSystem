@@ -14,22 +14,22 @@ from . import consumers
 
 websocket_urlpatterns = [
     path('ws/envdaq/daqserver/<daq_id>', consumers.DAQServerConsumer.as_asgi()),
-    path('ws/envdaq/data_test/', consumers.DataConsumer),
+    # path('ws/envdaq/data_test/', consumers.DataConsumer),
     path(
         'ws/envdaq/controller/<controller_name>/',
-        consumers.ControllerConsumer
+        consumers.ControllerConsumer.as_asgi()
         ),
     path(
         'ws/envdaq/instrument/<instrument_name>/',
-        consumers.InstrumentConsumer
+        consumers.InstrumentConsumer.as_asgi()
         ),
     path(
         'ws/envdaq/interface/<interface_name>/',
-        consumers.InterfaceConsumer
+        consumers.InterfaceConsumer.as_asgi()
         ),
     path(
         'ws/envdaq/ifdevice/<ifdevice_name>/',
-        consumers.IFDeviceConsumer
+        consumers.IFDeviceConsumer.as_asgi()
         ),
     
 ]

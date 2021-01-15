@@ -22,10 +22,12 @@ class DAQServer:
         self.controller_list = []
         self.controller_map = dict()
         self.task_list = []
+        self.ui_task_list = []
         self.last_data = {}
         self.run_flag = False
         self.registration_key = None
         self.run_state = "STOPPED"
+        self.config_state = "NOT_CONFIGURED"
 
         # defaults
         self.server_name = ""
@@ -34,9 +36,10 @@ class DAQServer:
             "port": 8001,
         }
         self.base_file_path = "/tmp"
+        self.current_run_config = {}
 
         # daq_id: used by ui to delineate between different daq_servers - {nodename}-{namespace}
-        self.daq_id = f"localhost-default"
+        self.daq_id = "localhost-default"
 
         self.loop = asyncio.get_event_loop()
 
@@ -59,6 +62,11 @@ class DAQServer:
                 namespace = server_config['daq_id']['namespace']
                 self.daq_id = f"{fqdn.split('.')[0]}-{namespace}"
 
+            if "current_run_config" in server_config:
+                self.current_run_config = server_config["current_run_config"]
+                if self.current_run_config:
+                    self.config = self.current_run_config
+
         except ModuleNotFoundError:
             print("settings file not found, using defaults")
             self.server_name = ""
@@ -71,18 +79,24 @@ class DAQServer:
 
         self.config = config
 
+        # self.do_ui_connection = auto_connect_ui
+        self.do_ui_connection = True
         self.reg_client = None
         self.ui_client = None
 
         # start managers
         SysManager.start()
 
+        # Create message buffers
+        self.create_msg_buffers()
+
         # Begin startup
         asyncio.ensure_future(self.open())
 
-    def create_msg_buffer(self):
+    def create_msg_buffers(self):
         # if need config, use self.config
         # self.read_buffer = MessageBuffer(config=config)
+        self.to_ui_buf = asyncio.Queue(loop=self.loop)
         self.from_child_buf = asyncio.Queue(loop=self.loop)
 
     def add_controllers(self):
@@ -109,7 +123,7 @@ class DAQServer:
         # await self.sendq.put(message.to_json())
         await self.to_ui_buf.put(message)
 
-    async def send_ui_loop(self):
+    async def to_ui_loop(self):
 
         print("send_ui_loop init")
         while True:
@@ -118,7 +132,7 @@ class DAQServer:
             await self.ui_client.send_message(message)
             # await asyncio.sleep(1)
 
-    async def read_ui_loop(self):
+    async def from_ui_loop(self):
 
         # print('read_ui_loop init')
         while True:
@@ -170,7 +184,7 @@ class DAQServer:
             body={
                 "purpose": "ADD",
                 "regkey": self.registration_key,
-                "id": self.daq_id, 
+                "id": self.daq_id,
                 "config": self.config,
             },
         )
@@ -179,66 +193,136 @@ class DAQServer:
         self.run_state = "REGISTERING"
         # await reg_client.close()
 
-    async def open(self):
-        # task = asyncio.ensure_future(self.read_loop())
-        # self.task_list.append(task)
+    async def connect_to_ui(self):
+        print(f'connecting to ui: {self}')
+        # build ui_address
+        ui_address = f'ws://{self.ui_config["host"]}'
+        ui_address += f':{self.ui_config["port"]}'
+        ui_address += f"/ws/envdaq/daqserver/{self.daq_id.replace(' ', '')}"
 
-        cfg_fetch_freq = 10  # seconds
+        print(f'ui_address: {ui_address}')
 
-        # for k, v in self.inst_map.items():
-        #     self.inst_map[k].start()
-        ui_config = self.ui_config
-        ui_ws_address = f'ws://{ui_config["host"]}:{ui_config["port"]}/'
-
-        ui_ws_address += f"ws/envdaq/daqserver/{self.daq_id}"
-
-        # await self.register_with_UI()
-
-        # # wait for registration
-        # while self.run_state != "READY_TO_CONNECT":
-        #     await asyncio.sleep(1)
-
-        # create gui client
-        print(f"Starting ui client: {ui_ws_address}")
-
-        self.ui_client = WSClient(uri=ui_ws_address)
+        # self.ui_client = WSClient(uri=quote(ui_address))
+        self.ui_client = WSClient(uri=ui_address)
         while self.ui_client.isConnected() is not True:
-            # print(f'waiting for is_conncted {self.ui_client.isConnected()}')
             # self.gui_client = WSClient(uri=gui_ws_address)
             # print(f"gui client: {self.gui_client.isConnected()}")
             await asyncio.sleep(1)
 
-        print(f"UI client is connected: {self.ui_client.isConnected()}")
+    async def run_ui_connection(self):
 
-        print("Creating message loops")
-        self.to_ui_buf = asyncio.Queue()
-        self.task_list.append(asyncio.ensure_future(self.send_ui_loop()))
-        self.task_list.append(asyncio.ensure_future(self.read_ui_loop()))
+        # # start ui queues
+        # self.ui_task_list.append(
+        #     asyncio.ensure_future(self.to_ui_loop())
+        # )
+        # self.ui_task_list.append(
+        #     asyncio.ensure_future(self.from_ui_loop())
+        # )
 
-        await self.register_with_UI()
+        while True:
+            if (
+                self.do_ui_connection and (
+                    self.ui_client is None or not self.ui_client.isConnected()
+                )
+            ):
+                # close tasks for current ui if any
+                for t in self.ui_task_list:
+                    t.cancel()
+
+                # make connection
+                print('connect to ui')
+                await self.connect_to_ui()
+
+                # start ui queues
+                self.ui_task_list.append(
+                    asyncio.ensure_future(self.to_ui_loop())
+                )
+                self.ui_task_list.append(
+                    asyncio.ensure_future(self.from_ui_loop())
+                )
+                self.ui_task_list.append(
+                    asyncio.create_task(self.ping_ui_server())
+                )
+
+                await self.register_with_UI()
+
+            await asyncio.sleep(1)
+
+    def start_connections(self):
+        print('start_connections')
+        self.start_ui_connection()
+
+    def start_ui_connection(self):
+        print('start_ui_connection')
+        self.task_list.append(
+            asyncio.create_task(self.run_ui_connection())
+        )
+
+    async def open(self):
+        # task = asyncio.ensure_future(self.read_loop())
+        # self.task_list.append(task)
+
+        # cfg_fetch_freq = 10  # seconds
+
+        # # for k, v in self.inst_map.items():
+        # #     self.inst_map[k].start()
+        # ui_config = self.ui_config
+        # ui_ws_address = f'ws://{ui_config["host"]}:{ui_config["port"]}/'
+
+        # ui_ws_address += f"ws/envdaq/daqserver/{self.daq_id}"
+
+        # # await self.register_with_UI()
+
+        # # # wait for registration
+        # # while self.run_state != "READY_TO_CONNECT":
+        # #     await asyncio.sleep(1)
+
+        # # create gui client
+        # print(f"Starting ui client: {ui_ws_address}")
+
+        # self.ui_client = WSClient(uri=ui_ws_address)
+        # while self.ui_client.isConnected() is not True:
+        #     # print(f'waiting for is_conncted {self.ui_client.isConnected()}')
+        #     # self.gui_client = WSClient(uri=gui_ws_address)
+        #     # print(f"gui client: {self.gui_client.isConnected()}")
+        #     await asyncio.sleep(1)
+
+        self.start_connections()
+
+        # print(f"UI client is connected: {self.ui_client.isConnected()}")
+        
+        # Start heartbeat ping
+        # asyncio.create_task(self.ping_ui_server())
+
+        # print("Creating message loops")
+        # self.to_ui_buf = asyncio.Queue()
+        # self.start_ui_message_loops()
+
+        # self.run_state != "READY_TO_REGISTER":
+        # await self.register_with_UI()
+
+        # # This should only be done on request
+        # print("sync DAQ")
+        # # system_def = SysManager.get_definitions_all()
+        # # print(f'system_def: {system_def}')
+        # sys_def = Message(
+        #     sender_id="daqserver",
+        #     msgtype="DAQServer",
+        #     subject="CONFIG",
+        #     body={
+        #         "purpose": "SYNC",
+        #         "type": "SYSTEM_DEFINITION",
+        #         "data": SysManager.get_definitions_all(),
+        #     },
+        # )
+        # await self.to_ui_buf.put(sys_def)
 
         # wait for registration
-        while self.run_state != "READY_TO_CONNECT":
+        while self.run_state != "READY_TO_RUN":
+            await self.configure_daq()
             await asyncio.sleep(1)
 
         if False:
-
-            # This should only be done on request
-            print("sync DAQ")
-            # system_def = SysManager.get_definitions_all()
-            # print(f'system_def: {system_def}')
-            sys_def = Message(
-                sender_id="daqserver",
-                msgtype="DAQServer",
-                subject="CONFIG",
-                body={
-                    "purpose": "SYNC",
-                    "type": "SYSTEM_DEFINITION",
-                    "data": SysManager.get_definitions_all(),
-                },
-            )
-            await self.to_ui_buf.put(sys_def)
-
             print("set self.config")
             while self.config is None:
                 # get config from gui
@@ -272,26 +356,63 @@ class DAQServer:
 
             # for now...sleep for a set amount of time to allow
             #   everything to get set up
-            print("Waiting for setup...")
-            await asyncio.sleep(10)
-            print("Waiting for setup...done.")
+        print("Waiting for setup...")
+        await asyncio.sleep(10)
+        print("Waiting for setup...done.")
 
 
             # PlotManager.get_server().start()
-            status = Message(
-                sender_id="DAQ_SERVER",
-                msgtype="GENERIC",
-                subject="READY_STATE",
-                body={
-                    "purpose": "STATUS",
-                    "status": "READY",
-                    # 'note': note,
-                },
-            )
-            print(f"_____ send no wait _____: {status.to_json()}")
-            await self.to_ui_buf.put(status)
+
+        status = Message(
+            sender_id="DAQ_SERVER",
+            msgtype="GENERIC",
+            subject="READY_STATE",
+            body={
+                "purpose": "STATUS",
+                "status": "READY",
+                # 'note': note,
+            },
+        )
+        print(f"_____ send no wait _____: {status.to_json()}")
+        await self.to_ui_buf.put(status)
 
             # end tmp if statement
+
+    async def configure_daq(self):
+
+        cfg_fetch_freq = 2  # seconds
+
+        print("set self.config")
+        while not self.config:
+            # get config from gui
+            print("Getting config from gui")
+            req = Message(
+                sender_id="daqserver",
+                msgtype="DAQServer",
+                subject="CONFIG",
+                body={
+                    "purpose": "REQUEST",
+                    "type": "ENVDAQ_CONFIG",
+                    "server_name": self.server_name,
+                },
+            )
+            await self.to_ui_buf.put(req)
+            await asyncio.sleep(cfg_fetch_freq)
+
+            # increase time between requests to avoid traffic
+            cfg_fetch_freq += 1
+            if cfg_fetch_freq > 30:
+                cfg_fetch_freq = 30
+
+        # print("Create message buffers...")
+        # self.create_msg_buffer()
+        print("Add controllers...")
+        self.add_controllers()
+
+        self.run_state = "READY_TO_RUN"
+        
+        # reset back to original
+        cfg_fetch_freq = 2
 
     def start(self):
         pass
@@ -338,10 +459,35 @@ class DAQServer:
             d = msg.to_dict()
             if "message" in d:
                 content = d["message"]
+
                 if content["SUBJECT"] == "CONFIG":
                     if content["BODY"]["purpose"] == "REPLY":
                         config = content["BODY"]["config"]
                         self.config = config
+                    
+                    elif content["BODY"]["purpose"] == "SYNCREQUEST":
+                        print("sync DAQ")
+                        # system_def = SysManager.get_definitions_all()
+                        # print(f'system_def: {system_def}')
+                        sys_def = Message(
+                            sender_id="daqserver",
+                            msgtype="DAQServer",
+                            subject="CONFIG",
+                            body={
+                                "purpose": "SYNC",
+                                "type": "SYSTEM_DEFINITION",
+                                "data": SysManager.get_definitions_all(),
+                            },
+                        )
+                        await self.to_ui_buf.put(sys_def)
+
+                elif content["SUBJECT"] == "REGISTRATION":
+                    if content["BODY"]["purpose"] == "SUCCESS":
+                        self.registration_key = content["BODY"]["regkey"]
+                        # config = content["BODY"]["config"]
+                        self.config = content["BODY"]["config"]
+                        # self.
+
             elif src == "FromChild":
                 content = ""
                 if "message" in d:
@@ -349,6 +495,20 @@ class DAQServer:
                 print(f"fromChild: {content}")
 
         await asyncio.sleep(0.01)
+
+    async def ping_ui_server(self):
+
+        while self.ui_client.isConnected():
+            msg = Message(
+                sender_id="DAQ_SERVER",
+                msgtype="PING",
+                subject="PING",
+                body={
+                    "id": self.daq_id
+                }
+            )
+            await self.to_ui_buf.put(msg)
+            await asyncio.sleep(2)
 
     def shutdown(self):
         print("daq_server:shutdown:")
@@ -368,14 +528,22 @@ class DAQServer:
         #     # print(sensor)
         #     controller.stop()
 
-        # tasks = asyncio.Task.all_tasks()
-        for t in self.task_list:
-            # print(t)
-            t.cancel()
-        # print("Tasks canceled")
+        self.start_ui_message_loops()
+
         # asyncio.get_event_loop().stop()
 
         # self.server.close()
+
+    def start_ui_message_loops(self):
+        self.ui_task_list.append(asyncio.ensure_future(self.to_ui_loop()))
+        self.ui_task_list.append(asyncio.ensure_future(self.from_ui_loop()))
+
+    def stop_ui_message_loops(self):
+        # tasks = asyncio.Task.all_tasks()
+        for t in self.ui_task_list:
+            # print(t)
+            t.cancel()
+        # print("Tasks canceled")
 
 
 async def heartbeat():

@@ -22,7 +22,7 @@ def index(request):
     return render(request, 'envdaq/index.html', {})
 
 
-def daqserver(request):
+def daqserver(request, daq_id):
     # TODO: This will be based on current "Project"
 
     # list needs to be filtered based on controller

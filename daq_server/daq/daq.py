@@ -92,6 +92,7 @@ class DAQ(abc.ABC):
         self.controls = dict()
         self.status = {
             'run_status': 'STOPPED',
+            'ready_to_start': False,
             'connected_to_ui': False,
             'health': 'OK'
         }
@@ -148,7 +149,7 @@ class DAQ(abc.ABC):
 
     @abc.abstractmethod
     def setup(self):
-        print(f'daq.setup')
+        print('daq.setup')
         self.start_connections()
 
     # @abc.abstractmethod
