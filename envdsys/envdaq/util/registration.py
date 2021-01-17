@@ -24,6 +24,7 @@ class RegistrationManager:
     @staticmethod
     def ping(id, type="DAQServer"):
 
+        # print(f'ping: {id}')
         try:
             RegistrationManager._registry[type][id]["age"] = 0
             RegistrationManager._registry[type][id]["status"] = "CONNECTED"
@@ -102,14 +103,17 @@ class RegistrationManager:
             # print("registry check")
             for type, registry in RegistrationManager._registry.items():
                 for k, v in registry.items():
-                    v["age"] += 2
-                    if v["age"] > RegistrationManager.auto_clean_limit:
-                        RegistrationManager.remove(k, type)
-                        print(f'Removing {type} {id} from registry')
-                        continue
-                    elif v["age"] > RegistrationManager.disconnected_limit:
-                        v['status'] = "DISCONNECTED"
-                        print(f'{type} {k} looks to be disconnected') 
-                    RegistrationManager._registry[type][k] = v
+                    try:
+                        v["age"] += 2
+                        if v["age"] > RegistrationManager.auto_clean_limit:
+                            RegistrationManager.remove(k, type)
+                            print(f'Removing {type} {id} from registry')
+                            continue
+                        elif v["age"] > RegistrationManager.disconnected_limit:
+                            v['status'] = "DISCONNECTED"
+                            print(f'{type} {k} looks to be disconnected') 
+                            RegistrationManager._registry[type][k] = v
+                    except KeyError:
+                        pass
                 # print(f'registry: {registry}')
             await asyncio.sleep(2)

@@ -103,6 +103,11 @@ class Instrument(DAQ):
         # temporary
         self.last_entry = {'DATETIME': ''}
 
+        self.namespace['instrument'] = f"{self.label}".replace(" ", "")
+        if self.alias and ("name" in self.alias):
+            self.namespace['instrument'] = f"{self.alias['name']}".replace(" ", "")
+
+
         # # parameters to include metadata in output
         # self.include_metadata = True
         # # set interval to 0 to always send metadata
@@ -207,17 +212,17 @@ class Instrument(DAQ):
             'name': (meta['plot_meta']['name'])
         }
 
-        msg = Message(
-            sender_id=self.get_id(),
-            msgtype='Instrument',
-            subject='CONFIG',
-            body={
-                'purpose': 'SYNC',
-                'type': 'INSTRUMENT_INSTANCE',
-                'data': meta
-            }
-        )
-        self.message_to_ui_nowait(msg)
+        # msg = Message(
+        #     sender_id=self.get_id(),
+        #     msgtype='Instrument',
+        #     subject='CONFIG',
+        #     body={
+        #         'purpose': 'SYNC',
+        #         'type': 'INSTRUMENT_INSTANCE',
+        #         'data': meta
+        #     }
+        # )
+        # self.message_to_ui_nowait(msg)
         # print(f'setup: {msg.body}')
 
         # Ready to start
@@ -229,6 +234,29 @@ class Instrument(DAQ):
 
     #     # if plot_type == 'TimeSeries1D':
 
+    def resend_config_to_ui(self):
+
+        self.send_config_to_ui()
+
+        # for k, inst in self.instrument_map.items():
+        #     inst.resend_config_to_ui()
+
+
+    def send_config_to_ui(self):
+
+        msg = Message(
+            sender_id=self.get_id(),
+            msgtype='Instrument',
+            subject='CONFIG',
+            body={
+                'purpose': 'SYNC',
+                'type': 'INSTRUMENT_INSTANCE',
+                'data': self.get_metadata()
+            }
+        )
+        self.message_to_ui_nowait(msg)
+
+
     def get_ui_address(self):
         # print(self.label)
         # print(f'instrument.get_ui_address: {self}')
@@ -237,6 +265,17 @@ class Instrument(DAQ):
             address = 'envdaq/instrument/'+self.alias['name']+'/'
         else:
             address = 'envdaq/instrument/'+self.label+'/'
+
+        address_parts = [
+            "envdaq",
+            self.namespace['daq_server'],
+            self.namespace['controller'],
+            "instrument",
+            self.namespace['instrument'],
+            ""
+        ]
+        address = "/".join(address_parts)
+        # address = f"envdaq/{self.namespace['daq_server']}/{self.namespace['controller']/instrument/{self.namespace['instrument']}/"
         # print(f'@@@@@@@@@ instrument.get_ui_address: {address}')
         return address
 

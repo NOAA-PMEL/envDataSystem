@@ -103,6 +103,11 @@ class Controller(DAQ):
         self.data_record_template = dict()
         self.data_record = dict()
 
+        # set daq_id: this will be there plot-server id
+        self.namespace['controller'] = f"{self.label}".replace(" ", "")
+        if self.alias and ("name" in self.alias):
+            self.namespace['controller'] = f"{self.alias['name']}".replace(" ", "")
+
         # self.add_instruments()
         # self.add_signals()
 
@@ -136,6 +141,42 @@ class Controller(DAQ):
         #     'name': ('/controller_'+meta['plot_meta']['name'])
         # }
 
+        # # tell ui to build controller
+        # msg = Message(
+        #     sender_id=self.get_id(),
+        #     msgtype="Controller",
+        #     subject="CONFIG",
+        #     body={
+        #         "purpose": "SYNC",
+        #         "type": "CONTROLLER_INSTANCE",
+        #         # TODO: controller needs metadata
+        #         "data": self.get_metadata(),
+        #     },
+        # )
+        # self.message_to_ui_nowait(msg)
+        # # print(f'setup: {msg.body}')
+
+        # tell ui to build controller
+        self.send_config_to_ui()
+
+        # check to see if all instruments are ready
+        asyncio.create_task(self.check_ready_to_run())
+
+        # tell UI to start plot_server for this controller
+
+        if self.config["AUTO_START"]:
+            self.start()
+
+    def resend_config_to_ui(self):
+
+        self.send_config_to_ui()
+
+        for k, inst in self.instrument_map.items():
+            inst.resend_config_to_ui()
+
+
+    def send_config_to_ui(self):
+
         # tell ui to build controller
         msg = Message(
             sender_id=self.get_id(),
@@ -151,13 +192,6 @@ class Controller(DAQ):
         self.message_to_ui_nowait(msg)
         # print(f'setup: {msg.body}')
 
-        # check to see if all instruments are ready
-        asyncio.create_task(self.check_ready_to_run())
-
-        # tell UI to start plot_server for this controller
-
-        if self.config["AUTO_START"]:
-            self.start()
 
     async def check_ready_to_run(self):
         ready = True
@@ -172,12 +206,47 @@ class Controller(DAQ):
     def configure_components(self):
         pass
 
+    async def register_with_UI(self):
+
+        # ui_config = self.ui_config
+        # ui_ws_address = f'ws://{ui_config["host"]}:{ui_config["port"]}/'
+        # ui_ws_address += "ws/envdaq/daqserver/register"
+
+        # self.reg_client = WSClient(uri=ui_ws_address)
+        # while self.reg_client.isConnected() is not True:
+        #     # print(f'waiting for is_conncted {self.ui_client.isConnected()}')
+        #     # self.gui_client = WSClient(uri=gui_ws_address)
+        #     # print(f"gui client: {self.gui_client.isConnected()}")
+        #     await asyncio.sleep(1)
+
+        req = Message(
+            sender_id=self.get_id(),
+            msgtype=Controller.class_type,
+            subject="REGISTRATION",
+            body={
+                "purpose": "ADD",
+                "regkey": self.registration_key,
+                # "id": self.daq_id,
+                "namespace": self.namespace,
+                "config": self.config,
+            },
+        )
+        print(f'Registering with UI server: {self.namespace}')
+        await self.to_ui_buf.put(req)
+        self.run_state = "REGISTERING"
+        # await reg_client.close()
+
     def get_ui_address(self):
         # print(self.label)
-        if self.alias and ("name" in self.alias):
-            address = "envdaq/controller/" + self.alias["name"] + "/"
-        else:
-            address = "envdaq/controller/" + self.label + "/"
+        # base_address = f"envdaq/{self.parent_id}/"
+        # base_address = f"envdaq/{self.namespace['daq_server']/"
+        # if self.alias and ("name" in self.alias):
+        #     # address = "envdaq/controller/" + self.alias["name"] + "/"
+        #     address = f"{base_address}controller/{self.alias['name']}/"
+        # else:
+        #     # address = "envdaq/controller/" + self.label + "/"
+        #     address = f"{base_address}controller/{self.label}/"
+        address = f"envdaq/{self.namespace['daq_server']}/controller/{self.namespace['controller']}/"
         print(f"get_ui_address: {address}")
         return address
 
@@ -354,7 +423,7 @@ class Controller(DAQ):
             # for instr in self.config['INST_LIST']:
             # inst = InstrumentFactory().create(icfg['INST_CONFIG'])
             inst = InstrumentFactory().create(
-                icfg, base_file_path=self.get_base_filepath(), ui_config=self.ui_config
+                icfg, base_file_path=self.get_base_filepath(), ui_config=self.ui_config, namespace=self.namespace
             )
             # inst.msg_buffer = self.inst_msg_buffer
             inst.to_parent_buf = self.from_child_buf
@@ -490,6 +559,8 @@ class DummyController(Controller):
         #     auto_connect_ui=auto_connect_ui
         # )
         self.name = "DummyController"
+
+        self.keepalive_ping = True
 
         # self.INSTANTIABLE = True
 

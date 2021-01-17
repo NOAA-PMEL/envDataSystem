@@ -36,9 +36,9 @@ def daqserver(request, daq_id):
     return render(request, 'envdaq/daqserver.html')
 
 
-def controller(request, controller_alias_name):
+def controller(request, daq_namespace, controller_namespace):
 
-    print(f'{settings.ALLOWED_HOSTS}')
+    # print(f'{settings.ALLOWED_HOSTS}')
     # list needs to be filtered based on controller
     # instrument_list = InstrumentMask.objects.all()
     # print(instrument_list)
@@ -47,7 +47,7 @@ def controller(request, controller_alias_name):
     # TODO: lookup controller name in Models pass config/def in context
     #       what to do if not in db?
     try:
-        ctr = Controller.objects.get(alias_name=controller_alias_name)
+        ctr = Controller.objects.get(alias_name=controller_namespace)
         print(f'controller: {ctr}')
     except Controller.DoesNotexist:
         # TODO: return 404 ... lookup how
@@ -84,6 +84,8 @@ def controller(request, controller_alias_name):
     print(f'565656 plot_scripts: {plot_scripts}')
     print(f'controller_name: {mark_safe(json.dumps(ctr.name))}')
     context = {
+        'daq_namespace': mark_safe(json.dumps(daq_namespace)),
+        'controller_namespace': mark_safe(json.dumps(controller_namespace)),
         'controller_display_name': mark_safe(json.dumps(ctr.name)),
         'controller_name': mark_safe(json.dumps(ctr.alias_name)),
         'controller_label': mark_safe(json.dumps(ctr.name)),
@@ -97,7 +99,7 @@ def controller(request, controller_alias_name):
     return render(request, 'envdaq/controller.html', context=context)
 
 
-def instrument(request, instrument_name):
+def instrument(request, daq_namespace, controller_namespace, instrument_name):
     # list needs to be filtered based on controller
     # instrument_list = InstrumentMask.objects.all()
     # print(instrument_list)
@@ -151,6 +153,8 @@ def instrument(request, instrument_name):
     plot_script = server_document(f"http://{host}:{port}"+plots["name"])
     print(f'plot_scripts: {plot_scripts}')
     context = {
+        'daq_namespace': mark_safe(json.dumps(daq_namespace)),
+        'controller_namespace': mark_safe(json.dumps(controller_namespace)),
         'instrument_instance': mark_safe(
             json.dumps(alias.instrument.definition.__str__())
         ),

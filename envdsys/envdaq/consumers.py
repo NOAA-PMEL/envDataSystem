@@ -100,13 +100,24 @@ class DataConsumer(AsyncWebsocketConsumer):
 class ControllerConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
-        self.controller_name = (
-            self.scope['url_route']['kwargs']['controller_name']
-        )
+        try:
+            self.daqserver_namespace = (
+                self.scope['url_route']['kwargs']['daq_namespace']
+            )
+            self.controller_namespace = (
+                self.scope['url_route']['kwargs']['controller_namespace']
+            )
+        except KeyError:
+            self.daqserver_namespace = "default"
+            self.controller_namespace = "default"
+
         self.controller_group_name = (
-            'controller_{}'.format(self.controller_name)
+            f'{self.daqserver_namespace}-controller-{self.controller_namespace}'
         )
-        print(f'name = {self.controller_name}')
+
+        self.namespace = f"{self.daqserver_namespace}/{self.controller_namespace}"
+        print(f'name = {self.namespace}')
+
         # Join room group
         await self.channel_layer.group_add(
             self.controller_group_name,
@@ -159,6 +170,82 @@ class ControllerConsumer(AsyncWebsocketConsumer):
             )
             src_id = message['SENDER_ID']
             await PlotManager.update_data_by_source(src_id, data)
+
+        elif (message['SUBJECT'] == 'PING'):
+            # RegistrationManager.ping(message['BODY']['namespace']['daq_server'])
+            RegistrationManager.ping(self.namespace, type="Controller")
+
+        elif (message['SUBJECT'] == 'REGISTRATION'):
+            body = message['BODY']
+            if (body['purpose'] == 'ADD'):
+                # print('add')
+                # print(f'add: {self.scope}')
+                # daq_namespace = body['namespace']['daq_server']
+                # print(f'namespace: {self.daqserver_namespace}, {daq_namespace}')
+                # registration = RegistrationManager.get(body['id'])
+                # registration = RegistrationManager.get(daq_namespace, type="DAQServer")
+                config_requested = False
+                registration = RegistrationManager.get(self.namespace, type="Controller")
+                if registration:  # reg exists - UI running, unknown daq state
+                    # if daq_server has key, check against current registration
+                    if body['regkey']:  # daq running (likely a reconnect)
+                        # same: daq_server config takes precedence
+                        if body['regkey'] == registration['regkey']:
+                            registration['config'] = body['config']
+                            # RegistrationManager.update(body['id'], registration)
+                            # RegistrationManager.update(daq_namespace, registration, type="DAQServer")
+                            RegistrationManager.update(
+                                self.namespace,
+                                registration,
+                                type="Controller"
+                            )
+                    
+                else:  # no reg, no connection to daq since UI start
+                    if body['regkey']:  # daq has been running
+                        config_requested = True
+                        registration = {
+                            "regkey": body['regkey'],
+                            "config": body['config'],
+                        }
+                        # RegistrationManager.update(body['id'], registration)
+                        # RegistrationManager.update(daq_namespace, registration, type="DAQServer")
+                        RegistrationManager.update(self.namespace, registration, type="Controller")
+                    else:  # daq has started
+                        registration = RegistrationManager.add(
+                            # body['id'],
+                            self.namespace,
+                            config=body['config'],
+                            type="Controller"
+                        )
+
+                # print("before reply")
+                reply = {
+                    'TYPE': 'UI',
+                    'SENDER_ID': 'ControllerConsumer',
+                    'TIMESTAMP': time_util.dt_to_string(),
+                    'SUBJECT': 'REGISTRATION',
+                    'BODY': {
+                        'purpose': 'SUCCESS',
+                        'regkey': registration['regkey'],
+                        'config': registration['config'],
+                        'config_requested': config_requested
+                    }
+                }
+                print(f"reply: {reply}")
+                print(json.dumps(reply))
+                await self.controller_message({'message': reply})
+
+                # body={
+                #     "purpose": "ADD",
+                #     "key": self.registration_key,
+                #     "id": self.daq_id, 
+                #     "config": self.config,
+                # },
+
+            if (body['purpose'] == 'REMOVE'):
+                print('remove')
+                # RegistrationManager.remove(body['id'])
+                RegistrationManager.remove(self.namespace, type="Controller")
 
         elif (message['SUBJECT'] == 'CONFIG'):
             body = message['BODY']
@@ -830,14 +917,14 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
 
         print(f'scope: {self.scope}')
         try:
-            self.daqserver_name = (
-                self.scope['url_route']['kwargs']['daq_id']
+            self.daqserver_namespace = (
+                self.scope['url_route']['kwargs']['daq_namespace']
             )
             self.daqserver_group_name = (
-                f"daqserver_{self.scope['url_route']['kwargs']['daq_id']}_messages"
+                f"daqserver_{self.scope['url_route']['kwargs']['daq_namespace']}_messages"
             )
         except KeyError:
-            self.daqserver_name = "default"
+            self.daqserver_namespace = "default"
             self.daqserver_group_name = "daq_default_messages"
 
         # self.server_name = (
@@ -893,33 +980,50 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
         # print(f'999999 message: {message}')
 
         if (message['SUBJECT'] == 'PING'):
-            RegistrationManager.ping(message['BODY']['id'])
+            # RegistrationManager.ping(message['BODY']['namespace']['daq_server'])
+            RegistrationManager.ping(self.daqserver_namespace)
     
         elif (message['SUBJECT'] == 'REGISTRATION'):
             body = message['BODY']
             if (body['purpose'] == 'ADD'):
                 # print('add')
                 print(f'add: {self.scope}')
-                registration = RegistrationManager.get(body['id'])
+                daq_namespace = body['namespace']['daq_server']
+                print(f'namespace: {self.daqserver_namespace}, {daq_namespace}')
+                # registration = RegistrationManager.get(body['id'])
+                # registration = RegistrationManager.get(daq_namespace, type="DAQServer")
+                ui_reconfig_request = False
+                registration = RegistrationManager.get(self.daqserver_namespace, type="DAQServer")
                 if registration:  # reg exists - UI running, unknown daq state
                     # if daq_server has key, check against current registration
                     if body['regkey']:  # daq running (likely a reconnect)
                         # same: daq_server config takes precedence
                         if body['regkey'] == registration['regkey']:
                             registration['config'] = body['config']
-                            RegistrationManager.update(body['id'], registration)
+                            # RegistrationManager.update(body['id'], registration)
+                            # RegistrationManager.update(daq_namespace, registration, type="DAQServer")
+                            RegistrationManager.update(
+                                self.daqserver_namespace,
+                                registration,
+                                type="DAQServer"
+                            )
                     
                 else:  # no reg, no connection to daq since UI start
                     if body['regkey']:  # daq has been running
+                        ui_reconfig_request = True
                         registration = {
                             "regkey": body['regkey'],
                             "config": body['config'],
                         }
-                        RegistrationManager.update(body['id'], registration)
+                        # RegistrationManager.update(body['id'], registration)
+                        # RegistrationManager.update(daq_namespace, registration, type="DAQServer")
+                        RegistrationManager.update(self.daqserver_namespace, registration, type="DAQServer")
                     else:  # daq has started
                         registration = RegistrationManager.add(
-                            body['id'],
-                            config=body['config']
+                            # body['id'],
+                            self.daqserver_namespace,
+                            config=body['config'],
+                            type="DAQServer"
                         )
 
                 # print("before reply")
@@ -932,6 +1036,7 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
                         'purpose': 'SUCCESS',
                         'regkey': registration['regkey'],
                         'config': registration['config'],
+                        'ui_reconfig_request': ui_reconfig_request,
                     }
                 }
                 print(f"reply: {reply}")
@@ -947,7 +1052,8 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
 
             if (body['purpose'] == 'REMOVE'):
                 print('remove')
-                RegistrationManager.remove(body['id'])
+                # RegistrationManager.remove(body['id'])
+                RegistrationManager.remove(self.daqserver_namespace, type="DAQServer")
 
         elif (message['SUBJECT'] == 'CONFIG'):
             body = message['BODY']

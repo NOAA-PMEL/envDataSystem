@@ -22,6 +22,7 @@ class DAQ(abc.ABC):
         ui_config=None,
         base_file_path=None,
         auto_connect_ui=True,
+        namespace=None,
         **kwargs
     ):
         # non-abstract DAQ children need to set this to True
@@ -37,10 +38,13 @@ class DAQ(abc.ABC):
         self.do_ui_connection = auto_connect_ui
         self.task_list = []
         self.ui_task_list = []
+        self.registration_key = None
 
         self.plot_app = None
 
         self.datafile = None
+
+        self.keepalive_ping = False
 
         # set base file path for all file saves
         # base_file_path = '/tmp'
@@ -62,6 +66,14 @@ class DAQ(abc.ABC):
         if 'LABEL' in config:
             self.label = config['LABEL']
         # print(f"id: {self.get_id()}")
+
+        self.namespace = {}
+        if namespace:
+            self.namespace = namespace
+        # self.parent_id = "parent-default"
+        # if parent_id:
+        #     self.parent_id = parent_id
+        # self.daq_id = f"{self.parent_id}-default"
 
         # in case we want to add heierarchy
         # parent = {
@@ -296,6 +308,9 @@ class DAQ(abc.ABC):
     def get_ui_address(self):
         pass
 
+    async def register_with_UI(self):
+        pass
+
     async def connect_to_ui(self):
         print(f'connecting to ui: {self}')
         # build ui_address
@@ -343,6 +358,13 @@ class DAQ(abc.ABC):
                 self.ui_task_list.append(
                     asyncio.ensure_future(self.from_ui_loop())
                 )
+                if self.keepalive_ping:
+                    self.ui_task_list.append(
+                        asyncio.create_task(self.ping_ui_server())
+                    )
+
+                await self.register_with_UI()
+
             await asyncio.sleep(1)
 
     # async def open_ui_connection(self):
@@ -416,6 +438,24 @@ class DAQ(abc.ABC):
 
         self.status['run_status'] = 'STOPPED'
         self.send_status()
+
+    async def ping_ui_server(self):
+
+        # wait for things to get started before pinging
+        await asyncio.sleep(5)
+
+        while self.ui_client.isConnected():
+            msg = Message(
+                sender_id=self.get_id(),
+                msgtype="PING",
+                subject="PING",
+                body={
+                    # "id": self.daq_id
+                    "namespace": self.namespace
+                }
+            )
+            await self.to_ui_buf.put(msg)
+            await asyncio.sleep(2)
 
     def shutdown(self):
 

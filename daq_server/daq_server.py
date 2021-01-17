@@ -40,6 +40,9 @@ class DAQServer:
 
         # daq_id: used by ui to delineate between different daq_servers - {nodename}-{namespace}
         self.daq_id = "localhost-default"
+        self.namespace = {
+            "daq_server": "localhost-default",
+        }
 
         self.loop = asyncio.get_event_loop()
 
@@ -60,7 +63,8 @@ class DAQServer:
             if "daq_id" in server_config:
                 fqdn = server_config['daq_id']['fqdn']
                 namespace = server_config['daq_id']['namespace']
-                self.daq_id = f"{fqdn.split('.')[0]}-{namespace}"
+                self.daq_id = f"{fqdn.split('.')[0]}-{namespace}"                
+                self.namespace['daq_server'] = self.daq_id.replace(" ", "")
 
             if "current_run_config" in server_config:
                 self.current_run_config = server_config["current_run_config"]
@@ -112,7 +116,7 @@ class DAQServer:
             # print(ifcfg['IFACE_CONFIG'])
             # controller = ControllerFactory().create(icfg['CONT_CONFIG'])
             controller = ControllerFactory().create(
-                icfg, ui_config=self.ui_config, base_file_path=self.base_file_path
+                icfg, ui_config=self.ui_config, base_file_path=self.base_file_path, namespace=self.namespace
             )
             print(controller)
             controller.to_parent_buf = self.from_child_buf
@@ -184,11 +188,12 @@ class DAQServer:
             body={
                 "purpose": "ADD",
                 "regkey": self.registration_key,
-                "id": self.daq_id,
+                # "id": self.daq_id,
+                "namespace": self.namespace,
                 "config": self.config,
             },
         )
-        print(f'Registering with UI server: {self.daq_id}')
+        print(f'Registering with UI server: {self.namespace}')
         await self.to_ui_buf.put(req)
         self.run_state = "REGISTERING"
         # await reg_client.close()
@@ -198,7 +203,8 @@ class DAQServer:
         # build ui_address
         ui_address = f'ws://{self.ui_config["host"]}'
         ui_address += f':{self.ui_config["port"]}'
-        ui_address += f"/ws/envdaq/daqserver/{self.daq_id.replace(' ', '')}"
+        # ui_address += f"/ws/envdaq/daqserver/{self.daq_id.replace(' ', '')}"
+        ui_address += f"/ws/envdaq/daqserver/{self.namespace['daq_server']}"
 
         print(f'ui_address: {ui_address}')
 
@@ -414,6 +420,10 @@ class DAQServer:
         # reset back to original
         cfg_fetch_freq = 2
 
+    def resend_config_to_ui(self):
+        for k, ctl in self.controller_map.items():
+            ctl.resend_config_to_ui()            
+
     def start(self):
         pass
 
@@ -486,7 +496,9 @@ class DAQServer:
                         self.registration_key = content["BODY"]["regkey"]
                         # config = content["BODY"]["config"]
                         self.config = content["BODY"]["config"]
-                        # self.
+                        
+                        if content['BODY']['ui_reconfig_request']:
+                            self.resend_config_to_ui()
 
             elif src == "FromChild":
                 content = ""
@@ -498,13 +510,17 @@ class DAQServer:
 
     async def ping_ui_server(self):
 
+        # wait for things to get started before pinging
+        await asyncio.sleep(5)
+
         while self.ui_client.isConnected():
             msg = Message(
                 sender_id="DAQ_SERVER",
                 msgtype="PING",
                 subject="PING",
                 body={
-                    "id": self.daq_id
+                    # "id": self.daq_id
+                    "namespace": self.namespace
                 }
             )
             await self.to_ui_buf.put(msg)
