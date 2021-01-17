@@ -177,6 +177,10 @@ class Controller(DAQ):
 
     def send_config_to_ui(self):
 
+        # add namespace to metadata
+        meta = self.get_metadata()
+        meta['namespace'] = self.namespace
+
         # tell ui to build controller
         msg = Message(
             sender_id=self.get_id(),
@@ -186,7 +190,7 @@ class Controller(DAQ):
                 "purpose": "SYNC",
                 "type": "CONTROLLER_INSTANCE",
                 # TODO: controller needs metadata
-                "data": self.get_metadata(),
+                "data": meta,
             },
         )
         self.message_to_ui_nowait(msg)

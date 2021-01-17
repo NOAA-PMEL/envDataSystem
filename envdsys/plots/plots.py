@@ -25,6 +25,13 @@ class PlotManager():
     def add_apps(config):
         # PlotManager.start_server()
         print(f'##### add_apps -> {config}')
+        server_namespace = ''
+        if ("namespace") in config:
+            if "daq_server" in config["namespace"]:
+                server_namespace += config['namespace']['daq_server']
+            if "controller" in config["namespace"]:
+                server_namespace += config['namespace']['controller']
+                
         if ('plot_meta' in config and 'plots' in config['plot_meta']):
             app_list = []
             for plot_name, plot_def in config['plot_meta']['plots'].items():

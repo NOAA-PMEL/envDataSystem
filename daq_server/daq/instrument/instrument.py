@@ -161,6 +161,9 @@ class Instrument(DAQ):
         meta = self.get_metadata()
         # tell ui to build instrument
 
+        # add namespace to metadata
+        meta['namespace'] = self.namespace
+
         # TODO: how to pass config and data to PlotApp: custom meta or
         #       what we are using now? How do we specify defaults
         # plot_config = dict()

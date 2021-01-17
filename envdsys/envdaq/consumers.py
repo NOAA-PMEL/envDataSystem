@@ -124,6 +124,10 @@ class ControllerConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
 
+        # get hostname/port for plot server
+        self.hostname = self.scope['server'][0]
+        self.port = self.scope['server'][1]
+
         await self.accept()
 
         # TODO: request config from controller?
