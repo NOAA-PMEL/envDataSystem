@@ -66,10 +66,20 @@ class DAQServer:
                 self.daq_id = f"{fqdn.split('.')[0]}-{namespace}"                
                 self.namespace['daq_server'] = self.daq_id.replace(" ", "")
 
-            if "current_run_config" in server_config:
-                self.current_run_config = server_config["current_run_config"]
-                if self.current_run_config:
-                    self.config = self.current_run_config
+            if "last_config_file" in server_config:
+                self.last_config_file = server_config["last_config_file"]
+                try:
+                    with open(self.last_config_file) as cfg:
+                        self.config = json.load(cfg)
+                except FileNotFoundError:
+                    pass
+                except TypeError:
+                    pass
+
+            # if "current_run_config" in server_config:
+            #     self.current_run_config = server_config["current_run_config"]
+            #     if self.current_run_config:
+            #         self.config = self.current_run_config
 
         except ModuleNotFoundError:
             print("settings file not found, using defaults")
@@ -80,13 +90,20 @@ class DAQServer:
             self.server_name = server_name
         if ui_config:
             self.ui_config = ui_config
-
-        self.config = config
+        if config:
+            self.config = config
 
         # self.do_ui_connection = auto_connect_ui
         self.do_ui_connection = True
         self.reg_client = None
         self.ui_client = None
+
+        self.status = {
+            # 'run_status': 'STOPPED',
+            'ready_to_run': False,
+            'connected_to_ui': False,
+            'health': 'OK'
+        }
 
         # start managers
         SysManager.start()
@@ -363,11 +380,35 @@ class DAQServer:
             # for now...sleep for a set amount of time to allow
             #   everything to get set up
         print("Waiting for setup...")
-        await asyncio.sleep(10)
+        # await asyncio.sleep(10)
+
+        self.ui_task_list.append(asyncio.create_task(self.check_ready_to_run()))
+
+        while not self.status['ready_to_run']:
+            await asyncio.sleep(1)
+
         print("Waiting for setup...done.")
 
 
             # PlotManager.get_server().start()
+
+        await self.send_ready_to_ui()
+        # status = Message(
+        #     sender_id="DAQ_SERVER",
+        #     msgtype="GENERIC",
+        #     subject="READY_STATE",
+        #     body={
+        #         "purpose": "STATUS",
+        #         "status": "READY",
+        #         # 'note': note,
+        #     },
+        # )
+        # print(f"_____ send no wait _____: {status.to_json()}")
+        # await self.to_ui_buf.put(status)
+
+            # end tmp if statement
+
+    async def send_ready_to_ui(self):
 
         status = Message(
             sender_id="DAQ_SERVER",
@@ -381,8 +422,6 @@ class DAQServer:
         )
         print(f"_____ send no wait _____: {status.to_json()}")
         await self.to_ui_buf.put(status)
-
-            # end tmp if statement
 
     async def configure_daq(self):
 
@@ -420,9 +459,13 @@ class DAQServer:
         # reset back to original
         cfg_fetch_freq = 2
 
-    def resend_config_to_ui(self):
+    async def resend_config_to_ui(self):
         for k, ctl in self.controller_map.items():
-            ctl.resend_config_to_ui()            
+            ctl.resend_config_to_ui()
+
+        await asyncio.sleep(5)  # wait for config to be sent
+        await self.send_ready_to_ui()
+
 
     def start(self):
         pass
@@ -474,6 +517,11 @@ class DAQServer:
                     if content["BODY"]["purpose"] == "REPLY":
                         config = content["BODY"]["config"]
                         self.config = config
+
+                        # save config locally
+                        if self.last_config_file:
+                            with open(self.last_config_file, "w") as cfg:
+                                json.dump(self.config, cfg)
                     
                     elif content["BODY"]["purpose"] == "SYNCREQUEST":
                         print("sync DAQ")
@@ -498,7 +546,7 @@ class DAQServer:
                         self.config = content["BODY"]["config"]
                         
                         if content['BODY']['ui_reconfig_request']:
-                            self.resend_config_to_ui()
+                            await self.resend_config_to_ui()
 
             elif src == "FromChild":
                 content = ""
@@ -507,6 +555,18 @@ class DAQServer:
                 print(f"fromChild: {content}")
 
         await asyncio.sleep(0.01)
+
+    async def check_ready_to_run(self):
+        wait = True
+        while wait:
+            wait = False
+            for k, v in self.controller_map.items():
+                if not v.status['ready_to_run']:
+                    wait = True
+                    print(f'Waiting for controller: {k}')
+                    break
+            await asyncio.sleep(1)
+        self.status['ready_to_run'] = True
 
     async def ping_ui_server(self):
 

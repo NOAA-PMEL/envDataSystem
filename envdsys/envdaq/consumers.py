@@ -367,13 +367,28 @@ class ControllerConsumer(AsyncWebsocketConsumer):
 class InstrumentConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
-        self.instrument_name = (
-            self.scope['url_route']['kwargs']['instrument_name']
-        )
+        try:
+            self.daqserver_namespace = (
+                self.scope['url_route']['kwargs']['daq_namespace']
+            )
+            self.controller_namespace = (
+                self.scope['url_route']['kwargs']['controller_namespace']
+            )
+            self.instrument_namespace = (
+                self.scope['url_route']['kwargs']['instrument_namespace']
+            )
+        except KeyError:
+            self.daqserver_namespace = "default"
+            self.controller_namespace = "default"
+            self.instrument_namespace = "default"
+
         self.instrument_group_name = (
-            'instrument_{}'.format(self.instrument_name)
+            f'{self.daqserver_namespace}-{self.controller_namespace}-instrument-{self.instrument_namespace}'
         )
-        print(f'name = {self.instrument_name}')
+
+        self.namespace = f"{self.daqserver_namespace}/{self.controller_namespace}/{self.instrument_namespace}"
+
+        print(f'name = {self.instrument_namespace}')
         # Join room group
         await self.channel_layer.group_add(
             self.instrument_group_name,
@@ -450,7 +465,9 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
                 # TODO: make this a utility function
                 for dr in message['BODY']['DATA_REQUEST_LIST']:
                     if dr['class'] == 'CONTROLLER':
-                        group_name = f'controller_{dr["alias"]["name"]}'
+                        # group_name = f'controller_{dr["alias"]["name"]}'
+                        group_name = f'{self.daqserver_namespace}-controller-{self.controller_namespace}'
+
                         await self.channel_layer.group_send(
                             group_name.replace(' ', ''),
                             {
@@ -1094,9 +1111,9 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
                 print(f'hostname: {self.hostname}')
                 ws_origin = f'{self.hostname}:{self.port}'
 
-                # PlotManager.get_server().start(
-                #     add_ws_origin=ws_origin
-                # )
+                PlotManager.get_server().start(
+                    add_ws_origin=ws_origin
+                )
 
         # message = text_data_json['BODY']
 

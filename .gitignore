@@ -141,3 +141,5 @@ daq_server/connector/connector_settings.py
 # static files
 staticfiles
 envdsys/media/
+daq_server/last_config.json
+last_config.json

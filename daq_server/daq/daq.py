@@ -104,7 +104,7 @@ class DAQ(abc.ABC):
         self.controls = dict()
         self.status = {
             'run_status': 'STOPPED',
-            'ready_to_start': False,
+            'ready_to_run': False,
             'connected_to_ui': False,
             'health': 'OK'
         }

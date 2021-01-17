@@ -20,7 +20,7 @@ websocket_urlpatterns = [
         consumers.ControllerConsumer.as_asgi()
         ),
     path(
-        'ws/envdaq/<daq_namespace>/<controller_namespace>/instrument/<instrument_name>/',
+        'ws/envdaq/<daq_namespace>/<controller_namespace>/instrument/<instrument_namespace>/',
         consumers.InstrumentConsumer.as_asgi()
         ),
     path(

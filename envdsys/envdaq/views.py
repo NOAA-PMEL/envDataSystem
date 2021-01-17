@@ -99,7 +99,7 @@ def controller(request, daq_namespace, controller_namespace):
     return render(request, 'envdaq/controller.html', context=context)
 
 
-def instrument(request, daq_namespace, controller_namespace, instrument_name):
+def instrument(request, daq_namespace, controller_namespace, instrument_namespace):
     # list needs to be filtered based on controller
     # instrument_list = InstrumentMask.objects.all()
     # print(instrument_list)
@@ -109,7 +109,7 @@ def instrument(request, daq_namespace, controller_namespace, instrument_name):
     #       what to do if not in db?
 
     try:
-        alias = InstrumentAlias.objects.get(name=instrument_name)
+        alias = InstrumentAlias.objects.get(name=instrument_namespace)
 
         print(f'alias: {alias}')
     except InstrumentAlias.DoesNotExist:
@@ -155,10 +155,11 @@ def instrument(request, daq_namespace, controller_namespace, instrument_name):
     context = {
         'daq_namespace': mark_safe(json.dumps(daq_namespace)),
         'controller_namespace': mark_safe(json.dumps(controller_namespace)),
+        'instrument_namespace': mark_safe(json.dumps(instrument_namespace)),
         'instrument_instance': mark_safe(
             json.dumps(alias.instrument.definition.__str__())
         ),
-        'instrument_name': mark_safe(json.dumps(instrument_name)),
+        'instrument_name': mark_safe(json.dumps(instrument_namespace)),
         'instrument_label': mark_safe(json.dumps(alias.label)),
         'instrument_prefix': mark_safe(json.dumps(alias.prefix)),
         'instrument_measurements': mark_safe(

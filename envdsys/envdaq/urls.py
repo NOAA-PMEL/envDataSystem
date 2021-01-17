@@ -11,7 +11,7 @@ urlpatterns = [
         '<daq_namespace>/controller/<controller_namespace>/',
         views.controller, name='controller'
     ),
-    path('<daq_namespace>/<controller_namespace>/instrument/<instrument_name>/', views.instrument, name='instrument'),
+    path('<daq_namespace>/<controller_namespace>/instrument/<instrument_namespace>/', views.instrument, name='instrument'),
     # path('interface/<interface_name>/', views.interface, name='interface'),
     # path('ifdevice/<ifdevice_name>/', views.ifdevice, name='ifdevice'),
 ]

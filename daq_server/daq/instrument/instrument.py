@@ -158,63 +158,61 @@ class Instrument(DAQ):
 
         # add measurements
         self.add_measurements()
-        meta = self.get_metadata()
+        # meta = self.get_metadata()
+        # # tell ui to build instrument
+
+        # # add namespace to metadata
+        # meta['namespace'] = self.namespace
+
+        # # TODO: how to pass config and data to PlotApp: custom meta or
+        # #       what we are using now? How do we specify defaults
+        # # plot_config = dict()
+        # # plot_config['name'] = '/instrument_'+meta['alias']['name']
+        # # plot_data = dict()
+
+        # # use current meta
+
+        # # TODO: implement last_config
+
+        # # for now, set controls to default
+        # if 'measurement_meta' in meta:
+        #     if 'controls' in meta['measurement_meta']:
+        #         controls = meta['measurement_meta']['controls']
+        #         for control, config in controls.items():
+        #             if 'default_value' in config:
+        #                 # TODO: on start, have to go through and send all
+        #                 #       control values to instrument
+        #                 self.set_control_att(
+        #                     control, 'value', config['default_value']
+        #                 )
+
+        # # add dictionary specifying which measurements go with which plot
+        # # if there are more than one.
+
+        # # plot_config['data'] = plot_data
+
+        # # print(f'{meta["plot_meta"]}')
+        # # print(f'{meta["plot_meta"]["name"]}')
+        # # TODO: move this to actual instrument
+        # # # add plots to PlotServer
+
+        # # TESTING: moving this to django side
+        # # PlotManager.add_app(
+        # #     TimeSeries1D(
+        # #         meta,
+        # #         # name=('/instrument_'+meta['plot_meta']['name'])
+        # #         name=(meta['plot_meta']['name'])
+        # #     ),
+        # #     start_after_add=False
+        # # )
+
+        # print(f"app_name: {meta['plot_meta']['name']}")
+        # meta['plot_app'] = {
+        #     'name': (meta['plot_meta']['name'])
+        # }
+
         # tell ui to build instrument
-
-        # add namespace to metadata
-        meta['namespace'] = self.namespace
-
-        # TODO: how to pass config and data to PlotApp: custom meta or
-        #       what we are using now? How do we specify defaults
-        # plot_config = dict()
-        # plot_config['name'] = '/instrument_'+meta['alias']['name']
-        # plot_data = dict()
-
-        # use current meta
-
-        # TODO: implement last_config
-
-        # for now, set controls to default
-        if 'measurement_meta' in meta:
-            if 'controls' in meta['measurement_meta']:
-                controls = meta['measurement_meta']['controls']
-                for control, config in controls.items():
-                    if 'default_value' in config:
-                        # TODO: on start, have to go through and send all
-                        #       control values to instrument
-                        self.set_control_att(
-                            control, 'value', config['default_value']
-                        )
-
-        # add dictionary specifying which measurements go with which plot
-        # if there are more than one.
-
-        # plot_config['data'] = plot_data
-
-        # print(f'{meta["plot_meta"]}')
-        # print(f'{meta["plot_meta"]["name"]}')
-        # TODO: move this to actual instrument
-        # # add plots to PlotServer
-
-        # TESTING: moving this to django side
-        # PlotManager.add_app(
-        #     TimeSeries1D(
-        #         meta,
-        #         # name=('/instrument_'+meta['plot_meta']['name'])
-        #         name=(meta['plot_meta']['name'])
-        #     ),
-        #     start_after_add=False
-        # )
-
-        print(f"app_name: {meta['plot_meta']['name']}")
-        # plot_app_name = ('/instrument_'+meta['plot_meta']['name'])
-        # plot_app_name = self.add_plot_app()
-        # if plot_app_name:
-        meta['plot_app'] = {
-            # 'name': ('/instrument_'+meta['plot_meta']['name'])
-            'name': (meta['plot_meta']['name'])
-        }
-
+        self.send_config_to_ui()
         # msg = Message(
         #     sender_id=self.get_id(),
         #     msgtype='Instrument',
@@ -229,7 +227,7 @@ class Instrument(DAQ):
         # print(f'setup: {msg.body}')
 
         # Ready to start
-        self.status['ready_to_start'] = True
+        self.status['ready_to_run'] = True
         
     # def add_plot_app(self, plot_typ):
 
@@ -247,6 +245,33 @@ class Instrument(DAQ):
 
     def send_config_to_ui(self):
 
+        meta = self.get_metadata()
+
+        # add namespace to metadata
+        meta['namespace'] = self.namespace
+
+        # for now, set controls to default
+        if 'measurement_meta' in meta:
+            if 'controls' in meta['measurement_meta']:
+                controls = meta['measurement_meta']['controls']
+                for control, config in controls.items():
+                    if 'default_value' in config:
+                        # TODO: on start, have to go through and send all
+                        #       control values to instrument
+                        self.set_control_att(
+                            control, 'value', config['default_value']
+                        )
+
+
+        print(f"app_name: {meta['plot_meta']['name']}")
+        # plot_app_name = ('/instrument_'+meta['plot_meta']['name'])
+        # plot_app_name = self.add_plot_app()
+        # if plot_app_name:
+        meta['plot_app'] = {
+            # 'name': ('/instrument_'+meta['plot_meta']['name'])
+            'name': (meta['plot_meta']['name'])
+        }
+
         msg = Message(
             sender_id=self.get_id(),
             msgtype='Instrument',
@@ -254,7 +279,7 @@ class Instrument(DAQ):
             body={
                 'purpose': 'SYNC',
                 'type': 'INSTRUMENT_INSTANCE',
-                'data': self.get_metadata()
+                'data': meta
             }
         )
         self.message_to_ui_nowait(msg)

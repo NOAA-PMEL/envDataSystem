@@ -198,11 +198,13 @@ class Controller(DAQ):
 
 
     async def check_ready_to_run(self):
-        ready = True
-        while not ready:
+        wait = True
+        while wait:
+            wait = False
             for k, v in self.instrument_map.items():
-                if not v.status['ready_to_start']:
-                    ready = False
+                if not v.status['ready_to_run']:
+                    wait = True
+                    print(f'Waiting for instrument: {k}')
                     break
             await asyncio.sleep(1)
         self.status['ready_to_run'] = True

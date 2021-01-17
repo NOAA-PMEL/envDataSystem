@@ -42,17 +42,20 @@
     {% endfor %}
 {% endblock %}
 
+
+{% comment %} <label for="input_temperature_sp">Input Temperature SP</label> {% endcomment %}
+{% comment %} <input id="input_temperature_sp" type="number" name="input_temperature_sp" min="10.0" max="30.0" value="25.0"> {% endcomment %}
+{% comment %} <input id"input_temperature_sp_set" type="button" value="Set"> {% endcomment %}
+{% comment %} <div id="run-control> {% endcomment %}
+{% comment %} </div> {% endcomment %}
+
+
 {% block controls %}
     <div class="card">
         <div id="controls-table"></div>
-        {% comment %} <label for="input_temperature_sp">Input Temperature SP</label>
-        <input id="input_temperature_sp" type="number" name="input_temperature_sp" min="10.0" max="30.0" value="25.0">
-        <input id"input_temperature_sp_set" type="button" value="Set"> {% endcomment %}
-        {% comment %} <div id="run-control> {% endcomment %}
             <div class="opsbutton-container">
                 <input type="button" id="start-stop-button" value="Start" class="opsbutton stopped" onclick=opsButtonRequest(this)>
             </div>
-        {% comment %} </div> {% endcomment %}
     </div>
 {% endblock %}
 
@@ -342,9 +345,15 @@
         // websocket communication
 
         var instrument_name = {{ instrument_name }}
+        var daq_namespace = {{ daq_namespace }}
+        var controller_namespace = {{ controller_namespace }}
+        var instrument_namespace = {{ instrument_namespace }}
+
         var websocket = new WebSocket(
             'ws://' + window.location.host +
-            '/ws/envdaq/instrument/'+instrument_name+'/');
+            {% comment %} '/ws/envdaq/instrument/'+instrument_name+'/'); {% endcomment %}
+            '/ws/envdaq/'+daq_namespace+'/'+controller_namespace+'/instrument/'+instrument_namespace+'/');
+
 
         var run_status = "UNKNOWN"
 
