@@ -1,7 +1,7 @@
 import abc
 import asyncio
 from client.wsclient import WSClient
-from plots.apps.plot_app import PlotApp
+# from plots.apps.plot_app import PlotApp
 from data.message import Message
 from data.datafile import DataFile
 from utilities.util import time_to_next, dt_to_string
@@ -500,8 +500,8 @@ class DAQ(abc.ABC):
 
         while True:
             msg = await self.from_child_buf.get()
-            print(f'****from_child_loop: {msg.to_json()}')
-            print(f'from_child: {self.get_id()}')
+            # print(f'****from_child_loop: {msg.to_json()}')
+            # print(f'from_child: {self.get_id()}')
             await self.handle(msg, type="FromChild")
             # await asyncio.sleep(.1)
 
@@ -525,7 +525,7 @@ class DAQ(abc.ABC):
 
     async def message_to_parents(self, msg):
         # while True:
-        print(f'message_to_parents: {self.get_id()}, {msg.to_json()}')
+        # print(f'message_to_parents: {self.get_id()}, {msg.to_json()}')
         for id, parent in self.parent_map.items():
             if parent['to_parent_buffer']:
                 # print(f'mtp: {msg.to_json()}')

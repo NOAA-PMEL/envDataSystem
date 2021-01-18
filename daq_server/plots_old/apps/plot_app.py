@@ -108,7 +108,7 @@ class TimeSeries1D(PlotApp):
 
     def setup(self):
         super().setup()
-        print(f'TS1D:setup: {self.config}')
+        # print(f'TS1D:setup: {self.config}')
 
         if 'plot_meta' in self.config:
             self.name = self.config['plot_meta']['name']

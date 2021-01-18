@@ -395,7 +395,7 @@ class Controller(DAQ):
     #         )
 
     async def handle(self, msg, type=None):
-        print(f"controller handle: {msg}")
+        # print(f"controller handle: {msg}")
         await asyncio.sleep(0.01)
 
     # def get_signature(self):

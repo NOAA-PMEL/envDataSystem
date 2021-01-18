@@ -86,7 +86,7 @@ class ClientConnection(abc.ABC):
 
         timeout = 1  # seconds
 
-        print('run...')
+        # print('run...')
 
         while True:
 

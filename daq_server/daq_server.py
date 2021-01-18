@@ -494,7 +494,7 @@ class DAQServer:
 
         while True:
             msg = await self.from_child_buf.get()
-            print(f"daq_server:from_child_loop: {msg}")
+            # print(f"daq_server:from_child_loop: {msg}")
             await self.handle(msg, src="FromChild")
             # await asyncio.sleep(.1)
 
@@ -506,7 +506,7 @@ class DAQServer:
             await asyncio.sleep(0.1)
 
     async def handle(self, msg, src=None):
-        print(f"****controller handle: {src} - {msg.to_json()}")
+        # print(f"****controller handle: {src} - {msg.to_json()}")
 
         if src == "FromUI":
             d = msg.to_dict()
@@ -524,7 +524,7 @@ class DAQServer:
                                 json.dump(self.config, cfg)
                     
                     elif content["BODY"]["purpose"] == "SYNCREQUEST":
-                        print("sync DAQ")
+                        # print("sync DAQ")
                         # system_def = SysManager.get_definitions_all()
                         # print(f'system_def: {system_def}')
                         sys_def = Message(
@@ -552,7 +552,7 @@ class DAQServer:
                 content = ""
                 if "message" in d:
                     content = d["message"]
-                print(f"fromChild: {content}")
+                # print(f"fromChild: {content}")
 
         await asyncio.sleep(0.01)
 

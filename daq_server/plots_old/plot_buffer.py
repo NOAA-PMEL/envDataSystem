@@ -14,20 +14,20 @@ class PlotBufferManager():
         def add_buffer(self, plot_buffer):
             if plot_buffer:
 
-                print(
-                    f'plot_buffer: {plot_buffer.server_id}, {plot_buffer.id}')
+                # print(
+                #     f'plot_buffer: {plot_buffer.server_id}, {plot_buffer.id}')
                 # if plot_buffer.server_id not in PlotBufferManager.plot_buffer_map:
                 if plot_buffer.server_id not in self.plot_buffer_map:
-                    print('1')
+                    # print('1')
                     # PlotBufferManager.plot_buffer_map[plot_buffer.server_id] = dict()
                     self.plot_buffer_map[plot_buffer.server_id] = dict()
-                print(f'plot_buffer_map: {self.plot_buffer_map}')
+                # print(f'plot_buffer_map: {self.plot_buffer_map}')
                 # PlotBufferManager.plot_buffer_map[plot_buffer.server_id] = {plot_buffer.id: plot_buffer}
                 self.plot_buffer_map[plot_buffer.server_id][plot_buffer.id] = plot_buffer
-                print(f'before add: {self.plot_buffer_map}')
-                print(f'{self.plot_buffer_map[plot_buffer.server_id][plot_buffer.id]}')
-                print(f'plot_buffer_map: {self.plot_buffer_map}')
-                print(f'plot_buffer_map: {self.plot_buffer_map}')
+                # print(f'before add: {self.plot_buffer_map}')
+                # print(f'{self.plot_buffer_map[plot_buffer.server_id][plot_buffer.id]}')
+                # print(f'plot_buffer_map: {self.plot_buffer_map}')
+                # print(f'plot_buffer_map: {self.plot_buffer_map}')
 
         def remove_buffer(self, server_id, id):
             if self.get_buffer(server_id, id):

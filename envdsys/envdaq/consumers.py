@@ -1008,7 +1008,7 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
             body = message['BODY']
             if (body['purpose'] == 'ADD'):
                 # print('add')
-                print(f'add: {self.scope}')
+                # print(f'add: {self.scope}')
                 daq_namespace = body['namespace']['daq_server']
                 print(f'namespace: {self.daqserver_namespace}, {daq_namespace}')
                 # registration = RegistrationManager.get(body['id'])

@@ -61,7 +61,7 @@ class DAQManager(abc.ABC):
     def __init__(self):
         self.daq_map = dict()
         # self.update()
-        print(f'definitions: {self.get_sys_definitions()}')
+        # print(f'definitions: {self.get_sys_definitions()}')
 
     @abc.abstractmethod
     def update(self, force_new=False):
@@ -116,7 +116,7 @@ class DAQManager(abc.ABC):
         mod = importlib.import_module(module_name)
         # print(f'explore')
         for sub_module in pkgutil.iter_modules(mod.__path__):
-            print(sub_module)
+            # print(sub_module)
             importer, sub_module_name, ispkg = sub_module
             # print('sub_module: '+sub_module_name+' ('+str(ispkg)+')')
 
@@ -157,7 +157,7 @@ class ControllerManager(DAQManager):
         for controller in controller_list:
             self.daq_map[controller.__name__] = controller
 
-        print(f'controller_map: {self.daq_map}')
+        # print(f'controller_map: {self.daq_map}')
 
     def get_sys_definitions(self, update=True):
         if update:
@@ -166,7 +166,7 @@ class ControllerManager(DAQManager):
         definitions = dict()
         definitions['CONTROLLER_SYS_DEFS'] = dict()
         for k, controller in self.daq_map.items():
-            print(f'controller is {controller}')
+            # print(f'controller is {controller}')
             definitions['CONTROLLER_SYS_DEFS'][k] = controller.get_definition()
 
         return definitions
@@ -190,7 +190,7 @@ class InstrumentManager(DAQManager):
         for instrument in instrument_list:
             self.daq_map[instrument.__name__] = instrument
 
-        print(f'instrument_map: {self.daq_map}')
+        # print(f'instrument_map: {self.daq_map}')
 
     def get_sys_definitions(self, update=True):
         if update:
@@ -225,7 +225,7 @@ class IFDeviceManager(DAQManager):
         for ifdevice in ifdevice_list:
             self.daq_map[ifdevice.__name__] = ifdevice
 
-        print(f'ifdevice_map: {self.daq_map}')
+        # print(f'ifdevice_map: {self.daq_map}')
 
     def get_sys_definitions(self, update=True):
         if update:

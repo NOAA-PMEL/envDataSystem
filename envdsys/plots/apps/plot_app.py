@@ -154,7 +154,7 @@ class TimeSeries1D(PlotApp):
 
     def setup(self):
         super().setup()
-        print(f'TS1D:setup: {self.config}')
+        # print(f'TS1D:setup: {self.config}')
 
         # self.name = self.config['plot_meta']['name']
         if self.config['app_type'] == 'TimeSeries1D':
@@ -843,7 +843,7 @@ class SizeDistribution(PlotApp):
 
     def setup(self, ):
         super().setup()
-        print(f'SD:setup: {self.config}')
+        # print(f'SD:setup: {self.config}')
 
         if self.config['app_type'] == 'SizeDistribution':
             # if plot['app_type'] == 'SizeDistribution':
@@ -1482,7 +1482,7 @@ class GeoMapPlot(PlotApp):
 
     def setup(self):
         super().setup()
-        print(f'GeoMap:setup: {self.config}')
+        # print(f'GeoMap:setup: {self.config}')
 
         if self.config['app_type'] == 'GeoMapPlot':
 

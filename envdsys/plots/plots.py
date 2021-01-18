@@ -86,7 +86,7 @@ class PlotManager():
 
     @staticmethod
     def register_app_source(plot_def):
-        print(f'-=-=-= register_app_source: {plot_def}')
+        # print(f'-=-=-= register_app_source: {plot_def}')
         if plot_def and 'source_map' in plot_def:
             for src_id, src in plot_def['source_map'].items():
                 if src_id not in PlotManager().__app_source_map:
