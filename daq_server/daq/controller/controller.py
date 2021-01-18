@@ -20,8 +20,8 @@ class ControllerFactory:
         alias = None
         if "ALIAS" in config:
             alias = config["ALIAS"]
-        print("module: " + create_cfg["MODULE"])
-        print("class: " + create_cfg["CLASS"])
+        # print("module: " + create_cfg["MODULE"])
+        # print("class: " + create_cfg["CLASS"])
 
         try:
             mod_ = importlib.import_module(create_cfg["MODULE"])
@@ -497,8 +497,8 @@ class Controller(DAQ):
         instrument_meta["instrument_meta"] = inst_meta
 
         # print(f'plot_config = {plot_config}')
-        print(f"name: {self.name}")
-        print(f"label: {self.label}")
+        # print(f"name: {self.name}")
+        # print(f"label: {self.label}")
         meta = {
             "NAME": self.name,
             "LABEL": self.label,
@@ -1006,14 +1006,14 @@ class DummyController(Controller):
             # print(f'data_json: {data.to_json()}\n')
         elif type == "FromUI":
             if msg.subject == "STATUS" and msg.body["purpose"] == "REQUEST":
-                print(f"msg: {msg.body}")
+                # print(f"msg: {msg.body}")
                 self.send_status()
 
             elif msg.subject == "CONTROLS" and msg.body["purpose"] == "REQUEST":
-                print(f"msg: {msg.body}")
+                # print(f"msg: {msg.body}")
                 await self.set_control(msg.body["control"], msg.body["value"])
             elif msg.subject == "RUNCONTROLS" and msg.body["purpose"] == "REQUEST":
-                print(f"msg: {msg.body}")
+                # print(f"msg: {msg.body}")
                 await self.handle_control_action(msg.body["control"], msg.body["value"])
                 # await self.set_control(msg.body['control'], msg.body['value'])
 

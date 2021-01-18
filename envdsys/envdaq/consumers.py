@@ -116,7 +116,7 @@ class ControllerConsumer(AsyncWebsocketConsumer):
         )
 
         self.namespace = f"{self.daqserver_namespace}/{self.controller_namespace}"
-        print(f'name = {self.namespace}')
+        # print(f'name = {self.namespace}')
 
         # Join room group
         await self.channel_layer.group_add(
@@ -235,8 +235,8 @@ class ControllerConsumer(AsyncWebsocketConsumer):
                         'config_requested': config_requested
                     }
                 }
-                print(f"reply: {reply}")
-                print(json.dumps(reply))
+                # print(f"reply: {reply}")
+                # print(json.dumps(reply))
                 await self.controller_message({'message': reply})
 
                 # body={
@@ -279,7 +279,7 @@ class ControllerConsumer(AsyncWebsocketConsumer):
                     PlotManager.add_apps(body['data'])
                     
         elif message['SUBJECT'] == 'RUNCONTROLS':
-            print(f'message: {message}')
+            # print(f'message: {message}')
             body = message['BODY']
             if body['purpose'] == 'REQUEST':
                 msg = {
@@ -298,7 +298,7 @@ class ControllerConsumer(AsyncWebsocketConsumer):
                 )
 
         elif message['SUBJECT'] == 'CONTROLS':
-            print(f'message: {message}')
+            # print(f'message: {message}')
             body = message['BODY']
             if body['purpose'] == 'REQUEST':
                 msg = {
@@ -317,7 +317,7 @@ class ControllerConsumer(AsyncWebsocketConsumer):
                 )
         elif message['SUBJECT'] == 'STATUS':
             if message['BODY']['purpose'] == 'REQUEST':
-                print(f'status request: {message}')
+                # print(f'status request: {message}')
                 body = message['BODY']
                 msg = {
                     'TYPE': 'UI',
@@ -326,7 +326,7 @@ class ControllerConsumer(AsyncWebsocketConsumer):
                     'SUBJECT': 'STATUS',
                     'BODY': body
                 }
-                print(f'controller request: status {msg}')
+                # print(f'controller request: status {msg}')
                 await self.channel_layer.group_send(
                     self.controller_group_name,
                     {
@@ -388,7 +388,7 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
 
         self.namespace = f"{self.daqserver_namespace}/{self.controller_namespace}/{self.instrument_namespace}"
 
-        print(f'name = {self.instrument_namespace}')
+        # print(f'name = {self.instrument_namespace}')
         # Join room group
         await self.channel_layer.group_add(
             self.instrument_group_name,
@@ -509,7 +509,7 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
                     await SyncManager.sync_instrument_instance(body['data'])
                     PlotManager.add_apps(body['data'])
         elif message['SUBJECT'] == 'RUNCONTROLS':
-            print(f'message: {message}')
+            # print(f'message: {message}')
             body = message['BODY']
             if body['purpose'] == 'REQUEST':
                 msg = {
@@ -528,7 +528,7 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
                 )
 
         elif message['SUBJECT'] == 'CONTROLS':
-            print(f'message: {message}')
+            # print(f'message: {message}')
             body = message['BODY']
             if body['purpose'] == 'REQUEST':
                 msg = {
@@ -599,7 +599,7 @@ class InterfaceConsumer(AsyncWebsocketConsumer):
         self.interface_group_name = (
             'interface_{}'.format(self.interface_name)
         )
-        print(f'name = {self.interface_name}')
+        # print(f'name = {self.interface_name}')
         # Join room group
         await self.channel_layer.group_add(
             self.interface_group_name,
@@ -687,7 +687,7 @@ class InterfaceConsumer(AsyncWebsocketConsumer):
             #         await SyncManager.sync_interface_instance(body['data'])
         
         elif message['SUBJECT'] == 'RUNCONTROLS':
-            print(f'message: {message}')
+            # print(f'message: {message}')
             body = message['BODY']
             if body['purpose'] == 'REQUEST':
                 msg = {
@@ -706,7 +706,7 @@ class InterfaceConsumer(AsyncWebsocketConsumer):
                 )
 
         elif message['SUBJECT'] == 'CONTROLS':
-            print(f'message: {message}')
+            # print(f'message: {message}')
             body = message['BODY']
             if body['purpose'] == 'REQUEST':
                 msg = {
@@ -725,7 +725,7 @@ class InterfaceConsumer(AsyncWebsocketConsumer):
                 )
         elif message['SUBJECT'] == 'STATUS':
             if message['BODY']['purpose'] == 'REQUEST':
-                print(f'status request: {message}')
+                # print(f'status request: {message}')
                 body = message['BODY']
                 msg = {
                     'TYPE': 'UI',
@@ -771,7 +771,7 @@ class IFDeviceConsumer(AsyncWebsocketConsumer):
         self.ifdevice_group_name = (
             'ifdevice_{}'.format(self.ifdevice_name)
         )
-        print(f'name = {self.ifdevice_name}')
+        # print(f'name = {self.ifdevice_name}')
         # Join room group
         await self.channel_layer.group_add(
             self.ifdevice_group_name,
@@ -857,7 +857,7 @@ class IFDeviceConsumer(AsyncWebsocketConsumer):
             #         await SyncManager.sync_interface_instance(body['data'])
         
         elif message['SUBJECT'] == 'RUNCONTROLS':
-            print(f'message: {message}')
+            # print(f'message: {message}')
             body = message['BODY']
             if body['purpose'] == 'REQUEST':
                 msg = {
@@ -876,7 +876,7 @@ class IFDeviceConsumer(AsyncWebsocketConsumer):
                 )
 
         elif message['SUBJECT'] == 'CONTROLS':
-            print(f'message: {message}')
+            # print(f'message: {message}')
             body = message['BODY']
             if body['purpose'] == 'REQUEST':
                 msg = {
@@ -895,7 +895,7 @@ class IFDeviceConsumer(AsyncWebsocketConsumer):
                 )
         elif message['SUBJECT'] == 'STATUS':
             if message['BODY']['purpose'] == 'REQUEST':
-                print(f'status request: {message}')
+                # print(f'status request: {message}')
                 body = message['BODY']
                 msg = {
                     'TYPE': 'UI',
@@ -936,7 +936,7 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
 
-        print(f'scope: {self.scope}')
+        # print(f'scope: {self.scope}')
         try:
             self.daqserver_namespace = (
                 self.scope['url_route']['kwargs']['daq_namespace']
@@ -1010,7 +1010,7 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
                 # print('add')
                 # print(f'add: {self.scope}')
                 daq_namespace = body['namespace']['daq_server']
-                print(f'namespace: {self.daqserver_namespace}, {daq_namespace}')
+                # print(f'namespace: {self.daqserver_namespace}, {daq_namespace}')
                 # registration = RegistrationManager.get(body['id'])
                 # registration = RegistrationManager.get(daq_namespace, type="DAQServer")
                 ui_reconfig_request = False
@@ -1060,8 +1060,8 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
                         'ui_reconfig_request': ui_reconfig_request,
                     }
                 }
-                print(f"reply: {reply}")
-                print(json.dumps(reply))
+                # print(f"reply: {reply}")
+                # print(json.dumps(reply))
                 await self.data_message({'message': reply})
 
                 # body={
@@ -1107,8 +1107,10 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
         elif message['SUBJECT'] == 'READY_STATE':
             # print('$$$$$$$ READY_STATE')
             if message['BODY']['status'] == 'READY':
-                print(f'___ READY TO GO ___: {message}')
-                print(f'hostname: {self.hostname}')
+                # print(f'___ READY TO GO ___: {message}')
+                print('READY TO RUN:')
+                print(f'    daq_server: {self.daqserver_namespace}')
+                print(f'    UI Server: {self.hostname}:{self.port}')
                 ws_origin = f'{self.hostname}:{self.port}'
 
                 PlotManager.get_server().start(
@@ -1128,7 +1130,7 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
     # Receive message from room group
     async def data_message(self, event):
         message = event['message']
-        print(f'data_message: {json.dumps(message)}')
+        # print(f'data_message: {json.dumps(message)}')
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
             'message': message

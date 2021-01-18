@@ -281,38 +281,38 @@ class Controller(models.Model):
         # print(f'***********update_instruments: {config}')
         if config and ('instrument_meta' in config):
             for name, meta in config['instrument_meta'].items():
-                print(f'name, meta: {name}, {meta}')
+                # print(f'name, meta: {name}, {meta}')
                 if 'alias' not in meta:
                     print(f'alias not defined in {name}...skipping')
                     continue
-                print(f'alias: {meta["alias"]}')
+                # print(f'alias: {meta["alias"]}')
                 alias_cfg = meta['alias']
                 # TODO: make this more elegant with some sort of state variable
                 #       that tracks while instruments are being configured
                 tries = 0
                 while tries < max_tries:
                     try:
-                        print(Instrument.objects.all())
+                        # print(Instrument.objects.all())
                         inst = Instrument.objects.get(
                             definition__name=meta['NAME'],
                             serial_number=meta['SERIAL_NUMBER']
                         )
-                        print(f'111update_inst: {inst}')
+                        # print(f'111update_inst: {inst}')
 
                         try:
-                            print(f"try: {alias_cfg['name']}")
+                            # print(f"try: {alias_cfg['name']}")
                             alias = InstrumentAlias.objects.get(
                                 name=alias_cfg['name'],
                                 # label=meta['LABEL'],
                                 controller=self,
                             )
                             alias.instrument = inst
-                            print(f'alias: {alias}->{inst}')
+                            # print(f'alias: {alias}->{inst}')
                             # alias.prefix = meta_prefix
                             alias.save()
                             tries = max_tries
                         except InstrumentAlias.DoesNotExist:
-                            print(f"create new: {alias_cfg['name']}")
+                            # print(f"create new: {alias_cfg['name']}")
                             alias = InstrumentAlias(
                                 name=alias_cfg['name'],
                                 label=meta['LABEL'],
@@ -320,7 +320,7 @@ class Controller(models.Model):
                                 controller=self,
                                 prefix=alias_cfg['prefix'],
                             )
-                            print(f'alias: {alias}->{inst}')
+                            # print(f'alias: {alias}->{inst}')
                             alias.save()
                             tries = max_tries
                     except Instrument.DoesNotExist:

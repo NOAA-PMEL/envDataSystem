@@ -25,10 +25,10 @@ class PlotServer():
         self.running = False
 
         self.apps = dict()
-        print(f'{self.id}, {self.app_map}')
+        # print(f'{self.id}, {self.app_map}')
 
     def add_app(self, app):
-        print(f'add_app: {app}, {self.app_map}')
+        # print(f'add_app: {app}, {self.app_map}')
         if app:
             self.app_map[app.name] = app
 

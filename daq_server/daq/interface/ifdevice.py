@@ -17,8 +17,8 @@ class IFDeviceFactory():
         # print(config)
         create_cfg = config['IFDEVICE']
         ifdevconfig = config['IFDEVCONFIG']
-        print("module: " + create_cfg['MODULE'])
-        print("class: " + create_cfg['CLASS'])
+        # print("module: " + create_cfg['MODULE'])
+        # print("class: " + create_cfg['CLASS'])
 
         try:
             # print('Creating: ' + config['name'])

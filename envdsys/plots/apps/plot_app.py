@@ -58,10 +58,10 @@ class PlotApp(abc.ABC):
         self.buf_size = 100
 
         # PlotBufferManager.add_buffer(PlotBuffer('/', self.msg_buffer))
-        print(f'init: {self.name}')
+        # print(f'init: {self.name}')
 
         if self.config:
-            print(f'plot_app: {config}')
+            # print(f'plot_app: {config}')
             self.setup()
         else:
             self.source = ColumnDataSource(
@@ -252,8 +252,8 @@ class TimeSeries1D(PlotApp):
             self.source_map['TimeSeries1D'] = ts1d_map
 
             # print(f'ts1d_setup source: {self.source}')
-            print(f'ts1d_setup current: {self.current_data}')
-            print(f'ts1d_setup map: {self.source_map}')
+            # print(f'ts1d_setup current: {self.current_data}')
+            # print(f'ts1d_setup map: {self.source_map}')
 
         # if self.config:
         #     print(f'plotapp_configure: {self.config}')
@@ -966,8 +966,8 @@ class SizeDistribution(PlotApp):
             self.source_map['SizeDistribution'] = sd_map
 
             # print(f'sd_setup source: {self.source.data}')
-            print(f'sd_setup current: {self.current_data}')
-            print(f'sd_setup map: {self.source_map}')
+            # print(f'sd_setup current: {self.current_data}')
+            # print(f'sd_setup map: {self.source_map}')
 
         # if self.config:
         #     print(f'plotapp_configure: {self.config}')
@@ -1621,8 +1621,8 @@ class GeoMapPlot(PlotApp):
             self.source_map['GeoMapPlot'] = geo_map
 
             # print(f'geo_setup source: {self.source}')
-            print(f'geo_setup current: {self.current_data}')
-            print(f'geo_setup map: {self.source_map}')
+            # print(f'geo_setup current: {self.current_data}')
+            # print(f'geo_setup map: {self.source_map}')
 
         # if self.config:
         #     print(f'plotapp_configure: {self.config}')

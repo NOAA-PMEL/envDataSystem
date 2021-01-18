@@ -23,8 +23,8 @@ class InstrumentFactory():
         alias = None
         if 'ALIAS' in config:
             alias = config['ALIAS']
-        print("module: " + create_cfg['MODULE'])
-        print("class: " + create_cfg['CLASS'])
+        # print("module: " + create_cfg['MODULE'])
+        # print("class: " + create_cfg['CLASS'])
 
         try:
             # print('Creating: ' + config['name'])
@@ -263,7 +263,7 @@ class Instrument(DAQ):
                         )
 
 
-        print(f"app_name: {meta['plot_meta']['name']}")
+        # print(f"app_name: {meta['plot_meta']['name']}")
         # plot_app_name = ('/instrument_'+meta['plot_meta']['name'])
         # plot_app_name = self.add_plot_app()
         # if plot_app_name:

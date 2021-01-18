@@ -37,12 +37,12 @@ class PlotManager():
         # if app_class == 'TimeSeries1D':
         #     app = TimeSeries1D(config, name=name)    
 
-        print(f'app = {app}')
+        # print(f'app = {app}')
         if not server_id:
             server_id = PlotManager.DEFAULT_ID
 
         server = PlotManager.get_server(server_id=server_id)
-        print(f'server = {server}')
+        # print(f'server = {server}')
         if server and server.running:
             server.stop()
 
@@ -51,7 +51,7 @@ class PlotManager():
             # if app.name[0] is not '/':
             #     app.name prepend '/'
             # if there is a '/' in the rest of the name, replace with _
-            print(f'server_add: {server}')
+            # print(f'server_add: {server}')
             server.add_app(app)
 
         if server and start_after_add:
@@ -70,17 +70,17 @@ class PlotManager():
     @staticmethod
     def update_server(config=None, server_id=None, app_list=None, force=False):
 
-        print(f'update_server: {config}, {server_id}')
+        # print(f'update_server: {config}, {server_id}')
         # use config to create PlotApps
         if (config):
             server_id = ''
             pass
         elif not server_id:
             server_id = PlotManager.DEFAULT_ID
-        print(f'server_id = {server_id}, {PlotManager.server_map}')
+        # print(f'server_id = {server_id}, {PlotManager.server_map}')
         if (server_id in PlotManager.server_map) or force:
             PlotManager.server_map[server_id] = PlotServer(server_id, app_list)
-        print(f'server_id = {server_id}, {PlotManager.server_map}')
+        # print(f'server_id = {server_id}, {PlotManager.server_map}')
 
     @staticmethod
     def get_server(server_id=None):

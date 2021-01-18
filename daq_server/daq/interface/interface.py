@@ -18,8 +18,8 @@ class InterfaceFactory():
         ifconfig = config['IFCONFIG']
 
         # inst_config = config['instrument']
-        print("module: " + create_cfg['MODULE'])
-        print("class: " + create_cfg['CLASS'])
+        # print("module: " + create_cfg['MODULE'])
+        # print("class: " + create_cfg['CLASS'])
 
         try:
             # print('Creating: ' + config['name'])
@@ -391,9 +391,11 @@ class DummyInterface(Interface):
                 # await self.msg_send_buffer.put(msg)
                 await self.message_to_parent(msg)
         elif type == 'FromParent':
-            print(f'message{msg.subject}, {msg.body}')
+            # print(f'message{msg.subject}, {msg.body}')
+            pass
         else:
             print(f'Unknown Message type: {msg.type}, {msg.to_json()}')
+            pass
 
     def get_definition_instance(self):
         return DummyInterface.get_definition()

@@ -25,10 +25,10 @@ class PlotServer():
         self.running = False
 
         self.apps = dict()
-        print(f'{self.id}, {self.app_map}')
+        # print(f'{self.id}, {self.app_map}')
 
     def add_app(self, app):
-        print(f'add_app: {app}, {self.app_map}')
+        # print(f'add_app: {app}, {self.app_map}')
         if app:
             self.app_map[app.name] = app
 
@@ -46,7 +46,7 @@ class PlotServer():
         # if (self.running):
         #     return
 
-        print(f'****start server****')
+        # print(f'****start server****')
         app_list = []
         for name, app in self.app_map.items():
             app_list.append(app)
@@ -70,7 +70,7 @@ class PlotServer():
         if add_ws_origin:
             ws_origin.append(add_ws_origin)
 
-        print(f'------- {self.apps},{self.address},{self.port}')
+        # print(f'------- {self.apps},{self.address},{self.port}')
         self.server = Server(
             self.apps,
             address=self.address,
@@ -80,6 +80,7 @@ class PlotServer():
         self.server.start()
         if self.server:
             self.running = True
+            print(f'Started Plot Server: {self.address}:{self.port}')
         else:
             self.running = False
 

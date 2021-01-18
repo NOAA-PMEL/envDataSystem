@@ -146,7 +146,7 @@ class DAQServer:
 
     async def to_ui_loop(self):
 
-        print("send_ui_loop init")
+        # print("send_ui_loop init")
         while True:
             message = await self.to_ui_buf.get()
             # print('send server message')
@@ -393,6 +393,8 @@ class DAQServer:
             # PlotManager.get_server().start()
 
         await self.send_ready_to_ui()
+
+        self.run_state = "RUNNING"
         # status = Message(
         #     sender_id="DAQ_SERVER",
         #     msgtype="GENERIC",
@@ -420,7 +422,8 @@ class DAQServer:
                 # 'note': note,
             },
         )
-        print(f"_____ send no wait _____: {status.to_json()}")
+        # print(f"_____ send no wait _____: {status.to_json()}")
+        print(f"** daq_server ({self.namespace['daq_server']}) ready")
         await self.to_ui_buf.put(status)
 
     async def configure_daq(self):
@@ -587,28 +590,41 @@ class DAQServer:
             await asyncio.sleep(2)
 
     def shutdown(self):
-        print("daq_server:shutdown:")
+        print(f"daq_server ({self.namespace['daq_server']}) shutting down...")
 
         self.stop()
+
 
         # asyncio.get_event_loop().run_until_complete(self.ws_client.shutdown())
         # if self.ws_client is not None:
         #     self.ws_client.sync_close()
+        for t in self.ui_task_list:
+            # print(t)
+            t.cancel()
 
         if self.ui_client is not None:
+            print("closing ui client")
             self.loop.run_until_complete(self.ui_client.close())
+            # self.ui_client.close()
+
+        # await asyncio.sleep(2)
 
         for k, controller in self.controller_map.items():
+            print(f"shutdown controller: {k}")
             controller.shutdown()
+            # await asyncio.sleep(1)
         # for controller in self.controller_list:
         #     # print(sensor)
         #     controller.stop()
 
-        self.start_ui_message_loops()
+        # self.start_ui_message_loops()
 
         # asyncio.get_event_loop().stop()
 
         # self.server.close()
+        # await asyncio.sleep(1)
+        print("shutdown complete.")
+        self.run_state = "SHUTDOWN"
 
     def start_ui_message_loops(self):
         self.ui_task_list.append(asyncio.ensure_future(self.to_ui_loop()))
@@ -642,9 +658,11 @@ def shutdown(server):
     #     controller.stop()
 
     if server is not None:
+        print("server shutdown...")
         server.shutdown()
+        print("...done")
 
-    tasks = asyncio.Task.all_tasks()
+    tasks = asyncio.all_tasks(loop=event_loop)
     for t in tasks:
         # print(t)
         t.cancel()
@@ -727,7 +745,7 @@ if __name__ == "__main__":
 
     task = asyncio.ensure_future(heartbeat())
     # task = asyncio.ensure_future(output_to_screen())
-    task_list = asyncio.Task.all_tasks()
+    task_list = asyncio.all_tasks(loop=event_loop)
     #
     try:
         event_loop.run_until_complete(asyncio.wait(task_list))
