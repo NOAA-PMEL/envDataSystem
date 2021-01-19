@@ -4,10 +4,10 @@ import copy
 import random
 # import sys
 from daq.daq import DAQ
-from data.datafile import DataFile
+from shared.data.datafile import DataFile
 import asyncio
-from data.message import Message
-import utilities.util
+from shared.data.message import Message
+import shared.utilities.util
 from daq.interface.interface import Interface, InterfaceFactory
 # import json
 # from plots.plots import PlotManager

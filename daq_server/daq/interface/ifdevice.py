@@ -1,8 +1,8 @@
 from daq.daq import DAQ
 import asyncio
 import random
-from utilities import util
-from data.message import Message
+from shared.utilities import util
+from shared.data.message import Message
 import importlib
 from client.serialport import SerialPortClient
 from client.tcpport import TCPPortClient

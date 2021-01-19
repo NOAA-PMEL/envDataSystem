@@ -2,9 +2,9 @@ import abc
 import asyncio
 from client.wsclient import WSClient
 # from plots.apps.plot_app import PlotApp
-from data.message import Message
-from data.datafile import DataFile
-from utilities.util import time_to_next, dt_to_string
+from shared.data.message import Message
+from shared.data.datafile import DataFile
+from shared.utilities.util import time_to_next, dt_to_string
 
 
 # from urllib.parse import quote

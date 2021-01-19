@@ -2,10 +2,10 @@
 import sys
 from daq.instrument.instrument import Instrument
 from daq.instrument.contrib.dmt.dmt import DMTInstrument
-from data.message import Message
+from shared.data.message import Message
 # from daq.daq import DAQ
 import asyncio
-from utilities.util import time_to_next
+from shared.utilities.util import time_to_next
 from daq.interface.interface import Interface
 # from plots.plots import PlotManager
 import math

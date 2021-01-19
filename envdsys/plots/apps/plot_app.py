@@ -25,7 +25,7 @@ from bokeh.tile_providers import get_provider, Vendors
 from bokeh.palettes import Category10_10 as palette
 # import json
 # import envdaq.util.util
-import shared.utilities.util as time_util
+from shared.utilities.util import string_to_dt
 
 
 class PlotApp(abc.ABC):
@@ -322,7 +322,7 @@ class TimeSeries1D(PlotApp):
                         if 'datetime' not in data[y_id]:
                             data[y_id]['datetime'] = []
                             data[y_id]['datetime'].append(
-                                time_util.string_to_dt(dt_string),
+                                string_to_dt(dt_string),
                             )
 
                         # print(f'        {name}: {meas["VALUE"]}')
@@ -490,7 +490,7 @@ class TimeSeries1D(PlotApp):
                             if 'datetime' not in data[y_id]:
                                 data[y_id]['datetime'] = []
                                 data[y_id]['datetime'].append(
-                                    time_util.string_to_dt(dt_string),
+                                    string_to_dt(dt_string),
                                 )
 
                             # print(f'        {name}: {meas["VALUE"]}')
@@ -1770,7 +1770,7 @@ class GeoMapPlot(PlotApp):
                         if 'datetime' not in data[y_id]:
                             data[y_id]['datetime'] = []
                             data[y_id]['datetime'].append(
-                                time_util.string_to_dt(dt_string),
+                                string_to_dt(dt_string),
                             )
 
                         # print(f'        {name}: {meas["VALUE"]}')
@@ -2063,7 +2063,7 @@ class GeoMapPlot(PlotApp):
                             if 'datetime' not in data[y_id]:
                                 data[y_id]['datetime'] = []
                                 data[y_id]['datetime'].append(
-                                    time_util.string_to_dt(dt_string),
+                                    string_to_dt(dt_string),
                                 )
 
                             data[y_id][name] = []
@@ -2101,7 +2101,7 @@ class GeoMapPlot(PlotApp):
                     # data['datetime'] = []
                     # data['datetime'].append(
                     #     # utilities.util.string_to_dt(dt_string).replace(tzinfo=None)
-                    #     time_util.string_to_dt(dt_string)
+                    #     string_to_dt(dt_string)
 
                     # )
                     # # print(data['datetime'])

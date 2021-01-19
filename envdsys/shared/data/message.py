@@ -1,8 +1,8 @@
 import asyncio
 # from datetime import datetime
 import json
-import utilities.util
-
+# import shared.utilities.util
+from shared.utilities.util import dt_to_string
 
 class Message():
 
@@ -12,7 +12,7 @@ class Message():
         # self.signature = 'daq.data.message.Message'
         self.type = msgtype
         # self.id = None # why was this missing? do we want it?
-        self.timestamp = utilities.util.dt_to_string()
+        self.timestamp = dt_to_string()
         self.sender_id = sender_id
         self.subject = subject
         self.body = body
@@ -33,7 +33,7 @@ class Message():
         if extra is not None:
             self.extra = extra
 
-        self.timestamp = utilities.util.dt_to_string()
+        self.timestamp = dt_to_string()
 
     def to_json(self):
         # print(self.body)

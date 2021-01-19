@@ -1,6 +1,6 @@
 import abc
 import asyncio
-from data.message import Message
+from shared.data.message import Message
 
 
 # class ClientConnection(abc.ABC):

@@ -593,14 +593,15 @@ if __name__ == "__main__":
     
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     # print(BASE_DIR)
-    sys.path.append(os.path.join(BASE_DIR, 'envdsys/shared'))
+    # sys.path.append(os.path.join(BASE_DIR, 'envdsys/shared'))
+    sys.path.append(os.path.join(BASE_DIR, 'envdsys'))
 
     # from daq.manager.sys_manager import SysManager
     # from daq.controller.controller import ControllerFactory  # , Controller
     from client.wsclient import WSClient
     # import utilities.util as util
     from daq.interface.interface import InterfaceFactory
-    from data.message import Message
+    from shared.data.message import Message
 
     # main('ui')
     main(sys.argv[1])

@@ -167,7 +167,7 @@ if __name__ == "__main__":
     sys.path.append(os.path.join(BASE_DIR, 'envdsys/shared'))
 
     from client.tcpport import TCPPortClient
-    from data.message import Message
+    from shared.data.message import Message
 
     kw = {
         # 'send_method': 'binary',

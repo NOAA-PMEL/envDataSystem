@@ -2,7 +2,7 @@ from client.serialport import SerialPortClient
 import asyncio
 import json
 import time
-from data.message import Message
+from shared.data.message import Message
 from datetime import datetime
 
 scan_state = 0

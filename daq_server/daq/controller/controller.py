@@ -4,7 +4,7 @@ import importlib
 import asyncio
 from daq.daq import DAQ
 from daq.instrument.instrument import InstrumentFactory, Instrument
-from data.message import Message
+from shared.data.message import Message
 import math
 
 # from plots.plots import PlotManager
