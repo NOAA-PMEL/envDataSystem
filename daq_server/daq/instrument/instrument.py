@@ -4,10 +4,10 @@ import copy
 import random
 # import sys
 from daq.daq import DAQ
-from data.datafile import DataFile
+from shared.data.datafile import DataFile
 import asyncio
-from data.message import Message
-import utilities.util
+from shared.data.message import Message
+import shared.utilities.util
 from daq.interface.interface import Interface, InterfaceFactory
 # import json
 # from plots.plots import PlotManager
@@ -23,8 +23,8 @@ class InstrumentFactory():
         alias = None
         if 'ALIAS' in config:
             alias = config['ALIAS']
-        print("module: " + create_cfg['MODULE'])
-        print("class: " + create_cfg['CLASS'])
+        # print("module: " + create_cfg['MODULE'])
+        # print("class: " + create_cfg['CLASS'])
 
         try:
             # print('Creating: ' + config['name'])
@@ -103,6 +103,11 @@ class Instrument(DAQ):
         # temporary
         self.last_entry = {'DATETIME': ''}
 
+        self.namespace['instrument'] = f"{self.label}".replace(" ", "")
+        if self.alias and ("name" in self.alias):
+            self.namespace['instrument'] = f"{self.alias['name']}".replace(" ", "")
+
+
         # # parameters to include metadata in output
         # self.include_metadata = True
         # # set interval to 0 to always send metadata
@@ -153,18 +158,97 @@ class Instrument(DAQ):
 
         # add measurements
         self.add_measurements()
-        meta = self.get_metadata()
+        # meta = self.get_metadata()
+        # # tell ui to build instrument
+
+        # # add namespace to metadata
+        # meta['namespace'] = self.namespace
+
+        # # TODO: how to pass config and data to PlotApp: custom meta or
+        # #       what we are using now? How do we specify defaults
+        # # plot_config = dict()
+        # # plot_config['name'] = '/instrument_'+meta['alias']['name']
+        # # plot_data = dict()
+
+        # # use current meta
+
+        # # TODO: implement last_config
+
+        # # for now, set controls to default
+        # if 'measurement_meta' in meta:
+        #     if 'controls' in meta['measurement_meta']:
+        #         controls = meta['measurement_meta']['controls']
+        #         for control, config in controls.items():
+        #             if 'default_value' in config:
+        #                 # TODO: on start, have to go through and send all
+        #                 #       control values to instrument
+        #                 self.set_control_att(
+        #                     control, 'value', config['default_value']
+        #                 )
+
+        # # add dictionary specifying which measurements go with which plot
+        # # if there are more than one.
+
+        # # plot_config['data'] = plot_data
+
+        # # print(f'{meta["plot_meta"]}')
+        # # print(f'{meta["plot_meta"]["name"]}')
+        # # TODO: move this to actual instrument
+        # # # add plots to PlotServer
+
+        # # TESTING: moving this to django side
+        # # PlotManager.add_app(
+        # #     TimeSeries1D(
+        # #         meta,
+        # #         # name=('/instrument_'+meta['plot_meta']['name'])
+        # #         name=(meta['plot_meta']['name'])
+        # #     ),
+        # #     start_after_add=False
+        # # )
+
+        # print(f"app_name: {meta['plot_meta']['name']}")
+        # meta['plot_app'] = {
+        #     'name': (meta['plot_meta']['name'])
+        # }
+
         # tell ui to build instrument
+        self.send_config_to_ui()
+        # msg = Message(
+        #     sender_id=self.get_id(),
+        #     msgtype='Instrument',
+        #     subject='CONFIG',
+        #     body={
+        #         'purpose': 'SYNC',
+        #         'type': 'INSTRUMENT_INSTANCE',
+        #         'data': meta
+        #     }
+        # )
+        # self.message_to_ui_nowait(msg)
+        # print(f'setup: {msg.body}')
 
-        # TODO: how to pass config and data to PlotApp: custom meta or
-        #       what we are using now? How do we specify defaults
-        # plot_config = dict()
-        # plot_config['name'] = '/instrument_'+meta['alias']['name']
-        # plot_data = dict()
+        # Ready to start
+        self.status['ready_to_run'] = True
+        
+    # def add_plot_app(self, plot_typ):
 
-        # use current meta
+    #     meta = self.get_metadata()
 
-        # TODO: implement last_config
+    #     # if plot_type == 'TimeSeries1D':
+
+    def resend_config_to_ui(self):
+
+        self.send_config_to_ui()
+
+        # for k, inst in self.instrument_map.items():
+        #     inst.resend_config_to_ui()
+
+
+    def send_config_to_ui(self):
+
+        meta = self.get_metadata()
+
+        # add namespace to metadata
+        meta['namespace'] = self.namespace
 
         # for now, set controls to default
         if 'measurement_meta' in meta:
@@ -178,27 +262,8 @@ class Instrument(DAQ):
                             control, 'value', config['default_value']
                         )
 
-        # add dictionary specifying which measurements go with which plot
-        # if there are more than one.
 
-        # plot_config['data'] = plot_data
-
-        # print(f'{meta["plot_meta"]}')
-        # print(f'{meta["plot_meta"]["name"]}')
-        # TODO: move this to actual instrument
-        # # add plots to PlotServer
-
-        # TESTING: moving this to django side
-        # PlotManager.add_app(
-        #     TimeSeries1D(
-        #         meta,
-        #         # name=('/instrument_'+meta['plot_meta']['name'])
-        #         name=(meta['plot_meta']['name'])
-        #     ),
-        #     start_after_add=False
-        # )
-
-        print(f"app_name: {meta['plot_meta']['name']}")
+        # print(f"app_name: {meta['plot_meta']['name']}")
         # plot_app_name = ('/instrument_'+meta['plot_meta']['name'])
         # plot_app_name = self.add_plot_app()
         # if plot_app_name:
@@ -218,13 +283,7 @@ class Instrument(DAQ):
             }
         )
         self.message_to_ui_nowait(msg)
-        # print(f'setup: {msg.body}')
 
-    # def add_plot_app(self, plot_typ):
-
-    #     meta = self.get_metadata()
-
-    #     # if plot_type == 'TimeSeries1D':
 
     def get_ui_address(self):
         # print(self.label)
@@ -234,6 +293,17 @@ class Instrument(DAQ):
             address = 'envdaq/instrument/'+self.alias['name']+'/'
         else:
             address = 'envdaq/instrument/'+self.label+'/'
+
+        address_parts = [
+            "envdaq",
+            self.namespace['daq_server'],
+            self.namespace['controller'],
+            "instrument",
+            self.namespace['instrument'],
+            ""
+        ]
+        address = "/".join(address_parts)
+        # address = f"envdaq/{self.namespace['daq_server']}/{self.namespace['controller']/instrument/{self.namespace['instrument']}/"
         # print(f'@@@@@@@@@ instrument.get_ui_address: {address}')
         return address
 

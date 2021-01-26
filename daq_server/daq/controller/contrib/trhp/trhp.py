@@ -1,6 +1,6 @@
 from daq.instrument.instrument import Instrument
 from daq.controller.controller import Controller
-from data.message import Message
+from shared.data.message import Message
 
 
 class TRHPController(Controller):

@@ -2,7 +2,7 @@ from client.tcpport import TCPPortClient
 import asyncio
 import json
 import time
-from data.message import Message
+from shared.data.message import Message
 from datetime import datetime
 from struct import pack, unpack
 from struct import error as structerror

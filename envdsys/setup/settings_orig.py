@@ -36,7 +36,8 @@ utilizes an environment variable at the above link.
 try:
     SECRET_KEY
 except NameError:
-    SECRET_FILE = os.path.join(BASE_DIR, 'secret.txt')
+    # SECRET_FILE = os.path.join(BASE_DIR, 'secret.txt')
+    SECRET_FILE = os.path.join(BASE_DIR, 'config', 'secret.txt')
     try:
         SECRET_KEY = open(SECRET_FILE).read().strip()
     except IOError:
@@ -56,6 +57,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     'localhost',
+    '127.0.0.1',
 ]
 
 
@@ -79,6 +81,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -115,7 +118,8 @@ WSGI_APPLICATION = 'envdsys.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        # 'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'NAME': os.path.join(BASE_DIR, 'db', 'db.sqlite3'),
     }
 }
 
@@ -156,7 +160,13 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
-STATIC_URL = '/static/'
+# STATIC_URL = '/static/'
+STATIC_URL = '/staticfiles/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 # use something like below for production server
 # -------
 # STATIC_URL = '/staticfiles/'
@@ -182,11 +192,36 @@ CHANNEL_LAYERS = {
 }
 
 # Plot Server settings..use this?
+# PLOT_SERVER = {
+#     'server_id': ('localhost', 5001),
+#     # 'default': {
+#     #     'CONFIG': {
+#     #         "hosts": [('localhost', 18001)]
+#     #     }
+#     # }
+# }
+
+# Plot Server settings..use this?
 PLOT_SERVER = {
-    'server_id': ('localhost', 5001),
+    'server_id': ('localhost', 5001, 'default'), # old default
+    'host': 'localhost',
+    'ports': "5001:5011",  # allows for 10 servers
+    'namespace': 'default' # default namespace
+    #'server_id': ('10.55.169.61', 5001),
+    # 'server_id': ('192.168.86.32', 5001),
     # 'default': {
     #     'CONFIG': {
     #         "hosts": [('localhost', 18001)]
     #     }
     # }
+}
+
+# Configure DataManager
+#   ui_save_base_path: where UI Server will save data from daq_server(s). Make
+#                       sure this is not the same as the daq_server folder if
+#                       running on same host
+#   ui_save_data: whether UI Server should save data (Default: False)
+DATA_MANAGER = {
+    'ui_save_base_path': '/tmp/envDataServer/UIServer',
+    'ui_save_data': False,
 }

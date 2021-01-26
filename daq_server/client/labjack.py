@@ -105,7 +105,7 @@ class LabJackClient(ClientConnection):
 
         async def write(self, msg):
             if self.writer:
-                print(f'msg: {msg}')
+                # print(f'msg: {msg}')
                 self.writer.write(msg.encode())
                 await self.writer.drain()
 

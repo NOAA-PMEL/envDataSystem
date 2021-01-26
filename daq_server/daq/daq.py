@@ -1,10 +1,10 @@
 import abc
 import asyncio
 from client.wsclient import WSClient
-from plots.apps.plot_app import PlotApp
-from data.message import Message
-from data.datafile import DataFile
-from utilities.util import time_to_next, dt_to_string
+# from plots.apps.plot_app import PlotApp
+from shared.data.message import Message
+from shared.data.datafile import DataFile
+from shared.utilities.util import time_to_next, dt_to_string
 
 
 # from urllib.parse import quote
@@ -22,6 +22,7 @@ class DAQ(abc.ABC):
         ui_config=None,
         base_file_path=None,
         auto_connect_ui=True,
+        namespace=None,
         **kwargs
     ):
         # non-abstract DAQ children need to set this to True
@@ -37,10 +38,13 @@ class DAQ(abc.ABC):
         self.do_ui_connection = auto_connect_ui
         self.task_list = []
         self.ui_task_list = []
+        self.registration_key = None
 
         self.plot_app = None
 
         self.datafile = None
+
+        self.keepalive_ping = False
 
         # set base file path for all file saves
         # base_file_path = '/tmp'
@@ -62,6 +66,14 @@ class DAQ(abc.ABC):
         if 'LABEL' in config:
             self.label = config['LABEL']
         # print(f"id: {self.get_id()}")
+
+        self.namespace = {}
+        if namespace:
+            self.namespace = namespace
+        # self.parent_id = "parent-default"
+        # if parent_id:
+        #     self.parent_id = parent_id
+        # self.daq_id = f"{self.parent_id}-default"
 
         # in case we want to add heierarchy
         # parent = {
@@ -92,6 +104,7 @@ class DAQ(abc.ABC):
         self.controls = dict()
         self.status = {
             'run_status': 'STOPPED',
+            'ready_to_run': False,
             'connected_to_ui': False,
             'health': 'OK'
         }
@@ -148,7 +161,7 @@ class DAQ(abc.ABC):
 
     @abc.abstractmethod
     def setup(self):
-        print(f'daq.setup')
+        print('daq.setup')
         self.start_connections()
 
     # @abc.abstractmethod
@@ -156,11 +169,11 @@ class DAQ(abc.ABC):
         pass
 
     def start_connections(self):
-        print(f'start_connections')
+        print('start_connections')
         self.start_ui_connection()
 
     def start_ui_connection(self):
-        print(f'start_ui_connection')
+        print('start_ui_connection')
         self.task_list.append(
             asyncio.ensure_future(self.run_ui_connection())
         )
@@ -295,6 +308,9 @@ class DAQ(abc.ABC):
     def get_ui_address(self):
         pass
 
+    async def register_with_UI(self):
+        pass
+
     async def connect_to_ui(self):
         print(f'connecting to ui: {self}')
         # build ui_address
@@ -342,6 +358,13 @@ class DAQ(abc.ABC):
                 self.ui_task_list.append(
                     asyncio.ensure_future(self.from_ui_loop())
                 )
+                if self.keepalive_ping:
+                    self.ui_task_list.append(
+                        asyncio.create_task(self.ping_ui_server())
+                    )
+
+                await self.register_with_UI()
+
             await asyncio.sleep(1)
 
     # async def open_ui_connection(self):
@@ -362,7 +385,7 @@ class DAQ(abc.ABC):
                 # 'note': note,
             }
         )
-        print(f'send no wait: {self.name}, {self.status}')
+        # print(f'send no wait: {self.name}, {self.status}')
         self.message_to_ui_nowait(status)
         # self.message_to_ui_nowait(status)
 
@@ -416,6 +439,24 @@ class DAQ(abc.ABC):
         self.status['run_status'] = 'STOPPED'
         self.send_status()
 
+    async def ping_ui_server(self):
+
+        # wait for things to get started before pinging
+        await asyncio.sleep(5)
+
+        while self.ui_client.isConnected():
+            msg = Message(
+                sender_id=self.get_id(),
+                msgtype="PING",
+                subject="PING",
+                body={
+                    # "id": self.daq_id
+                    "namespace": self.namespace
+                }
+            )
+            await self.to_ui_buf.put(msg)
+            await asyncio.sleep(2)
+
     def shutdown(self):
 
         # if self.started:
@@ -459,8 +500,8 @@ class DAQ(abc.ABC):
 
         while True:
             msg = await self.from_child_buf.get()
-            print(f'****from_child_loop: {msg.to_json()}')
-            print(f'from_child: {self.get_id()}')
+            # print(f'****from_child_loop: {msg.to_json()}')
+            # print(f'from_child: {self.get_id()}')
             await self.handle(msg, type="FromChild")
             # await asyncio.sleep(.1)
 
@@ -479,12 +520,12 @@ class DAQ(abc.ABC):
 
     async def message_to_parent(self, msg):
         # while True:
-        print(f'message_to_parent: {self.get_id()}, {msg.to_json()}')
+        # print(f'message_to_parent: {self.get_id()}, {msg.to_json()}')
         await self.to_parent_buf.put(msg)
 
     async def message_to_parents(self, msg):
         # while True:
-        print(f'message_to_parents: {self.get_id()}, {msg.to_json()}')
+        # print(f'message_to_parents: {self.get_id()}, {msg.to_json()}')
         for id, parent in self.parent_map.items():
             if parent['to_parent_buffer']:
                 # print(f'mtp: {msg.to_json()}')

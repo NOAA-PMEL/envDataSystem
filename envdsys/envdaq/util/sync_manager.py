@@ -58,14 +58,14 @@ class SyncManager():
     def sync_instrument_instance_nowait(config):
         # pass
         if config:
-            print(f'***** config: {config}')
-            print(f'instance: {config["NAME"]}, {config["MODEL"]},')
+            # print(f'***** config: {config}')
+            # print(f'instance: {config["NAME"]}, {config["MODEL"]},')
             try:
                 inst_def = InstrumentDef.objects.get(
                     name=config['NAME'],
                     model=config['MODEL'],
                 )
-                print(inst_def)
+                # print(inst_def)
 
                 try:
                     inst = Instrument.objects.get(
@@ -96,7 +96,7 @@ class SyncManager():
     def sync_controller_instance_nowait(config):
         # pass
         if config:
-            print(f'controller instance: {config["NAME"]}')
+            # print(f'controller instance: {config["NAME"]}')
             try:
                 cont_def = ControllerDef.objects.get(
                     name=config['NAME'],

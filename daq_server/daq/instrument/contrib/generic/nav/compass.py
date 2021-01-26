@@ -1,5 +1,5 @@
 from daq.instrument.instrument import Instrument
-from data.message import Message
+from shared.data.message import Message
 from daq.daq import DAQ
 from daq.interface.interface import Interface, InterfaceFactory
 # import json
