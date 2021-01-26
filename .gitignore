@@ -147,4 +147,8 @@ last_config.json
 daq_server/config/daq_settings.py
 envdsys/db_dump.json
 envdsys/config/settings.py
+<<<<<<< HEAD
 envdsys/config/secret.txt
+=======
+# envdsys/config/secret.txt
+>>>>>>> origin/master
