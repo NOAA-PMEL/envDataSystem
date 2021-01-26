@@ -1,9 +1,9 @@
 # import json
 from daq.instrument.instrument import Instrument
-from data.message import Message
+from shared.data.message import Message
 # from daq.daq import DAQ
 import asyncio
-from utilities.util import time_to_next, dt_to_string
+from shared.utilities.util import time_to_next, dt_to_string
 from daq.interface.interface import Interface
 import math
 import numpy as np

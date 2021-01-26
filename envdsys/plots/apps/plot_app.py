@@ -25,7 +25,7 @@ from bokeh.tile_providers import get_provider, Vendors
 from bokeh.palettes import Category10_10 as palette
 # import json
 # import envdaq.util.util
-import shared.utilities.util as time_util
+from shared.utilities.util import string_to_dt
 
 
 class PlotApp(abc.ABC):
@@ -58,10 +58,10 @@ class PlotApp(abc.ABC):
         self.buf_size = 100
 
         # PlotBufferManager.add_buffer(PlotBuffer('/', self.msg_buffer))
-        print(f'init: {self.name}')
+        # print(f'init: {self.name}')
 
         if self.config:
-            print(f'plot_app: {config}')
+            # print(f'plot_app: {config}')
             self.setup()
         else:
             self.source = ColumnDataSource(
@@ -154,7 +154,7 @@ class TimeSeries1D(PlotApp):
 
     def setup(self):
         super().setup()
-        print(f'TS1D:setup: {self.config}')
+        # print(f'TS1D:setup: {self.config}')
 
         # self.name = self.config['plot_meta']['name']
         if self.config['app_type'] == 'TimeSeries1D':
@@ -252,8 +252,8 @@ class TimeSeries1D(PlotApp):
             self.source_map['TimeSeries1D'] = ts1d_map
 
             # print(f'ts1d_setup source: {self.source}')
-            print(f'ts1d_setup current: {self.current_data}')
-            print(f'ts1d_setup map: {self.source_map}')
+            # print(f'ts1d_setup current: {self.current_data}')
+            # print(f'ts1d_setup map: {self.source_map}')
 
         # if self.config:
         #     print(f'plotapp_configure: {self.config}')
@@ -322,7 +322,7 @@ class TimeSeries1D(PlotApp):
                         if 'datetime' not in data[y_id]:
                             data[y_id]['datetime'] = []
                             data[y_id]['datetime'].append(
-                                time_util.string_to_dt(dt_string),
+                                string_to_dt(dt_string),
                             )
 
                         # print(f'        {name}: {meas["VALUE"]}')
@@ -490,7 +490,7 @@ class TimeSeries1D(PlotApp):
                             if 'datetime' not in data[y_id]:
                                 data[y_id]['datetime'] = []
                                 data[y_id]['datetime'].append(
-                                    time_util.string_to_dt(dt_string),
+                                    string_to_dt(dt_string),
                                 )
 
                             # print(f'        {name}: {meas["VALUE"]}')
@@ -843,7 +843,7 @@ class SizeDistribution(PlotApp):
 
     def setup(self, ):
         super().setup()
-        print(f'SD:setup: {self.config}')
+        # print(f'SD:setup: {self.config}')
 
         if self.config['app_type'] == 'SizeDistribution':
             # if plot['app_type'] == 'SizeDistribution':
@@ -966,8 +966,8 @@ class SizeDistribution(PlotApp):
             self.source_map['SizeDistribution'] = sd_map
 
             # print(f'sd_setup source: {self.source.data}')
-            print(f'sd_setup current: {self.current_data}')
-            print(f'sd_setup map: {self.source_map}')
+            # print(f'sd_setup current: {self.current_data}')
+            # print(f'sd_setup map: {self.source_map}')
 
         # if self.config:
         #     print(f'plotapp_configure: {self.config}')
@@ -1482,7 +1482,7 @@ class GeoMapPlot(PlotApp):
 
     def setup(self):
         super().setup()
-        print(f'GeoMap:setup: {self.config}')
+        # print(f'GeoMap:setup: {self.config}')
 
         if self.config['app_type'] == 'GeoMapPlot':
 
@@ -1621,8 +1621,8 @@ class GeoMapPlot(PlotApp):
             self.source_map['GeoMapPlot'] = geo_map
 
             # print(f'geo_setup source: {self.source}')
-            print(f'geo_setup current: {self.current_data}')
-            print(f'geo_setup map: {self.source_map}')
+            # print(f'geo_setup current: {self.current_data}')
+            # print(f'geo_setup map: {self.source_map}')
 
         # if self.config:
         #     print(f'plotapp_configure: {self.config}')
@@ -1770,7 +1770,7 @@ class GeoMapPlot(PlotApp):
                         if 'datetime' not in data[y_id]:
                             data[y_id]['datetime'] = []
                             data[y_id]['datetime'].append(
-                                time_util.string_to_dt(dt_string),
+                                string_to_dt(dt_string),
                             )
 
                         # print(f'        {name}: {meas["VALUE"]}')
@@ -2063,7 +2063,7 @@ class GeoMapPlot(PlotApp):
                             if 'datetime' not in data[y_id]:
                                 data[y_id]['datetime'] = []
                                 data[y_id]['datetime'].append(
-                                    time_util.string_to_dt(dt_string),
+                                    string_to_dt(dt_string),
                                 )
 
                             data[y_id][name] = []
@@ -2101,7 +2101,7 @@ class GeoMapPlot(PlotApp):
                     # data['datetime'] = []
                     # data['datetime'].append(
                     #     # utilities.util.string_to_dt(dt_string).replace(tzinfo=None)
-                    #     time_util.string_to_dt(dt_string)
+                    #     string_to_dt(dt_string)
 
                     # )
                     # # print(data['datetime'])

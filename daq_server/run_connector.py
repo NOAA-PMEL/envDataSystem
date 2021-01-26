@@ -48,7 +48,7 @@ def main(connector_type):
     
     event_loop = asyncio.get_event_loop()
     asyncio.ensure_future(heartbeat())
-    task_list = asyncio.Task.all_tasks()
+    task_list = asyncio.all_tasks()
 
     try:
         event_loop.run_until_complete(asyncio.wait(task_list))

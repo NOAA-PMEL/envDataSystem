@@ -3,7 +3,7 @@ import asyncio
 import json
 import time
 from client.client import WSClient
-from data.message import Message
+from shared.data.message import Message
 from datetime import datetime
 
 

@@ -1,6 +1,6 @@
 import asyncio
-import utilities.util
-from data.message import Message
+from shared.utilities.util import time_to_next
+from shared.data.message import Message
 
 # from datetime import datetime
 # from data.data import Data
@@ -156,7 +156,7 @@ class DataFile():
         while True:
             if self.save_interval > 0:
                 await asyncio.sleep(
-                    utilities.util.time_to_next(self.save_interval)
+                    time_to_next(self.save_interval)
                 )
                 self.save_now = True
             else:
