@@ -66,6 +66,9 @@ class PlotServer():
         # this is hardcoded at the moment for proxy server used in production
         ws_origin.append('localhost:8002')
 
+        # test for docker
+        ws_origin.append('*')
+
         # add extra ws_origin
         if add_ws_origin:
             ws_origin.append(add_ws_origin)
@@ -74,6 +77,7 @@ class PlotServer():
         self.server = Server(
             self.apps,
             address=self.address,
+            # address="0.0.0.0",
             port=self.port,
             allow_websocket_origin=ws_origin,
         )

@@ -6,13 +6,26 @@ defined in the ASGI_APPLICATION setting.
 
 import os
 import django
+
+# from django.conf.urls import url
+# from channels.routing import ProtocolTypeRouter, URLRouter
+from django.core.asgi import get_asgi_application
+# from channels.routing import get_default_application
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+# django.setup()
+django_asgi_app = get_asgi_application()
+
 # from channels.routing import get_default_application
 from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter
-from django.core.asgi import get_asgi_application
+# from django.core.asgi import get_asgi_application
 import envdaq.routing
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "envdsys.settings")
+# os.environ.setdefault("DJANGO_SETTINGS_MODULE", "envdsys.settings")
+# os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+# os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings'
+
 # django.setup()
 
 application = ProtocolTypeRouter({

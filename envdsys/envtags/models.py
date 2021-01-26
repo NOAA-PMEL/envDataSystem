@@ -8,7 +8,7 @@ import json
 # TODO: This may eventually be replaced by taggit or some other 3rd party app
 class Tag(models.Model):
 
-    name = models.CharField(max_length=30)
+    name = models.CharField(max_length=50)
     type = models.CharField(
         max_length=30,
         null=True,

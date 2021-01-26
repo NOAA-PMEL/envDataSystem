@@ -48,7 +48,7 @@ class DAQServer:
 
         # try to import config from daq_settings.py
         try:
-            daq_settings = import_module("daq_settings")
+            daq_settings = import_module("config.daq_settings")
             server_config = daq_settings.server_config
 
             if "name" in server_config:
@@ -67,11 +67,21 @@ class DAQServer:
                 self.namespace['daq_server'] = self.daq_id.replace(" ", "")
 
             if "last_config_file" in server_config:
+                # dir_path = os.path.dirname(os.path.realpath(__file__))
+                # print(dir_path)
                 self.last_config_file = server_config["last_config_file"]
+                fname = self.last_config_file
+                if not os.path.isabs(self.last_config_file):
+                    fname = os.path.join(
+                        os.path.dirname(os.path.realpath(__file__)),
+                        self.last_config_file
+                    )
                 try:
-                    with open(self.last_config_file) as cfg:
+                    # with open(self.last_config_file) as cfg:
+                    with open(fname) as cfg:
                         self.config = json.load(cfg)
-                except FileNotFoundError:
+                except FileNotFoundError as e:
+                    print(e)
                     pass
                 except TypeError:
                     pass

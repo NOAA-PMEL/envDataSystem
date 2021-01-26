@@ -106,7 +106,7 @@ class Person(Contact):
 class Organization(Contact):
 
     name = models.CharField(
-        max_length=40,
+        max_length=50,
         null=True,
         blank=True,
         help_text='Enter short name for labels and ID',
