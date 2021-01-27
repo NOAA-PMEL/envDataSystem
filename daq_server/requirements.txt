@@ -1,0 +1,5 @@
+websockets
+pytz
+pyserial
+pyserial-asyncio
+labjack-ljm

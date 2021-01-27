@@ -1,0 +1,8 @@
+Django
+channels
+channels_redis
+Twisted[tls,http2]
+bokeh
+whitenoise
+mysqlclient
+django-mysql
