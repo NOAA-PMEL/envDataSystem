@@ -2,7 +2,7 @@
 
 Python based data system to be used for acquiring, visualizing and analyzing environmental data. Web based.
 
-## Initial Setup
+## Initial Setup - THESE HAVE CHANGED
 
 * **Settings files**: make local copies of settings from template files that will persist after updating form repo. Make all local configuration settings in local file
 
