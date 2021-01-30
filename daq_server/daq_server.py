@@ -61,10 +61,10 @@ class DAQServer:
                 self.base_file_path = server_config["base_file_path"]
 
             if "daq_id" in server_config:
-                fqdn = server_config['daq_id']['fqdn']
-                namespace = server_config['daq_id']['namespace']
-                self.daq_id = f"{fqdn.split('.')[0]}-{namespace}"                
-                self.namespace['daq_server'] = self.daq_id.replace(" ", "")
+                fqdn = server_config["daq_id"]["fqdn"]
+                namespace = server_config["daq_id"]["namespace"]
+                self.daq_id = f"{fqdn.split('.')[0]}-{namespace}"
+                self.namespace["daq_server"] = self.daq_id.replace(" ", "")
 
             if "last_config_file" in server_config:
                 # dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -74,7 +74,7 @@ class DAQServer:
                 if not os.path.isabs(self.last_config_file):
                     fname = os.path.join(
                         os.path.dirname(os.path.realpath(__file__)),
-                        self.last_config_file
+                        self.last_config_file,
                     )
                 try:
                     # with open(self.last_config_file) as cfg:
@@ -110,9 +110,9 @@ class DAQServer:
 
         self.status = {
             # 'run_status': 'STOPPED',
-            'ready_to_run': False,
-            'connected_to_ui': False,
-            'health': 'OK'
+            "ready_to_run": False,
+            "connected_to_ui": False,
+            "health": "OK",
         }
 
         # start managers
@@ -143,7 +143,10 @@ class DAQServer:
             # print(ifcfg['IFACE_CONFIG'])
             # controller = ControllerFactory().create(icfg['CONT_CONFIG'])
             controller = ControllerFactory().create(
-                icfg, ui_config=self.ui_config, base_file_path=self.base_file_path, namespace=self.namespace
+                icfg,
+                ui_config=self.ui_config,
+                base_file_path=self.base_file_path,
+                namespace=self.namespace,
             )
             print(controller)
             controller.to_parent_buf = self.from_child_buf
@@ -220,20 +223,20 @@ class DAQServer:
                 "config": self.config,
             },
         )
-        print(f'Registering with UI server: {self.namespace}')
+        print(f"Registering with UI server: {self.namespace}")
         await self.to_ui_buf.put(req)
         self.run_state = "REGISTERING"
         # await reg_client.close()
 
     async def connect_to_ui(self):
-        print(f'connecting to ui: {self}')
+        print(f"connecting to ui: {self}")
         # build ui_address
         ui_address = f'ws://{self.ui_config["host"]}'
         ui_address += f':{self.ui_config["port"]}'
         # ui_address += f"/ws/envdaq/daqserver/{self.daq_id.replace(' ', '')}"
         ui_address += f"/ws/envdaq/daqserver/{self.namespace['daq_server']}"
 
-        print(f'ui_address: {ui_address}')
+        print(f"ui_address: {ui_address}")
 
         # self.ui_client = WSClient(uri=quote(ui_address))
         self.ui_client = WSClient(uri=ui_address)
@@ -253,43 +256,33 @@ class DAQServer:
         # )
 
         while True:
-            if (
-                self.do_ui_connection and (
-                    self.ui_client is None or not self.ui_client.isConnected()
-                )
+            if self.do_ui_connection and (
+                self.ui_client is None or not self.ui_client.isConnected()
             ):
                 # close tasks for current ui if any
                 for t in self.ui_task_list:
                     t.cancel()
 
                 # make connection
-                print('connect to ui')
+                print("connect to ui")
                 await self.connect_to_ui()
 
                 # start ui queues
-                self.ui_task_list.append(
-                    asyncio.ensure_future(self.to_ui_loop())
-                )
-                self.ui_task_list.append(
-                    asyncio.ensure_future(self.from_ui_loop())
-                )
-                self.ui_task_list.append(
-                    asyncio.create_task(self.ping_ui_server())
-                )
+                self.ui_task_list.append(asyncio.ensure_future(self.to_ui_loop()))
+                self.ui_task_list.append(asyncio.ensure_future(self.from_ui_loop()))
+                self.ui_task_list.append(asyncio.create_task(self.ping_ui_server()))
 
                 await self.register_with_UI()
 
             await asyncio.sleep(1)
 
     def start_connections(self):
-        print('start_connections')
+        print("start_connections")
         self.start_ui_connection()
 
     def start_ui_connection(self):
-        print('start_ui_connection')
-        self.task_list.append(
-            asyncio.create_task(self.run_ui_connection())
-        )
+        print("start_ui_connection")
+        self.task_list.append(asyncio.create_task(self.run_ui_connection()))
 
     async def open(self):
         # task = asyncio.ensure_future(self.read_loop())
@@ -323,7 +316,7 @@ class DAQServer:
         self.start_connections()
 
         # print(f"UI client is connected: {self.ui_client.isConnected()}")
-        
+
         # Start heartbeat ping
         # asyncio.create_task(self.ping_ui_server())
 
@@ -394,13 +387,12 @@ class DAQServer:
 
         self.ui_task_list.append(asyncio.create_task(self.check_ready_to_run()))
 
-        while not self.status['ready_to_run']:
+        while not self.status["ready_to_run"]:
             await asyncio.sleep(1)
 
         print("Waiting for setup...done.")
 
-
-            # PlotManager.get_server().start()
+        # PlotManager.get_server().start()
 
         await self.send_ready_to_ui()
 
@@ -418,7 +410,7 @@ class DAQServer:
         # print(f"_____ send no wait _____: {status.to_json()}")
         # await self.to_ui_buf.put(status)
 
-            # end tmp if statement
+        # end tmp if statement
 
     async def send_ready_to_ui(self):
 
@@ -468,7 +460,7 @@ class DAQServer:
         self.add_controllers()
 
         self.run_state = "READY_TO_RUN"
-        
+
         # reset back to original
         cfg_fetch_freq = 2
 
@@ -478,7 +470,6 @@ class DAQServer:
 
         await asyncio.sleep(5)  # wait for config to be sent
         await self.send_ready_to_ui()
-
 
     def start(self):
         pass
@@ -535,7 +526,7 @@ class DAQServer:
                         if self.last_config_file:
                             with open(self.last_config_file, "w") as cfg:
                                 json.dump(self.config, cfg)
-                    
+
                     elif content["BODY"]["purpose"] == "SYNCREQUEST":
                         # print("sync DAQ")
                         # system_def = SysManager.get_definitions_all()
@@ -557,8 +548,8 @@ class DAQServer:
                         self.registration_key = content["BODY"]["regkey"]
                         # config = content["BODY"]["config"]
                         self.config = content["BODY"]["config"]
-                        
-                        if content['BODY']['ui_reconfig_request']:
+
+                        if content["BODY"]["ui_reconfig_request"]:
                             await self.resend_config_to_ui()
 
             elif src == "FromChild":
@@ -574,12 +565,12 @@ class DAQServer:
         while wait:
             wait = False
             for k, v in self.controller_map.items():
-                if not v.status['ready_to_run']:
+                if not v.status["ready_to_run"]:
                     wait = True
-                    print(f'Waiting for controller: {k}')
+                    print(f"Waiting for controller: {k}")
                     break
             await asyncio.sleep(1)
-        self.status['ready_to_run'] = True
+        self.status["ready_to_run"] = True
 
     async def ping_ui_server(self):
 
@@ -594,7 +585,7 @@ class DAQServer:
                 body={
                     # "id": self.daq_id
                     "namespace": self.namespace
-                }
+                },
             )
             await self.to_ui_buf.put(msg)
             await asyncio.sleep(2)
@@ -603,7 +594,6 @@ class DAQServer:
         print(f"daq_server ({self.namespace['daq_server']}) shutting down...")
 
         self.stop()
-
 
         # asyncio.get_event_loop().run_until_complete(self.ws_client.shutdown())
         # if self.ws_client is not None:
@@ -684,7 +674,7 @@ def shutdown(server):
 if __name__ == "__main__":
 
     print(f"args: {sys.argv[1:]}")
-   
+
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     # print(BASE_DIR)
     # sys.path.append(os.path.join(BASE_DIR, "envdsys/shared"))
