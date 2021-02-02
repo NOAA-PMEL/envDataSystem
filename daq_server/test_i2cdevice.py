@@ -164,7 +164,9 @@ if __name__ == "__main__":
 
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     # print(BASE_DIR)
-    sys.path.append(os.path.join(BASE_DIR, 'envdsys/shared'))
+    # sys.path.append(os.path.join(BASE_DIR, 'envdsys/shared'))
+    sys.path.append(os.path.join(BASE_DIR, "envdsys"))
+
 
     from client.tcpport import TCPPortClient
     from shared.data.message import Message
