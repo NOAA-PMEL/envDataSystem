@@ -2,12 +2,17 @@ FROM python:3
 ENV PYTHONUNBUFFERED=1
 
 # RUN mkdir -p /app/envDataSystem
+RUN mkdir -p /app/setup
+COPY ./envdsys/requirements.txt /app/setup/requirements.txt
+WORKDIR /app/setup
+RUN pip install -r requirements.txt
+
 COPY ./envdsys /app/envDataSystem/envdsys
 RUN mkdir -p /app/envDataSystem/envdsys/config
 RUN mkdir -p /data/envDataSystem/UIServer
 
 WORKDIR /app/envDataSystem/envdsys
-RUN pip install -r requirements.txt
+# RUN pip install -r requirements.txt
 
 COPY ./docker/envdsys/entrypoint.sh /app/envDataSystem/envdsys/entrypoint.sh
 

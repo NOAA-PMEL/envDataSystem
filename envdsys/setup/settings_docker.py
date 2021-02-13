@@ -115,11 +115,22 @@ WSGI_APPLICATION = 'envdsys.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         # 'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+#         'NAME': os.path.join(BASE_DIR, 'db', 'db.sqlite3'),
+#     }
+# }
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        # 'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-        'NAME': os.path.join(BASE_DIR, 'db', 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': 'postgres',
+        'PASSWORD': 'postgres',
+        'HOST': 'db', # set in docker-compose.yml
+        # 'HOST': '127.0.0.1', # set in docker-compose.yml
+        'PORT': 5432 # default postgres port
     }
 }
 
@@ -183,7 +194,8 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],
+            "hosts": [('redis', 6379)],
+            # "hosts": [('127.0.0.1', 6379)],
             # in case you run into over capacity errors
             # 'capacity': 1500,  # added due to over capacity bug
             # 'expiry': 10,      # workaround
@@ -203,7 +215,8 @@ CHANNEL_LAYERS = {
 
 # Plot Server settings..use this?
 PLOT_SERVER = {
-    'server_id': ('localhost', 5001, 'default'), # old default
+    'server_id': ('0.0.0.0', 5001, 'default'), # old default
+    'hostname': os.environ["ENVDSYS_PLOT_SERVER_HOSTNAME"],
     'host': 'localhost',
     'ports': "5001:5011",  # allows for 10 servers
     'namespace': 'default' # default namespace
@@ -223,5 +236,5 @@ PLOT_SERVER = {
 #   ui_save_data: whether UI Server should save data (Default: False)
 DATA_MANAGER = {
     'ui_save_base_path': '/data/envDataSystem/UIServer',
-    'ui_save_data': False,
+    'ui_save_data': os.environ["ENVDSYS_UI_DATA_SAVE"],
 }
