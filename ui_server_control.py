@@ -19,21 +19,31 @@ from envdsys.setup.setup import configure_ui_server
 # }
 
 if __name__ == "__main__":
-    # sys.argv.append("-c")
-    print(sys.argv)
+    # sys.argv.append("stop")
+    print(sys.argv[1:])
 
     do_config = False
     do_build = False
+    do_start = False
+    do_stop = False
     if len(sys.argv) > 1:
         opts = ["--config", "-c"]
-        result = [s for s in sys.argv if any(xs in s for xs in opts)]
+        result = [s for s in sys.argv[1:] if any(xs in s for xs in opts)]
         if result:
             do_config = True
         opts = ["--build", "-b"]
-        result = [s for s in sys.argv if any(xs in s for xs in opts)]
+        result = [s for s in sys.argv[1:] if any(xs in s for xs in opts)]
         if result:
             do_config = True
             do_build = True
+        opts = ["start"]
+        result = [s for s in sys.argv[1:] if any(xs in s for xs in opts)]
+        if result:
+            do_start = True
+        opts = ["stop"]
+        result = [s for s in sys.argv[1:] if any(xs in s for xs in opts)]
+        if result:
+            do_stop = True
 
         # if "--config" in sys.argv or "-c" in sys.argv:
         # if sys.argv[1] == "--config" or sys.argv[1] == "-c":
@@ -92,11 +102,22 @@ if __name__ == "__main__":
     if do_config:
         from envdsys.setup.setup import configure_ui_server
 
+        print("Configuring UIServer:")
+        print(f"\thost:port = {host}:{port}")
+        print(f"\tsave UI data = {ui_data_save}")
+        if run_type == "docker":
+            print(f"\tDB dir = {db_data}")
+            print(f"\tUI conf dir = {ui_conf}")
+            print(f"\tUI data dir = {ui_data_save}")
+
         configure_ui_server()
         if run_type == "docker" and do_build:
+            print("building containers...")
             result = subprocess.call(
                 [
                     "docker-compose",
+                    "-f",
+                    "docker-compose-envdsys.yml",
                     "--env-file",
                     "envdsys/setup/envdsys_variables.env",
                     "build",
@@ -104,19 +125,21 @@ if __name__ == "__main__":
                 ]
             )
 
-    else:
-
+    if do_start:
+        print("starting envdsys docker containter environment...")
         # run based on run type
         if run_type == "docker":
-            print("run docker")
+            print("start docker")
             result = subprocess.call(
                 [
                     "docker-compose",
+                    "-f",
+                    "docker-compose-envdsys.yml",
                     "--env-file",
                     "envdsys/setup/envdsys_variables.env",
                     "up",
                     "-d",
-                    "envdsys",
+                    # "envdsys",
                 ]
             )
 
@@ -131,3 +154,22 @@ if __name__ == "__main__":
             result = subprocess.call(
                 ["daphne", "-b", host, "-p", port, "envdsys.asgi:application"]
             )
+
+    elif do_stop:
+        print("stopping envdsys docker containter environment...")
+        if run_type == "docker":
+            print("stop docker")
+            result = subprocess.call(
+                [
+                    "docker-compose",
+                    "-f",
+                    "docker-compose-envdsys.yml",
+                    "--env-file",
+                    "envdsys/setup/envdsys_variables.env",
+                    "down",
+                ]
+            )
+        else:
+            print("Running via pyton, kill from command line or by pid")
+
+        

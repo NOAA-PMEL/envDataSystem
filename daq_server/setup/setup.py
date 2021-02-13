@@ -2,7 +2,7 @@
 import os
 # import sys
 import shutil
-from envdsys.setup.ui_server_conf import run_config
+from daq_server.setup.daq_server_conf import run_config
 
 def config_setup(server_type="standalone"):
     root_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -40,80 +40,107 @@ def create_settings_file(run_type):
 
     if run_type == "docker":
         # save settings to volume folder
-        ui_conf = "/tmp/ui_conf"
+        daq_conf = "/tmp/daq_conf"
         try:
-            ui_conf = run_config["DOCKER"]["volumes"]["ui_conf"]
+            daq_conf = run_config["DOCKER"]["volumes"]["daq_conf"]
         except KeyError:
             pass
         # docker_path = os.path.join(root_path, ui_conf)
-        if not os.path.exists(ui_conf):
-            os.makedirs(ui_conf)
+        if not os.path.exists(daq_conf):
+            os.makedirs(daq_conf)
             print(f"New config directory file created")
 
-        src = os.path.join(root_path, 'setup', 'settings_docker.py')
-        path = os.path.join(ui_conf, 'settings.py')
+        src = os.path.join(root_path, 'setup', 'daq_settings.py')
+        path = os.path.join(daq_conf, 'daq_settings.py')
         shutil.copyfile(src, path)
 
         # create env file
         create_env_file()
     else:
-        src = os.path.join(root_path, 'setup', 'settings.py')
-        path = os.path.join(root_path, 'config', 'settings.py')
+        src = os.path.join(root_path, 'setup', 'daq_settings.py')
+        path = os.path.join(root_path, 'config', 'daq_settings.py')
         shutil.copyfile(src, path)
         # print(f"New settings.py file created")
+        set_env_variables()
 
-def create_env_file():
+
+def create_env_vars():
 
     root_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
     # open env file
     # write env variables for docker-compose
 
-    host = "localhost"
+    daq_name = "Test Server"
     try:
-        host = run_config["HOST"]["name"]
+        daq_name = run_config["DAQ_NAME"]
     except KeyError:
         pass
 
-    port = "8001"
+    daq_fqdn = "localhost"
     try:
-        port = run_config["HOST"]["port"]
+        daq_fqdn = run_config["DAQ_FQDN"]
+    except KeyError:
+        pass
+    daq_nodename = daq_fqdn.split(".")[0]
+
+    daq_namespace = "default"
+    try:
+        daq_namespace = run_config["DAQ_NAMESPACE"]
     except KeyError:
         pass
 
-    ui_data_save = True
+    ui_host = "localhost"
     try:
-        ui_data_save = run_config["UI_DATA_SAVE"]
+        ui_host = run_config["UI_HOST"]["name"]
     except KeyError:
         pass
 
-    db_data = "/tmp/db"
+    ui_port = "8001"
     try:
-        db_data = run_config["DOCKER"]["volumes"]["db_data"]
+        ui_port = run_config["UI_HOST"]["port"]
     except KeyError:
         pass
 
-    ui_conf = "/tmp/ui_conf"
+    daq_conf = "/tmp/daq_conf"
     try:
-        ui_conf = run_config["DOCKER"]["volumes"]["ui_conf"]
+        daq_conf = run_config["DOCKER"]["volumes"]["daq_conf"]
     except KeyError:
         pass
 
-    ui_data_save_dir = "/tmp/ui_data"
+    daq_data_save_dir = "/tmp/daq_data"
     try:
-        ui_data_save_dir = run_config["DOCKER"]["volumes"]["ui_data_save"]
+        daq_data_save_dir = run_config["DOCKER"]["volumes"]["daq_data_save"]
     except KeyError:
         pass
 
-    with open(os.path.join(root_path, 'setup', 'envdsys_variables.env'), "w") as fd:
-        fd.write(f"UI_HOSTNAME={host}\n")
-        fd.write(f"UI_HOSTPORT={port}\n")
-        fd.write(f"UI_DATA_SAVE={ui_data_save}\n")
-        fd.write(f"DB_DATA_DIR={db_data}\n")
-        fd.write(f"UI_CFG_DIR={ui_conf}\n")
-        fd.write(f"UI_DATA_SAVE_DIR={ui_data_save_dir}\n")
+    env_vars = {
+        "DAQ_NAME": daq_name,
+        "DAQ_FQDN": daq_fqdn,
+        "DAQ_NODENAME": daq_nodename,
+        "DAQ_NAMESPACE": daq_namespace,
+        "UI_HOSTNAME": ui_host,
+        "UI_HOSTPORT": ui_port,
+        "DAQ_CFG_DIR": daq_conf,
+        "DAQ_DATA_SAVE_DIR": daq_data_save_dir
+    }
+    return env_vars
 
-def configure_ui_server():
+def create_env_file():
+    vars = create_env_vars()
+
+    root_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+
+    with open(os.path.join(root_path, 'setup', 'daq_server_variables.env'), "w") as fd:
+        for name, val in vars.items():
+            fd.write(f"{name}={val}\n")
+
+def set_env_variables():
+    vars = create_env_vars()
+    for name, val in vars.items():
+        os.environ[name]=val
+
+def configure_daq_server():
     
     run_type = "docker"
     try:

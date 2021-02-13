@@ -39,7 +39,7 @@ services:
       context: .
       dockerfile: ./docker/envdsys/Dockerfile
     environment:
-      - ENVDSYS_PLOT_SERVER_HOSTNAME=${HOSTNAME}
+      - ENVDSYS_PLOT_SERVER_HOSTNAME=${UI_HOSTNAME}
       - ENVDSYS_UI_DATA_SAVE=${UI_DATA_SAVE}
     volumes: 
       # - "/home/acgsb/Software/python/test_envdsys_docker/envDataSystem/config:/app/envDataSystem/envdsys/config"
@@ -47,7 +47,7 @@ services:
       - "${UI_CFG_DIR}:/app/envDataSystem/envdsys/config"
       - "${UI_DATA_SAVE_DIR}:/data/envDataSystem/UIServer"
     ports:
-      - "${HOSTPORT}:8001"
+      - "${UI_HOSTPORT}:8001"
       - "5001:5001"
     depends_on: 
       - redis
@@ -55,19 +55,19 @@ services:
     # command: ["/bin/bash"]
     entrypoint: ["./entrypoint.sh"]
 
-  daq_server:
-    # build: ./envdsys
-    image: daq_server:latest
-    build:
-      context: .
-      dockerfile: ./docker/daq_server/Dockerfile
-    volumes: 
-      - "/home/acgsb/Software/python/test_daq_server_docker/envDataSystem/config:/app/envDataSystem/daq_server/config"
-      - "/home/acgsb/Software/python/test_daq_server_docker/envDataSystem/data:/data/envDataSystem/"
-    # ports:
-    #   - "8001:8001"
-    #   - "5001:5001"
-    # depends_on: 
-    #   - redis
-    # command: ["/bin/bash"]
-    entrypoint: ["./entrypoint.sh"]
+  # daq_server:
+  #   # build: ./envdsys
+  #   image: daq_server:latest
+  #   build:
+  #     context: .
+  #     dockerfile: ./docker/daq_server/Dockerfile
+  #   volumes: 
+  #     - "/home/acgsb/Software/python/test_daq_server_docker/envDataSystem/config:/app/envDataSystem/daq_server/config"
+  #     - "/home/acgsb/Software/python/test_daq_server_docker/envDataSystem/data:/data/envDataSystem/"
+  #   # ports:
+  #   #   - "8001:8001"
+  #   #   - "5001:5001"
+  #   # depends_on: 
+  #   #   - redis
+  #   # command: ["/bin/bash"]
+  #   entrypoint: ["./entrypoint.sh"]
