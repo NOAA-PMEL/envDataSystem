@@ -2,6 +2,11 @@ FROM python:3
 ENV PYTHONUNBUFFERED=1
 
 # RUN mkdir -p /app/envDataSystem
+RUN mkdir -p /app/setup
+COPY ./envdsys/requirements.txt /app/setup/requirements.txt
+WORKDIR /app/setup
+RUN pip install -r requirements.txt
+
 COPY ./daq_server /app/envDataSystem/daq_server
 COPY ./envdsys/shared /app/envDataSystem/envdsys/shared
 
@@ -9,7 +14,7 @@ RUN mkdir -p /app/envDataSystem/daq_server/config
 RUN mkdir -p /data/envDataSystem/
 
 WORKDIR /app/envDataSystem/daq_server
-RUN pip install -r requirements.txt
+# RUN pip install -r requirements.txt
 
 COPY ./docker/daq_server/entrypoint.sh /app/envDataSystem/daq_server/entrypoint.sh
 

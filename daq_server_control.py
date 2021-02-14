@@ -19,7 +19,7 @@ from daq_server.setup.setup import configure_daq_server
 # }
 
 if __name__ == "__main__":
-    sys.argv.append("-c")
+    # sys.argv.append("-c")
     print(sys.argv[1:])
 
     do_config = False
@@ -128,7 +128,7 @@ if __name__ == "__main__":
                     "-f",
                     "docker-compose-daq_server.yml",
                     "--env-file",
-                    "daq_server/setup/daq_server_variables.env",
+                    "docker/daq_server/daq_server_variables.env",
                     "build",
                     "daq_server",
                 ]
@@ -145,7 +145,7 @@ if __name__ == "__main__":
                     "-f",
                     "docker-compose-daq_server.yml",
                     "--env-file",
-                    "daq_server/setup/daq_server_variables.env",
+                    "docker/daq_server/daq_server_variables.env",
                     "up",
                     "-d",
                     # "envdsys",
@@ -168,7 +168,7 @@ if __name__ == "__main__":
                     "-f",
                     "docker-compose-daq_server.yml",
                     "--env-file",
-                    "daq_server/setup/daq_server_variables.env",
+                    "docker/daq_server/daq_server_variables.env",
                     "down",
                 ]
             )

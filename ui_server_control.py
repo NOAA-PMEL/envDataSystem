@@ -19,7 +19,7 @@ from envdsys.setup.setup import configure_ui_server
 # }
 
 if __name__ == "__main__":
-    # sys.argv.append("stop")
+    # sys.argv.append("-c")
     print(sys.argv[1:])
 
     do_config = False
@@ -119,7 +119,7 @@ if __name__ == "__main__":
                     "-f",
                     "docker-compose-envdsys.yml",
                     "--env-file",
-                    "envdsys/setup/envdsys_variables.env",
+                    "docker/envdsys/envdsys_variables.env",
                     "build",
                     "envdsys",
                 ]
@@ -136,7 +136,7 @@ if __name__ == "__main__":
                     "-f",
                     "docker-compose-envdsys.yml",
                     "--env-file",
-                    "envdsys/setup/envdsys_variables.env",
+                    "docker/envdsys/envdsys_variables.env",
                     "up",
                     "-d",
                     # "envdsys",
@@ -165,7 +165,7 @@ if __name__ == "__main__":
                     "-f",
                     "docker-compose-envdsys.yml",
                     "--env-file",
-                    "envdsys/setup/envdsys_variables.env",
+                    "docker/envdsys/envdsys_variables.env",
                     "down",
                 ]
             )

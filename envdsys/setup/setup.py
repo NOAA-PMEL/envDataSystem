@@ -62,12 +62,7 @@ def create_settings_file(run_type):
         shutil.copyfile(src, path)
         # print(f"New settings.py file created")
 
-def create_env_file():
-
-    root_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-
-    # open env file
-    # write env variables for docker-compose
+def create_env_vars():
 
     host = "localhost"
     try:
@@ -105,13 +100,75 @@ def create_env_file():
     except KeyError:
         pass
 
-    with open(os.path.join(root_path, 'setup', 'envdsys_variables.env'), "w") as fd:
-        fd.write(f"UI_HOSTNAME={host}\n")
-        fd.write(f"UI_HOSTPORT={port}\n")
-        fd.write(f"UI_DATA_SAVE={ui_data_save}\n")
-        fd.write(f"DB_DATA_DIR={db_data}\n")
-        fd.write(f"UI_CFG_DIR={ui_conf}\n")
-        fd.write(f"UI_DATA_SAVE_DIR={ui_data_save_dir}\n")
+    env_vars = {
+        "UI_HOSTNAME": host,
+        "UI_HOSTPORT": port,
+        "UI_DATA_SAVE": ui_data_save,
+        "DB_DATA_DIR": db_data,
+        "UI_CFG_DIR": ui_conf,
+        "UI_DATA_SAVE_DIR": ui_data_save_dir,
+    }
+    return env_vars
+
+def create_env_file():
+
+    # root_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    root_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+    
+    vars = create_env_vars()
+
+    # open env file
+    # write env variables for docker-compose
+
+    # host = "localhost"
+    # try:
+    #     host = run_config["HOST"]["name"]
+    # except KeyError:
+    #     pass
+
+    # port = "8001"
+    # try:
+    #     port = run_config["HOST"]["port"]
+    # except KeyError:
+    #     pass
+
+    # ui_data_save = True
+    # try:
+    #     ui_data_save = run_config["UI_DATA_SAVE"]
+    # except KeyError:
+    #     pass
+
+    # db_data = "/tmp/db"
+    # try:
+    #     db_data = run_config["DOCKER"]["volumes"]["db_data"]
+    # except KeyError:
+    #     pass
+
+    # ui_conf = "/tmp/ui_conf"
+    # try:
+    #     ui_conf = run_config["DOCKER"]["volumes"]["ui_conf"]
+    # except KeyError:
+    #     pass
+
+    # ui_data_save_dir = "/tmp/ui_data"
+    # try:
+    #     ui_data_save_dir = run_config["DOCKER"]["volumes"]["ui_data_save"]
+    # except KeyError:
+    #     pass
+
+    # with open(os.path.join(root_path, 'setup', 'envdsys_variables.env'), "w") as fd:
+    
+    with open(os.path.join(root_path, 'docker', 'envdsys','envdsys_variables.env'), "w") as fd:
+        for name, val in vars.items():
+            fd.write(f"{name}={val}\n")
+
+
+        # fd.write(f"UI_HOSTNAME={host}\n")
+        # fd.write(f"UI_HOSTPORT={port}\n")
+        # fd.write(f"UI_DATA_SAVE={ui_data_save}\n")
+        # fd.write(f"DB_DATA_DIR={db_data}\n")
+        # fd.write(f"UI_CFG_DIR={ui_conf}\n")
+        # fd.write(f"UI_DATA_SAVE_DIR={ui_data_save_dir}\n")
 
 def configure_ui_server():
     

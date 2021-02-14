@@ -129,9 +129,9 @@ def create_env_vars():
 def create_env_file():
     vars = create_env_vars()
 
-    root_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    root_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
-    with open(os.path.join(root_path, 'setup', 'daq_server_variables.env'), "w") as fd:
+    with open(os.path.join(root_path, 'docker', 'daq_server', 'daq_server_variables.env'), "w") as fd:
         for name, val in vars.items():
             fd.write(f"{name}={val}\n")
 
