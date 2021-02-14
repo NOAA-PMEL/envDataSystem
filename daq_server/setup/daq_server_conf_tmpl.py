@@ -8,7 +8,7 @@ run_config = {
 
     "RUN_TYPE": "docker",
     
-    "FQDN": "<host fqdn>",
+    "DAQ_FQDN": "<host fqdn>",
 
     "DAQ_NAMESPACE": "default",
 
