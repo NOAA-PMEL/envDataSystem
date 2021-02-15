@@ -5,7 +5,7 @@ RUN apt-get update -y && apt install libusb-1.0 udev -y
 
 # RUN mkdir -p /app/envDataSystem
 RUN mkdir -p /app/setup/lib
-COPY ./daq_server/setup/lib/labjack_ljm.tar.gz /app/setup/lib/labjack_ljm.tar.gz
+COPY ./daq_server/setup/deps/labjack_ljm.tar.gz /app/setup/lib/labjack_ljm.tar.gz
 WORKDIR /app/setup/lib
 RUN mkdir labjack_ljm \
     && tar xf labjack_ljm.tar.gz -C labjack_ljm --strip-components=1 \
