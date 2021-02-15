@@ -1,10 +1,21 @@
 FROM python:3
 ENV PYTHONUNBUFFERED=1
 
+RUN apt-get update -y && apt install libusb-1.0 udev -y
+
 # RUN mkdir -p /app/envDataSystem
-RUN mkdir -p /app/setup
-COPY ./envdsys/requirements.txt /app/setup/requirements.txt
+RUN mkdir -p /app/setup/lib
+COPY ./daq_server/setup/lib/labjack_ljm.tar.gz /app/setup/lib/labjack_ljm.tar.gz
+WORKDIR /app/setup/lib
+RUN mkdir labjack_ljm \
+    && tar xf labjack_ljm.tar.gz -C labjack_ljm --strip-components=1 \
+    # && cd labjack_ljm \
+    && labjack_ljm/labjack_ljm_installer.run -- --no-restart-device-rules \
+    && rm -rf labjack_ljm
+
+COPY ./daq_server/requirements.txt /app/setup/requirements.txt
 WORKDIR /app/setup
+# RUN rm -rf lib
 RUN pip install -r requirements.txt
 
 COPY ./daq_server /app/envDataSystem/daq_server

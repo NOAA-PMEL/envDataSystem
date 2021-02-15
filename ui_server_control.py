@@ -19,7 +19,7 @@ from envdsys.setup.setup import configure_ui_server
 # }
 
 if __name__ == "__main__":
-    # sys.argv.append("-c")
+    # sys.argv.append("-b")
     print(sys.argv[1:])
 
     do_config = False
@@ -139,7 +139,7 @@ if __name__ == "__main__":
                     "docker/envdsys/envdsys_variables.env",
                     "up",
                     "-d",
-                    # "envdsys",
+                    "envdsys",
                 ]
             )
 

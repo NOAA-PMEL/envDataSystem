@@ -148,7 +148,7 @@ if __name__ == "__main__":
                     "docker/daq_server/daq_server_variables.env",
                     "up",
                     "-d",
-                    # "envdsys",
+                    "daq_server"
                 ]
             )
 

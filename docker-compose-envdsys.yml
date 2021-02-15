@@ -32,8 +32,8 @@ services:
 
   envdsys:
     # build: ./envdsys
-    env_file:
-      - ./envdsys/setup/envdsys_variables.env
+    # env_file:
+    #   - ./envdsys/setup/envdsys_variables.env
     image: envdsys:latest
     build:
       context: .
