@@ -162,7 +162,7 @@ def set_platform_libs():
             lj_src = os.path.join(
                 root_path,
                 "setup",
-                "lib",
+                "deps",
                 "labjack",
                 "labjack_ljm_software_2019_07_16_x86_64.tar.gz",
             )
@@ -171,7 +171,7 @@ def set_platform_libs():
             lj_src = os.path.join(
                 root_path,
                 "setup",
-                "lib",
+                "deps",
                 "labjack",
                 "LabJackM-1.2000-openSUSE-Linux-aarch64-release.tar.gz.tar.gz",
             )
@@ -180,7 +180,7 @@ def set_platform_libs():
             lj_src = os.path.join(
                 root_path,
                 "setup",
-                "lib",
+                "deps",
                 "labjack",
                 "labjack_ljm_software_2019_02_14_i386_release.tar.gz",
             )
@@ -188,14 +188,14 @@ def set_platform_libs():
             lj_src = os.path.join(
                 root_path,
                 "setup",
-                "lib",
+                "deps",
                 "labjack",
                 "LabJackM-1.1804-Raspbian-Linux-armhf-release.tar.gz",
             )
 
     if lj_src:
         msg = f"setup labjack libraries for {arch} : {machine}"
-        path = os.path.join(root_path, "setup", "lib", "labjack_ljm.tar.gz")
+        path = os.path.join(root_path, "setup", "deps", "labjack_ljm.tar.gz")
         shutil.copyfile(lj_src, path)
     print(msg)
 
