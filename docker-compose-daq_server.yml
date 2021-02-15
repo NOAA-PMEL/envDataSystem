@@ -81,4 +81,9 @@ services:
     # depends_on: 
     #   - redis
     # command: ["/bin/bash"]
+    networks:
+      - daq_server_net
     entrypoint: ["./entrypoint.sh"]
+
+networks: 
+  daq_server_net:

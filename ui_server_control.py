@@ -126,7 +126,7 @@ if __name__ == "__main__":
             )
 
     if do_start:
-        print("starting envdsys docker containter environment...")
+        print("starting envdsys docker container environment...")
         # run based on run type
         if run_type == "docker":
             print("start docker")
@@ -156,7 +156,7 @@ if __name__ == "__main__":
             )
 
     elif do_stop:
-        print("stopping envdsys docker containter environment...")
+        print("stopping envdsys docker container environment...")
         if run_type == "docker":
             print("stop docker")
             result = subprocess.call(

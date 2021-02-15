@@ -6,6 +6,8 @@ services:
     ports:
       - "6379:6379"
     restart: always
+    networks: 
+      - ui_server_net
 
   db:
     # image: mariadb
@@ -14,6 +16,8 @@ services:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+    networks: 
+      - ui_server_net
 
     restart: always
     # environment: 
@@ -52,6 +56,8 @@ services:
     depends_on: 
       - redis
       - db
+    networks: 
+      - ui_server_net
     # command: ["/bin/bash"]
     entrypoint: ["./entrypoint.sh"]
 
@@ -71,3 +77,6 @@ services:
   #   #   - redis
   #   # command: ["/bin/bash"]
   #   entrypoint: ["./entrypoint.sh"]
+
+networks: 
+  ui_server_net:
