@@ -7,42 +7,35 @@ services:
       - "6379:6379"
     restart: always
     networks: 
-      - ui_server_net
+      # - ui_server_net
+      - envdsys_backend
 
   db:
-    # image: mariadb
     image: postgres
     environment: 
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     networks: 
-      - ui_server_net
+      # - ui_server_net
+      - envdsys_backend
 
     restart: always
-    # environment: 
-    #   - MYSQL_DATABASE=envdsys
-    #   - MYSQL_USER=envdsys
-    #   - MYSQL_PASSWORD=envdsys
-    #   - MYSQL_ROOT_PASSWORD=envdsys_db_root
-    # ports:
-    #   - "3306:3306"
     volumes: 
-      # - /home/pi/Data/envDataSystem/db:/var/lib/mysql
-      # - /home/derek/app_data/envDataSystem/db/postgresql:/var/lib/postgresql/data/
       - ${DB_DATA_DIR}:/var/lib/postgresql/data/
-    ports:
-      - "5432:5432"
+    # ports:
+    #   - "5432:5432"
 
   envdsys:
     # build: ./envdsys
     # env_file:
-    #   - ./envdsys/setup/envdsys_variables.env
+    #   - ./docker/envdsys/envdsys_variables.env
     image: envdsys:latest
     build:
       context: .
       dockerfile: ./docker/envdsys/Dockerfile
     environment:
+      - ENVDSYS_UI_ALLOWED_HOSTS=${UI_ALLOWED_HOSTS}
       - ENVDSYS_PLOT_SERVER_HOSTNAME=${UI_HOSTNAME}
       - ENVDSYS_UI_DATA_SAVE=${UI_DATA_SAVE}
     volumes: 
@@ -57,7 +50,9 @@ services:
       - redis
       - db
     networks: 
-      - ui_server_net
+      - envdsys_net
+      - envdsys_backend
+      # - ui_server_net
     # command: ["/bin/bash"]
     entrypoint: ["./entrypoint.sh"]
 
@@ -79,4 +74,6 @@ services:
   #   entrypoint: ["./entrypoint.sh"]
 
 networks: 
-  ui_server_net:
+  # ui_server_net:
+  envdsys_net:
+  envdsys_backend:

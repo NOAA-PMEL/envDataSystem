@@ -82,8 +82,10 @@ services:
     #   - redis
     # command: ["/bin/bash"]
     networks:
-      - daq_server_net
+      # - daq_server_net
+      - envdsys_net
     entrypoint: ["./entrypoint.sh"]
 
 networks: 
-  daq_server_net:
+  # daq_server_net:
+  envdsys_net:

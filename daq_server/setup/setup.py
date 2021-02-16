@@ -4,7 +4,7 @@ import os
 # import sys
 import shutil
 import platform
-from daq_server.setup.daq_server_conf import run_config
+# from daq_server.setup.daq_server_conf import run_config
 
 # def config_setup(server_type="standalone"):
 #     root_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -36,18 +36,21 @@ from daq_server.setup.daq_server_conf import run_config
 #         print(f"New db directory created")
 
 
-def create_settings_file(run_type):
+def create_settings_file(conf_vars):
+
+    run_type = conf_vars["RUN_TYPE"]
 
     root_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     # # check if config folder has been setup
-
+    
     if run_type == "docker":
-        # save settings to volume folder
-        daq_conf = "/tmp/daq_conf"
-        try:
-            daq_conf = run_config["DOCKER"]["volumes"]["daq_conf"]
-        except KeyError:
-            pass
+        daq_conf = conf_vars["DAQ_CFG_DIR"]
+        # # save settings to volume folder
+        # daq_conf = "/tmp/daq_conf"
+        # try:
+        #     daq_conf = run_config["DOCKER"]["volumes"]["daq_conf"]
+        # except KeyError:
+        #     pass
         # docker_path = os.path.join(root_path, ui_conf)
         if not os.path.exists(daq_conf):
             os.makedirs(daq_conf)
@@ -58,18 +61,32 @@ def create_settings_file(run_type):
         shutil.copyfile(src, path)
 
         # create env file
-        create_env_file()
+        create_env_file(conf_vars)
+
     else:
         src = os.path.join(root_path, "setup", "daq_settings.py")
         path = os.path.join(root_path, "config", "daq_settings.py")
         shutil.copyfile(src, path)
         # print(f"New settings.py file created")
-        set_env_variables()
+        set_env_variables(conf_vars)
 
+def get_conf_vars():
 
-def create_env_vars():
+    # root_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
-    root_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    try:
+        from daq_server.setup.daq_server_conf import run_config
+        run_type = run_config["RUN_TYPE"]
+
+    except ModuleNotFoundError:
+        init_server_config()
+        print(
+            f"Initialized server config file. Edit ./daq_server/setup/daq_server_conf.py and re-run"
+        )
+        return None
+    except KeyError:
+        print("Unable to determine run_type. Check conf file.")
+        return None
 
     # open env file
     # write env variables for docker-compose
@@ -118,6 +135,7 @@ def create_env_vars():
         pass
 
     env_vars = {
+        "RUN_TYPE": run_type,
         "DAQ_NAME": daq_name,
         "DAQ_FQDN": daq_fqdn,
         "DAQ_NODENAME": daq_nodename,
@@ -130,8 +148,9 @@ def create_env_vars():
     return env_vars
 
 
-def create_env_file():
-    vars = create_env_vars()
+def create_env_file(conf_vars):
+    # vars = get_conf_vars()
+    vars = conf_vars
 
     root_path = os.path.dirname(
         os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -141,14 +160,22 @@ def create_env_file():
         os.path.join(root_path, "docker", "daq_server", "daq_server_variables.env"), "w"
     ) as fd:
         for name, val in vars.items():
-            fd.write(f"{name}={val}\n")
+            if name != "RUN_TYPE":
+                fd.write(f"{name}={val}\n")
 
 
-def set_env_variables():
-    vars = create_env_vars()
+def set_env_variables(conf_vars):
+    # vars = get_conf_vars()
+    vars = conf_vars
     for name, val in vars.items():
-        os.environ[name] = val
+        if name != "RUN_TYPE":
+            os.environ[name] = val
 
+def init_server_config():
+    root_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    src = os.path.join(root_path, "setup", "daq_server_conf_tmpl.py")
+    dest = os.path.join(root_path, "setup", "daq_server_conf.py")
+    shutil.copyfile(src, dest)
 
 def set_platform_libs():
     arch = platform.architecture()
@@ -201,14 +228,20 @@ def set_platform_libs():
 
 def configure_daq_server():
 
-    run_type = "docker"
-    try:
-        run_type = run_config["RUN_TYPE"]
-    except KeyError:
-        pass
+    conf_vars = get_conf_vars()
+    if conf_vars:
+        if conf_vars["RUN_TYPE"] == "docker":
+            set_platform_libs()
+        create_settings_file(conf_vars)
 
-    # setup architecture/machine specific files for docker install
-    if run_type == "docker":
-        set_platform_libs()
+    # run_type = "docker"
+    # try:
+    #     run_type = run_config["RUN_TYPE"]
+    # except KeyError:
+    #     pass
 
-    create_settings_file(run_type)
+    # # setup architecture/machine specific files for docker install
+    # if run_type == "docker":
+    #     set_platform_libs()
+
+    # create_settings_file(run_type)
