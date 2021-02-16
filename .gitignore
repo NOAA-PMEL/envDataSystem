@@ -152,3 +152,4 @@ envdsys/setup/ui_server_conf.py
 envdsys/setup/settings.py
 daq_server/setup/daq_settings.py
 daq_server/setup/daq_server_conf.py
+daq_server/setup/deps/labjack_ljm.tar.gz
