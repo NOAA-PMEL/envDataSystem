@@ -138,6 +138,9 @@ daq_server/daq_settings.py
 
 daq_server/connector/connector_settings.py
 
+# Docker specific excludes
+*.env
+
 # static files
 staticfiles
 envdsys/media/
@@ -145,3 +148,7 @@ envdsys/config/secret.txt
 last_config.json
 daq_server/config/daq_settings.py
 envdsys/config/settings.py
+envdsys/setup/ui_server_conf.py
+envdsys/setup/settings.py
+daq_server/setup/daq_settings.py
+daq_server/setup/daq_server_conf.py
