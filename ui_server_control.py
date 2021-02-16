@@ -121,7 +121,14 @@ if __name__ == "__main__":
 
         configure_ui_server()
         if run_type == "docker" and do_build:
-            print("building containers...")
+            print("collecting static files")
+            os.chdir("./envdsys")
+            result = subprocess.call(
+                ["python", "manage.py", "collectstatic", "--noinput"]
+            )
+            os.chdir("..")
+
+            print("building containers...")            
             result = subprocess.call(
                 [
                     "docker-compose",
