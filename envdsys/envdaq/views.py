@@ -67,6 +67,9 @@ def controller(request, daq_namespace, controller_namespace):
         host = settings.PLOT_SERVER['server_id'][0]
         port = settings.PLOT_SERVER['server_id'][1]
 
+    if 'hostname' in settings.PLOT_SERVER:
+        host = settings.PLOT_SERVER['hostname']
+
     plots = dict()
     plots["host"] = host
     plots["port"] = port
@@ -132,6 +135,9 @@ def instrument(request, daq_namespace, controller_namespace, instrument_namespac
         host = settings.PLOT_SERVER['server_id'][0]
         port = settings.PLOT_SERVER['server_id'][1]
 
+    if 'hostname' in settings.PLOT_SERVER:
+        host = settings.PLOT_SERVER['hostname']
+
     plots = dict()
     plots["host"] = host
     plots["port"] = port
@@ -151,7 +157,7 @@ def instrument(request, daq_namespace, controller_namespace, instrument_namespac
     
     # TODO: get plot name dynamically
     plot_script = server_document(f"http://{host}:{port}"+plots["name"])
-    # print(f'plot_scripts: {plot_scripts}')
+    print(f'plot_scripts: {plot_scripts}')
     context = {
         'daq_namespace': mark_safe(json.dumps(daq_namespace)),
         'controller_namespace': mark_safe(json.dumps(controller_namespace)),
