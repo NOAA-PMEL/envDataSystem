@@ -29,5 +29,6 @@ VOLUME ["/app/envDataSystem/envdsys/config", "/data/envDataSystem/UIServer"]
 # # RUN pip install -r requirements.txt
 # # COPY . /code/
 # # COPY composeexample/remove_settings.py /code/config/
+RUN python manage.py collectstatic --noinput
 
 CMD /bin/bash
