@@ -8,6 +8,10 @@ run_config = {
 
     "RUN_TYPE": "docker",
     
+    # Set username/groupname for run permissions - default to uid/gid of account during setup
+    # "RUN_USER": "derek",
+    # "RUN_GROUP": "derek",
+
     "DAQ_FQDN": "<host fqdn>",
 
     "DAQ_NAMESPACE": "default",

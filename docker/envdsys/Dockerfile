@@ -16,7 +16,10 @@ WORKDIR /app/envDataSystem/envdsys
 
 COPY ./docker/envdsys/entrypoint.sh /app/envDataSystem/envdsys/entrypoint.sh
 
-RUN useradd envdsys
+ARG UID
+ARG GID
+
+RUN groupadd -g $GID envdsys && useradd -u $UID -g $GID envdsys
 RUN chown -R envdsys:envdsys /app/envDataSystem/envdsys
 RUN chown -R envdsys:envdsys /data/envDataSystem/UIServer
 

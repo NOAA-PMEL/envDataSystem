@@ -5,6 +5,10 @@ run_config = {
     #   system-python: runs from command line using "python manage.py runserver"
     #   system-daphne: runs using daphne
     "RUN_TYPE": "docker",
+
+    # Set username/groupname for run permissions - default to uid/gid of account during setup
+    # "RUN_USER": "derek",
+    # "RUN_GROUP": "derek",
     
     # HOST:
     "HOST": {

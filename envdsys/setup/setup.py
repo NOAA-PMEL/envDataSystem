@@ -3,6 +3,8 @@ import os
 
 # import sys
 import shutil
+from pwd import getpwnam
+from grp import getgrnam
 # from envdsys.setup.ui_server_conf import run_config
 
 
@@ -87,6 +89,20 @@ def get_conf_vars():
         print("Unable to determine run_type. Check conf file.")
         return None
 
+    uid = os.getuid()
+    try:
+        username = run_config["RUN_USER"]
+        uid = getpwnam(username).pw_uid
+    except KeyError:
+        pass
+
+    gid = os.getgid()
+    try:
+        groupname = run_config["RUN_GROUP"]
+        gid = getgrnam(groupname).gr_gid
+    except KeyError:
+        pass
+
     host = "localhost"
     try:
         host = run_config["HOST"]["name"]
@@ -125,6 +141,8 @@ def get_conf_vars():
 
     conf_vars = {
         "RUN_TYPE": run_type,
+        "RUN_UID": str(uid),
+        "RUN_GID": str(gid),
         "UI_HOSTNAME": host,
         "UI_HOSTPORT": port,
         "UI_DATA_SAVE": ui_data_save,
@@ -132,6 +150,7 @@ def get_conf_vars():
         "UI_CFG_DIR": ui_conf,
         "UI_DATA_SAVE_DIR": ui_data_save_dir,
     }
+    # print(conf_vars)
     return conf_vars
 
 

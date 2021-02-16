@@ -61,6 +61,9 @@ services:
     build:
       context: .
       dockerfile: ./docker/daq_server/Dockerfile
+      args:
+        UID: ${RUN_UID}
+        GID: ${RUN_GID}
     environment:
       - DAQ_NAME=${DAQ_NAME}
       - DAQ_FQDN=${DAQ_FQDN}

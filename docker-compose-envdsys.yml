@@ -34,6 +34,9 @@ services:
     build:
       context: .
       dockerfile: ./docker/envdsys/Dockerfile
+      args:
+        UID: ${RUN_UID}
+        GID: ${RUN_GID}
     environment:
       - ENVDSYS_UI_ALLOWED_HOSTS=${UI_ALLOWED_HOSTS}
       - ENVDSYS_PLOT_SERVER_HOSTNAME=${UI_HOSTNAME}
