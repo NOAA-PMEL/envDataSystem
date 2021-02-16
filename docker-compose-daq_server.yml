@@ -1,0 +1,91 @@
+version: "3.5"
+
+services:
+  # redis:
+  #   image: redis:5
+  #   ports:
+  #     - "6379:6379"
+  #   restart: always
+
+  # db:
+  #   # image: mariadb
+  #   image: postgres
+  #   environment: 
+  #     - POSTGRES_DB=postgres
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=postgres
+
+  #   restart: always
+  #   # environment: 
+  #   #   - MYSQL_DATABASE=envdsys
+  #   #   - MYSQL_USER=envdsys
+  #   #   - MYSQL_PASSWORD=envdsys
+  #   #   - MYSQL_ROOT_PASSWORD=envdsys_db_root
+  #   # ports:
+  #   #   - "3306:3306"
+  #   volumes: 
+  #     # - /home/pi/Data/envDataSystem/db:/var/lib/mysql
+  #     # - /home/derek/app_data/envDataSystem/db/postgresql:/var/lib/postgresql/data/
+  #     - ${DB_DATA_DIR}:/var/lib/postgresql/data/
+  #   ports:
+  #     - "5432:5432"
+
+  # envdsys:
+  #   # build: ./envdsys
+  #   env_file:
+  #     - ./envdsys/setup/envdsys_variables.env
+  #   image: envdsys:latest
+  #   build:
+  #     context: .
+  #     dockerfile: ./docker/envdsys/Dockerfile
+  #   environment:
+  #     - ENVDSYS_PLOT_SERVER_HOSTNAME=${HOSTNAME}
+  #     - ENVDSYS_UI_DATA_SAVE=${UI_DATA_SAVE}
+  #   volumes: 
+  #     # - "/home/acgsb/Software/python/test_envdsys_docker/envDataSystem/config:/app/envDataSystem/envdsys/config"
+  #     # - "/home/acgsb/Software/python/test_envdsys_docker/envDataSystem/data:/data/envDataSystem/UIServer"
+  #     - "${UI_CFG_DIR}:/app/envDataSystem/envdsys/config"
+  #     - "${UI_DATA_SAVE_DIR}:/data/envDataSystem/UIServer"
+  #   ports:
+  #     - "${HOSTPORT}:8001"
+  #     - "5001:5001"
+  #   depends_on: 
+  #     - redis
+  #     - db
+  #   # command: ["/bin/bash"]
+  #   entrypoint: ["./entrypoint.sh"]
+
+  daq_server:
+    # build: ./envdsys
+    image: daq_server:latest
+    build:
+      context: .
+      dockerfile: ./docker/daq_server/Dockerfile
+    environment:
+      - DAQ_NAME=${DAQ_NAME}
+      - DAQ_FQDN=${DAQ_FQDN}
+      - DAQ_NODENAME=${DAQ_NODENAME}
+      - DAQ_NAMESPACE=${DAQ_NAMESPACE}
+      - UI_HOSTNAME=${UI_HOSTNAME}
+      - UI_HOSTPORT=${UI_HOSTPORT}
+      - DAQ_CFG_DIR=${DAQ_CFG_DIR}
+      - DAQ_DATA_SAVE_DIR=${DAQ_DATA_SAVE_DIR}
+    volumes: 
+      # - "/home/acgsb/Software/python/test_daq_server_docker/envDataSystem/config:/app/envDataSystem/daq_server/config"
+      # - "/home/acgsb/Software/python/test_daq_server_docker/envDataSystem/data:/data/envDataSystem/"
+      - "${DAQ_CFG_DIR}:/app/envDataSystem/daq_server/config"
+      - "${DAQ_DATA_SAVE_DIR}:/data/envDataSystem/"
+    # ports:
+    #   - "8001:8001"
+    #   - "5001:5001"
+    # depends_on: 
+    #   - redis
+    # command: ["/bin/bash"]
+    networks:
+      # - daq_server_net
+      - envdsys_net
+    entrypoint: ["./entrypoint.sh"]
+
+networks: 
+  # daq_server_net:
+  envdsys_net:

@@ -1,8 +1,8 @@
+cryptography==3.3.1
 Django
 channels
 channels_redis
 Twisted[tls,http2]
 bokeh
 whitenoise
-mysqlclient
-django-mysql
+psycopg2-binary

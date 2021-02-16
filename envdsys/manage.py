@@ -1,25 +1,24 @@
 #!/usr/bin/env python
 import os
 import sys
-from setup.setup import config_setup
+# from setup.setup import config_setup
 
 if __name__ == '__main__':
 
-    # print(f'arguments: {sys.argv}')
-    if sys.argv[1] == "envdsys_setup":
-        server_type = "standalone"
-        try:
-            server_type = sys.argv[2]
-        except IndexError:
-            pass
+    do_collectstatic = False
+    if len(sys.argv) > 1:
+        opts = ["collectstatic"]
+        result = [s for s in sys.argv[1:] if any(xs in s for xs in opts)]
+        if result:
+            do_collectstatic = True
 
-        config_setup(server_type=server_type)
-        print(f"envdsys setup for {server_type} complete...exit.")
-        exit()
-
+    if do_collectstatic:
+        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'setup.settings_orig')
+        os.environ['DJANGO_SETTINGS_MODULE'] = 'setup.settings_orig'
+    else:
     # os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'envdsys.settings')
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
-    os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings'
+        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+        os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings'
 
  
     try:
