@@ -216,7 +216,7 @@ def set_platform_libs():
                 "setup",
                 "deps",
                 "labjack",
-                "LabJackM-1.2000-openSUSE-Linux-aarch64-release.tar.gz.tar.gz",
+                "labjack_ljm_minimal_2020_03_31_aarch64_beta_0.tar.gz",
             )
     elif arch[0] == "32bit":
         if machine == "i386": # 64bit linux
@@ -233,7 +233,7 @@ def set_platform_libs():
                 "setup",
                 "deps",
                 "labjack",
-                "LabJackM-1.1804-Raspbian-Linux-armhf-release.tar.gz",
+                "labjack_ljm_minimal_2020_03_31_armhf_beta.tar.gz",
             )
 
     if lj_src:
