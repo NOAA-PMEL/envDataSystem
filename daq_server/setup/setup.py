@@ -4,6 +4,9 @@ import os
 # import sys
 import shutil
 import platform
+from pwd import getpwnam
+from grp import getgrnam
+
 # from daq_server.setup.daq_server_conf import run_config
 
 # def config_setup(server_type="standalone"):
@@ -88,8 +91,19 @@ def get_conf_vars():
         print("Unable to determine run_type. Check conf file.")
         return None
 
-    # open env file
-    # write env variables for docker-compose
+    uid = os.getuid()
+    try:
+        username = run_config["RUN_USER"]
+        uid = getpwnam(username).pw_uid
+    except KeyError:
+        pass
+
+    gid = os.getgid()
+    try:
+        groupname = run_config["RUN_GROUP"]
+        gid = getgrnam(groupname).gr_gid
+    except KeyError:
+        pass
 
     daq_name = "Test Server"
     try:
@@ -136,6 +150,8 @@ def get_conf_vars():
 
     env_vars = {
         "RUN_TYPE": run_type,
+        "RUN_UID": str(uid),
+        "RUN_GID": str(gid),
         "DAQ_NAME": daq_name,
         "DAQ_FQDN": daq_fqdn,
         "DAQ_NODENAME": daq_nodename,
