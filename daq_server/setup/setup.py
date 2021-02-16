@@ -59,7 +59,7 @@ def create_settings_file(conf_vars):
             os.makedirs(daq_conf)
             print(f"New config directory file created")
 
-        src = os.path.join(root_path, "setup", "daq_settings.py")
+        src = os.path.join(root_path, "setup", "daq_settings_docker.py")
         path = os.path.join(daq_conf, "daq_settings.py")
         shutil.copyfile(src, path)
 
@@ -67,7 +67,7 @@ def create_settings_file(conf_vars):
         create_env_file(conf_vars)
 
     else:
-        src = os.path.join(root_path, "setup", "daq_settings.py")
+        src = os.path.join(root_path, "setup", "daq_settings_orig.py")
         path = os.path.join(root_path, "config", "daq_settings.py")
         shutil.copyfile(src, path)
         # print(f"New settings.py file created")
