@@ -170,7 +170,8 @@ def create_env_file(conf_vars):
         vars['UI_ALLOWED_HOSTS'] = ",".join(["127.0.0.1,localhost", conf_vars["UI_HOSTNAME"]])
 
     with open(
-        os.path.join(root_path, "docker", "envdsys", "envdsys_variables.env"), "w"
+        # os.path.join(root_path, "docker", "envdsys", "envdsys_variables.env"), "w"
+        os.path.join(root_path, "docker", "envdsys", ".env"), "w"
     ) as fd:
         for name, val in vars.items():
             if name != "RUN_TYPE":

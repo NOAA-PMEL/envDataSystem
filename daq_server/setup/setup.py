@@ -173,7 +173,8 @@ def create_env_file(conf_vars):
     )
 
     with open(
-        os.path.join(root_path, "docker", "daq_server", "daq_server_variables.env"), "w"
+        # os.path.join(root_path, "docker", "daq_server", "daq_server_variables.env"), "w"
+        os.path.join(root_path, "docker", "daq_server", ".env"), "w"
     ) as fd:
         for name, val in vars.items():
             if name != "RUN_TYPE":
@@ -207,7 +208,7 @@ def set_platform_libs():
                 "setup",
                 "deps",
                 "labjack",
-                "labjack_ljm_software_2019_07_16_x86_64.tar.gz",
+                "labjack_ljm_minimal_2019_04_10_x86_64.tar.gz",
             )
 
         elif machine == "aarch64": # Raspberry Pi
@@ -225,7 +226,7 @@ def set_platform_libs():
                 "setup",
                 "deps",
                 "labjack",
-                "labjack_ljm_software_2019_02_14_i386_release.tar.gz",
+                "labjack_ljm_minimal_2019_04_10_i386.tar.gz",
             )
         elif "armv7" in machine: # Raspberry Pi
             lj_src = os.path.join(

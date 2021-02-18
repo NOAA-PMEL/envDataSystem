@@ -134,35 +134,39 @@ if __name__ == "__main__":
         configure_daq_server()
         if run_type == "docker" and do_build:
             print("building containers...")
+            os.chdir("docker/daq_server")
             result = subprocess.call(
                 [
                     "docker-compose",
                     "-f",
                     "docker-compose-daq_server.yml",
-                    "--env-file",
-                    "docker/daq_server/daq_server_variables.env",
+                    # "--env-file",
+                    # "docker/daq_server/daq_server_variables.env",
                     "build",
                     "daq_server",
                 ]
             )
+            os.chdir("../..")
 
     if do_start:
         # run based on run type
         if run_type == "docker":
             print("starting daq_server docker container environment...")
             # print("start docker")
+            os.chdir("docker/daq_server")
             result = subprocess.call(
                 [
                     "docker-compose",
                     "-f",
                     "docker-compose-daq_server.yml",
-                    "--env-file",
-                    "docker/daq_server/daq_server_variables.env",
+                    # "--env-file",
+                    # "docker/daq_server/daq_server_variables.env",
                     "up",
                     "-d",
                     "daq_server"
                 ]
             )
+            os.chdir("../..")
 
         elif run_type == "system":
             print("starting daq_server system environment...")
@@ -175,16 +179,18 @@ if __name__ == "__main__":
         if run_type == "docker":
             print("stopping daq_server docker container environment...")
             # print("stop docker")
+            os.chdir("docker/daq_server")
             result = subprocess.call(
                 [
                     "docker-compose",
                     "-f",
                     "docker-compose-daq_server.yml",
-                    "--env-file",
-                    "docker/daq_server/daq_server_variables.env",
+                    # "--env-file",
+                    # "docker/daq_server/daq_server_variables.env",
                     "down",
                 ]
             )
+            os.chdir("../..")
         else:
             print("Running via pyton, kill from command line or by pid")
 

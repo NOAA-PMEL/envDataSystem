@@ -59,7 +59,8 @@ services:
     # build: ./envdsys
     image: daq_server:latest
     build:
-      context: .
+      # context: .
+      context: ../..
       dockerfile: ./docker/daq_server/Dockerfile
       args:
         UID: ${RUN_UID}

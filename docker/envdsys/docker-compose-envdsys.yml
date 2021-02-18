@@ -32,7 +32,8 @@ services:
     #   - ./docker/envdsys/envdsys_variables.env
     image: envdsys:latest
     build:
-      context: .
+      # context: .
+      context: ../..
       dockerfile: ./docker/envdsys/Dockerfile
       args:
         UID: ${RUN_UID}
@@ -52,6 +53,7 @@ services:
     depends_on: 
       - redis
       - db
+    restart: unless-stopped
     networks: 
       - envdsys_net
       - envdsys_backend

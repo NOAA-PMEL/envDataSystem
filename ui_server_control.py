@@ -123,35 +123,39 @@ if __name__ == "__main__":
         if run_type == "docker" and do_build:
 
             print("building containers...")            
+            os.chdir("docker/envdsys")
             result = subprocess.call(
                 [
                     "docker-compose",
                     "-f",
                     "docker-compose-envdsys.yml",
-                    "--env-file",
-                    "docker/envdsys/envdsys_variables.env",
+                    # "--env-file",
+                    # "docker/envdsys/envdsys_variables.env",
                     "build",
                     "envdsys",
                 ]
             )
+            os.chdir("../..")
 
     if do_start:
         print("starting envdsys docker container environment...")
         # run based on run type
         if run_type == "docker":
             print("start docker")
+            os.chdir("docker/envdsys")
             result = subprocess.call(
                 [
                     "docker-compose",
                     "-f",
                     "docker-compose-envdsys.yml",
-                    "--env-file",
-                    "docker/envdsys/envdsys_variables.env",
+                    # "--env-file",
+                    # "docker/envdsys/envdsys_variables.env",
                     "up",
                     "-d",
                     "envdsys",
                 ]
             )
+            os.chdir("../..")
 
         elif run_type == "system-python":
             os.chdir("./envdsys")
@@ -169,16 +173,18 @@ if __name__ == "__main__":
         print("stopping envdsys docker container environment...")
         if run_type == "docker":
             print("stop docker")
+            os.chdir("docker/envdsys")
             result = subprocess.call(
                 [
                     "docker-compose",
                     "-f",
                     "docker-compose-envdsys.yml",
-                    "--env-file",
-                    "docker/envdsys/envdsys_variables.env",
+                    # "--env-file",
+                    # "docker/envdsys/envdsys_variables.env",
                     "down",
                 ]
             )
+            os.chdir("../..")
         else:
             print("Running via pyton, kill from command line or by pid")
 
