@@ -1034,7 +1034,8 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
                 print(f"    daq_server: {self.daqserver_namespace}")
                 print(f"    UI Server: {self.hostname}:{self.port}")
                 ws_origin = f"{self.hostname}:{self.port}"
-
+                
+                # TODO: add docker host to ws_origin
                 PlotManager.get_server().start(add_ws_origin=ws_origin)
 
         # message = text_data_json['BODY']
