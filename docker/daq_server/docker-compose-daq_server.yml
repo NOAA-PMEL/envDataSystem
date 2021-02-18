@@ -85,6 +85,7 @@ services:
     # depends_on: 
     #   - redis
     # command: ["/bin/bash"]
+    restart: unless-stopped
     networks:
       # - daq_server_net
       - envdsys_net
