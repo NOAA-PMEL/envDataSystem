@@ -23,8 +23,8 @@ services:
     restart: always
     volumes: 
       - ${DB_DATA_DIR}:/var/lib/postgresql/data/
-    # ports:
-    #   - "5432:5432"
+    ports:
+      - "5432:5432"
 
   envdsys:
     # build: ./envdsys
