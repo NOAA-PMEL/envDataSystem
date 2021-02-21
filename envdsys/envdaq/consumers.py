@@ -1,11 +1,12 @@
 # envdaq/consumers.py
-from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.generic.websocket import AsyncWebsocketConsumer, AsyncConsumer
 import channels.db
 import json
 import asyncio
 import os
 
 from envdaq.util.daq import ConfigurationUtility
+from envnet.registry.registry import ServiceRegistry
 
 # import envdaq.util.util as time_util
 from shared.utilities.util import dt_to_string
@@ -1055,3 +1056,51 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
         # Send message to WebSocket
         await self.send(text_data=json.dumps({"message": message}))
 
+
+# class InitConsumer(SyncConsumer):
+#     def test():
+#         print('test')
+#     # def __init__(self):
+#     #     print('init')
+
+
+#     # async def connect(self):
+#     #     print(f'scope: {self.scope}')
+#     #     # try:
+#     #     #     self.daqserver_namespace = self.scope["url_route"]["kwargs"][
+#     #     #         "daq_namespace"
+#     #     #     ]
+#     #     #     self.daqserver_group_name = f"daqserver_{self.scope['url_route']['kwargs']['daq_namespace']}_messages"
+#     #     # except KeyError:
+#     #     #     self.daqserver_namespace = "default"
+#     #     #     self.daqserver_group_name = "daq_default_messages"
+
+class ManagementConsumer(AsyncConsumer):
+
+    async def manage(self, message):
+        print('start')
+        print(message)
+        try:
+            command = message["command"]
+            from setup.ui_server_conf import run_config
+            if command == "INIT_ENVDAQ":
+                print("Start envdaq servers")
+                # try:
+                #     network = run_config["HOST"]["network"]
+                # except KeyError:
+                #     network = None
+
+                # from envnet.registry.registry import ServiceRegistry 
+                # await ServiceRegistry.start(network=network)
+            elif command == "REGISTER_SERVICE":
+                try:
+                    config = {
+                        "host": run_config["HOST"]["name"],
+                        "port":  run_config["HOST"]["port"],
+                        "service_list": {"envdsys_daq": {}}
+                    }
+                    await ServiceRegistry.register(config=config)
+                except KeyError:
+                    pass
+        except KeyError:
+            pass
