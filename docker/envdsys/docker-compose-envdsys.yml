@@ -26,6 +26,42 @@ services:
     ports:
       - "5432:5432"
 
+  worker:
+    # build: ./envdsys
+    # env_file:
+    #   - ./docker/envdsys/envdsys_variables.env
+    image: envdsys:latest
+    build:
+      # context: .
+      context: ../..
+      dockerfile: ./docker/envdsys/Dockerfile
+      args:
+        UID: ${RUN_UID}
+        GID: ${RUN_GID}
+    environment:
+      - ENVDSYS_UI_ALLOWED_HOSTS=${UI_ALLOWED_HOSTS}
+      - ENVDSYS_PLOT_SERVER_HOSTNAME=${UI_HOSTNAME}
+      - ENVDSYS_UI_DATA_SAVE=${UI_DATA_SAVE}
+    # volumes: 
+    #   # - "/home/acgsb/Software/python/test_envdsys_docker/envDataSystem/config:/app/envDataSystem/envdsys/config"
+    #   # - "/home/acgsb/Software/python/test_envdsys_docker/envDataSystem/data:/data/envDataSystem/UIServer"
+    #   - "${UI_CFG_DIR}:/app/envDataSystem/envdsys/config"
+    #   - "${UI_DATA_SAVE_DIR}:/data/envDataSystem/UIServer"
+    # ports:
+    #   - "${UI_HOSTPORT}:8001"
+    #   - "5001:5001"
+    depends_on: 
+      - redis
+      - db
+    restart: unless-stopped
+    networks: 
+      - envdsys_net
+      - envdsys_backend
+      # - ui_server_net
+    # command: ["/bin/bash"]
+    entrypoint: ["./entrypoint.sh"]
+    command: bash -c "python manage.py runworker envnet-manage envdaq-manage"
+
   envdsys:
     # build: ./envdsys
     # env_file:
@@ -53,6 +89,7 @@ services:
     depends_on: 
       - redis
       - db
+      - worker
     restart: unless-stopped
     networks: 
       - envdsys_net

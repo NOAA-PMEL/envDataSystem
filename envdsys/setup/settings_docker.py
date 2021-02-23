@@ -67,6 +67,7 @@ ALLOWED_HOSTS = os.environ["ENVDSYS_UI_ALLOWED_HOSTS"].split(",")
 INSTALLED_APPS = [
     # 'envdaq.apps.EnvdaqConfig',
     'channels',
+    'envnet.apps.EnvnetConfig',
     'envdaq.apps.EnvdaqConfig',
     'envcontacts.apps.EnvcontactsConfig',
     'envinventory.apps.EnvinventoryConfig',
