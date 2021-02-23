@@ -45,6 +45,12 @@ class ServiceRegistry:
     @database_sync_to_async
     def start_registry(network="default_network"):
         print("starting service registry")
+
+        # deactivate all networks
+        nets = Network.objects.all()
+        for net in nets:
+            net.deactivate()
+            
         try:
             net = Network.objects.get(name=network)
             # net.activate()
