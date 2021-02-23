@@ -67,6 +67,7 @@ ALLOWED_HOSTS = os.environ["ENVDSYS_UI_ALLOWED_HOSTS"].split(",")
 INSTALLED_APPS = [
     # 'envdaq.apps.EnvdaqConfig',
     'channels',
+    'envnet.apps.EnvnetConfig',
     'envdaq.apps.EnvdaqConfig',
     'envcontacts.apps.EnvcontactsConfig',
     'envinventory.apps.EnvinventoryConfig',
@@ -190,7 +191,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # mysite/settings.py
 # Channels
-ASGI_APPLICATION = 'envdsys.routing.application'
+# ASGI_APPLICATION = 'envdsys.routing.application'
+ASGI_APPLICATION = 'envdsys.asgi.application'
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',

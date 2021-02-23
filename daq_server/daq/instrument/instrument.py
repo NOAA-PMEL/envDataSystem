@@ -107,6 +107,7 @@ class Instrument(DAQ):
         if self.alias and ("name" in self.alias):
             self.namespace['instrument'] = f"{self.alias['name']}".replace(" ", "")
 
+        self.keepalive_ping = True
 
         # # parameters to include metadata in output
         # self.include_metadata = True
@@ -309,6 +310,36 @@ class Instrument(DAQ):
 
     # def connect(self, cmd=None):
     #     pass
+
+    async def register_with_UI(self):
+
+        # ui_config = self.ui_config
+        # ui_ws_address = f'ws://{ui_config["host"]}:{ui_config["port"]}/'
+        # ui_ws_address += "ws/envdaq/daqserver/register"
+
+        # self.reg_client = WSClient(uri=ui_ws_address)
+        # while self.reg_client.isConnected() is not True:
+        #     # print(f'waiting for is_conncted {self.ui_client.isConnected()}')
+        #     # self.gui_client = WSClient(uri=gui_ws_address)
+        #     # print(f"gui client: {self.gui_client.isConnected()}")
+        #     await asyncio.sleep(1)
+
+        req = Message(
+            sender_id=self.get_id(),
+            msgtype=Instrument.class_type,
+            subject="REGISTRATION",
+            body={
+                "purpose": "ADD",
+                "regkey": self.registration_key,
+                # "id": self.daq_id,
+                "namespace": self.namespace,
+                "config": self.config,
+            },
+        )
+        print(f'Registering with UI server: {self.namespace}')
+        await self.to_ui_buf.put(req)
+        self.run_state = "REGISTERING"
+        # await reg_client.close()
 
     def get_data_entry(self, timestamp, force_add_meta=False):
         # print(f'timestamp: {timestamp}')

@@ -13,7 +13,8 @@ run_config = {
     # HOST:
     "HOST": {
         "name": "localhost",
-        "port": 8001
+        "port": 8001,
+        # "network": "<env network name"
     },
     
     # DOCKER variable settings - ignrored for non docker run_type

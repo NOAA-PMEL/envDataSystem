@@ -31,5 +31,12 @@ websocket_urlpatterns = [
         'ws/envdaq/ifdevice/<ifdevice_name>/',
         consumers.IFDeviceConsumer.as_asgi()
         ),
-    
+    # path(
+    #     'ws/envdaq/init/',
+    #     consumers.InitConsumer.as_asgi()
+    #     ),
 ]
+
+channel_urlpatterns = {
+    'envdaq-manage': consumers.ManagementConsumer.as_asgi(),
+}

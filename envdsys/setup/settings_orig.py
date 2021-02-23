@@ -66,6 +66,7 @@ ALLOWED_HOSTS = [
 INSTALLED_APPS = [
     # 'envdaq.apps.EnvdaqConfig',
     'channels',
+    'envnet.apps.EnvnetConfig',
     'envdaq.apps.EnvdaqConfig',
     'envcontacts.apps.EnvcontactsConfig',
     'envinventory.apps.EnvinventoryConfig',

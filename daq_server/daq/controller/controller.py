@@ -108,6 +108,8 @@ class Controller(DAQ):
         if self.alias and ("name" in self.alias):
             self.namespace['controller'] = f"{self.alias['name']}".replace(" ", "")
 
+        self.keepalive_ping = True
+
         # self.add_instruments()
         # self.add_signals()
 
@@ -242,6 +244,36 @@ class Controller(DAQ):
         self.run_state = "REGISTERING"
         # await reg_client.close()
 
+    async def unregister_with_UI(self):
+
+        # ui_config = self.ui_config
+        # ui_ws_address = f'ws://{ui_config["host"]}:{ui_config["port"]}/'
+        # ui_ws_address += "ws/envdaq/daqserver/register"
+
+        # self.reg_client = WSClient(uri=ui_ws_address)
+        # while self.reg_client.isConnected() is not True:
+        #     # print(f'waiting for is_conncted {self.ui_client.isConnected()}')
+        #     # self.gui_client = WSClient(uri=gui_ws_address)
+        #     # print(f"gui client: {self.gui_client.isConnected()}")
+        #     await asyncio.sleep(1)
+
+        req = Message(
+            sender_id=self.get_id(),
+            msgtype=Controller.class_type,
+            subject="REGISTRATION",
+            body={
+                "purpose": "REMOVE",
+                "regkey": self.registration_key,
+                # "id": self.daq_id,
+                "namespace": self.namespace,
+                "config": self.config,
+            },
+        )
+        print(f'Unregistering with UI server: {self.namespace}')
+        await self.to_ui_buf.put(req)
+        self.run_state = "UNREGISTERING"
+        # await reg_client.close()
+
     def get_ui_address(self):
         # print(self.label)
         # base_address = f"envdaq/{self.parent_id}/"
@@ -295,6 +327,7 @@ class Controller(DAQ):
         # if self.gui_client is not None:
         #     # self.loop.run_until_complete(self.gui_client.close())
         #     self.gui_client.sync_close()
+        # asyncio.create_task(self.unregister_with_UI())
 
         for k, instrument in self.instrument_map.items():
             # print(sensor)
