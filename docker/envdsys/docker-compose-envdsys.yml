@@ -46,7 +46,7 @@ services:
       # - "/home/acgsb/Software/python/test_envdsys_docker/envDataSystem/config:/app/envDataSystem/envdsys/config"
       # - "/home/acgsb/Software/python/test_envdsys_docker/envDataSystem/data:/data/envDataSystem/UIServer"
       - "${UI_CFG_DIR}:/app/envDataSystem/envdsys/config"
-      # - "${UI_DATA_SAVE_DIR}:/data/envDataSystem/UIServer"
+      - "${UI_DATA_SAVE_DIR}:/data/envDataSystem/UIServer"
     # ports:
     #   - "${UI_HOSTPORT}:8001"
     #   - "5001:5001"
@@ -59,7 +59,7 @@ services:
       - envdsys_backend
       # - ui_server_net
     # command: ["/bin/bash"]
-    entrypoint: ["./entrypoint.sh"]
+    # entrypoint: ["./entrypoint_worker.sh"]
     command: bash -c "python manage.py runworker envnet-manage envdaq-manage"
 
   envdsys:

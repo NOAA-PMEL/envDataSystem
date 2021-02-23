@@ -191,7 +191,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # mysite/settings.py
 # Channels
-ASGI_APPLICATION = 'envdsys.routing.application'
+# ASGI_APPLICATION = 'envdsys.routing.application'
+ASGI_APPLICATION = 'envdsys.asgi.application'
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
