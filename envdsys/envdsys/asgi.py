@@ -34,20 +34,22 @@ application = ProtocolTypeRouter(
     {
         "http": get_asgi_application(),
         "websocket": AuthMiddlewareStack(
-            [
-                URLRouter(envdaq.routing.websocket_urlpatterns),
-                URLRouter(envnet.routing.websocket_urlpatterns),
-            ]
+            # [
+            URLRouter(
+                envdaq.routing.websocket_urlpatterns
+                + envnet.routing.websocket_urlpatterns
+            )
+            # ]
         ),
         "channel": (
+            # ChannelNameRouter(
+            #     envdaq.routing.channel_urlpatterns,
+            # )
             ChannelNameRouter({
                 **envnet.routing.channel_urlpatterns,
                 **envdaq.routing.channel_urlpatterns,
             })
         )
-        # "channel": ChannelNameRouter(
-        #     {"test-manage": envnet.consumers.ManagementConsumer.as_asgi()}
-        # ),
     }
 )
 

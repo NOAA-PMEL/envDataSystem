@@ -124,6 +124,11 @@ class DAQ(abc.ABC):
         #     asyncio.ensure_future(self.open_ui_connection())
         # )
 
+    def get_namespace_as_string(self):
+        names = [k for k, v in self.namespace.items()]
+        ns = "-".join(names)
+        return ns
+        
     def open_datafile(self):
 
         cfg = self.get_datafile_config()

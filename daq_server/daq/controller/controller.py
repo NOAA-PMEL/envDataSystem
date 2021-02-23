@@ -108,6 +108,8 @@ class Controller(DAQ):
         if self.alias and ("name" in self.alias):
             self.namespace['controller'] = f"{self.alias['name']}".replace(" ", "")
 
+        self.keepalive_ping = True
+
         # self.add_instruments()
         # self.add_signals()
 

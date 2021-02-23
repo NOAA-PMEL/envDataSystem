@@ -15,19 +15,26 @@ class Registration(models.Model):
 
     # TODO: overload save to update time field instead of rely on auto
     #       this will allow changing status without renewing age
-    local_service = models.BooleanField(default=True)
-    host = models.CharField(_("Host name"), max_length=100)
-    port = models.IntegerField(_("Port number"))
     status = models.CharField(_("Status"), default="UNKNOWN", max_length=50)
     regkey = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     created = models.DateTimeField(
         _("Created"), auto_now_add=True, blank=True, null=True
     )
-    updated = models.DateTimeField(_("Updated"), auto_now=True, blank=True, null=True)
+    # updated = models.DateTimeField(_("Updated"), auto_now=True, blank=True, null=True)
+    updated = models.DateTimeField(_("Updated"), auto_now_add=True, blank=True, null=True)
     # network = models.ForeignKey(
     #     "envnet.Network", on_delete=models.CASCADE
     # )
 
+    def save(self, *args, **kwargs):
+        do_update=False
+        try: 
+            # print(f'do update')
+            do_update = kwargs.pop("do_update")
+            self.updated = timezone.now()
+        except KeyError:
+            pass
+        return super(Registration, self).save(*args, **kwargs)
     class Meta:
         # verbose_name = _("Registration")
         # verbose_name_plural = _("Registrations")
@@ -46,6 +53,9 @@ class Registration(models.Model):
 
 class ServiceRegistration(Registration):
 
+    local_service = models.BooleanField(default=True)
+    host = models.CharField(_("Host name"), max_length=100)
+    port = models.IntegerField(_("Port number"))
     service_list = models.TextField(_("Services"), default="{}")
     network = models.ForeignKey(
         "envnet.Network", on_delete=models.CASCADE, blank=True, null=True
@@ -72,10 +82,10 @@ class ServiceRegistration(Registration):
             "host": self.host,
             "port": self.port,
             "status": self.status,
-            "regkey": self.regkey,
+            "regkey": f"{self.regkey}",
             "service_list": self.service_list,
         }
-        print(f"reg = {reg}")
+        # print(f"reg = {reg}")
         return reg
 
     def add_services(self, service_list):
@@ -116,6 +126,8 @@ class ServiceRegistration(Registration):
 class DAQRegistration(Registration):
 
     # daq_list = models.TextField(_("DAQ List"))
+    # eventually, namespace may be replaced with the Service object
+    namespace = models.CharField(_("Namespace"), max_length=100, default="default")
     daq_type = models.CharField(_("Type"), max_length=50, default="DAQServer")
     config = models.TextField(null=True, blank=True)
     status = models.CharField(_("Status"), max_length=50, default="CONNECTED")
@@ -125,11 +137,23 @@ class DAQRegistration(Registration):
         verbose_name_plural = _("DAQ Registrations")
 
     def __str__(self):
-        return f"DAQ-{self.host}:{self.port}"
+        return f"{self.daq_type}:{self.namespace}"
         # return self.name
 
     # def get_absolute_url(self):
     #     return reverse("_detail", kwargs={"pk": self.pk})
+
+    def get_registration(self):
+        reg = {
+            "namespace": self.namespace,
+            "daq_type": self.daq_type,
+            "regkey": f"{self.regkey}",
+            "config": self.config,
+            "status": self.status,
+            "age": self.get_age()
+        }
+        # print(f"reg = {reg}")
+        return reg
 
 
 # network model

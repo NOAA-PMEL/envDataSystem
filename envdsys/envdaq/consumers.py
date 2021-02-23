@@ -6,7 +6,7 @@ import asyncio
 import os
 
 from envdaq.util.daq import ConfigurationUtility
-from envnet.registry.registry import ServiceRegistry
+from envnet.registry.registry import ServiceRegistry, DAQRegistry
 
 # import envdaq.util.util as time_util
 from shared.utilities.util import dt_to_string
@@ -108,7 +108,7 @@ class ControllerConsumer(AsyncWebsocketConsumer):
             f"{self.daqserver_namespace}-controller-{self.controller_namespace}"
         )
 
-        self.namespace = f"{self.daqserver_namespace}/{self.controller_namespace}"
+        self.namespace = f"{self.daqserver_namespace}-{self.controller_namespace}"
         # print(f'name = {self.namespace}')
 
         self.ui_save_base_path = "/tmp/envDataSystem/UIServer"
@@ -183,7 +183,8 @@ class ControllerConsumer(AsyncWebsocketConsumer):
 
         elif message["SUBJECT"] == "PING":
             # RegistrationManager.ping(message['BODY']['namespace']['daq_server'])
-            RegistrationManager.ping(self.namespace, type="Controller")
+            # RegistrationManager.ping(self.namespace, type="Controller")
+            await DAQRegistry.ping(namespace=self.namespace, type="Controller")
 
         elif message["SUBJECT"] == "REGISTRATION":
             body = message["BODY"]
@@ -195,37 +196,87 @@ class ControllerConsumer(AsyncWebsocketConsumer):
                 # registration = RegistrationManager.get(body['id'])
                 # registration = RegistrationManager.get(daq_namespace, type="DAQServer")
                 config_requested = False
-                registration = RegistrationManager.get(
-                    self.namespace, type="Controller"
+                # registration = RegistrationManager.get(
+                #     self.namespace, type="Controller"
+                # )
+                # if registration:  # reg exists - UI running, unknown daq state
+                #     # if daq_server has key, check against current registration
+                #     if body["regkey"]:  # daq running (likely a reconnect)
+                #         # same: daq_server config takes precedence
+                #         if body["regkey"] == registration["regkey"]:
+                #             registration["config"] = body["config"]
+                #             # RegistrationManager.update(body['id'], registration)
+                #             # RegistrationManager.update(daq_namespace, registration, type="DAQServer")
+                #             RegistrationManager.update(
+                #                 self.namespace, registration, type="Controller"
+                #             )
+
+                # else:  # no reg, no connection to daq since UI start
+                #     if body["regkey"]:  # daq has been running
+                #         config_requested = True
+                #         registration = {
+                #             "regkey": body["regkey"],
+                #             "config": body["config"],
+                #         }
+                #         # RegistrationManager.update(body['id'], registration)
+                #         # RegistrationManager.update(daq_namespace, registration, type="DAQServer")
+                #         RegistrationManager.update(
+                #             self.namespace, registration, type="Controller"
+                #         )
+                #     else:  # daq has started
+                #         registration = RegistrationManager.add(
+                #             # body['id'],
+                #             self.namespace,
+                #             config=body["config"],
+                #             type="Controller",
+                #         )
+
+                # namespace = body["namespace"]
+                registration = await DAQRegistry.get_registration(
+                    # namespace=self.daqserver_namespace, type="Controller"
+                    namespace=self.namespace,
+                    type="Controller",
                 )
-                if registration:  # reg exists - UI running, unknown daq state
-                    # if daq_server has key, check against current registration
+                # print(f"registration2-get: {registration}")
+                # registration2 = await DAQRegistry.register(
+                #     namespace=self.daqserver_namespace,
+                #     type="DAQServer",
+                #     config=body["config"],
+                # )
+                # print(f"registration2: {registration2}")
+                if registration:
                     if body["regkey"]:  # daq running (likely a reconnect)
                         # same: daq_server config takes precedence
                         if body["regkey"] == registration["regkey"]:
                             registration["config"] = body["config"]
                             # RegistrationManager.update(body['id'], registration)
                             # RegistrationManager.update(daq_namespace, registration, type="DAQServer")
-                            RegistrationManager.update(
-                                self.namespace, registration, type="Controller"
+                            registration = await DAQRegistry.update_registration(
+                                # namespace=self.daqserver_namespace,
+                                namespace=self.namespace,
+                                registration=registration,
+                                type="Controller",
                             )
-
                 else:  # no reg, no connection to daq since UI start
                     if body["regkey"]:  # daq has been running
-                        config_requested = True
+                        ui_reconfig_request = True
                         registration = {
-                            "regkey": body["regkey"],
+                            # "regkey": body["regkey"],
                             "config": body["config"],
                         }
                         # RegistrationManager.update(body['id'], registration)
                         # RegistrationManager.update(daq_namespace, registration, type="DAQServer")
-                        RegistrationManager.update(
-                            self.namespace, registration, type="Controller"
+                        registration = await DAQRegistry.update_registration(
+                            # self.daqserver_namespace, registration, type="Controller"
+                            namespace=self.namespace,
+                            registration=registration,
+                            type="Controller",
                         )
                     else:  # daq has started
-                        registration = RegistrationManager.add(
+                        registration = await DAQRegistry.register(
                             # body['id'],
-                            self.namespace,
+                            namespace=self.namespace,
+                            # self.daqserver_namespace,
                             config=body["config"],
                             type="Controller",
                         )
@@ -257,7 +308,10 @@ class ControllerConsumer(AsyncWebsocketConsumer):
             if body["purpose"] == "REMOVE":
                 print("remove")
                 # RegistrationManager.remove(body['id'])
-                RegistrationManager.remove(self.namespace, type="Controller")
+                # RegistrationManager.remove(self.namespace, type="Controller")
+                await DAQRegistry.unregister(
+                    namespace=self.namespace, type="Controller"
+                )
 
         elif message["SUBJECT"] == "CONFIG":
             body = message["BODY"]
@@ -375,7 +429,7 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
 
         self.instrument_group_name = f"{self.daqserver_namespace}-{self.controller_namespace}-instrument-{self.instrument_namespace}"
 
-        self.namespace = f"{self.daqserver_namespace}/{self.controller_namespace}/{self.instrument_namespace}"
+        self.namespace = f"{self.daqserver_namespace}-{self.controller_namespace}-{self.instrument_namespace}"
 
         self.ui_save_base_path = "/tmp/envDataSystem/UIServer"
         self.ui_save_data = False
@@ -477,6 +531,144 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
             # alias_name = message.BODY.alias.name
             # print(f'alias: {alias_name}')
             # await PlotManager.update_data_by_key(alias_name, data)
+
+        elif message["SUBJECT"] == "PING":
+            await DAQRegistry.ping(namespace=self.namespace, type="Instrument")
+
+        elif message["SUBJECT"] == "REGISTRATION":
+            body = message["BODY"]
+            if body["purpose"] == "ADD":
+                daq_namespace = body["namespace"]["daq_server"]
+                # print(f'namespace: {self.daqserver_namespace}, {daq_namespace}')
+                # registration = RegistrationManager.get(body['id'])
+                # registration = RegistrationManager.get(daq_namespace, type="DAQServer")
+                ui_reconfig_request = False
+
+                registration = await DAQRegistry.get_registration(
+                    namespace=self.namespace, type="Instrument"
+                )
+                # print(f"registration2-get: {registration}")
+                # registration2 = await DAQRegistry.register(
+                #     namespace=self.daqserver_namespace,
+                #     type="DAQServer",
+                #     config=body["config"],
+                # )
+                # print(f"registration2: {registration2}")
+                if registration:
+                    if body["regkey"]:  # daq running (likely a reconnect)
+                        # same: daq_server config takes precedence
+                        if body["regkey"] == registration["regkey"]:
+                            registration["config"] = body["config"]
+                            # RegistrationManager.update(body['id'], registration)
+                            # RegistrationManager.update(daq_namespace, registration, type="DAQServer")
+                            registration = await DAQRegistry.update_registration(
+                                namespace=self.namespace,
+                                registration=registration,
+                                type="Instrument",
+                            )
+                else:  # no reg, no connection to daq since UI start
+                    if body["regkey"]:  # daq has been running
+                        ui_reconfig_request = True
+                        registration = {
+                            # "regkey": body["regkey"],
+                            "config": body["config"],
+                        }
+                        # RegistrationManager.update(body['id'], registration)
+                        # RegistrationManager.update(daq_namespace, registration, type="DAQServer")
+                        registration = await DAQRegistry.update_registration(
+                            namespace=self.namespace,
+                            registration=registration,
+                            type="Instrument",
+                        )
+                    else:  # daq has started
+                        registration = await DAQRegistry.register(
+                            # body['id'],
+                            self.namespace,
+                            config=body["config"],
+                            type="Instrument",
+                        )
+
+                reply = {
+                    "TYPE": "UI",
+                    "SENDER_ID": "InstrumentConsumer",
+                    "TIMESTAMP": dt_to_string(),
+                    "SUBJECT": "REGISTRATION",
+                    "BODY": {
+                        "purpose": "SUCCESS",
+                        "regkey": registration["regkey"],
+                        "config": registration["config"],
+                        "ui_reconfig_request": ui_reconfig_request,
+                    },
+                }
+                # print(f"reply2: {json.dumps(reply)}")
+
+                # ui_reconfig_request = False
+                # registration = RegistrationManager.get(
+                #     self.daqserver_namespace, type="DAQServer"
+                # )
+                # if registration:  # reg exists - UI running, unknown daq state
+                #     # if daq_server has key, check against current registration
+                #     if body["regkey"]:  # daq running (likely a reconnect)
+                #         # same: daq_server config takes precedence
+                #         if body["regkey"] == registration["regkey"]:
+                #             registration["config"] = body["config"]
+                #             # RegistrationManager.update(body['id'], registration)
+                #             # RegistrationManager.update(daq_namespace, registration, type="DAQServer")
+                #             RegistrationManager.update(
+                #                 self.daqserver_namespace, registration, type="DAQServer"
+                #             )
+
+                # else:  # no reg, no connection to daq since UI start
+                #     if body["regkey"]:  # daq has been running
+                #         ui_reconfig_request = True
+                #         registration = {
+                #             "regkey": body["regkey"],
+                #             "config": body["config"],
+                #         }
+                #         # RegistrationManager.update(body['id'], registration)
+                #         # RegistrationManager.update(daq_namespace, registration, type="DAQServer")
+                #         RegistrationManager.update(
+                #             self.daqserver_namespace, registration, type="DAQServer"
+                #         )
+                #     else:  # daq has started
+                #         registration = RegistrationManager.add(
+                #             # body['id'],
+                #             self.daqserver_namespace,
+                #             config=body["config"],
+                #             type="DAQServer",
+                #         )
+
+                # print("before reply")
+                # reply = {
+                #     "TYPE": "UI",
+                #     "SENDER_ID": "DAQServerConsumer",
+                #     "TIMESTAMP": dt_to_string(),
+                #     "SUBJECT": "REGISTRATION",
+                #     "BODY": {
+                #         "purpose": "SUCCESS",
+                #         "regkey": registration["regkey"],
+                #         "config": registration["config"],
+                #         "ui_reconfig_request": ui_reconfig_request,
+                #     },
+                # }
+                # print(f"reply: {reply}")
+                # print(json.dumps(reply))
+                await self.instrument_message({"message": reply})
+
+                # body={
+                #     "purpose": "ADD",
+                #     "key": self.registration_key,
+                #     "id": self.daq_id,
+                #     "config": self.config,
+                # },
+
+            if body["purpose"] == "REMOVE":
+                print("remove")
+                # RegistrationManager.remove(body['id'])
+                # RegistrationManager.remove(self.daqserver_namespace, type="DAQServer")
+                await DAQRegistry.unregister(
+                    namespace=self.namespace, type="Instrument"
+                )
 
         elif message["SUBJECT"] == "CONFIG":
             body = message["BODY"]
@@ -925,7 +1117,8 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
 
         if message["SUBJECT"] == "PING":
             # RegistrationManager.ping(message['BODY']['namespace']['daq_server'])
-            RegistrationManager.ping(self.daqserver_namespace)
+            # RegistrationManager.ping(self.daqserver_namespace)
+            await DAQRegistry.ping(namespace=self.daqserver_namespace, type="DAQServer")
 
         elif message["SUBJECT"] == "REGISTRATION":
             body = message["BODY"]
@@ -937,42 +1130,51 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
                 # registration = RegistrationManager.get(body['id'])
                 # registration = RegistrationManager.get(daq_namespace, type="DAQServer")
                 ui_reconfig_request = False
-                registration = RegistrationManager.get(
-                    self.daqserver_namespace, type="DAQServer"
+
+                registration = await DAQRegistry.get_registration(
+                    namespace=self.daqserver_namespace, type="DAQServer"
                 )
-                if registration:  # reg exists - UI running, unknown daq state
-                    # if daq_server has key, check against current registration
+                # print(f"registration2-get: {registration}")
+                # registration2 = await DAQRegistry.register(
+                #     namespace=self.daqserver_namespace,
+                #     type="DAQServer",
+                #     config=body["config"],
+                # )
+                # print(f"registration2: {registration2}")
+                if registration:
                     if body["regkey"]:  # daq running (likely a reconnect)
                         # same: daq_server config takes precedence
                         if body["regkey"] == registration["regkey"]:
                             registration["config"] = body["config"]
                             # RegistrationManager.update(body['id'], registration)
                             # RegistrationManager.update(daq_namespace, registration, type="DAQServer")
-                            RegistrationManager.update(
-                                self.daqserver_namespace, registration, type="DAQServer"
+                            registration = await DAQRegistry.update_registration(
+                                namespace=self.daqserver_namespace,
+                                registration=registration,
+                                type="DAQServer",
                             )
-
                 else:  # no reg, no connection to daq since UI start
                     if body["regkey"]:  # daq has been running
                         ui_reconfig_request = True
                         registration = {
-                            "regkey": body["regkey"],
+                            # "regkey": body["regkey"],
                             "config": body["config"],
                         }
                         # RegistrationManager.update(body['id'], registration)
                         # RegistrationManager.update(daq_namespace, registration, type="DAQServer")
-                        RegistrationManager.update(
-                            self.daqserver_namespace, registration, type="DAQServer"
+                        registration = await DAQRegistry.update_registration(
+                            namespace=self.daqserver_namespace,
+                            registration=registration,
+                            type="DAQServer",
                         )
                     else:  # daq has started
-                        registration = RegistrationManager.add(
+                        registration = await DAQRegistry.register(
                             # body['id'],
-                            self.daqserver_namespace,
+                            namespace=self.daqserver_namespace,
                             config=body["config"],
                             type="DAQServer",
                         )
 
-                # print("before reply")
                 reply = {
                     "TYPE": "UI",
                     "SENDER_ID": "DAQServerConsumer",
@@ -985,6 +1187,57 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
                         "ui_reconfig_request": ui_reconfig_request,
                     },
                 }
+                # print(f"reply2: {json.dumps(reply)}")
+
+                # ui_reconfig_request = False
+                # registration = RegistrationManager.get(
+                #     self.daqserver_namespace, type="DAQServer"
+                # )
+                # if registration:  # reg exists - UI running, unknown daq state
+                #     # if daq_server has key, check against current registration
+                #     if body["regkey"]:  # daq running (likely a reconnect)
+                #         # same: daq_server config takes precedence
+                #         if body["regkey"] == registration["regkey"]:
+                #             registration["config"] = body["config"]
+                #             # RegistrationManager.update(body['id'], registration)
+                #             # RegistrationManager.update(daq_namespace, registration, type="DAQServer")
+                #             RegistrationManager.update(
+                #                 self.daqserver_namespace, registration, type="DAQServer"
+                #             )
+
+                # else:  # no reg, no connection to daq since UI start
+                #     if body["regkey"]:  # daq has been running
+                #         ui_reconfig_request = True
+                #         registration = {
+                #             "regkey": body["regkey"],
+                #             "config": body["config"],
+                #         }
+                #         # RegistrationManager.update(body['id'], registration)
+                #         # RegistrationManager.update(daq_namespace, registration, type="DAQServer")
+                #         RegistrationManager.update(
+                #             self.daqserver_namespace, registration, type="DAQServer"
+                #         )
+                #     else:  # daq has started
+                #         registration = RegistrationManager.add(
+                #             # body['id'],
+                #             self.daqserver_namespace,
+                #             config=body["config"],
+                #             type="DAQServer",
+                #         )
+
+                # print("before reply")
+                # reply = {
+                #     "TYPE": "UI",
+                #     "SENDER_ID": "DAQServerConsumer",
+                #     "TIMESTAMP": dt_to_string(),
+                #     "SUBJECT": "REGISTRATION",
+                #     "BODY": {
+                #         "purpose": "SUCCESS",
+                #         "regkey": registration["regkey"],
+                #         "config": registration["config"],
+                #         "ui_reconfig_request": ui_reconfig_request,
+                #     },
+                # }
                 # print(f"reply: {reply}")
                 # print(json.dumps(reply))
                 await self.data_message({"message": reply})
@@ -999,7 +1252,10 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
             if body["purpose"] == "REMOVE":
                 print("remove")
                 # RegistrationManager.remove(body['id'])
-                RegistrationManager.remove(self.daqserver_namespace, type="DAQServer")
+                # RegistrationManager.remove(self.daqserver_namespace, type="DAQServer")
+                await DAQRegistry.unregister(
+                    namespace=self.daqserver_namespace, type="DAQServer"
+                )
 
         elif message["SUBJECT"] == "CONFIG":
             body = message["BODY"]
@@ -1035,7 +1291,7 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
                 print(f"    daq_server: {self.daqserver_namespace}")
                 print(f"    UI Server: {self.hostname}:{self.port}")
                 ws_origin = f"{self.hostname}:{self.port}"
-                
+
                 # TODO: add docker host to ws_origin
                 PlotManager.get_server().start(add_ws_origin=ws_origin)
 
@@ -1075,14 +1331,15 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
 #     #     #     self.daqserver_namespace = "default"
 #     #     #     self.daqserver_group_name = "daq_default_messages"
 
-class ManagementConsumer(AsyncConsumer):
 
+class ManagementConsumer(AsyncConsumer):
     async def manage(self, message):
-        print('start')
+        print("start")
         print(message)
         try:
             command = message["command"]
             from setup.ui_server_conf import run_config
+
             if command == "INIT_ENVDAQ":
                 print("Start envdaq servers")
                 # try:
@@ -1090,14 +1347,14 @@ class ManagementConsumer(AsyncConsumer):
                 # except KeyError:
                 #     network = None
 
-                # from envnet.registry.registry import ServiceRegistry 
-                # await ServiceRegistry.start(network=network)
+                # from envnet.registry.registry import ServiceRegistry
+                await DAQRegistry.start()
             elif command == "REGISTER_SERVICE":
                 try:
                     config = {
                         "host": run_config["HOST"]["name"],
-                        "port":  run_config["HOST"]["port"],
-                        "service_list": {"envdsys_daq": {}}
+                        "port": run_config["HOST"]["port"],
+                        "service_list": {"envdsys_daq": {}},
                     }
                     await ServiceRegistry.register(config=config)
                 except KeyError:
