@@ -229,7 +229,7 @@ class ManagementConsumer(AsyncConsumer):
                 try:
                     network = run_config["HOST"]["network"]
                 except KeyError:
-                    network = None
+                    network = "default"
 
                 await ServiceRegistry.start(network=network)
             elif command == "REGISTER_SERVICE":
