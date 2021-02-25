@@ -16,12 +16,16 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from django.contrib.auth import views as auth_views
+from django.views.generic import TemplateView
+from . import views
 
 urlpatterns = [
+    path('', views.index, name='index'),
     path('envdaq/', include('envdaq.urls')),
     path('envtags/', include('envtags.urls')),
     path('admin/', admin.site.urls),
     path('envdsys/', include('django.contrib.auth.urls')),
+    # path("", TemplateView.as_view(template_name='index.html'),name='index'),
     # eventually, this will be in its own "app" 
-    path('', include('envdaq.urls'))
+    # path('', include('envdaq.urls'))
 ]
