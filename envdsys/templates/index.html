@@ -1,0 +1,116 @@
+{% extends "envbase.html" %}
+{% load static%}
+
+{% block title%}envDataSystem Home{% endblock title%}
+
+
+{% block content %}
+
+    <h3>Introduction</h3>
+    <p>
+    The goal of this manager is to help create datasets for use on the 
+    PMEL ERDDAP server. Specifically, these goals include:
+    </p>
+    <ul class="w3-leftbar w3-theme-border" style="list-style:none">
+        <li>Maintain consistency in names, units, etc between datasets</li>
+        <li>Include more metadata</li>
+        <li>Follow CF conventions</li>
+    </ul>
+
+    <div class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
+            {% comment %} <button type="button" onclick="myAccordion('networks')" class="w3-btn w3-round w3-margin-bottom w3-margin-top w3-block w3-theme w3-left-align">
+                <div class="w3-left"><b>Networks</b></div>
+                <div class="w3-right"><i id='button-icon-networks' class="material-icons">expand_more</i></div>
+            </button>            
+
+            <div id="accordion-networks" class="w3-container w3-hide"> {% endcomment %}
+
+                <h5>Networks</h5>
+                <table class="w3-table w3-bordered">
+                    <tr>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Active</th>
+                    </tr>
+                    {% for key, values in network_map.items %}
+                    <tr>
+                        <td>{{ key }}</td>
+                        {% for k,v in values.items %}
+                            <td>{{v}}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </table>
+            {% comment %} </div> {% endcomment %}
+    </div>
+
+    <div class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
+            {% comment %} <button type="button" onclick="myAccordion('daq-reg')" class="w3-btn w3-round w3-margin-bottom w3-margin-top w3-block w3-theme w3-left-align">
+                <div class="w3-left"><b>DAQ Registrations</b></div>
+                <div class="w3-right"><i id='button-icon-daq-reg' class="material-icons">expand_more</i></div>
+            </button>            
+
+            <div id="accordion-daq-reg" class="w3-container w3-hide"> {% endcomment %}
+                <h5>DAQ Registrations</h5>
+                <table class="w3-table w3-bordered">
+                    <tr>
+                        <th>Namespace</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                    </tr>
+                    {% for key, values in daq_reg_map.items %}
+                    <tr>
+                        <td>{{ key }}</td>
+                        {% for k,v in values.items %}
+                            <td>{{v}}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </table>
+            {% comment %} </div> {% endcomment %}
+    </div>
+
+
+{% endblock content %}
+        {% comment %} <script type="text/javascript">
+
+            function w3_open() {
+            document.getElementById("mySidebar").style.display = "block";
+            //document.getElementById("myOverlay").style.display = "block";
+            }
+
+            function w3_close() {
+            document.getElementById("mySidebar").style.display = "none";
+            //document.getElementById("myOverlay").style.display = "none";
+            }
+
+            // Change style of top container on scroll
+            window.onscroll = function() {myFunction()};
+            function myFunction() {
+            if (document.body.scrollTop > 80 || document.documentElement.scrollTop > 80) {
+                document.getElementById("myTop").classList.add("w3-card-4", "w3-animate-opacity");
+                document.getElementById("myIntro").classList.add("w3-show-inline-block");
+            } else {
+                document.getElementById("myIntro").classList.remove("w3-show-inline-block");
+                document.getElementById("myTop").classList.remove("w3-card-4", "w3-animate-opacity");
+            }
+            }
+
+            // Accordions
+            function myAccordion(id) {
+                var x = document.getElementById('accordion-'+id);
+                var bi = document.getElementById('button-icon-'+id);
+                console.log(x, id)
+                if (x.className.indexOf("w3-show") == -1) {
+                    x.className += " w3-show";
+                    bi.innerText = "expand_less"
+                } else { 
+                    x.className = x.className.replace("w3-show", "");
+                    bi.innerText = "expand_more"
+                }
+            }
+        
+        </script> {% endcomment %}
+
+    {% comment %} </body>
+</html> {% endcomment %}
