@@ -194,6 +194,7 @@ class ControllerDef(models.Model):
         related_name='controllerdef_tags',
     )
 
+    component_map = models.TextField("Component Map", default=json.dumps(dict()))
     class Meta:
         verbose_name = 'Controller Definition'
         verbose_name_plural = 'Controller Definitions'
@@ -213,6 +214,11 @@ class ControllerDef(models.Model):
         if definition and 'DEFINITION' in definition:
             self._module = definition['DEFINITION']['module']
             self._class = definition['DEFINITION']['name']
+            try:
+                self.component_map = definition["DEFINITION"]["component_map"]
+            except KeyError:
+                self.component_map = json.dumps(dict())
+            print(self.component_map)
             self.save()
 
 

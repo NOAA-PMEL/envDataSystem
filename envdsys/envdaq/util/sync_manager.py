@@ -17,7 +17,7 @@ class SyncManager():
         if 'SYSTEM_DEFINITIONS' in config:
 
             sys_def = config['SYSTEM_DEFINITIONS']
-
+            print(f"sys_def:{sys_def}")
             for def_type, def_value in sys_def.items():
 
                 if def_type == 'CONTROLLER_SYS_DEFS':
