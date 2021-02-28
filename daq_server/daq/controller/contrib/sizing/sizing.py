@@ -986,8 +986,16 @@ class SizingSystem(Controller):
 
         definition["component_map"] = {
             "INSTRUMENTS": {
-                "aitken_dmps": {"LIST": [], "PRIMARY": None},
-                "accum_dmps": {"LIST": [], "PRIMARY": None},
+                "aitken_dmps": {
+                    "LIST": [],
+                    "PRIMARY": None,
+                    "INTERFACE_MAP": {"cpc": None, "hv": None},
+                },
+                "accum_dmps": {
+                    "LIST": [],
+                    "PRIMARY": None,
+                    "INTERFACE_MAP": {"cpc": None, "hv": None},
+                },
                 "aps": {"LIST": [], "PRIMARY": None},
             }
         }
