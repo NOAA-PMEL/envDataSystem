@@ -104,9 +104,9 @@ class Controller(DAQ):
         self.data_record = dict()
 
         # set daq_id: this will be there plot-server id
-        self.namespace['controller'] = f"{self.label}".replace(" ", "")
+        self.namespace["controller"] = f"{self.label}".replace(" ", "")
         if self.alias and ("name" in self.alias):
-            self.namespace['controller'] = f"{self.alias['name']}".replace(" ", "")
+            self.namespace["controller"] = f"{self.alias['name']}".replace(" ", "")
 
         self.keepalive_ping = True
 
@@ -176,12 +176,11 @@ class Controller(DAQ):
         for k, inst in self.instrument_map.items():
             inst.resend_config_to_ui()
 
-
     def send_config_to_ui(self):
 
         # add namespace to metadata
         meta = self.get_metadata()
-        meta['namespace'] = self.namespace
+        meta["namespace"] = self.namespace
 
         # tell ui to build controller
         msg = Message(
@@ -198,21 +197,25 @@ class Controller(DAQ):
         self.message_to_ui_nowait(msg)
         # print(f'setup: {msg.body}')
 
-
     async def check_ready_to_run(self):
         wait = True
         while wait:
             wait = False
             for k, v in self.instrument_map.items():
-                if not v.status['ready_to_run']:
+                if not v.status["ready_to_run"]:
                     wait = True
-                    print(f'Waiting for instrument: {k}')
+                    print(f"Waiting for instrument: {k}")
                     break
             await asyncio.sleep(1)
-        self.status['ready_to_run'] = True
+        self.status["ready_to_run"] = True
 
     def configure_components(self):
-        pass
+        self.component_map = {}
+        try:
+            definition = self.get_definition_instance()
+            self.component_map = definition["DEFINITION"]["component_map"]
+        except KeyError:
+            pass
 
     async def register_with_UI(self):
 
@@ -239,7 +242,7 @@ class Controller(DAQ):
                 "config": self.config,
             },
         )
-        print(f'Registering with UI server: {self.namespace}')
+        print(f"Registering with UI server: {self.namespace}")
         await self.to_ui_buf.put(req)
         self.run_state = "REGISTERING"
         # await reg_client.close()
@@ -269,7 +272,7 @@ class Controller(DAQ):
                 "config": self.config,
             },
         )
-        print(f'Unregistering with UI server: {self.namespace}')
+        print(f"Unregistering with UI server: {self.namespace}")
         await self.to_ui_buf.put(req)
         self.run_state = "UNREGISTERING"
         # await reg_client.close()
@@ -462,7 +465,10 @@ class Controller(DAQ):
             # for instr in self.config['INST_LIST']:
             # inst = InstrumentFactory().create(icfg['INST_CONFIG'])
             inst = InstrumentFactory().create(
-                icfg, base_file_path=self.get_base_filepath(), ui_config=self.ui_config, namespace=self.namespace
+                icfg,
+                base_file_path=self.get_base_filepath(),
+                ui_config=self.ui_config,
+                namespace=self.namespace,
             )
             # inst.msg_buffer = self.inst_msg_buffer
             inst.to_parent_buf = self.from_child_buf
@@ -624,14 +630,14 @@ class DummyController(Controller):
 
         # print(f'dummy_map: {self.dummy_instrument_map}')
 
-    def configure_components(self):
+    # def configure_components(self):
 
-        self.component_map["INSTRUMENTS"] = {
-            "GPS": {"LIST": [], "PRIMARY": None},
-            "DUMMY": {
-                "LIST": [],
-            },
-        }
+    #     self.component_map["INSTRUMENTS"] = {
+    #         "GPS": {"LIST": [], "PRIMARY": None},
+    #         "DUMMY": {
+    #             "LIST": [],
+    #         },
+    #     }
 
     def build_controller_meta(self):
 
@@ -1141,104 +1147,15 @@ class DummyController(Controller):
             "sizing",
             "inverted",
         ]
+        definition["component_map"] = {
+            "INSTRUMENTS": {
+                "GPS": {"LIST": [], "PRIMARY": None},
+                "DUMMY": {
+                    "LIST": [],
+                },
+            }
+        }
 
-        # measurement_config = dict()
-
-        # y_data = []
-        # dist_data = []
-
-        # primary_meas_2d = dict()
-        # primary_meas_2d['dndlogdp'] = {
-        #     'dimensions': {
-        #         'axes': ['TIME', 'DIAMETER'],
-        #         'unlimited': 'TIME',
-        #         'units': ['dateTime', 'um'],
-        #     },
-        #     'units': 'cm-3',  # should be cfunits or udunits
-        #     'uncertainty': 0.1,
-        #     'source': 'CALCULATED',
-        #     'data_type': 'NUMERIC',
-        #     # 'short_name': 'bin_conc',
-        #     # 'parse_label': 'bin',
-        #     'control': None,
-        #     'axes': {
-        #         # 'TIME', 'datetime',
-        #         'DIAMETER': 'inverted_diameter_um',
-        #     }
-        # }
-        # dist_data.append('dndlogdp')
-
-        # primary_meas_2d['inverted_diameter_um'] = {
-        #     'dimensions': {
-        #         'axes': ['TIME', 'DIAMETER'],
-        #         'unlimited': 'TIME',
-        #         'units': ['dateTime', 'um'],
-        #     },
-        #     'units': 'um',  # should be cfunits or udunits
-        #     'uncertainty': 0.1,
-        #     'source': 'CALCULATED',
-        #     'data_type': 'NUMERIC',
-        #     'short_name': 'dmps_dp',
-        #     # 'parse_label': 'diameter',
-        #     'control': None,
-        # }
-        # dist_data.append('inverted_diameter_um')
-
-        # primary_meas = dict()
-        # primary_meas['integral_concentration'] = {
-        #     'dimensions': {
-        #         'axes': ['TIME'],
-        #         'unlimited': 'TIME',
-        #         'units': ['dateTime'],
-        #     },
-        #     'units': 'cm-3',  # should be cfunits or udunits
-        #     'uncertainty': 0.2,
-        #     'source': 'calculated',
-        #     'data_type': 'NUMERIC',
-        #     'short_name': 'int_conc',
-        #     # 'parse_label': 'scan_max_volts',
-        #     'control': None,
-        # }
-        # y_data.append('integral_concentration')
-
-        # measurement_config['primary_2d'] = primary_meas_2d
-        # measurement_config['primary'] = primary_meas
-        # definition['measurement_config'] = measurement_config
-
-        # plot_config = dict()
-
-        # size_dist = dict()
-        # size_dist['app_type'] = 'SizeDistribution'
-        # size_dist['y_data'] = dist_data,
-        # size_dist['default_y_data'] = [
-        #     'dndlogdp',
-        # ]
-        # source_map = {
-        #     'default': {
-        #         'y_data': dist_data,
-        #         'default_y_data': [
-        #             'dndlogdp'
-        #         ]
-        #     },
-        # }
-        # size_dist['source_map'] = source_map
-
-        # time_series1d = dict()
-        # time_series1d['app_type'] = 'TimeSeries1D'
-        # time_series1d['y_data'] = y_data
-        # time_series1d['default_y_data'] = ['integral_concentration']
-        # source_map = {
-        #     'default': {
-        #         'y_data': y_data,
-        #         'default_y_data': ['integral_concentration']
-        #     },
-        # }
-        # time_series1d['source_map'] = source_map
-
-        # plot_config['plots'] = dict()
-        # plot_config['plots']['inverted_size_dist'] = size_dist
-        # plot_config['plots']['main_ts1d'] = time_series1d
-        # definition['plot_config'] = plot_config
 
         return {"DEFINITION": definition}
         # DAQ.daq_definition['DEFINITION'] = definition

@@ -327,21 +327,21 @@ class DAQServer:
         # self.run_state != "READY_TO_REGISTER":
         # await self.register_with_UI()
 
-        # # This should only be done on request
-        # print("sync DAQ")
-        # # system_def = SysManager.get_definitions_all()
-        # # print(f'system_def: {system_def}')
-        # sys_def = Message(
-        #     sender_id="daqserver",
-        #     msgtype="DAQServer",
-        #     subject="CONFIG",
-        #     body={
-        #         "purpose": "SYNC",
-        #         "type": "SYSTEM_DEFINITION",
-        #         "data": SysManager.get_definitions_all(),
-        #     },
-        # )
-        # await self.to_ui_buf.put(sys_def)
+        # This should only be done on request
+        print("sync DAQ")
+        # system_def = SysManager.get_definitions_all()
+        # print(f'system_def: {system_def}')
+        sys_def = Message(
+            sender_id="daqserver",
+            msgtype="DAQServer",
+            subject="CONFIG",
+            body={
+                "purpose": "SYNC",
+                "type": "SYSTEM_DEFINITION",
+                "data": SysManager.get_definitions_all(),
+            },
+        )
+        await self.to_ui_buf.put(sys_def)
 
         # wait for registration
         while self.run_state != "READY_TO_RUN":
