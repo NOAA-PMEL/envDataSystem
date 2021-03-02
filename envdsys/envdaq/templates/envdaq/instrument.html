@@ -201,6 +201,7 @@
 
             for (var meastype in measurements) {
                 if (meastype != "controls") {
+                    //console.log(measurements[meastype])
                     mtype = measurements[meastype]
                     for (var meas in mtype) {
                         dims = mtype[meas]['dimensions']['axes']
@@ -274,36 +275,29 @@
             cell.innerHTML = "";
             cell.setAttribute('id', 'control-table-setbuttoncol');
 
-                        {% comment %} meas = 'inlet_temperature_sp'
-                        name = 'test_'+meas
-                        row = table.insertRow(-1);
-                        cell = row.insertCell(0);
-                        cell.setAttribute('id', (meas+'-name'));
-                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center')
-                        cell.innerHTML = name
-                        cell = row.insertCell(1);
-                        cell.setAttribute('id', (meas+'-value'));
-                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
-                        cell.innerHTML = '';         
-                        cell = row.insertCell(2);           
-                        cell.setAttribute('id', (meas+'-setting'));
-                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
-                        cell.innerHTML = '<input id="test" type=number min="10" max="30" step="0.5">'                  
-                        cell = row.insertCell(3);           
-                        cell.setAttribute('id', (meas+'-settingbutton'));
-                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
-                        cell.innerHTML = '<input id="testbutton" type=button value="set">'                   {% endcomment %}
-
             for (var meastype in measurements) {
                 if (meastype == "controls") {
                     mtype = measurements[meastype]
+                    //console.log(mtype)
                     for (var meas in mtype) {
+                        // get min,max
+                        //console.log(mtype[meas])
+                        var rng_min = 0
+                        var rng_max = 65000
+                        if ("allowed_range" in mtype[meas]) {
+                            var rng = mtype[meas]["allowed_range"]
+                            rng_min = rng[0]
+                            rng_max = rng[1]
+                            //console.log(rng)
+                        }
+                        //console.log(rng_min, rng_max)
                         var name = meas
                         if (meas_prefix) {
                             name = meas_prefix + "_" + meas
                         }
+                        //console.log(name)
                         meas_id = meas.replace(/_/g, "-")
-                        prefix_id = prefix.replace(/_/g, "-")
+                        // prefix_id = prefix.replace(/_/g, "-")
                         row = table.insertRow(-1);
                         cell = row.insertCell(0);
                         cell.setAttribute('id', (meas_id+'-name'));
@@ -316,7 +310,7 @@
                         cell = row.insertCell(2);           
                         cell.setAttribute('id', (meas_id+'-input'));
                         cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
-                        cell.innerHTML = '<input id='+meas_id+'-setting-input type=number min="0" max="65000">'                                
+                        cell.innerHTML = '<input id='+meas_id+'-setting-input type=number min='+rng_min+' max='+rng_max+' step=any>'                                
                         cell = row.insertCell(3);           
                         cell.setAttribute('id', (meas_id+'-setting-set'));
                         cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
@@ -377,6 +371,7 @@
 
                     document.querySelector('#time-stamp').innerHTML =  (message['DATETIME'].replace(/T|Z/g, " "));
 
+                    {% comment %} console.log(message['MEASUREMENTS']) {% endcomment %}
                     var cell_value = ''
                     for (var meas in message['MEASUREMENTS']) {
                         if (message['MEASUREMENTS'][meas]['VALUE'] == null) {
@@ -392,7 +387,13 @@
                         //cell_id = "#"+meas+"-value"
                         cell_id = (meas+"-value").replace(/_/g, "-")
                         //document.querySelector(cell_id).innerHTML = message['MEASUREMENTS'][meas]['VALUE'];
+                        // console.log(cell_id)
+                        //val = message['MEASUREMENTS'][meas]['VALUE'];
+                        //if (typeof val === "string") {
+                        //    console.log("string", val)
+                        //}
                         document.getElementById(cell_id).innerHTML = message['MEASUREMENTS'][meas]['VALUE'];
+                        //document.getElementById(cell_id).innerHTML = val;
                         // document.getElementById(cell_id).innerHTML = cell_value;
                     }
                     // cell2 = 'cell1';
@@ -444,12 +445,22 @@
         }; {% endcomment %}
 
         function apply_setting(control) {
-            var index = control.id.indexOf("-")
-            if (index<0) {
-                return
-            }
-            var control = control.id.substring(0,index)
+            console.log(control)
+            //var index = control.id.indexOf("-")
+            //console.log(index)
+            //if (index<0) {
+            //    return
+            //}
+            var id = control.id.split('-')
+            id.splice(-2,2)
+            var control = id.join("-")
+            //console.log(id.join("-"))
+            //id = control.id.split("-").splice(-2,2).join("-")
+            //console.log(id)
+            //var control = control.id.substring(0,index)
             setpoint = document.getElementById(control+'-setting-input').value
+            console.log(control)
+            console.log(setpoint)
             var message = {}
             message['SUBJECT'] = 'CONTROLS'
             message['BODY'] = {
@@ -457,10 +468,11 @@
                 'control': control,
                 'value': setpoint,
             }
-
-            websocket.send(
-                JSON.stringify({'message': message})
-            )
+            console.log(message)
+            
+            //websocket.send(
+            //    JSON.stringify({'message': message})
+            //)
 
         }
 
@@ -512,7 +524,7 @@
             var class_val = 'opsbutton started'
             var value = "Stop"
 
-            if (runstate == "STOPPED") {
+        if (runstate == "STOPPED" || runstate == "READY_TO_RUN") {
                 class_val = 'opsbutton stopped'
                 value = "Start"
             }

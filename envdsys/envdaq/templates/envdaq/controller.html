@@ -289,7 +289,7 @@
         var class_val = 'opsbutton started'
         var value = "Stop"
 
-        if (runstate == "STOPPED") {
+        if (runstate == "STOPPED" || runstate == "READY_TO_RUN") {
             class_val = 'opsbutton stopped'
             value = "Start"
         }

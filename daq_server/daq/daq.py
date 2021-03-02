@@ -3,6 +3,7 @@ import asyncio
 from client.wsclient import WSClient
 # from plots.apps.plot_app import PlotApp
 from shared.data.message import Message
+from shared.data.status import Status
 from shared.data.datafile import DataFile
 from shared.utilities.util import time_to_next, dt_to_string
 
@@ -108,6 +109,7 @@ class DAQ(abc.ABC):
             'connected_to_ui': False,
             'health': 'OK'
         }
+        self.status2 = Status()
         # start loop to maintain ui
         # if (
         #     'do_ui_connection' in self.ui_config and
@@ -248,7 +250,13 @@ class DAQ(abc.ABC):
     # TODO: implement this as an abstract method
     # @abc.abstractmethod
     async def handle_control_action(self, control, value):
-        pass
+        # default control actions
+        if control and value:
+            if control == "start_stop":
+                if value == "START":
+                    self.start()
+                elif value == "STOP":
+                    self.stop()
 
     def set_control_att(self, control, att, value):
         if control not in self.controls:
@@ -348,6 +356,7 @@ class DAQ(abc.ABC):
                     self.ui_client is None or not self.ui_client.isConnected()
                 )
             ):
+                self.status2.set_connection_status(Status.CONNECTING)
                 # close tasks for current ui if any
                 for t in self.ui_task_list:
                     t.cancel()
@@ -370,6 +379,7 @@ class DAQ(abc.ABC):
 
                 await self.register_with_UI()
 
+            self.status2.set_connection_status(Status.CONNECTED)
             await asyncio.sleep(1)
 
     # async def open_ui_connection(self):
@@ -390,6 +400,7 @@ class DAQ(abc.ABC):
                 # 'note': note,
             }
         )
+        status = self.status2.to_message(sender_id=self.get_id())
         # print(f'send no wait: {self.name}, {self.status}')
         self.message_to_ui_nowait(status)
         # self.message_to_ui_nowait(status)
@@ -414,7 +425,7 @@ class DAQ(abc.ABC):
 
     def start(self, cmd=None):
         # self.create_msg_buffers()
-
+        self.status2.set_run_status(Status.STARTING)
         # only need to start this, will be cancelled by
         #   daq on stop
         self.include_metadata = True
@@ -424,7 +435,8 @@ class DAQ(abc.ABC):
             )
         )
 
-        if self.status['run_status'] != 'STARTED':
+        if self.status2.get_run_status() != Status.RUNNING:
+        # if self.status['run_status'] != 'STARTED':
             self.task_list.append(
                 asyncio.ensure_future(self.from_parent_loop())
             )
@@ -433,15 +445,17 @@ class DAQ(abc.ABC):
                 asyncio.ensure_future(self.from_child_loop())
             )
             self.status['run_status'] = 'STARTED'
+            self.status2.set_run_status(Status.RUNNING)
 
         self.send_status()
 
     def stop(self, cmd=None):
-
+        self.status2.set_run_status(Status.STOPPING)
         for t in self.task_list:
             t.cancel()
 
         self.status['run_status'] = 'STOPPED'
+        self.status2.set_run_status(Status.STOPPED)
         self.send_status()
 
     async def ping_ui_server(self):
@@ -467,13 +481,14 @@ class DAQ(abc.ABC):
         # if self.started:
         #     print(f'wait for shutdown...')
         #     return
-
+        self.status2.set_run_status(Status.SHUTTING_DOWN)
         if self.ui_client is not None:
             # self.loop.run_until_complete(self.gui_client.close())
             self.ui_client.sync_close()
 
         for t in self.ui_task_list:
             t.cancel()
+        self.status2.set_run_status(Status.SHUTDOWN)
 
     def create_msg_buffers(self, config=None):
         '''
@@ -489,7 +504,31 @@ class DAQ(abc.ABC):
 
     @abc.abstractmethod
     async def handle(self, msg, type=None):
-        pass
+
+        if type == "FromUI":
+            if msg.subject == "STATUS" and msg.body["purpose"] == "REQUEST":
+                # print(f"msg: {msg.body}")
+                self.send_status()
+
+            elif msg.subject == "CONTROLS" and msg.body["purpose"] == "REQUEST":
+                # print(f"msg: {msg.body}")
+                await self.set_control(msg.body["control"], msg.body["value"])
+            elif msg.subject == "RUNCONTROLS" and msg.body["purpose"] == "REQUEST":
+                # print(f"msg: {msg.body}")
+                await self.handle_control_action(msg.body["control"], msg.body["value"])
+                # await self.set_control(msg.body['control'], msg.body['value'])
+
+            elif msg.subject == "REGISTRATION":
+                print(f"reg: {msg.subject}")
+                if msg.body["purpose"] == "SUCCESS":
+                    self.registration_key = msg.body["regkey"]
+                    # if content["BODY"]["config"]:
+
+                    # self.config = content["BODY"]["config"]
+                        # self.save_current_config(json.loads(content["BODY"]["config"]))
+                    self.status2.set_registration_status(Status.REGISTERED)
+                    # if content["BODY"]["ui_reconfig_request"]:
+                    #     await self.resend_config_to_ui()
 
     async def from_parent_loop(self):
         while True:

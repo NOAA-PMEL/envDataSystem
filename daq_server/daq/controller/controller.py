@@ -5,6 +5,7 @@ import asyncio
 from daq.daq import DAQ
 from daq.instrument.instrument import InstrumentFactory, Instrument
 from shared.data.message import Message
+from shared.data.status import Status
 import math
 
 # from plots.plots import PlotManager
@@ -115,6 +116,7 @@ class Controller(DAQ):
 
     def setup(self):
         print("Controller setup")
+        self.status2.set_config_status(Status.CONFIGURING)
         super().setup()
 
         self.configure_components()
@@ -158,6 +160,7 @@ class Controller(DAQ):
         # self.message_to_ui_nowait(msg)
         # # print(f'setup: {msg.body}')
 
+        self.status2.set_config_status(Status.CONFIGURED)
         # tell ui to build controller
         self.send_config_to_ui()
 
@@ -202,12 +205,14 @@ class Controller(DAQ):
         while wait:
             wait = False
             for k, v in self.instrument_map.items():
-                if not v.status["ready_to_run"]:
+                # if not v.status["ready_to_run"]:
+                if v.status2.get_run_status() != Status.READY_TO_RUN:
                     wait = True
                     print(f"Waiting for instrument: {k}")
                     break
             await asyncio.sleep(1)
         self.status["ready_to_run"] = True
+        self.status2.set_run_status(Status.READY_TO_RUN)
 
     def configure_components(self):
         self.component_map = {}
@@ -245,6 +250,7 @@ class Controller(DAQ):
         print(f"Registering with UI server: {self.namespace}")
         await self.to_ui_buf.put(req)
         self.run_state = "REGISTERING"
+        self.status2.set_registration_status(Status.REGISTERING)
         # await reg_client.close()
 
     async def unregister_with_UI(self):
@@ -275,6 +281,7 @@ class Controller(DAQ):
         print(f"Unregistering with UI server: {self.namespace}")
         await self.to_ui_buf.put(req)
         self.run_state = "UNREGISTERING"
+        self.status2.set_run_status(Status.UNREGISTERING)
         # await reg_client.close()
 
     def get_ui_address(self):
@@ -432,7 +439,8 @@ class Controller(DAQ):
 
     async def handle(self, msg, type=None):
         # print(f"controller handle: {msg}")
-        await asyncio.sleep(0.01)
+        await super(Controller, self).handle(msg, type)
+        # await asyncio.sleep(0.01)
 
     # def get_signature(self):
     #     # This will combine instrument metadata to generate
@@ -447,6 +455,9 @@ class Controller(DAQ):
     # # TODO: How do we want to id instruments? Need to clean this up
     # def add_instrument(self, instrument):
     #     self.inst_map[instrument.get_signature()] = instrument
+
+    async def handle_control_action(self, control, value):
+        await super(Controller, self).handle_control_action(control, value)
 
     def add_instruments(self):
         print("Add instruments")
@@ -1043,19 +1054,32 @@ class DummyController(Controller):
                 # await PlotManager.update_data(self.plot_name, data.to_json())
 
             # print(f'data_json: {data.to_json()}\n')
-        elif type == "FromUI":
-            if msg.subject == "STATUS" and msg.body["purpose"] == "REQUEST":
-                # print(f"msg: {msg.body}")
-                self.send_status()
+        # elif type == "FromUI":
+        #     if msg.subject == "STATUS" and msg.body["purpose"] == "REQUEST":
+        #         # print(f"msg: {msg.body}")
+        #         self.send_status()
 
-            elif msg.subject == "CONTROLS" and msg.body["purpose"] == "REQUEST":
-                # print(f"msg: {msg.body}")
-                await self.set_control(msg.body["control"], msg.body["value"])
-            elif msg.subject == "RUNCONTROLS" and msg.body["purpose"] == "REQUEST":
-                # print(f"msg: {msg.body}")
-                await self.handle_control_action(msg.body["control"], msg.body["value"])
-                # await self.set_control(msg.body['control'], msg.body['value'])
+        #     elif msg.subject == "CONTROLS" and msg.body["purpose"] == "REQUEST":
+        #         # print(f"msg: {msg.body}")
+        #         await self.set_control(msg.body["control"], msg.body["value"])
+        #     elif msg.subject == "RUNCONTROLS" and msg.body["purpose"] == "REQUEST":
+        #         # print(f"msg: {msg.body}")
+        #         await self.handle_control_action(msg.body["control"], msg.body["value"])
+        #         # await self.set_control(msg.body['control'], msg.body['value'])
 
+        #     elif msg.subject == "REGISTRATION":
+        #         print(f"reg: {msg.subject}")
+        #         if msg.body["purpose"] == "SUCCESS":
+        #             self.registration_key = msg.body["regkey"]
+        #             # if content["BODY"]["config"]:
+
+        #             # self.config = content["BODY"]["config"]
+        #                 # self.save_current_config(json.loads(content["BODY"]["config"]))
+        #             self.status2.set_registration_status(Status.REGISTERED)
+        #             # if content["BODY"]["ui_reconfig_request"]:
+        #             #     await self.resend_config_to_ui()
+
+        await super().handle(msg, type)
         # print("DummyInstrument:msg: {}".format(msg.body))
         # else:
         #     await asyncio.sleep(0.01)
@@ -1098,13 +1122,13 @@ class DummyController(Controller):
         return None
 
     async def handle_control_action(self, control, value):
-        pass
-        if control and value:
-            if control == "start_stop":
-                if value == "START":
-                    self.start()
-                elif value == "STOP":
-                    self.stop()
+        await super().handle_control_action(control, value)
+        # if control and value:
+        #     if control == "start_stop":
+        #         if value == "START":
+        #             self.start()
+        #         elif value == "STOP":
+        #             self.stop()
 
         #     elif control == 'inlet_temperature_sp':
         #         # check bounds

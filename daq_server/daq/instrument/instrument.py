@@ -7,6 +7,7 @@ from daq.daq import DAQ
 from shared.data.datafile import DataFile
 import asyncio
 from shared.data.message import Message
+from shared.data.status import Status
 import shared.utilities.util
 from daq.interface.interface import Interface, InterfaceFactory
 # import json
@@ -229,6 +230,7 @@ class Instrument(DAQ):
 
         # Ready to start
         self.status['ready_to_run'] = True
+        self.status2.set_run_status(Status.READY_TO_RUN)
         
     # def add_plot_app(self, plot_typ):
 
@@ -339,6 +341,7 @@ class Instrument(DAQ):
         print(f'Registering with UI server: {self.namespace}')
         await self.to_ui_buf.put(req)
         self.run_state = "REGISTERING"
+        self.status2.set_registration_status(Status.REGISTERING)
         # await reg_client.close()
 
     def get_data_entry(self, timestamp, force_add_meta=False):
@@ -506,7 +509,10 @@ class Instrument(DAQ):
 
     @abc.abstractmethod
     async def handle(self, msg, type=None):
-        pass
+        await super(Instrument, self).handle(msg, type)
+
+    async def handle_control_action(self, control, value):
+        await super(Instrument, self).handle_control_action(control, value)
 
     def get_signature(self):
         # This will combine instrument metadata to generate
@@ -779,40 +785,41 @@ class DummyInstrument(Instrument):
             # print(f'data_json: {data.to_json()}\n')
             # await asyncio.sleep(0.01)
 
-        elif type == 'FromUI':
-            if msg.subject == 'STATUS' and msg.body['purpose'] == 'REQUEST':
-                # print(f'msg: {msg.body}')
-                self.send_status()
+        # elif type == 'FromUI':
+        #     if msg.subject == 'STATUS' and msg.body['purpose'] == 'REQUEST':
+        #         # print(f'msg: {msg.body}')
+        #         self.send_status()
 
-            elif msg.subject == 'CONTROLS' and msg.body['purpose'] == 'REQUEST':
+        #     elif msg.subject == 'CONTROLS' and msg.body['purpose'] == 'REQUEST':
 
-                # print(f'msg: {msg.body}')
-                await self.set_control(msg.body['control'], msg.body['value'])
+        #         # print(f'msg: {msg.body}')
+        #         await self.set_control(msg.body['control'], msg.body['value'])
 
-            elif (
-                msg.subject == 'RUNCONTROLS' and
-                msg.body['purpose'] == 'REQUEST'
-            ):
+        #     elif (
+        #         msg.subject == 'RUNCONTROLS' and
+        #         msg.body['purpose'] == 'REQUEST'
+        #     ):
 
-                # print(f'msg: {msg.body}')
-                await self.handle_control_action(
-                    msg.body['control'], msg.body['value']
-                )
-                # await self.set_control(msg.body['control'], msg.body['value'])
+        #         # print(f'msg: {msg.body}')
+        #         await self.handle_control_action(
+        #             msg.body['control'], msg.body['value']
+        #         )
+        #         # await self.set_control(msg.body['control'], msg.body['value'])
 
+        await super().handle(msg, type)
         # print("DummyInstrument:msg: {}".format(msg.body))
         # else:
         #     await asyncio.sleep(0.01)
 
     async def handle_control_action(self, control, value):
         if control and value:
-            if control == 'start_stop':
-                if value == 'START':
-                    self.start()
-                elif value == 'STOP':
-                    self.stop()
+            # if control == 'start_stop':
+            #     if value == 'START':
+            #         self.start()
+            #     elif value == 'STOP':
+            #         self.stop()
 
-            elif control == 'inlet_temperature_sp':
+            if control == 'inlet_temperature_sp':
                 # check bounds
                 # send command to instrument via interface
                 cmd = Message(
@@ -841,6 +848,8 @@ class DummyInstrument(Instrument):
                 # await self.to_child_buf.put(cmd)
                 await self.iface_map['DummyInterface:test_interface'].message_from_parent(cmd)
                 self.set_control_att(control, 'action_state', 'OK')
+            
+            await super().handle_control_action(control, value)
 
     def parse(self, msg):
         # print(f'parse: {msg.to_json()}')
@@ -1397,12 +1406,13 @@ class DummyGPS(Instrument):
         #     await asyncio.sleep(0.01)
 
     async def handle_control_action(self, control, value):
-        if control and value:
-            if control == 'start_stop':
-                if value == 'START':
-                    self.start()
-                elif value == 'STOP':
-                    self.stop()
+        await super().handle_control_action(control, value)
+        # if control and value:
+        #     if control == 'start_stop':
+        #         if value == 'START':
+        #             self.start()
+        #         elif value == 'STOP':
+        #             self.stop()
 
                 # print(f'{self.iface_map}')
                 # await self.to_child_buf.put(cmd)
