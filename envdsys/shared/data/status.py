@@ -1,10 +1,15 @@
 import json
-from urllib.request import HTTPDefaultErrorHandler
+# from urllib.request import HTTPDefaultErrorHandler
 
 from shared.data.message import Message
 
 
 class Status:
+
+    ENABLING = "ENABLING"
+    ENABLED = "ENABLED"
+    DISABLING = "DISABLING"
+    DISABLED = "DISABLED"
 
     STOPPED = "STOPPED"
     STARTING = "STARTING"
@@ -37,6 +42,7 @@ class Status:
 
     def __init__(
         self,
+        enabled_status=None,
         run_status=None,
         config_status=None,
         connection_status=None,
@@ -44,6 +50,7 @@ class Status:
     ) -> None:
 
         self.status_types = [
+            "enabled_status",
             "run_status",
             "config_status",
             "registration_status",
@@ -51,6 +58,11 @@ class Status:
             "health_status",
         ]
         self.status_map = dict()
+
+        if enabled_status:
+            self.set_enabled_status(enabled_status)
+        else:
+            self.set_enabled_status(Status.DISABLED)
 
         if run_status:
             self.set_run_status(run_status)
@@ -89,6 +101,12 @@ class Status:
             return self.status_map[status_type]
         except KeyError:
             return Status.UNKNOWN
+
+    def set_enabled_status(self, status):
+        self.set_status("enabled_status", status)
+
+    def get_enabled_status(self):
+        return self.get_status("enabled_status")
 
     def set_run_status(self, status):
         self.set_status("run_status", status)

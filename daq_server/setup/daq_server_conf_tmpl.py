@@ -4,7 +4,9 @@ run_config = {
     #   docker: run in docker containers including redis and postgresql db (default)
     #   system-python: runs from command line using "python manage.py runserver"
     #   system-daphne: runs using daphne
-    "SERVER_NAME": "Test Server",
+    # "SERVER_NAME": "Test Server",
+
+    "DAQ_NAME": "UAS Cloudy Server",
 
     "RUN_TYPE": "docker",
     

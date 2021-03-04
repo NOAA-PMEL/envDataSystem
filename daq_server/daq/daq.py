@@ -1,5 +1,9 @@
 import abc
 import asyncio
+import json
+from json.decoder import JSONDecodeError
+import os
+from pathlib import Path
 from client.wsclient import WSClient
 # from plots.apps.plot_app import PlotApp
 from shared.data.message import Message
@@ -110,6 +114,7 @@ class DAQ(abc.ABC):
             'health': 'OK'
         }
         self.status2 = Status()
+        self.current_run_settings = dict()
         # start loop to maintain ui
         # if (
         #     'do_ui_connection' in self.ui_config and
@@ -220,6 +225,99 @@ class DAQ(abc.ABC):
 
         return id
 
+    def current_run_settings_file(self) -> Path:
+        ns_path = Path("config") / "run"
+        # ns_path = ["config", "run"]
+        if "daq_server" in self.namespace:
+            # ns_path.append(self.namespace['daq_server'])
+            ns_path /= self.namespace['daq_server']
+        if "controller" in self.namespace:
+            # ns_path.append(self.namespace['controller'])
+            ns_path /= self.namespace['controller']
+        if "instrument" in self.namespace:
+            # ns_path.append(self.namespace['instrument'])
+            ns_path /= self.namespace['instrument']
+        # if not os.path.exists(os.path.join(ns_path)):
+        #     os.makedirs(ns_path)
+        # Path.mkdir(ns_path, parents=True, exist_ok=True)
+        fname = ns_path / "current_run_settings.json"
+        return fname
+
+    def get_current_run_settings(self):
+
+        if not self.controls:
+            definition = self.get_definition_instance()
+            try:
+                self.controls = definition['DEFINITION']['measurement_config']['controls']
+            except KeyError:
+                print("no run settings to get")
+                return
+
+        fname = self.current_run_settings_file()
+        Path.mkdir(fname.parent, parents=True, exist_ok=True)
+        try:
+            with open(fname) as cfg:
+                self.current_run_settings = json.load(cfg)
+                print(f"{self.current_run_settings}")
+        except (FileNotFoundError, JSONDecodeError, TypeError):
+            self.set_current_run_settings_default()
+            # saved settings not valid for some reason, set to default
+
+        need_save = False
+        for control, config in self.controls.items():
+            if control not in self.current_run_settings:
+                self.current_run_settings[control] = None
+                need_save = True
+                if 'default_value' in config:
+                    self.current_run_settings[control] =config['default_value']
+        if need_save:
+            self.save_current_run_settings()
+
+    def update_current_run_settings(self):
+        if self.controls:
+            for control, settings in self.controls.items():
+                try:
+                    # print(f"{control}, {settings}")
+                    self.current_run_settings[control] = settings["value"]
+                except KeyError:
+                    pass
+                    # print(f"update crs error: {control}")
+            # print(f"updated run settings: {self.current_run_settings}")
+            self.save_current_run_settings()
+
+    def save_current_run_settings(self):
+        if self.current_run_settings:
+            fname = self.current_run_settings_file()
+            Path.mkdir(fname.parent, parents=True, exist_ok=True)
+            try:
+                # test = json.dumps(self.current_run_settings)
+                # print(test)
+                with open(fname, "w") as cfg:
+                    json.dump(self.current_run_settings, cfg)
+            except (FileNotFoundError, JSONDecodeError, TypeError) as e:
+                print(f"Could not save current_run_settigns: {fname}: {e}")
+             
+
+    def set_current_run_settings_default(self):
+        if not self.controls:
+            definition = self.get_definition_instance()
+            try:
+                self.controls = definition['DEFINITION']['measurement_config']['controls']
+            except KeyError:
+                print("no run settings to get")
+                return
+
+            for control, config in self.controls.items():
+                self.current_run_settings[control] = None
+                if 'default_value' in config:
+                    # TODO: on start, have to go through and send all
+                    #       control values to instrument
+                    self.current_run_settings[control] =config['default_value']
+                    # self.set_control_att(
+                    #     control, 'value', config['default_value']
+                    # )
+            self.save_current_run_settings()
+
     def get_controls(self):
         return self.controls
 
@@ -241,11 +339,12 @@ class DAQ(abc.ABC):
             await self.handle_control_action(control, value)
             if (await self.control_action_success(control)):
                 self.set_control_att(control, 'value', value)
+                self.update_current_run_settings()
             else:
                 print(f'Setting {control} unsuccessful')
 
         # TODO: setting control should trigger action
-        print(f'set_control[{control}] = {value}')
+        # print(f'set_control[{control}] = {value}')
 
     # TODO: implement this as an abstract method
     # @abc.abstractmethod
@@ -282,15 +381,17 @@ class DAQ(abc.ABC):
         cnt = 0
         while cnt < timeout:
             try:
-                print(
-                    f'success; {self.get_control_att(control, "action_state")}'
-                )
+                # print(
+                #     f'success; {self.get_control_att(control, "action_state")}'
+                # )
                 if self.get_control_att(control, 'action_state') == 'OK':
                     self.set_control_att(control, 'action_state', 'IDLE')
                     return True
             except Exception as e:
                 print(f'exception: {e}')
                 await asyncio.sleep(.1)
+                cnt += 0.1
+            
         return False
 
     # TODO: add this abstract method to all daq
@@ -405,6 +506,40 @@ class DAQ(abc.ABC):
         self.message_to_ui_nowait(status)
         # self.message_to_ui_nowait(status)
 
+    async def send_settings_to_ui(self):
+        if self.current_run_settings:
+            settings = Message(
+                sender_id=self.get_id(),
+                msgtype=self.class_type,
+                subject="SETTINGS",
+                body={
+                    'purpose': 'UPDATE',
+                    'settings': self.current_run_settings,
+                    # 'note': note,
+                }
+            )
+            await self.message_to_ui(settings)
+           
+    async def update_settings_loop(self):
+        # print(f'send_status: {self.name}, {self.status}')
+        if not self.current_run_settings:
+            self.get_current_run_settings()
+        while True:
+        # while self.current_run_settings:
+            if self.status2.get_run_status() in [Status.READY_TO_RUN, Status.STOPPED]:
+                settings = Message(
+                    sender_id=self.get_id(),
+                    msgtype=self.class_type,
+                    subject="SETTINGS",
+                    body={
+                        'purpose': 'UPDATE',
+                        'settings': self.current_run_settings,
+                        # 'note': note,
+                    }
+                )
+                await self.message_to_ui(settings)
+            await asyncio.sleep(2)
+
     async def send_metadata_loop(self):
 
         while True:
@@ -423,6 +558,28 @@ class DAQ(abc.ABC):
                 self.include_metadata = True
                 asyncio.sleep(1)
 
+    def enable(self):
+        if self.status2.get_enabled_status() != Status.ENABLED:
+        # if self.status['run_status'] != 'STARTED':
+            self.task_list.append(
+                asyncio.ensure_future(self.from_parent_loop())
+            )
+
+            self.task_list.append(
+                asyncio.ensure_future(self.from_child_loop())
+            )
+
+            self.task_list.append(
+                asyncio.create_task(self.update_settings_loop())
+            )
+            self.status2.set_enabled_status(Status.ENABLED)
+
+    def disable(self):
+        self.stop()
+        for t in self.task_list:
+            t.cancel()
+        self.status2.set_enabled_status(Status.DISABLED)
+
     def start(self, cmd=None):
         # self.create_msg_buffers()
         self.status2.set_run_status(Status.STARTING)
@@ -435,24 +592,24 @@ class DAQ(abc.ABC):
             )
         )
 
-        if self.status2.get_run_status() != Status.RUNNING:
-        # if self.status['run_status'] != 'STARTED':
-            self.task_list.append(
-                asyncio.ensure_future(self.from_parent_loop())
-            )
+        # if self.status2.get_run_status() != Status.RUNNING:
+        # # if self.status['run_status'] != 'STARTED':
+        #     self.task_list.append(
+        #         asyncio.ensure_future(self.from_parent_loop())
+        #     )
 
-            self.task_list.append(
-                asyncio.ensure_future(self.from_child_loop())
-            )
-            self.status['run_status'] = 'STARTED'
-            self.status2.set_run_status(Status.RUNNING)
+        #     self.task_list.append(
+        #         asyncio.ensure_future(self.from_child_loop())
+        #     )
+        self.status['run_status'] = 'STARTED'
+        self.status2.set_run_status(Status.RUNNING)
 
         self.send_status()
 
     def stop(self, cmd=None):
         self.status2.set_run_status(Status.STOPPING)
-        for t in self.task_list:
-            t.cancel()
+        # for t in self.task_list:
+        #     t.cancel()
 
         self.status['run_status'] = 'STOPPED'
         self.status2.set_run_status(Status.STOPPED)
@@ -485,9 +642,9 @@ class DAQ(abc.ABC):
         if self.ui_client is not None:
             # self.loop.run_until_complete(self.gui_client.close())
             self.ui_client.sync_close()
-
-        for t in self.ui_task_list:
-            t.cancel()
+        self.disable()
+        # for t in self.ui_task_list:
+        #     t.cancel()
         self.status2.set_run_status(Status.SHUTDOWN)
 
     def create_msg_buffers(self, config=None):
@@ -533,7 +690,7 @@ class DAQ(abc.ABC):
     async def from_parent_loop(self):
         while True:
             msg = await self.from_parent_buf.get()
-            print(f'daq from parent: {msg.to_json()}')
+            # print(f'daq from parent: {msg.to_json()}')
             await self.handle(msg, type="FromParent")
             # await asyncio.sleep(.1)
 

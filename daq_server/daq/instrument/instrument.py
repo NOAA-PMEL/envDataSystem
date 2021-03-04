@@ -163,6 +163,8 @@ class Instrument(DAQ):
         # meta = self.get_metadata()
         # # tell ui to build instrument
 
+        self.get_current_run_settings()
+
         # # add namespace to metadata
         # meta['namespace'] = self.namespace
 
@@ -231,6 +233,7 @@ class Instrument(DAQ):
         # Ready to start
         self.status['ready_to_run'] = True
         self.status2.set_run_status(Status.READY_TO_RUN)
+        self.enable()
         
     # def add_plot_app(self, plot_typ):
 
@@ -450,6 +453,16 @@ class Instrument(DAQ):
             else:
                 self.include_metadata = True
                 asyncio.sleep(1)
+
+    def enable(self):
+        super().enable()
+        for k, iface in self.iface_map.items():
+            iface.enable()
+
+    def disable(self):
+        super().disable()
+        for k, iface in self.iface_map.items():
+            iface.disable()
 
     def start(self, cmd=None):
         # task = asyncio.ensure_future(self.read_loop())

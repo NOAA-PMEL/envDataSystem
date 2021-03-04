@@ -120,6 +120,16 @@ class IFDevice(DAQ):
     # def connect(self, msg=None):
     #     pass
 
+    def enable(self):
+        super().enable()
+        for k, iface in self.iface_map.items():
+            iface.enable()
+
+    def disable(self):
+        for k, iface in self.iface_map.items():
+            iface.disable()
+        super().disable()
+
     def start(self, cmd=None):
         super().start(cmd)
 

@@ -114,6 +114,17 @@ class Interface(DAQ):
     # def connect(self, cmd=None):
     #     pass
 
+    def enable(self):
+        super().enable()
+        self.ifdevice.register_parent(
+            self.get_id(),
+            to_parent_buffer=self.from_child_buf
+        )
+
+    def disable(self):
+        self.ifdevice.deregister_parent(self.get_id())
+        super().disable()
+
     def start(self, cmd=None):
         print('Starting Interface')
         super().start(cmd)
@@ -127,10 +138,10 @@ class Interface(DAQ):
         # Changed to allow multiple interface instances
         #   for a given device. Device will run as long
         #   as there are interfaces registered
-        self.ifdevice.register_parent(
-            self.get_id(),
-            to_parent_buffer=self.from_child_buf
-        )
+        # self.ifdevice.register_parent(
+        #     self.get_id(),
+        #     to_parent_buffer=self.from_child_buf
+        # )
 
     # def read(self, cmd=None):
     #     pass
@@ -165,9 +176,9 @@ class Interface(DAQ):
         #     # print(t)
         #     t.cancel()
 
-        if self.ifdevice is not None:
-            self.ifdevice.deregister_parent(self.get_id())
-            self.ifdevice.shutdown()
+        # if self.ifdevice is not None:
+        #     self.ifdevice.deregister_parent(self.get_id())
+        #     self.ifdevice.shutdown()
 
         super().shutdown()
 
