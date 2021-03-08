@@ -295,7 +295,7 @@ class Controller(DAQ):
         #     # address = "envdaq/controller/" + self.label + "/"
         #     address = f"{base_address}controller/{self.label}/"
         address = f"envdaq/{self.namespace['daq_server']}/controller/{self.namespace['controller']}/"
-        print(f"get_ui_address: {address}")
+        # print(f"get_ui_address: {address}")
         return address
 
     def start(self, cmd=None):

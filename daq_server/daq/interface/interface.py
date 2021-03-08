@@ -115,6 +115,7 @@ class Interface(DAQ):
     #     pass
 
     def enable(self):
+        print('Enabling Interface')
         super().enable()
         self.ifdevice.register_parent(
             self.get_id(),
@@ -162,7 +163,7 @@ class Interface(DAQ):
 
         # if self.ifdevice is not None:
         #     self.ifdevice.stop()
-        self.ifdevice.deregister_parent(self.get_id())
+        # self.ifdevice.deregister_parent(self.get_id())
 
         super().stop(cmd)
 

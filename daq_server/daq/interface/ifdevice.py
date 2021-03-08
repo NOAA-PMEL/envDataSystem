@@ -3,6 +3,7 @@ import asyncio
 import random
 from shared.utilities import util
 from shared.data.message import Message
+from shared.data.status import Status
 import importlib
 from client.serialport import SerialPortClient
 from client.tcpport import TCPPortClient
@@ -95,8 +96,12 @@ class IFDevice(DAQ):
             parent_id,
             to_parent_buffer
         )
-        if not self.started:
-            self.start()          
+        # if not self.started:
+        #     self.start()    
+
+        if self.status2.get_enabled_status() != Status.ENABLED:
+            self.enable()
+              
 
     def deregister_parent(self, parent_id):
         
@@ -109,7 +114,7 @@ class IFDevice(DAQ):
             # self.started and
             len(self.parent_map) == 0
         ):
-            self.stop()
+            self.disable()
 
     def get_ui_address(self):
         # print(self.label)
@@ -133,15 +138,15 @@ class IFDevice(DAQ):
     def start(self, cmd=None):
         super().start(cmd)
 
-        for k, iface in self.iface_map.items():
-            iface.start()
+        # for k, iface in self.iface_map.items():
+        #     iface.start()
 
         self.started = True
 
     def stop(self, cmd=None):
 
-        for k, iface in self.iface_map.items():
-            iface.stop()
+        # for k, iface in self.iface_map.items():
+        #     iface.stop()
 
         super().stop(cmd)
 
@@ -394,9 +399,8 @@ class TCPPortIFDevice(IFDevice):
     def setup(self):
         super().setup()
 
-    def start(self, cmd=None):
-        super().start(cmd)
-        print('Starting TCPPortIFDevice')
+    def enable(self):
+        super().enable()
 
         self.client = TCPPortClient(
             address=self.address,
@@ -410,6 +414,25 @@ class TCPPortIFDevice(IFDevice):
         self.task_list.append(
             asyncio.ensure_future(self.read_data())
         )
+
+
+
+    def start(self, cmd=None):
+        super().start(cmd)
+        print('Starting TCPPortIFDevice')
+
+        # self.client = TCPPortClient(
+        #     address=self.address,
+        #     **self.kwargs,
+        # )
+        # # print(f'tcp port: {self.client}')
+
+        # # # start dummy data loop
+        # # task = asyncio.ensure_future(self.data_loop())
+        # # self.task_list.append(task)
+        # self.task_list.append(
+        #     asyncio.ensure_future(self.read_data())
+        # )
         # self.task_list.append(
         #     asyncio.ensure_future(self.write_data())
         # )
@@ -425,8 +448,8 @@ class TCPPortIFDevice(IFDevice):
                     'DATA': data
                 }
             )
-            print(f'tcpportread: {data}')
-            print(f'tcpid to parent:{msg}')
+            # print(f'tcpportread: {data}')
+            # print(f'tcpid to parent:{msg}')
             await self.message_to_parents(msg)
 
     # async def write_data(self, msg):
@@ -435,6 +458,7 @@ class TCPPortIFDevice(IFDevice):
     #     await self.client.write(msg.body['COMMAND'])
 
     async def handle(self, msg, type=None):
+        # print(f'ifdevice.handle: {msg.subject}')
         if (type == "FromParent"):
             if msg.subject == 'SEND':
                 # print(f'tcpid from parent: {msg.body}')

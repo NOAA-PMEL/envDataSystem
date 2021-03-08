@@ -231,9 +231,9 @@ class Instrument(DAQ):
         # print(f'setup: {msg.body}')
 
         # Ready to start
-        self.status['ready_to_run'] = True
-        self.status2.set_run_status(Status.READY_TO_RUN)
-        self.enable()
+        # self.status['ready_to_run'] = True
+        # self.status2.set_run_status(Status.READY_TO_RUN)
+        # self.enable()
         
     # def add_plot_app(self, plot_typ):
 
@@ -294,6 +294,7 @@ class Instrument(DAQ):
     def get_ui_address(self):
         # print(self.label)
         # print(f'instrument.get_ui_address: {self}')
+        # print(f'inst.get_ui_address: {self.alias}, {self.namespace}, {self}')
         if self.alias and ('name' in self.alias):
             # print(f'self.alias: {self.alias}')
             address = 'envdaq/instrument/'+self.alias['name']+'/'
@@ -310,7 +311,6 @@ class Instrument(DAQ):
         ]
         address = "/".join(address_parts)
         # address = f"envdaq/{self.namespace['daq_server']}/{self.namespace['controller']/instrument/{self.namespace['instrument']}/"
-        # print(f'@@@@@@@@@ instrument.get_ui_address: {address}')
         return address
 
     # def connect(self, cmd=None):
@@ -421,10 +421,13 @@ class Instrument(DAQ):
         for name, value in data.items():
             # print(f'{name} = {value}')
             # self.data_record[timestamp][dataset][name] = value
-            self.data_record[timestamp][name] = (
-                {'VALUE': value}
-            )
-
+            try:
+                self.data_record[timestamp][name] = (
+                    {'VALUE': value}
+                )
+            except KeyError:
+                pass
+            
         while len(self.data_record) > 5:
             least = '9999-99-99T23:59:59Z'
             for k, v in self.data_record.items():
@@ -480,8 +483,8 @@ class Instrument(DAQ):
         # task = asyncio.ensure_future(self.from_child_loop())
         # self.task_list.append(task)
 
-        for k, iface in self.iface_map.items():
-            iface.start()
+        # for k, iface in self.iface_map.items():
+        #     iface.start()
 
     def stop(self, cmd=None):
         print('Instrument.stop()')
@@ -489,8 +492,8 @@ class Instrument(DAQ):
         if self.datafile:
             self.datafile.close()
 
-        for k, iface in self.iface_map.items():
-            iface.stop()
+        # for k, iface in self.iface_map.items():
+        #     iface.stop()
 
         super().stop(cmd)
 

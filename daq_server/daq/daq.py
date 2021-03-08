@@ -72,9 +72,12 @@ class DAQ(abc.ABC):
             self.label = config['LABEL']
         # print(f"id: {self.get_id()}")
 
+        # print(f"16namespace = {self.namespace} - {self.alias}")
+
+        # if namespace is passed, store a copy
         self.namespace = {}
         if namespace:
-            self.namespace = namespace
+            self.namespace = namespace.copy()
         # self.parent_id = "parent-default"
         # if parent_id:
         #     self.parent_id = parent_id
@@ -174,6 +177,7 @@ class DAQ(abc.ABC):
     @abc.abstractmethod
     def setup(self):
         print('daq.setup')
+
         self.start_connections()
 
     # @abc.abstractmethod
@@ -228,6 +232,7 @@ class DAQ(abc.ABC):
     def current_run_settings_file(self) -> Path:
         ns_path = Path("config") / "run"
         # ns_path = ["config", "run"]
+
         if "daq_server" in self.namespace:
             # ns_path.append(self.namespace['daq_server'])
             ns_path /= self.namespace['daq_server']
@@ -258,7 +263,7 @@ class DAQ(abc.ABC):
         try:
             with open(fname) as cfg:
                 self.current_run_settings = json.load(cfg)
-                print(f"{self.current_run_settings}")
+                # print(f"{self.current_run_settings}")
         except (FileNotFoundError, JSONDecodeError, TypeError):
             self.set_current_run_settings_default()
             # saved settings not valid for some reason, set to default
@@ -295,8 +300,7 @@ class DAQ(abc.ABC):
                 with open(fname, "w") as cfg:
                     json.dump(self.current_run_settings, cfg)
             except (FileNotFoundError, JSONDecodeError, TypeError) as e:
-                print(f"Could not save current_run_settigns: {fname}: {e}")
-             
+                print(f"Could not save current_run_settigns: {fname}: {e}")             
 
     def set_current_run_settings_default(self):
         if not self.controls:
@@ -521,11 +525,14 @@ class DAQ(abc.ABC):
             await self.message_to_ui(settings)
            
     async def update_settings_loop(self):
-        # print(f'send_status: {self.name}, {self.status}')
+        # overload this function if you want an update
+        #   settings loop. 
+        # pass
+        # # print(f'send_status: {self.name}, {self.status}')
         if not self.current_run_settings:
             self.get_current_run_settings()
         while True:
-        # while self.current_run_settings:
+            # while self.current_run_settings:
             if self.status2.get_run_status() in [Status.READY_TO_RUN, Status.STOPPED]:
                 settings = Message(
                     sender_id=self.get_id(),

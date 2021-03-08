@@ -64,10 +64,10 @@ class UASCloudyPayload(Controller):
                 'LIST': [],
                 'PRIMARY': None
             },
-            'pops': {
-                'LIST': [],
-                'PRIMARY': None
-            },
+            # 'pops': {
+            #     'LIST': [],
+            #     'PRIMARY': None
+            # },
             'cdp': {
                 'LIST': [],
                 'PRIMARY': None
@@ -386,138 +386,138 @@ class UASCloudyPayload(Controller):
 
             meas_meta['msems'] = msems
 
-        if len(self.component_map['INSTRUMENTS']['pops']['LIST']) > 0:
-            self.has_pops = True
-            # configure GPS measurements
-            # TODO: how to specify primary GPS (or other) meas?
-            pops = dict()
+        # if len(self.component_map['INSTRUMENTS']['pops']['LIST']) > 0:
+        #     self.has_pops = True
+        #     # configure GPS measurements
+        #     # TODO: how to specify primary GPS (or other) meas?
+        #     pops = dict()
 
-            # size_dist_y_data = []
-            # size_dist_default_y_data = []
+        #     # size_dist_y_data = []
+        #     # size_dist_default_y_data = []
 
-            for inst in self.component_map['INSTRUMENTS']['pops']['LIST']:
+        #     for inst in self.component_map['INSTRUMENTS']['pops']['LIST']:
 
-                ts1d_y_data = []
-                ts1d_default_y_data = []
-                ts1d_meas = {
-                    'primary': dict(),
-                }
+        #         ts1d_y_data = []
+        #         ts1d_default_y_data = []
+        #         ts1d_meas = {
+        #             'primary': dict(),
+        #         }
 
-                sd_y_data = []
-                sd_default_y_data = []
-                sd_meas = {
-                    'primary': dict(),
-                }
+        #         sd_y_data = []
+        #         sd_default_y_data = []
+        #         sd_meas = {
+        #             'primary': dict(),
+        #         }
 
-                geo_z_data = []
-                geo_meas = {
-                    'primary': dict(),
-                }
+        #         geo_z_data = []
+        #         geo_meas = {
+        #             'primary': dict(),
+        #         }
 
-                vp_x_data = []
-                vp_meas = {
-                    'primary': dict()
-                }
+        #         vp_x_data = []
+        #         vp_meas = {
+        #             'primary': dict()
+        #         }
 
-                inst_meta = inst.get_metadata()
-                inst_alias = inst_meta['alias']
-                inst_id = inst_meta['ID']
+        #         inst_meta = inst.get_metadata()
+        #         inst_alias = inst_meta['alias']
+        #         inst_id = inst_meta['ID']
 
-                inst_meas = inst_meta['measurement_meta']
-                inst_plots = inst_meta['plot_meta']
+        #         inst_meas = inst_meta['measurement_meta']
+        #         inst_plots = inst_meta['plot_meta']
 
-                # meas_meta[inst_id] = dict()
-                # meas_meta[inst_id]['alias'] = inst_alias
-                pops[inst_id] = dict()
-                pops[inst_id]['alias'] = inst_alias
-                pops[inst_id]['measurement_meta'] = dict()
-                pops[inst_id]['measurement_meta']['primary'] = dict()
-                mm = pops[inst_id]['measurement_meta']['primary']
-                for mtype, meas in inst_meas.items():
-                    if 'integral_concentration' in meas:
-                        mm['integral_concentration'] = (
-                            meas['integral_concentration']
-                        )
+        #         # meas_meta[inst_id] = dict()
+        #         # meas_meta[inst_id]['alias'] = inst_alias
+        #         pops[inst_id] = dict()
+        #         pops[inst_id]['alias'] = inst_alias
+        #         pops[inst_id]['measurement_meta'] = dict()
+        #         pops[inst_id]['measurement_meta']['primary'] = dict()
+        #         mm = pops[inst_id]['measurement_meta']['primary']
+        #         for mtype, meas in inst_meas.items():
+        #             if 'integral_concentration' in meas:
+        #                 mm['integral_concentration'] = (
+        #                     meas['integral_concentration']
+        #                 )
 
-                        ts1d_y_data.append('integral_concentration')
-                        ts1d_meas['primary']['integral_concentration'] = (
-                            meas['integral_concentration']
-                        )
+        #                 ts1d_y_data.append('integral_concentration')
+        #                 ts1d_meas['primary']['integral_concentration'] = (
+        #                     meas['integral_concentration']
+        #                 )
 
-                        geo_z_data.append('integral_concentration')
-                        geo_meas['primary']['integral_concentration'] = (
-                            meas['integral_concentration']
-                        )
+        #                 geo_z_data.append('integral_concentration')
+        #                 geo_meas['primary']['integral_concentration'] = (
+        #                     meas['integral_concentration']
+        #                 )
 
-                        vp_x_data.append('integral_concentration')
-                        vp_meas['primary']['integral_concentration'] = (
-                            meas['integral_concentration']
-                        )
+        #                 vp_x_data.append('integral_concentration')
+        #                 vp_meas['primary']['integral_concentration'] = (
+        #                     meas['integral_concentration']
+        #                 )
 
-                    if 'bin_concentration' in meas:
-                        mm['bin_concentration'] = (
-                            meas['bin_concentration']
-                        )
-                        # {
-                        # # dummy[inst_id]['size_distribution'] = {
-                        #     'measurement_meta': meas['size_distribution'],
-                        # }
-                        sd_y_data.append('bin_concentration')
-                        sd_meas['primary']['bin_concentration'] = (
-                            meas['bin_concentration']
-                        )
-                    if 'diameter_um' in meas:
-                        mm['diameter_um'] = (
-                            meas['diameter_um']
-                        )
-                        # meas_meta[inst_id]['diameter'] = {
-                        # dummy[inst_id]['diameter'] = {
-                        #     'measurement_meta': meas['diameter'],
-                        # }
-                        sd_y_data.append('diameter_um')
-                        sd_meas['primary']['diameter_um'] = (
-                            meas['diameter_um']
-                        )
+        #             if 'bin_concentration' in meas:
+        #                 mm['bin_concentration'] = (
+        #                     meas['bin_concentration']
+        #                 )
+        #                 # {
+        #                 # # dummy[inst_id]['size_distribution'] = {
+        #                 #     'measurement_meta': meas['size_distribution'],
+        #                 # }
+        #                 sd_y_data.append('bin_concentration')
+        #                 sd_meas['primary']['bin_concentration'] = (
+        #                     meas['bin_concentration']
+        #                 )
+        #             if 'diameter_um' in meas:
+        #                 mm['diameter_um'] = (
+        #                     meas['diameter_um']
+        #                 )
+        #                 # meas_meta[inst_id]['diameter'] = {
+        #                 # dummy[inst_id]['diameter'] = {
+        #                 #     'measurement_meta': meas['diameter'],
+        #                 # }
+        #                 sd_y_data.append('diameter_um')
+        #                 sd_meas['primary']['diameter_um'] = (
+        #                     meas['diameter_um']
+        #                 )
 
-                ts1d_source_map[inst_id] = {
-                    'y_data': {
-                        'default': ts1d_y_data
-                    },
-                    'default_y_data': ts1d_default_y_data,
-                    'alias': inst_alias,
-                    'measurement_meta': ts1d_meas
-                }
+        #         ts1d_source_map[inst_id] = {
+        #             'y_data': {
+        #                 'default': ts1d_y_data
+        #             },
+        #             'default_y_data': ts1d_default_y_data,
+        #             'alias': inst_alias,
+        #             'measurement_meta': ts1d_meas
+        #         }
 
-                sd_source_map[inst_id] = {
-                    'y_data': {
-                        'default': sd_y_data
-                    },
-                    'default_y_data': sd_default_y_data,
-                    'alias': inst_alias,
-                    'measurement_meta': sd_meas
-                }
+        #         sd_source_map[inst_id] = {
+        #             'y_data': {
+        #                 'default': sd_y_data
+        #             },
+        #             'default_y_data': sd_default_y_data,
+        #             'alias': inst_alias,
+        #             'measurement_meta': sd_meas
+        #         }
 
-                geo_source_map[inst_id] = {
-                    'z_data': {
-                        'default': geo_z_data
-                    },
-                    'default_z_data': [],
-                    'alias': inst_alias,
-                    'measurement_meta': geo_meas,
-                    'instrument_type': 'pops'
-                }
+        #         geo_source_map[inst_id] = {
+        #             'z_data': {
+        #                 'default': geo_z_data
+        #             },
+        #             'default_z_data': [],
+        #             'alias': inst_alias,
+        #             'measurement_meta': geo_meas,
+        #             'instrument_type': 'pops'
+        #         }
 
-                vp_source_map[inst_id] = {
-                    'x_data': {
-                        'default': vp_x_data
-                    },
-                    'default_x_data': [],
-                    'alias': inst_alias,
-                    'measurement_meta': vp_meas,
-                    'instrument_type': 'pops'
-                }
+        #         vp_source_map[inst_id] = {
+        #             'x_data': {
+        #                 'default': vp_x_data
+        #             },
+        #             'default_x_data': [],
+        #             'alias': inst_alias,
+        #             'measurement_meta': vp_meas,
+        #             'instrument_type': 'pops'
+        #         }
 
-            meas_meta['pops'] = pops
+        #     meas_meta['pops'] = pops
 
         if len(self.component_map['INSTRUMENTS']['cdp']['LIST']) > 0:
             self.has_cdp = True
@@ -990,12 +990,12 @@ class UASCloudyPayload(Controller):
         self.plot_list.append(app_name)
 
         # Add GeoMapPlot
-        geo_plot['source_map'] = geo_source_map
-        plot_name = prefix + '_geo_map'
-        self.plot_config['plots'][plot_name] = geo_plot
-        app_name = '/controller_' + self.alias['name'] + '_' + plot_name
-        self.plot_config['plots'][plot_name]['app_name'] = app_name
-        self.plot_list.append(app_name)
+        # geo_plot['source_map'] = geo_source_map
+        # plot_name = prefix + '_geo_map'
+        # self.plot_config['plots'][plot_name] = geo_plot
+        # app_name = '/controller_' + self.alias['name'] + '_' + plot_name
+        # self.plot_config['plots'][plot_name]['app_name'] = app_name
+        # self.plot_list.append(app_name)
 
         # Add VerticalProfilePlot
         # vp_plot['source_map'] = vp_source_map
@@ -1043,14 +1043,14 @@ class UASCloudyPayload(Controller):
             # print(f'data_json: {data.to_json()}\n')
         elif type == 'FromUI':
             if msg.subject == 'STATUS' and msg.body['purpose'] == 'REQUEST':
-                print(f'msg: {msg.body}')
+                # print(f'msg: {msg.body}')
                 self.send_status()
 
             elif (
                 msg.subject == 'CONTROLS' and
                 msg.body['purpose'] == 'REQUEST'
             ):
-                print(f'msg: {msg.body}')
+                # print(f'msg: {msg.body}')
                 await self.set_control(msg.body['control'], msg.body['value'])
 
             elif (
@@ -1280,6 +1280,15 @@ class UASCloudyPayload(Controller):
             'accumulation',
             'sizing',
         ]
+
+        definition["component_map"] = {
+            "INSTRUMENTS": {
+                "GPS": {"LIST": [], "PRIMARY": None},
+                "msems": {"LIST": [], "PRIMARY": None},
+                "cdp": {"LIST": [], "PRIMARY": None},
+                "trh": {"LIST": [], "PRIMARY": None},
+            }
+        }
 
         return {'DEFINITION': definition}
         # DAQ.daq_definition['DEFINITION'] = definition

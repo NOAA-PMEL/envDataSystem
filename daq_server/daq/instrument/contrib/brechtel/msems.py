@@ -3,6 +3,7 @@
 from daq.instrument.instrument import Instrument
 from daq.instrument.contrib.brechtel.brechtel import BrechtelInstrument
 from shared.data.message import Message
+from shared.data.status import Status
 from daq.daq import DAQ
 import asyncio
 from shared.utilities.util import time_to_next
@@ -42,12 +43,16 @@ class MSEMS(BrechtelInstrument):
 
         self.monitor_start_param = "pressure"
         self.monitor_stop_param = "sd_save"
-        self.scan_start_param = "msems_date"
+        # self.scan_start_param = "scan_date" # change in return value delmiter messes this up
+        self.scan_start_param = "scan_date"
         self.scan_stop_param = "mcpc_errs"
+        self.scan_first_found = False
         self.scan_ready = False
         self.current_bin_counts = []
         self.current_size_dist = []
         self.scan_state = 999
+        self.reading_scan = False
+        self.scan_time = None
         self.scan_run_state = "STOPPED"
 
         self.msems_mode = "off"
@@ -69,7 +74,6 @@ class MSEMS(BrechtelInstrument):
 
     def setup(self):
         super().setup()
-        print(f"namespace = {self.namespace}")
 
         # only has one interface
         self.iface = next(iter(self.iface_map.values()))
@@ -81,7 +85,7 @@ class MSEMS(BrechtelInstrument):
         # add polling loop
         # if polled:
         self.is_polled = False
-        self.poll_rate = 1  # every second
+        self.poll_rate = 2  # every second
 
         # create parse_map and empty data_record
         self.parse_map = dict()
@@ -96,9 +100,15 @@ class MSEMS(BrechtelInstrument):
                     self.parse_map[parse_label] = name
                     # self.data_record_template[msetsname][name] = None
                     self.data_record_template[name] = {"VALUE": None}
+
+        self.status['ready_to_run'] = True
+        self.status2.set_run_status(Status.READY_TO_RUN)
+        self.enable()
+
         print("done")
 
     def enable(self):
+
         super().enable()
 
         # if self.is_polled:
@@ -194,14 +204,14 @@ class MSEMS(BrechtelInstrument):
             # print(f'msg: {msg}')
             # await self.iface.message_from_parent(msg)
             await self.iface_map[if_id].message_from_parent(msg)
-            self.scan_state = "RUNNING"
+            # self.scan_state = "RUNNING"
 
     async def stop_scanning(self):
         if self.iface_components["default"]:
             if_id = self.iface_components["default"]
             # if self.iface:
             self.current_read_cnt = 0
-            cmd = "sems_mode=0\n"
+            cmd = "msems_mode=0\n"
             msg = Message(
                 sender_id=self.get_id(),
                 msgtype=Instrument.class_type,
@@ -238,6 +248,32 @@ class MSEMS(BrechtelInstrument):
 
         super().stop()
 
+    # async def update_settings_loop(self):
+    #     # print(f'send_status: {self.name}, {self.status}')
+    #     print(f"7namespace = {self.namespace}")
+
+    #     if not self.current_run_settings:
+    #         self.get_current_run_settings()
+    #     print(f"8namespace = {self.namespace}")
+    #     while True:
+    #         print(f"****** {self} {self.namespace}")
+    #     # while self.current_run_settings:
+    #         if self.status2.get_run_status() in [Status.READY_TO_RUN, Status.STOPPED]:
+    #             settings = Message(
+    #                 sender_id=self.get_id(),
+    #                 msgtype=self.class_type,
+    #                 subject="SETTINGS",
+    #                 body={
+    #                     'purpose': 'UPDATE',
+    #                     'settings': self.current_run_settings,
+    #                     # 'note': note,
+    #                 }
+    #             )
+    #             print(f'msems settings ns: {self.namespace} - {self.get_ui_address()}')
+    #             await self.message_to_ui(settings)
+    #         print(f"9namespace = {self.namespace}")
+    #         await asyncio.sleep(2)
+
     async def poll_loop(self):
         print("polling loop started")
         while True:
@@ -252,7 +288,7 @@ class MSEMS(BrechtelInstrument):
                 self.current_read_cnt = 0
                 if self.msems_mode == "off":
                     # do monitor reading "all" or "read"?
-                    cmds = ["read"]
+                    cmds = ["read\n"]
                     for cmd in cmds:
                         msg = Message(
                             sender_id=self.get_id(),
@@ -262,7 +298,7 @@ class MSEMS(BrechtelInstrument):
                         )
                         # print(f'msg: {msg.to_json()}')
 
-                        await self.iface_map[if_id].message_from_parent(msg)
+                        # await self.iface_map[if_id].message_from_parent(msg)
 
             await asyncio.sleep(time_to_next(self.poll_rate))
 
@@ -287,6 +323,10 @@ class MSEMS(BrechtelInstrument):
             # TODO: how to deal with record that crosses second bound?
             # if self.current_read_cnt == len(self.current_poll_cmds):
             if self.msems_mode == "scanning" and self.scan_ready:
+
+                # use scan_time
+                dt = self.scan_time
+
                 # bin_time = 1
                 try:
                     bin_time = self.current_run_settings["bin_time"]
@@ -313,7 +353,12 @@ class MSEMS(BrechtelInstrument):
                 # )
 
                 for control, value in self.current_run_settings.items():
-                    self.update_data_record(dt, control, value)
+                    # try:
+                        # pl = self.controls[control]["parse_label"]
+                        # if pl in self.data_record_template:
+                    self.update_data_record(dt, {control: value}, value)
+                    # except KeyError:
+                    #     pass
 
                 # if len(self.current_size_dist) == 30:
                 # if len(self.current_bin_counts) == 30:
@@ -432,7 +477,6 @@ class MSEMS(BrechtelInstrument):
 
                 entry = self.get_data_entry(dt)
                 # print(f'entry: {entry}')
-
                 data = Message(
                     sender_id=self.get_id(),
                     msgtype=Instrument.class_type,
@@ -444,6 +488,7 @@ class MSEMS(BrechtelInstrument):
 
                 # reset read count
                 self.current_read_cnt = 0
+                self.scan_first_found = False
                 self.scan_ready = False
 
                 # await self.msg_buffer.put(data)
@@ -458,24 +503,25 @@ class MSEMS(BrechtelInstrument):
             
             elif self.msems_mode == "off":
                 # monitoring the data
-                print(f"monitor: {dt}")
+                # print(f"monitor: {dt}")
+                pass
 
             # print(f'data_json: {data.to_json()}\n')
             # await asyncio.sleep(0.01)
-        elif type == "FromUI":
-            if msg.subject == "STATUS" and msg.body["purpose"] == "REQUEST":
-                print(f"msg: {msg.body}")
-                self.send_status()
+        # elif type == "FromUI":
+        #     if msg.subject == "STATUS" and msg.body["purpose"] == "REQUEST":
+        #         print(f"msg: {msg.body}")
+        #         self.send_status()
 
-            elif msg.subject == "CONTROLS" and msg.body["purpose"] == "REQUEST":
-                print(f"msg: {msg.body}")
-                await self.set_control(msg.body["control"], msg.body["value"])
+        #     elif msg.subject == "CONTROLS" and msg.body["purpose"] == "REQUEST":
+        #         print(f"msg: {msg.body}")
+        #         await self.set_control(msg.body["control"], msg.body["value"])
 
-            elif msg.subject == "RUNCONTROLS" and msg.body["purpose"] == "REQUEST":
+        #     elif msg.subject == "RUNCONTROLS" and msg.body["purpose"] == "REQUEST":
 
-                print(f"msg: {msg.body}")
-                await self.handle_control_action(msg.body["control"], msg.body["value"])
-
+        #         print(f"msg: {msg.body}")
+        #         await self.handle_control_action(msg.body["control"], msg.body["value"])
+        await super().handle(msg, type)
         # print("DummyInstrument:msg: {}".format(msg.body))
         # else:
         #     await asyncio.sleep(0.01)
@@ -499,7 +545,7 @@ class MSEMS(BrechtelInstrument):
                     if self.iface_components["default"]:
                         if_id = self.iface_components["default"]
                         cmd = f'{self.controls[control]["parse_label"]}={value}\n'
-                        print(f"msems control: {cmd.strip()}")
+                        # print(f"msems control: {cmd.strip()}")
                         # cmd = "msems_mode=2\n"
                         msg = Message(
                             sender_id=self.get_id(),
@@ -523,52 +569,77 @@ class MSEMS(BrechtelInstrument):
         # data['DATETIME'] = msg.body['DATETIME']
         dt = msg.body["DATETIME"]
 
-        line = msg.body["DATA"].rstrip()
+        line = msg.body["DATA"].rstrip().split()
         # if len(line) == 0:
         #     self.current_read_cnt += 1
         # else:
-        parts = line.split("=")
-        if len(parts) < 2:
-            return dt
+        parts = []
+        for entry in line:
+            if "=" in entry:
+                parts=entry.split("=")
+            # parts = line.split("=")
+            if len(parts) < 2:
+                return dt
 
-        # self.scan_state = 999
-        # if self.scan_run_state == 'STOPPING':
-        #     if parts[0] == 'scan_state':
-        #         self.scan_state = int(parts[1])
-        print(f"parse: {parts[0]}={parts[1]}")
-        # print(f'77777777777777{parts[0]} = {parts[1]}')
-        if parts[0] in self.parse_map:
-            self.update_data_record(
-                dt,
-                {self.parse_map[parts[0]]: parts[1]},
-            )
-            if self.scan_stop_param == parts[0]:
-                self.scan_ready = True
-            elif self.scan_start_param == parts[0]:
-                # self.current_size_dist.clear()
-                self.current_bin_counts.clear()
-        elif parts[0].find("bin") >= 0:
-            self.current_bin_counts.append(float(parts[1]))
-            # self.current_size_dist.append(float(parts[1]))
-            print(f"{parts[0]}={parts[1]}")
-            # print(f'{self.current_size_dist}')
-            print(f"{self.current_bin_counts}")
-        # # TODO: how to limit to one/sec
-        # # check for new second
-        # # if data['DATETIME'] == self.last_entry['DATA']['DATETIME']:
-        # #     # don't duplicate timestamp for now
-        # #     return
-        # # self.last_entry['DATETIME'] = data['DATETIME']
+            # self.scan_state = 999
+            # if self.scan_run_state == 'STOPPING':
+            #     if parts[0] == 'scan_state':
+            #         self.scan_state = int(parts[1])
+            # print(f"parse: {dt} {parts[0]}={parts[1]}")
+            # print(f'77777777777777{parts[0]} = {parts[1]}')
+            if parts[0] == "scan_state":
+                self.scan_state = parts[1]
+                if self.scan_state == "4":
+                    # print(f"reading scan data")
+                    self.reading_scan = True
+                    self.scan_ready = False
+                    self.current_bin_counts.clear()
+                    self.scan_time = dt
 
-        # measurements = dict()
+                else:
+                    if self.reading_scan:
+                        self.scan_ready = True
+                    self.reading_scan = False
+            if self.reading_scan:
+                print(f"scan state: {self.scan_state}")
+                if parts[0] in self.parse_map:
+                    self.update_data_record(
+                        # dt,
+                        self.scan_time,
+                        {self.parse_map[parts[0]]: parts[1]},
+                    )
+                    # if self.scan_stop_param == parts[0]:
+                    #     if self.scan_first_found:
+                    #         self.scan_ready = True
+                    #     else:
+                    #         self.scan_ready = False
+                    # elif self.scan_start_param == parts[0]:
 
-        # controls_list = ['mcpc_power', 'mcpc_pump']
+                    #     # self.current_size_dist.clear()
+                    #     self.scan_first_found = True
+                    #     self.current_bin_counts.clear()
+                elif parts[0].find("bin") >= 0:
+                    self.current_bin_counts.append(float(parts[1]))
+                    # self.current_size_dist.append(float(parts[1]))
+                    # print(f"{parts[0]}={parts[1]}")
+                    # print(f'{self.current_size_dist}')
+                    # print(f"{self.current_bin_counts}")
+                # # TODO: how to limit to one/sec
+                # # check for new second
+                # # if data['DATETIME'] == self.last_entry['DATA']['DATETIME']:
+                # #     # don't duplicate timestamp for now
+                # #     return
+                # # self.last_entry['DATETIME'] = data['DATETIME']
 
-        # for name in controls_list:
-        #     self.update_data_record(
-        #         dt,
-        #         {name: None},
-        #     )
+                # measurements = dict()
+
+                # controls_list = ['mcpc_power', 'mcpc_pump']
+
+                # for name in controls_list:
+                #     self.update_data_record(
+                #         dt,
+                #         {name: None},
+                #     )
 
         return dt
 
@@ -940,7 +1011,7 @@ class MSEMS(BrechtelInstrument):
             "parse_label": "msems_errs",
             "control": None,
         }
-        y_data.append("error")
+        y_data.append("msems_error")
 
         process_meas["mcpc_sample_flow"] = {
             "dimensions": {
@@ -998,7 +1069,7 @@ class MSEMS(BrechtelInstrument):
                 "unlimited": "TIME",
                 "units": ["dateTime"],
             },
-            "units": "degC",  # should be cfunits or udunits
+            "units": "counts",  # should be cfunits or udunits
             "uncertainty": 0.2,
             "source": "MEASURED",
             "data_type": "NUMERIC",
