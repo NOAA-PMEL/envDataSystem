@@ -3,6 +3,7 @@ import sys
 from daq.instrument.instrument import Instrument
 from daq.instrument.contrib.dmt.dmt import DMTInstrument
 from shared.data.message import Message
+from shared.data.status import Status
 # from daq.daq import DAQ
 import asyncio
 from shared.utilities.util import time_to_next
@@ -134,6 +135,23 @@ class CDP2(DMTInstrument):
                 self.data_record_template[name] = {'VALUE': None}
 
         # TODO: read config file to init probe
+        self.status2.set_run_status(Status.READY_TO_RUN)
+        self.enable()
+
+    def enable(self):
+
+        super().enable()
+
+        # start cdp power disabled
+        self.cdp_power_switch(power=False)
+        # if self.is_polled:
+        self.polling_task = asyncio.create_task(self.poll_loop())
+
+    def disable(self):
+        self.cdp_power_switch(power=False)
+        if self.polling_task:
+            self.polling_task.cancel()
+        super().disable()
 
     def get_cdp_command(self, cmd_type):
 
@@ -172,18 +190,32 @@ class CDP2(DMTInstrument):
         cmd += pack('<H', checksum)
         return cmd
 
+    def cdp_power_switch(self, power=False):
+
+        if power:
+            if 'RPi.GPIO' in sys.modules:
+                GPIO.setmode(GPIO.BOARD)
+                GPIO.setup(self.gpio_enable_ch, GPIO.OUT, initial=GPIO.LOW)
+                GPIO.output(self.gpio_enable_ch, GPIO.HIGH)
+        else:
+            if 'RPi.GPIO' in sys.modules:
+                GPIO.output(self.gpio_enable_ch, GPIO.LOW)
+                GPIO.cleanup(self.gpio_enable_ch)
+
+
     def start(self, cmd=None):
         super().start()
 
         # turn on 'enable' line via gpio
-        if 'RPi.GPIO' in sys.modules:
-            GPIO.setmode(GPIO.BOARD)
-            GPIO.setup(self.gpio_enable_ch, GPIO.OUT, initial=GPIO.LOW)
-            GPIO.output(self.gpio_enable_ch, GPIO.HIGH)
+        # if 'RPi.GPIO' in sys.modules:
+        #     GPIO.setmode(GPIO.BOARD)
+        #     GPIO.setup(self.gpio_enable_ch, GPIO.OUT, initial=GPIO.LOW)
+        #     GPIO.output(self.gpio_enable_ch, GPIO.HIGH)
 
+        self.cdp_power_switch(power=True)
         self.scan_run_state = 'CONFIGURE'
-        if self.is_polled:
-            self.polling_task = asyncio.ensure_future(self.poll_loop())
+        # if self.is_polled:
+        #     self.polling_task = asyncio.ensure_future(self.poll_loop())
 
         # TODO: Send config string to unit and wait for ACK
         # print(f'self.status = SETUP')
@@ -213,13 +245,13 @@ class CDP2(DMTInstrument):
         #     asyncio.ensure_future(self.start_scanning())
 
     def stop(self, cmd=None):
-        if 'RPi.GPIO' in sys.modules:
-            GPIO.output(self.gpio_enable_ch, GPIO.LOW)
-            GPIO.cleanup(self.gpio_enable_ch)
-
+        # if 'RPi.GPIO' in sys.modules:
+        #     GPIO.output(self.gpio_enable_ch, GPIO.LOW)
+        #     GPIO.cleanup(self.gpio_enable_ch)
+        self.cdp_power_switch(power=False)
         self.scan_run_state = 'STOPPED'
-        if self.polling_task:
-            self.polling_task.cancel()
+        # if self.polling_task:
+        #     self.polling_task.cancel()
 
         super().stop()
 
@@ -238,46 +270,46 @@ class CDP2(DMTInstrument):
             # cmds = self.current_poll_cmds
             # print(f'cmds: {cmds}')
             # cmds = ['read\n']
+            if self.scan_run_state == "CONFIGURE" or self.scan_run_state == "RUN":
+                if self.iface:
 
-            if self.iface:
+                    print(f'run state {self.scan_run_state}')
+                    if self.scan_run_state == 'CONFIGURE':
 
-                print(f'run state {self.scan_run_state}')
-                if self.scan_run_state == 'CONFIGURE':
+                        msg = Message(
+                            sender_id=self.get_id(),
+                            msgtype=Instrument.class_type,
+                            subject='SEND',
+                            body={
+                                'return_packet_bytes': 4,
+                                'send_packet': configure_cmd,
+                            }
+                        )
+                        self.scan_run_state = 'CONFIGURING'
+                        # print(f'msg: {msg.to_json()}')
+                        await self.iface.message_from_parent(msg)
 
-                    msg = Message(
-                        sender_id=self.get_id(),
-                        msgtype=Instrument.class_type,
-                        subject='SEND',
-                        body={
-                            'return_packet_bytes': 4,
-                            'send_packet': configure_cmd,
-                        }
-                    )
-                    self.scan_run_state = 'CONFIGURING'
-                    # print(f'msg: {msg.to_json()}')
-                    await self.iface.message_from_parent(msg)
+                    elif self.scan_run_state == 'CONFIGURING':
 
-                elif self.scan_run_state == 'CONFIGURING':
+                        if self.reconfigure_count > self.reconfigure_limit:
+                            self.scan_run_state = "CONFIGURE"
+                            self.reconfigure_count = 0
+                        else:
+                            self.reconfigure_count += 1
 
-                    if self.reconfigure_count > self.reconfigure_limit:
-                        self.scan_run_state = "CONFIGURE"
-                        self.reconfigure_count = 0
-                    else:
-                        self.reconfigure_count += 1
+                    elif self.scan_run_state == 'RUN':
 
-                elif self.scan_run_state == 'RUN':
-
-                    msg = Message(
-                        sender_id=self.get_id(),
-                        msgtype=Instrument.class_type,
-                        subject='SEND',
-                        body={
-                            'return_packet_bytes': 156,
-                            'send_packet': send_data_cmd,
-                        }
-                    )
-                    # print(f'msg: {msg.to_json()}')
-                    await self.iface.message_from_parent(msg)
+                        msg = Message(
+                            sender_id=self.get_id(),
+                            msgtype=Instrument.class_type,
+                            subject='SEND',
+                            body={
+                                'return_packet_bytes': 156,
+                                'send_packet': send_data_cmd,
+                            }
+                        )
+                        # print(f'msg: {msg.to_json()}')
+                        await self.iface.message_from_parent(msg)
 
             await asyncio.sleep(time_to_next(self.poll_rate))
 
@@ -290,6 +322,14 @@ class CDP2(DMTInstrument):
             dt = self.parse(msg)
             print(f'dt = {dt}')
             if dt:
+
+                # TODO: for when controls are added
+                # for control, value in self.current_run_settings.items():
+                #     # try:
+                #         # pl = self.controls[control]["parse_label"]
+                #         # if pl in self.data_record_template:
+                #     self.update_data_record(dt, {control: value}, value)
+
                 entry = self.get_data_entry(dt)
 
                 data = Message(
@@ -303,28 +343,31 @@ class CDP2(DMTInstrument):
 
                 await self.message_to_ui(data)
 
-        elif type == 'FromUI':
-            if msg.subject == 'STATUS' and msg.body['purpose'] == 'REQUEST':
-                print(f'msg: {msg.body}')
-                self.send_status()
 
-            elif (
-                msg.subject == 'CONTROLS' and
-                msg.body['purpose'] == 'REQUEST'
-            ):
-                print(f'msg: {msg.body}')
-                await self.set_control(
-                    msg.body['control'], msg.body['value']
-                )
+        # elif type == 'FromUI':
+        #     if msg.subject == 'STATUS' and msg.body['purpose'] == 'REQUEST':
+        #         print(f'msg: {msg.body}')
+        #         self.send_status()
 
-            elif (
-                msg.subject == 'RUNCONTROLS' and
-                msg.body['purpose'] == 'REQUEST'
-            ):
-                print(f'msg: {msg.body}')
-                await self.handle_control_action(
-                    msg.body['control'], msg.body['value']
-                )
+        #     elif (
+        #         msg.subject == 'CONTROLS' and
+        #         msg.body['purpose'] == 'REQUEST'
+        #     ):
+        #         print(f'msg: {msg.body}')
+        #         await self.set_control(
+        #             msg.body['control'], msg.body['value']
+        #         )
+
+        #     elif (
+        #         msg.subject == 'RUNCONTROLS' and
+        #         msg.body['purpose'] == 'REQUEST'
+        #     ):
+        #         print(f'msg: {msg.body}')
+        #         await self.handle_control_action(
+        #             msg.body['control'], msg.body['value']
+        #         )
+
+        await super().handle(msg, type)
 
         # print("DummyInstrument:msg: {}".format(msg.body))
         # else:
@@ -339,6 +382,32 @@ class CDP2(DMTInstrument):
                     self.stop()
 
                 self.set_control_att(control, 'action_state', 'OK')
+
+            # TODO: for when controls are added
+            # else:
+            #     try:
+            #         # print(
+            #         #     f'send command to msems: {self.controls[control]["parse_label"]}={value}'
+            #         # )
+            #         if self.iface_components["default"]:
+            #             if_id = self.iface_components["default"]
+            #             cmd = f'{self.controls[control]["parse_label"]}={value}\n'
+            #             # print(f"msems control: {cmd.strip()}")
+            #             # cmd = "msems_mode=2\n"
+            #             msg = Message(
+            #                 sender_id=self.get_id(),
+            #                 msgtype=Instrument.class_type,
+            #                 subject="SEND",
+            #                 body=cmd,
+            #             )
+            #             await self.iface_map[if_id].message_from_parent(msg)
+
+            #         self.set_control_att(control, "action_state", "OK")
+            #     except KeyError:
+            #         print(f"can't set {control}")
+            #         self.set_control_att(control, "action_state", "NOT_OK")
+
+
 
     def parse(self, msg):
         print(f'parse: {msg}')
