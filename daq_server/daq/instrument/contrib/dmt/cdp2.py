@@ -135,6 +135,7 @@ class CDP2(DMTInstrument):
                 self.data_record_template[name] = {'VALUE': None}
 
         # TODO: read config file to init probe
+        self.status['ready_to_run'] = True
         self.status2.set_run_status(Status.READY_TO_RUN)
         self.enable()
 
@@ -148,7 +149,7 @@ class CDP2(DMTInstrument):
         self.polling_task = asyncio.create_task(self.poll_loop())
 
     def disable(self):
-        self.cdp_power_switch(power=False)
+        self.cdp_power_switch(power=False, cleanup=True)
         if self.polling_task:
             self.polling_task.cancel()
         super().disable()
@@ -190,17 +191,21 @@ class CDP2(DMTInstrument):
         cmd += pack('<H', checksum)
         return cmd
 
-    def cdp_power_switch(self, power=False):
+    def cdp_power_switch(self, power=False, cleanup=False):
 
-        if power:
-            if 'RPi.GPIO' in sys.modules:
-                GPIO.setmode(GPIO.BOARD)
-                GPIO.setup(self.gpio_enable_ch, GPIO.OUT, initial=GPIO.LOW)
+        if 'RPi.GPIO' in sys.modules:
+            GPIO.setmode(GPIO.BOARD)
+            GPIO.setup(self.gpio_enable_ch, GPIO.OUT, initial=GPIO.LOW)
+
+            if power:
                 GPIO.output(self.gpio_enable_ch, GPIO.HIGH)
-        else:
-            if 'RPi.GPIO' in sys.modules:
+            else:
                 GPIO.output(self.gpio_enable_ch, GPIO.LOW)
+
+            if cleanup:
                 GPIO.cleanup(self.gpio_enable_ch)
+        else:
+            pass
 
 
     def start(self, cmd=None):
@@ -270,7 +275,7 @@ class CDP2(DMTInstrument):
             # cmds = self.current_poll_cmds
             # print(f'cmds: {cmds}')
             # cmds = ['read\n']
-            if self.scan_run_state == "CONFIGURE" or self.scan_run_state == "RUN":
+            if self.scan_run_state == "CONFIGURE" or self.scan_run_state == "CONFIGURING" or self.scan_run_state == "RUN":
                 if self.iface:
 
                     print(f'run state {self.scan_run_state}')
@@ -315,7 +320,7 @@ class CDP2(DMTInstrument):
 
     async def handle(self, msg, type=None):
 
-        print(f'%%%%%CDP2.handle: {msg.to_json()}')
+        # print(f'%%%%%CDP2.handle: {msg.to_json()}')
         # handle messages from multiple sources. What ID to use?
         if (type == 'FromChild' and msg.type == Interface.class_type):
             # id = msg.sender_id

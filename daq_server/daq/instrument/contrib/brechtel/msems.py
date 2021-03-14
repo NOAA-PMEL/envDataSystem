@@ -248,31 +248,26 @@ class MSEMS(BrechtelInstrument):
 
         super().stop()
 
-    # async def update_settings_loop(self):
-    #     # print(f'send_status: {self.name}, {self.status}')
-    #     print(f"7namespace = {self.namespace}")
+    async def update_settings_loop(self):
+        # print(f'send_status: {self.name}, {self.status}')
 
-    #     if not self.current_run_settings:
-    #         self.get_current_run_settings()
-    #     print(f"8namespace = {self.namespace}")
-    #     while True:
-    #         print(f"****** {self} {self.namespace}")
-    #     # while self.current_run_settings:
-    #         if self.status2.get_run_status() in [Status.READY_TO_RUN, Status.STOPPED]:
-    #             settings = Message(
-    #                 sender_id=self.get_id(),
-    #                 msgtype=self.class_type,
-    #                 subject="SETTINGS",
-    #                 body={
-    #                     'purpose': 'UPDATE',
-    #                     'settings': self.current_run_settings,
-    #                     # 'note': note,
-    #                 }
-    #             )
-    #             print(f'msems settings ns: {self.namespace} - {self.get_ui_address()}')
-    #             await self.message_to_ui(settings)
-    #         print(f"9namespace = {self.namespace}")
-    #         await asyncio.sleep(2)
+        if not self.current_run_settings:
+            self.get_current_run_settings()
+        while True:
+        # while self.current_run_settings:
+            if self.status2.get_run_status() in [Status.READY_TO_RUN, Status.STOPPED]:
+                settings = Message(
+                    sender_id=self.get_id(),
+                    msgtype=self.class_type,
+                    subject="SETTINGS",
+                    body={
+                        'purpose': 'UPDATE',
+                        'settings': self.current_run_settings,
+                        # 'note': note,
+                    }
+                )
+                await self.message_to_ui(settings)
+            await asyncio.sleep(2)
 
     async def poll_loop(self):
         print("polling loop started")

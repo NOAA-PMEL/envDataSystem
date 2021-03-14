@@ -2,12 +2,12 @@ import json
 from daq.instrument.instrument import Instrument
 from shared.data.message import Message
 from shared.data.status import Status
-from daq.daq import DAQ
+# from daq.daq import DAQ
 import asyncio
 from shared.utilities.util import time_to_next, dt_to_string
 from daq.interface.interface import Interface
-import math
-import numpy as np
+# import math
+# import numpy as np
 
 
 class RotronicsInstrument(Instrument):
@@ -164,7 +164,7 @@ class RotronicsHC2(RotronicsInstrument):
         # print(f'%%%%%Instrument.handle: {msg.to_json()}')
         # handle messages from multiple sources. What ID to use?
         if (type == 'FromChild' and msg.type == Interface.class_type):
-            # print(f'rotronics scan: {msg.to_json()}')
+            print(f'rotronics scan: {msg.to_json()}')
 
             # id = msg.sender_id
 
@@ -193,7 +193,7 @@ class RotronicsHC2(RotronicsInstrument):
             if self.datafile:
                 await self.datafile.write_message(data)
 
-            # print(f'data_json: {data.to_json()}\n')
+            print(f'data_json: {data.to_json()}\n')
             # await asyncio.sleep(0.01)
 
         # elif type == 'FromUI':

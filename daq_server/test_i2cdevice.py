@@ -103,8 +103,13 @@ async def read_data(client):
             try:
                 data = struct.unpack('<6B', unhexdata)
                 temp = data[0] * 256 + data[1]
+                # temp = data[0] << 8 | data[1]
                 cTemp = -45 + (175 * temp / 65535.0)
+                # cTemp = temp
                 humidity = 100 * (data[3] * 256 + data[4]) / 65535.0
+                # humidity = data[3] << 8 | data[4]
+                # humidity = (100.0*float(humidity))/65535.0
+                # humidity = 100.0*float(humidity)/65535.0
                 print(f'T = {round(cTemp, 2)}C, RH = {round(humidity, 2)}%')
             except Exception as e:
                 print(f'{e}')

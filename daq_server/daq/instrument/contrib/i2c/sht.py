@@ -1,6 +1,7 @@
 # import json
 from daq.instrument.instrument import Instrument
 from shared.data.message import Message
+from shared.data.status import Status
 # from daq.daq import DAQ
 import asyncio
 from shared.utilities.util import time_to_next
@@ -103,15 +104,30 @@ class SHT31(SHTInstrument):
                 # self.data_record_template[msetsname][name] = None
                 self.data_record_template[name] = {'VALUE': None}
 
-    def start(self, cmd=None):
-        super().start()
+        self.status['ready_to_run'] = True
+        self.status2.set_run_status(Status.READY_TO_RUN)
+        self.enable()
 
+    def enable(self):
+        super().enable()
+        # print(f"polled: {self.is_polled}")
         if self.is_polled:
             self.polling_task = asyncio.ensure_future(self.poll_loop())
 
-    def stop(self, cmd=None):
+    def disable(self):
         if self.polling_task:
             self.polling_task.cancel()
+        super().disable()
+
+    def start(self, cmd=None):
+        super().start()
+
+        # if self.is_polled:
+        #     self.polling_task = asyncio.ensure_future(self.poll_loop())
+
+    def stop(self, cmd=None):
+        # if self.polling_task:
+        #     self.polling_task.cancel()
 
         # TODO: add delay while scanning is stopped
         super().stop()
@@ -168,7 +184,7 @@ class SHT31(SHTInstrument):
                     subject='SEND',
                     body=cmd_args,
                 )
-                # print(f'msg: {msg.body}')
+                print(f'msg: {msg.body}')
                 await self.iface.message_from_parent(msg)
 
             await asyncio.sleep(time_to_next(self.poll_rate))
@@ -213,26 +229,28 @@ class SHT31(SHTInstrument):
                 # print(f'data_json: {data.to_json()}\n')
                 # await asyncio.sleep(0.01)
 
-        elif type == 'FromUI':
-            if msg.subject == 'STATUS' and msg.body['purpose'] == 'REQUEST':
-                # print(f'msg: {msg.body}')
-                self.send_status()
+        # elif type == 'FromUI':
+        #     if msg.subject == 'STATUS' and msg.body['purpose'] == 'REQUEST':
+        #         # print(f'msg: {msg.body}')
+        #         self.send_status()
 
-            elif (
-                msg.subject == 'CONTROLS' and
-                msg.body['purpose'] == 'REQUEST'
-            ):
-                # print(f'msg: {msg.body}')
-                await self.set_control(msg.body['control'], msg.body['value'])
+        #     elif (
+        #         msg.subject == 'CONTROLS' and
+        #         msg.body['purpose'] == 'REQUEST'
+        #     ):
+        #         # print(f'msg: {msg.body}')
+        #         await self.set_control(msg.body['control'], msg.body['value'])
 
-            elif (
-                msg.subject == 'RUNCONTROLS' and
-                msg.body['purpose'] == 'REQUEST'
-            ):
-                # print(f'msg: {msg.body}')
-                await self.handle_control_action(
-                    msg.body['control'], msg.body['value']
-                )
+        #     elif (
+        #         msg.subject == 'RUNCONTROLS' and
+        #         msg.body['purpose'] == 'REQUEST'
+        #     ):
+        #         # print(f'msg: {msg.body}')
+        #         await self.handle_control_action(
+        #             msg.body['control'], msg.body['value']
+        #         )
+
+        await super().handle(msg, type)
 
         # print("DummyInstrument:msg: {}".format(msg.body))
         # else:

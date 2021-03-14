@@ -189,6 +189,8 @@ def set_env_variables(conf_vars):
             os.environ[name] = str(val)
             print(f"set env: {name}: {val}")
 
+    print(f"os.environ: {os.environ}")
+
 def init_server_config():
     root_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     src = os.path.join(root_path, "setup", "daq_server_conf_tmpl.py")
