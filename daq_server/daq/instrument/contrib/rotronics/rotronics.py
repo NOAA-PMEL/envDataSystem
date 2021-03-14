@@ -1,12 +1,13 @@
 import json
 from daq.instrument.instrument import Instrument
 from shared.data.message import Message
-from daq.daq import DAQ
+from shared.data.status import Status
+# from daq.daq import DAQ
 import asyncio
 from shared.utilities.util import time_to_next, dt_to_string
 from daq.interface.interface import Interface
-import math
-import numpy as np
+# import math
+# import numpy as np
 
 
 class RotronicsInstrument(Instrument):
@@ -73,6 +74,7 @@ class RotronicsHC2(RotronicsInstrument):
 
     def setup(self):
         super().setup()
+        # print(f"namespace = {self.namespace}")
 
         # only has one interface
         self.iface = next(iter(self.iface_map.values()))
@@ -100,15 +102,30 @@ class RotronicsHC2(RotronicsInstrument):
                 # self.data_record_template[msetsname][name] = None
                 self.data_record_template[name] = {'VALUE': None}
 
-    def start(self, cmd=None):
-        super().start()
+        self.status['ready_to_run'] = True
+        self.status2.set_run_status(Status.READY_TO_RUN)
+        self.enable()
 
+    def enable(self):
+        super().enable()
+        # print(f"polled: {self.is_polled}")
         if self.is_polled:
             self.polling_task = asyncio.ensure_future(self.poll_loop())
 
-    def stop(self, cmd=None):
+    def disable(self):
         if self.polling_task:
             self.polling_task.cancel()
+        super().disable()
+
+    def start(self, cmd=None):
+        super().start()
+
+        # if self.is_polled:
+        #     self.polling_task = asyncio.ensure_future(self.poll_loop())
+
+    def stop(self, cmd=None):
+        # if self.polling_task:
+        #     self.polling_task.cancel()
 
         # TODO: add delay while scanning is stopped
         super().stop()
@@ -117,7 +134,7 @@ class RotronicsHC2(RotronicsInstrument):
         print('polling loop started')
 
         # wait for start of next scan period
-        # print(f'Starting scan in {time_to_next(scan_time)} seconds')
+        # print(f'Starting scan in {time_to_next(self.poll_rate)} seconds')
         await asyncio.sleep(time_to_next(self.poll_rate))
 
         while True:
@@ -147,7 +164,7 @@ class RotronicsHC2(RotronicsInstrument):
         # print(f'%%%%%Instrument.handle: {msg.to_json()}')
         # handle messages from multiple sources. What ID to use?
         if (type == 'FromChild' and msg.type == Interface.class_type):
-            # print(f'rotronics scan: {msg.to_json()}')
+            print(f'rotronics scan: {msg.to_json()}')
 
             # id = msg.sender_id
 
@@ -164,6 +181,9 @@ class RotronicsHC2(RotronicsInstrument):
             # to controller
             data.update(subject='DATA', body=entry)
 
+            # print(f"rotronics: {data.to_json()}")
+            # print(f'rotronics ns: {self.namespace} - {self.get_ui_address()}')
+
             # send data to user interface
             await self.message_to_ui(data)
             # send data to controller
@@ -173,23 +193,24 @@ class RotronicsHC2(RotronicsInstrument):
             if self.datafile:
                 await self.datafile.write_message(data)
 
-            # print(f'data_json: {data.to_json()}\n')
+            print(f'data_json: {data.to_json()}\n')
             # await asyncio.sleep(0.01)
 
-        elif type == 'FromUI':
-            if msg.subject == 'STATUS' and msg.body['purpose'] == 'REQUEST':
-                # print(f'msg: {msg.body}')
-                self.send_status()
+        # elif type == 'FromUI':
+        #     if msg.subject == 'STATUS' and msg.body['purpose'] == 'REQUEST':
+        #         # print(f'msg: {msg.body}')
+        #         self.send_status()
 
-            elif msg.subject == 'CONTROLS' and msg.body['purpose'] == 'REQUEST':
-                # print(f'msg: {msg.body}')
-                await self.set_control(msg.body['control'], msg.body['value'])
-            elif msg.subject == 'RUNCONTROLS' and msg.body[
-                    'purpose'] == 'REQUEST':
-                # print(f'msg: {msg.body}')
-                await self.handle_control_action(msg.body['control'],
-                                                 msg.body['value'])
-                # await self.set_control(msg.body['control'], msg.body['value'])
+        #     elif msg.subject == 'CONTROLS' and msg.body['purpose'] == 'REQUEST':
+        #         # print(f'msg: {msg.body}')
+        #         await self.set_control(msg.body['control'], msg.body['value'])
+        #     elif msg.subject == 'RUNCONTROLS' and msg.body[
+        #             'purpose'] == 'REQUEST':
+        #         # print(f'msg: {msg.body}')
+        #         await self.handle_control_action(msg.body['control'],
+        #                                          msg.body['value'])
+        #         # await self.set_control(msg.body['control'], msg.body['value'])
+        await super().handle(msg, type)
 
         # print("DummyInstrument:msg: {}".format(msg.body))
         # else:

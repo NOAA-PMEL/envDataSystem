@@ -532,6 +532,13 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
             # print(f'alias: {alias_name}')
             # await PlotManager.update_data_by_key(alias_name, data)
 
+        elif message["SUBJECT"] == "SETTINGS":
+            # print(f'settings: {message}')
+            await self.channel_layer.group_send(
+                self.instrument_group_name,
+                {"type": "instrument_message", "message": message},
+            )
+
         elif message["SUBJECT"] == "PING":
             await DAQRegistry.ping(namespace=self.namespace, type="Instrument")
 
@@ -738,7 +745,7 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
                     "SUBJECT": "STATUS",
                     "BODY": body,
                 }
-                # print(f'consumer: {message}')
+                print(f'consumer: {message}')
                 await self.channel_layer.group_send(
                     self.instrument_group_name,
                     {"type": "instrument_message", "message": msg},

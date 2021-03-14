@@ -52,10 +52,10 @@
 
 {% block controls %}
     <div class="card">
-        <div id="controls-table"></div>
             <div class="opsbutton-container">
                 <input type="button" id="start-stop-button" value="Start" class="opsbutton stopped" onclick=opsButtonRequest(this)>
             </div>
+        <div id="controls-table"></div>
     </div>
 {% endblock %}
 
@@ -160,9 +160,9 @@
             {% comment %} build_table() {% endcomment %}
 
             {% comment %} {{ instrument_label_json }} {% endcomment %}
-            setup_accordions()
             build_data_table()
             build_controls_table()
+            setup_accordions()
 
             // reqest_status()
             wait_for_setup = false
@@ -201,6 +201,7 @@
 
             for (var meastype in measurements) {
                 if (meastype != "controls") {
+                    //console.log(measurements[meastype])
                     mtype = measurements[meastype]
                     for (var meas in mtype) {
                         dims = mtype[meas]['dimensions']['axes']
@@ -240,70 +241,107 @@
 
         }
 
+        // change controls to be in "control groups" that are each an accordion to manage space
         function build_controls_table() {
             // var measurements = JSON.parse('{{ instrument_measurements | escapejs }}')
             // var tablediv = document.getElementById('meas-table')[0];
             var tablediv = document.getElementById('controls-table');
             
-            var table = document.createElement('table')
-
-            table.setAttribute('id', 'control-table');
-            table.setAttribute('style', 'border-collapse: collapse;')
- 
-            var caption = table.createCaption()
-            caption.innerHTML = "<em>Settings</em>"
-
-            var header = table.createTHead();
-            var row = header.insertRow(0);
-            row.setAttribute('style', 'border: 1px solid black')
-            var cell = row.insertCell(0);
-            cell.setAttribute('id', 'control-table-namecol');
-            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
-            cell.innerHTML = "<b>Name</b>";
-            cell = row.insertCell(1);
-            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
-            cell.innerHTML = "<b>Value</b>";
-            cell.setAttribute('id', 'control-table-valuecol');
-            cell.innerHTML = "Value"
-            cell = row.insertCell(2);
-            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
-            cell.innerHTML = "<b>Setting</b>";
-            cell.setAttribute('id', 'control-table-settingcol');
-            cell = row.insertCell(3);
-            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
-            cell.innerHTML = "";
-            cell.setAttribute('id', 'control-table-setbuttoncol');
-
-                        {% comment %} meas = 'inlet_temperature_sp'
-                        name = 'test_'+meas
-                        row = table.insertRow(-1);
-                        cell = row.insertCell(0);
-                        cell.setAttribute('id', (meas+'-name'));
-                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center')
-                        cell.innerHTML = name
-                        cell = row.insertCell(1);
-                        cell.setAttribute('id', (meas+'-value'));
-                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
-                        cell.innerHTML = '';         
-                        cell = row.insertCell(2);           
-                        cell.setAttribute('id', (meas+'-setting'));
-                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
-                        cell.innerHTML = '<input id="test" type=number min="10" max="30" step="0.5">'                  
-                        cell = row.insertCell(3);           
-                        cell.setAttribute('id', (meas+'-settingbutton'));
-                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
-                        cell.innerHTML = '<input id="testbutton" type=button value="set">'                   {% endcomment %}
-
+            var control_groups = []
             for (var meastype in measurements) {
                 if (meastype == "controls") {
                     mtype = measurements[meastype]
+                    // console.log(mtype)
                     for (var meas in mtype) {
+                        var group_name = "default"
+                        if ("control_group" in mtype[meas]) {
+                            group_name = mtype[meas]["control_group"]
+                            // console.log(mtype[meas]["control_group"])
+                        }
+                        var group_id = group_name.replace(/_/g, "-")
+                        group_id = group_id.replace(/ /g, "-")
+                        var group_box = document.getElementById('controls-group-box-'+group_id)
+                        // console.log(group_box)
+                        if (group_box == null) {
+                            //console.log('controls-group-box-'+group_id)
+                            group_box = document.createElement('div')
+                            //group_box.setAttribute('class', 'card')
+                            group_button = document.createElement('button')
+                            group_button.setAttribute('id', 'controls-group-box-'+group_id)
+                            group_button.setAttribute('class', 'accordion card')
+                            group_button.innerHTML = '<em>Settings: '+group_name+'</em>'
+                            
+                            var panel = document.createElement('div')
+                            panel.setAttribute('class', 'panel')
+                            control_groups.push(group_id)
+
+                            //console.log(group_box)
+                            //var table = document.getElementById('controls-group-table-'+group_id)
+                            // console.log('controls-group-table-'+group_id)                            
+                            table = document.createElement('table')
+                            table_id = 'controls-group-table-'+group_id
+                            table.setAttribute('id', table_id)
+                            table.setAttribute('style', 'border-collapse: collapse;')
+
+                            var caption = table.createCaption()
+                            caption.innerHTML = "<em>Settings</em>"
+                        
+
+                            var header = table.createTHead();
+                            var row = header.insertRow(0);
+                            row.setAttribute('style', 'border: 1px solid black')
+                            var cell = row.insertCell(0);
+                            cell.setAttribute('id', table_id+'-namecol');
+                            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
+                            cell.innerHTML = "<b>Name</b>";
+                            cell = row.insertCell(1);
+                            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
+                            cell.innerHTML = "<b>Value</b>";
+                            cell.setAttribute('id', table_id+'-valuecol');
+                            cell.innerHTML = "Value"
+                            cell = row.insertCell(2);
+                            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
+                            cell.innerHTML = "<b>Setting</b>";
+                            cell.setAttribute('id', table_id+'-settingcol');
+                            cell = row.insertCell(3);
+                            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
+                            cell.innerHTML = "";
+                            cell.setAttribute('id', table_id+'-setbuttoncol');
+
+                            var td = table.rows[0].cells[0];
+                            td.width = '200px';
+                            td = table.rows[0].cells[1];
+                            td.width = '100px';
+                            td = table.rows[0].cells[2];
+                            td.width = '100px';
+                            td = table.rows[0].cells[3];
+                            td.width = '100px'
+                            panel.appendChild(table)
+                            group_box.appendChild(group_button)
+                            group_box.appendChild(panel)
+                            //group_box.appendChild(panel)
+                            tablediv.appendChild(group_box);
+                        }
+                        
+                        table = document.getElementById('controls-group-table-'+group_id)
+                    
+                        var rng_min = 0
+                        var rng_max = 65000
+                        if ("allowed_range" in mtype[meas]) {
+                            var rng = mtype[meas]["allowed_range"]
+                            rng_min = rng[0]
+                            rng_max = rng[1]
+                            //console.log(rng)
+                        }
+                        //console.log(rng_min, rng_max)
                         var name = meas
                         if (meas_prefix) {
                             name = meas_prefix + "_" + meas
                         }
+
+                        //console.log(name)
                         meas_id = meas.replace(/_/g, "-")
-                        prefix_id = prefix.replace(/_/g, "-")
+                        // prefix_id = prefix.replace(/_/g, "-")
                         row = table.insertRow(-1);
                         cell = row.insertCell(0);
                         cell.setAttribute('id', (meas_id+'-name'));
@@ -316,7 +354,7 @@
                         cell = row.insertCell(2);           
                         cell.setAttribute('id', (meas_id+'-input'));
                         cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
-                        cell.innerHTML = '<input id='+meas_id+'-setting-input type=number min="0" max="65000">'                                
+                        cell.innerHTML = '<input id='+meas_id+'-setting-input type=number min='+rng_min+' max='+rng_max+' step=any>'                                
                         cell = row.insertCell(3);           
                         cell.setAttribute('id', (meas_id+'-setting-set'));
                         cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
@@ -325,18 +363,6 @@
                     }
                 }
             }
- 
-
-
-            var td = table.rows[0].cells[0];
-            td.width = '200px';
-            td = table.rows[0].cells[1];
-            td.width = '100px';
-            td = table.rows[0].cells[2];
-            td.width = '100px';
-            td = table.rows[0].cells[3];
-            td.width = '100px'
-            tablediv.appendChild(table);
 
            //var t = document.getElementById("control-table").createCaption()
            //t.innerHTML = "Settings"
@@ -365,6 +391,7 @@
             // }; {% endcomment %}
 
             var data = JSON.parse(e.data);
+            // console.log(data['message'])
             if (data['message']['SUBJECT'] == 'DATA') {
 
                 if ("METADATA" in data['message']['BODY']) {
@@ -377,6 +404,7 @@
 
                     document.querySelector('#time-stamp').innerHTML =  (message['DATETIME'].replace(/T|Z/g, " "));
 
+                    {% comment %} console.log(message['MEASUREMENTS']) {% endcomment %}
                     var cell_value = ''
                     for (var meas in message['MEASUREMENTS']) {
                         if (message['MEASUREMENTS'][meas]['VALUE'] == null) {
@@ -389,17 +417,28 @@
                         if (message['MEASUREMENTS'][meas]['VALUE'].constructor === Array) {
                             continue
                         }
-                        //cell_id = "#"+meas+"-value"
                         cell_id = (meas+"-value").replace(/_/g, "-")
-                        //document.querySelector(cell_id).innerHTML = message['MEASUREMENTS'][meas]['VALUE'];
                         document.getElementById(cell_id).innerHTML = message['MEASUREMENTS'][meas]['VALUE'];
-                        // document.getElementById(cell_id).innerHTML = cell_value;
                     }
-                    // cell2 = 'cell1';
-                    // cell_id = '#'+cell2;
-                    // document.querySelector(cell_id).innerHTML = message['MEASUREMENTS']['concentration']['VALUE']; 
                 }
 
+            } else if (data['message']['SUBJECT'] == "SETTINGS") {
+                //console.log("settings")
+                //console.log(data['message']['BODY'])
+
+                if ('settings' in data['message']['BODY']) {
+                    var settings = data['message']['BODY']['settings'];
+                    var cell_value = ''
+                    for (var setting in settings) {
+                        if (setting == null) {
+                            continue
+                        }
+                        value_id = (setting+"-value").replace(/_/g, "-")
+                        input_id = (setting+"-setting-input").replace(/_/g, "-")
+                        document.getElementById(value_id).innerHTML = settings[setting];
+                        document.getElementById(input_id).setAttribute('value', settings[setting]);
+                    }
+                }
             } else if (data['message']['SUBJECT'] == 'STATUS') {
 
                 {% comment %} if (data['message']['BODY']['purpose'] == 'UPDATE') { {% endcomment %}
@@ -444,12 +483,23 @@
         }; {% endcomment %}
 
         function apply_setting(control) {
-            var index = control.id.indexOf("-")
-            if (index<0) {
-                return
-            }
-            var control = control.id.substring(0,index)
+            console.log(control)
+            //var index = control.id.indexOf("-")
+            //console.log(index)
+            //if (index<0) {
+            //    return
+            //}
+            var id = control.id.split('-')
+            id.splice(-2,2)
+            var control = id.join("-")
+            //console.log(id.join("-"))
+            //id = control.id.split("-").splice(-2,2).join("-")
+            //console.log(id)
+            //var control = control.id.substring(0,index)
             setpoint = document.getElementById(control+'-setting-input').value
+            control = control.replace(/-/g, "_")
+            console.log(control)
+            console.log(setpoint)
             var message = {}
             message['SUBJECT'] = 'CONTROLS'
             message['BODY'] = {
@@ -457,7 +507,8 @@
                 'control': control,
                 'value': setpoint,
             }
-
+            console.log(message)
+            
             websocket.send(
                 JSON.stringify({'message': message})
             )
@@ -512,7 +563,7 @@
             var class_val = 'opsbutton started'
             var value = "Stop"
 
-            if (runstate == "STOPPED") {
+        if (runstate == "STOPPED" || runstate == "READY_TO_RUN") {
                 class_val = 'opsbutton stopped'
                 value = "Start"
             }

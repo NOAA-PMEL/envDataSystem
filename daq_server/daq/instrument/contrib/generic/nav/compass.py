@@ -4,7 +4,7 @@ from daq.daq import DAQ
 from daq.interface.interface import Interface, InterfaceFactory
 # import json
 # from plots.plots import PlotManager
-from plots.apps.plot_app import TimeSeries1D
+# from plots.apps.plot_app import TimeSeries1D
 
 
 class MagCompass(Instrument):

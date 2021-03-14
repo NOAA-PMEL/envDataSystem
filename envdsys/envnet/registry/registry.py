@@ -470,7 +470,7 @@ class DAQRegistry:
             config = registration["config"]
             # regkey = registration["regkey"]
         if not reg:
-            reg = DAQRegistration.objects.register(
+            reg = DAQRegistration(
                 namespace=namespace, daq_type=type, config=config
             )
         if reg:

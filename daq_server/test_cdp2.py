@@ -1,8 +1,10 @@
-from client.tcpport import TCPPortClient
+# from client.tcpport import TCPPortClient
+import os
+import sys
 import asyncio
 import json
 import time
-from shared.data.message import Message
+# from shared.data.message import Message
 from datetime import datetime
 from struct import pack, unpack
 from struct import error as structerror
@@ -210,6 +212,14 @@ def shutdown(serialport):
 
 if __name__ == "__main__":
 
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    # print(BASE_DIR)
+    # sys.path.append(os.path.join(BASE_DIR, 'envdsys/shared'))
+    sys.path.append(os.path.join(BASE_DIR, "envdsys"))
+
+    from client.tcpport import TCPPortClient
+    from shared.data.message import Message
+
     kw = {
         'send_method': 'binary',
         'read_method': 'readbinary',
@@ -223,7 +233,7 @@ if __name__ == "__main__":
     tcp = TCPPortClient(
         # host='moxa16chem2',
         # port=4016,
-        address=('10.55.169.52', 23),
+        address=('10.55.169.52', 24),
         # read_method='readuntil',
         # read_terminator='\r'
         **kw

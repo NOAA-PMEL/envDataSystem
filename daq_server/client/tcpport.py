@@ -193,7 +193,7 @@ class TCPPortClient(ClientConnection):
         while True:
             # print(f'read_loop: {self.ConnectionState()}')
             if self.ConnectionState() == ClientConnection.CONNECTED:
-                print(f'read_loop: {tcpport}')
+                # print(f'read_loop: {tcpport}')
                 if self.read_method == 'readline':
                     msg = await tcpport.readline(
                         decode_errors=self.decode_errors

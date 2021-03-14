@@ -1,5 +1,7 @@
 websockets
 pytz
+numpy
 pyserial
 pyserial-asyncio
 labjack-ljm
+RPi.GPIO

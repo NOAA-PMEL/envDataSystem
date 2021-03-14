@@ -124,7 +124,7 @@ class PlatformLocation(models.Model):
         "envdatasystem.Platform",
         verbose_name=_("Platform"),
         on_delete=models.CASCADE,
-        related_name="platformlocation_platforms",
+        related_name="platformlocations",
     )
 
     name = models.CharField(_("Name"), max_length=50)
@@ -139,7 +139,7 @@ class PlatformLocation(models.Model):
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name="platformlocation_parents",
+        related_name="platformlocations_parent",
     )
 
     class Meta:
@@ -500,7 +500,7 @@ class InstrumentComponent(models.Model):
         "envdatasystem.InstrumentSystem",
         verbose_name=_("Controller"),
         on_delete=models.CASCADE,
-        related_name="instrumentcomponent_instrument",
+        # related_name="instrumentcomponent_instrument",
     )
     name = models.CharField(_("Name"), max_length=50)
 
@@ -550,7 +550,7 @@ class InstrumentComponentInterface(models.Model):
         "envdatasystem.InstrumentComponent",
         verbose_name=_("Component"),
         on_delete=models.CASCADE,
-        related_name="instrumentcomponentinterface_component",
+        # related_name="instrumentcomponentinterface_component",
     )
     # interface = models.ForeignKey("envdatasystem.InterfaceSystem", verbose_name=_("Interface"), on_delete=models.CASCADE, related_name="instrumentcomponentinterface_interface")
     interface = models.CharField(

@@ -114,6 +114,18 @@ class Interface(DAQ):
     # def connect(self, cmd=None):
     #     pass
 
+    def enable(self):
+        print('Enabling Interface')
+        super().enable()
+        self.ifdevice.register_parent(
+            self.get_id(),
+            to_parent_buffer=self.from_child_buf
+        )
+
+    def disable(self):
+        self.ifdevice.deregister_parent(self.get_id())
+        super().disable()
+
     def start(self, cmd=None):
         print('Starting Interface')
         super().start(cmd)
@@ -127,10 +139,10 @@ class Interface(DAQ):
         # Changed to allow multiple interface instances
         #   for a given device. Device will run as long
         #   as there are interfaces registered
-        self.ifdevice.register_parent(
-            self.get_id(),
-            to_parent_buffer=self.from_child_buf
-        )
+        # self.ifdevice.register_parent(
+        #     self.get_id(),
+        #     to_parent_buffer=self.from_child_buf
+        # )
 
     # def read(self, cmd=None):
     #     pass
@@ -151,7 +163,7 @@ class Interface(DAQ):
 
         # if self.ifdevice is not None:
         #     self.ifdevice.stop()
-        self.ifdevice.deregister_parent(self.get_id())
+        # self.ifdevice.deregister_parent(self.get_id())
 
         super().stop(cmd)
 
@@ -165,9 +177,9 @@ class Interface(DAQ):
         #     # print(t)
         #     t.cancel()
 
-        if self.ifdevice is not None:
-            self.ifdevice.deregister_parent(self.get_id())
-            self.ifdevice.shutdown()
+        # if self.ifdevice is not None:
+        #     self.ifdevice.deregister_parent(self.get_id())
+        #     self.ifdevice.shutdown()
 
         super().shutdown()
 
@@ -623,7 +635,7 @@ class TCPPortInterface(Interface):
                 # print(f'TCP: {msg.to_json()}')
                 # self.msg_buffer.put_nowait(msg)
                 # await self.msg_send_buffer.put(msg)
-                # print(f'tcpif to parent: {msg}')
+                # print(f'tcpif to parent: {msg.body}')
                 await self.message_to_parent(msg)
         elif type == 'FromParent':
             # print(f'message{msg.subject}, {msg.body}')

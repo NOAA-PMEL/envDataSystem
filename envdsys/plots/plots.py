@@ -30,7 +30,7 @@ class PlotManager():
             if "daq_server" in config["namespace"]:
                 server_namespace += config['namespace']['daq_server']
             if "controller" in config["namespace"]:
-                server_namespace += config['namespace']['controller']
+                server_namespace += "-" + config['namespace']['controller']
                 
         if ('plot_meta' in config and 'plots' in config['plot_meta']):
             app_list = []

@@ -35,6 +35,8 @@ server_config = {
 
     "last_config_file": "config/last_config.json",
 
+    "current_config_file": "config/current_config.json",
+
     "current_run_config": {}
 
 }

@@ -1,8 +1,9 @@
 import asyncio
 from daq.interface.interface import Interface, InterfaceFactory
 from daq.interface.ifdevice import IFDevice
-from data.message import Message
-import json
+# from shared.data.message import Message
+# from shared.data.status import Status
+# import json
 import binascii
 from struct import unpack
 from struct import error as structerror
@@ -193,6 +194,17 @@ class NB_I2C_IFDevice(IFDevice):
         super().setup()
         self.add_interface()
 
+    def enable(self):
+        super().enable()
+        if self.iface:
+            self.iface.enable()
+            
+        self.task_list.append(
+            asyncio.ensure_future(self.send_cmd_loop())
+        )
+
+    # def disable(self):
+        
     def add_interface(self):
         print('Add host interface')
 
@@ -223,24 +235,24 @@ class NB_I2C_IFDevice(IFDevice):
         # # start dummy data loop
         # task = asyncio.ensure_future(self.data_loop())
         # self.task_list.append(task)
-        self.task_list.append(
-            asyncio.ensure_future(self.send_cmd_loop())
-        )
+        # self.task_list.append(
+        #     asyncio.ensure_future(self.send_cmd_loop())
+        # )
         # self.task_list.append(
         #     asyncio.ensure_future(self.write_data())
         # )
 
-        if self.iface:
-            self.iface.start()
+        # if self.iface:
+        #     self.iface.start()
 
-    def stop(self, cmd=None):
-        super().stop(cmd)
+    # def stop(self, cmd=None):
+    #     super().stop(cmd)
 
-        if self.iface:
-            self.iface.stop()
+    #     if self.iface:
+    #         self.iface.stop()
 
-        for task in self.task_list:
-            task.cancel()
+    #     for task in self.task_list:
+    #         task.cancel()
 
     async def send_cmd_loop(self):
 
@@ -256,8 +268,9 @@ class NB_I2C_IFDevice(IFDevice):
                     subject='SEND',
                     body=cmd
                 )
-                # print(f'nbid from parent: {msg}')
+                print(f'nbid from parent: {msg}')
                 await self.iface.message_from_parent(msg)
+                print("here")
             else:
                 await asyncio.sleep(.1)
 

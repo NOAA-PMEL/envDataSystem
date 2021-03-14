@@ -186,8 +186,10 @@ def set_env_variables(conf_vars):
     vars = conf_vars
     for name, val in vars.items():
         if name != "RUN_TYPE":
-            os.environ[name] = val
+            os.environ[name] = str(val)
             print(f"set env: {name}: {val}")
+
+    print(f"os.environ: {os.environ}")
 
 def init_server_config():
     root_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
