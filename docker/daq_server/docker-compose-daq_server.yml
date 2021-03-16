@@ -79,6 +79,10 @@ services:
       # - "/home/acgsb/Software/python/test_daq_server_docker/envDataSystem/data:/data/envDataSystem/"
       - "${DAQ_CFG_DIR}:/app/envDataSystem/daq_server/config"
       - "${DAQ_DATA_SAVE_DIR}:/data/envDataSystem/"
+      # - /dev/gpiomem:/dev/gpiomem
+    devices: 
+      - /dev/gpiomem:/dev/gpiomem
+    # privileged: true
     # ports:
     #   - "8001:8001"
     #   - "5001:5001"

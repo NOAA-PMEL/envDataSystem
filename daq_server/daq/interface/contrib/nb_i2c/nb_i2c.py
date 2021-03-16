@@ -268,9 +268,9 @@ class NB_I2C_IFDevice(IFDevice):
                     subject='SEND',
                     body=cmd
                 )
-                print(f'nbid from parent: {msg}')
+                # print(f'nbid from parent: {msg}')
                 await self.iface.message_from_parent(msg)
-                print("here")
+                # print("here")
             else:
                 await asyncio.sleep(.1)
 

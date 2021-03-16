@@ -325,7 +325,7 @@ class CDP2(DMTInstrument):
         if (type == 'FromChild' and msg.type == Interface.class_type):
             # id = msg.sender_id
             dt = self.parse(msg)
-            print(f'dt = {dt}')
+            # print(f'dt = {dt}')
             if dt:
 
                 # TODO: for when controls are added
@@ -415,7 +415,7 @@ class CDP2(DMTInstrument):
 
 
     def parse(self, msg):
-        print(f'parse: {msg}')
+        # print(f'parse: {msg}')
         # entry = dict()
         # entry['METADATA'] = self.get_metadata()
 
@@ -443,8 +443,8 @@ class CDP2(DMTInstrument):
             data_format = '<8HI5HI30IH'
             try:
                 data = unpack(data_format, packet)
-                print(f'packet: {packet}')
-                print(f'data: {data}')
+                # print(f'packet: {packet}')
+                # print(f'data: {data}')
 
             except structerror:
                 print(f'bad packet {packet}')

@@ -33,7 +33,7 @@ COPY ./docker/daq_server/entrypoint.sh /app/envDataSystem/daq_server/entrypoint.
 ARG UID
 ARG GID
 
-RUN groupadd -g $GID envdsys && useradd -u $UID -g $GID envdsys
+RUN groupadd -g $GID envdsys && useradd -u $UID -g $GID envdsys && usermod -a -G dialout envdsys
 RUN chown -R envdsys:envdsys /app/envDataSystem/daq_server
 RUN chown -R envdsys:envdsys /data/envDataSystem/
 

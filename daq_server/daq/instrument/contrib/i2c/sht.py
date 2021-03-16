@@ -184,7 +184,7 @@ class SHT31(SHTInstrument):
                     subject='SEND',
                     body=cmd_args,
                 )
-                print(f'msg: {msg.body}')
+                # print(f'msg: {msg.body}')
                 await self.iface.message_from_parent(msg)
 
             await asyncio.sleep(time_to_next(self.poll_rate))
@@ -290,7 +290,7 @@ class SHT31(SHTInstrument):
                         temp = data[0] * 256 + data[1]
                         cTemp = -45 + (175 * temp / 65535.0)
                         rh = 100 * (data[3] * 256 + data[4]) / 65535.0
-                        print(f'{round(cTemp, 2)}, {round(rh, 2)}')
+                        # print(f'{round(cTemp, 2)}, {round(rh, 2)}')
                         self.update_data_record(
                             dt,
                             {'temperature': round(cTemp, 2)}

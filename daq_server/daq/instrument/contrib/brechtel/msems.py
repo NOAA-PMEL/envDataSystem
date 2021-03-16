@@ -584,6 +584,7 @@ class MSEMS(BrechtelInstrument):
             # print(f'77777777777777{parts[0]} = {parts[1]}')
             if parts[0] == "scan_state":
                 self.scan_state = parts[1]
+                print(f"scan state: {self.scan_state}")
                 if self.scan_state == "4":
                     # print(f"reading scan data")
                     self.reading_scan = True
@@ -596,7 +597,6 @@ class MSEMS(BrechtelInstrument):
                         self.scan_ready = True
                     self.reading_scan = False
             if self.reading_scan:
-                print(f"scan state: {self.scan_state}")
                 if parts[0] in self.parse_map:
                     self.update_data_record(
                         # dt,

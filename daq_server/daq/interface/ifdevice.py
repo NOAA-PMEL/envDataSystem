@@ -461,7 +461,7 @@ class TCPPortIFDevice(IFDevice):
         # print(f'ifdevice.handle: {msg.subject}')
         if (type == "FromParent"):
             if msg.subject == 'SEND':
-                print(f'tcpid from parent: {msg.body}')
+                # print(f'tcpid from parent: {msg.body}')
                 await self.client.send(msg.body)
                 # print(f'msg.body: {msg.body}')
                 # print(f'tcpportifdevice.handle: {msg.to_json()}')

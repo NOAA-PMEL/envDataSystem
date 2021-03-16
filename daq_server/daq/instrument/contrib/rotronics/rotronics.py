@@ -164,7 +164,7 @@ class RotronicsHC2(RotronicsInstrument):
         # print(f'%%%%%Instrument.handle: {msg.to_json()}')
         # handle messages from multiple sources. What ID to use?
         if (type == 'FromChild' and msg.type == Interface.class_type):
-            print(f'rotronics scan: {msg.to_json()}')
+            # print(f'rotronics scan: {msg.to_json()}')
 
             # id = msg.sender_id
 
@@ -193,7 +193,7 @@ class RotronicsHC2(RotronicsInstrument):
             if self.datafile:
                 await self.datafile.write_message(data)
 
-            print(f'data_json: {data.to_json()}\n')
+            # print(f'data_json: {data.to_json()}\n')
             # await asyncio.sleep(0.01)
 
         # elif type == 'FromUI':
