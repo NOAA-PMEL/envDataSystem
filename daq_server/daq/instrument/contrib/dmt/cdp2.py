@@ -440,7 +440,9 @@ class CDP2(DMTInstrument):
             return None
 
         elif self.scan_run_state == 'RUN':
-            data_format = '<8HI5HI30IH'
+            # CDP format introduces NUXI so read in the 4 byte values as 2 byte and convert
+            # data_format = '<8HI5HI30IH' # old, wrong format, use to recode older files
+            data_format = f"<8H2H5H2H{self.bin_count*2}HH"
             try:
                 data = unpack(data_format, packet)
                 # print(f'packet: {packet}')
@@ -503,47 +505,65 @@ class CDP2(DMTInstrument):
                     {'control_board_temperature': round(degC, 2)}
                 )
 
+                # Reject DOF U32
+                # recode = pack('<I', data[8])
+                # rej_dof = unpack('>I', pack('>2H', *unpack('<2H', recode)))[0]
+                rej_dof = (data[8] << 16) + data[9]
                 self.update_data_record(
                     dt,
-                    {'reject_dof': data[8]}
+                    # {'reject_dof': data[8]}
+                    {'reject_dof': rej_dof}
                 )
 
                 self.update_data_record(
                     dt,
-                    {'average_transit': data[9]}
+                    # {'average_transit': data[9]}
+                    {'average_transit': data[10]}
                 )
 
                 self.update_data_record(
                     dt,
-                    {'qual_bandwidth': data[10]}
+                    # {'qual_bandwidth': data[10]}
+                    {'qual_bandwidth': data[11]}
                 )
 
                 self.update_data_record(
                     dt,
-                    {'qual_threshold': data[11]}
+                    # {'qual_threshold': data[11]}
+                    {'qual_threshold': data[12]}
                 )
 
                 self.update_data_record(
                     dt,
-                    {'dt_bandwidth': data[12]}
+                    # {'dt_bandwidth': data[12]}
+                    {'dt_bandwidth': data[13]}
                 )
 
                 self.update_data_record(
                     dt,
-                    {'dynamic_threshold': data[13]}
+                    # {'dynamic_threshold': data[13]}
+                    {'dynamic_threshold': data[14]}
                 )
 
+                adc_over = (data[15] << 16) + data[16]
                 self.update_data_record(
                     dt,
-                    {'adc_overflow': data[14]}
+                    # {'adc_overflow': data[14]}
+                    {'adc_overflow': adc_over}
                 )
 
                 bc = []
                 dp = []
                 intN = 0
-                for i in range(0, self.bin_count):
-                    bc.append(data[15+i])
-                    intN += data[15+i]
+                for i in range(0, self.bin_count*2, 2):
+                    # bin_count U32 - reorder bytes
+                    # recode = pack('<I', data[15+i])
+                    # count = unpack('>I', pack('>2H', *unpack('<2H', recode)))[0]
+                    count = (data[17+i] << 16) + data[18+i]
+                    # bc.append(data[15+i])
+                    bc.append(count)
+                    # intN += data[15+i]
+                    intN += count
                     dp.append(
                         (self.lower_dp_bnd[i] + self.uppder_dp_bnd[i])/2
                     )
