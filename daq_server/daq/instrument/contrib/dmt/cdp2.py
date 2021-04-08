@@ -441,12 +441,15 @@ class CDP2(DMTInstrument):
 
         elif self.scan_run_state == 'RUN':
             # CDP format introduces NUXI so read in the 4 byte values as 2 byte and convert
-            # data_format = '<8HI5HI30IH' # old, wrong format, use to recode older files
+            # old_data_format = '<8HI5HI30IH' # old, wrong format, use to recode older files
             data_format = f"<8H2H5H2H{self.bin_count*2}HH"
+            # print(f"data_format: {data_format}")
             try:
+                # old_data = unpack(old_data_format, packet)
                 data = unpack(data_format, packet)
                 # print(f'packet: {packet}')
-                # print(f'data: {data}')
+                # print(f'old_data: {old_data}, {len(old_data)}')
+                print(f'data: {data}, {len(data)}')
 
             except structerror:
                 print(f'bad packet {packet}')
@@ -455,6 +458,7 @@ class CDP2(DMTInstrument):
 
             try:
                 val = data[0]*0.061
+                # print(f'val0={val}')
                 self.update_data_record(
                     dt,
                     {'laser_current': round(val, 2)}
@@ -467,14 +471,18 @@ class CDP2(DMTInstrument):
                 )
 
                 v = 5*data[2]/4095
-                degC = 1 / (((math.log((5/v) - 1))/3750) + 1/298) - 273
+                degC = None
+                if v!=0:
+                    degC = 1 / (((math.log((5/v) - 1))/3750) + 1/298) - 273
                 self.update_data_record(
                     dt,
                     {'wingboard_temperature': round(degC, 2)}
                 )
 
                 v = 5*data[3]/4095
-                degC = 1 / (((math.log((5/v) - 1))/3750) + 1/298) - 273
+                degC = None
+                if v!=0:
+                    degC = 1 / (((math.log((5/v) - 1))/3750) + 1/298) - 273
                 self.update_data_record(
                     dt,
                     {'laser_temperature': round(degC, 2)}
@@ -499,7 +507,9 @@ class CDP2(DMTInstrument):
                 )
 
                 v = 5*data[7]/4095
-                degC = 1 / (((math.log((5/v) - 1))/3750) + 1/298) - 273
+                degC = None
+                if v!=0:
+                    degC = 1 / (((math.log((5/v) - 1))/3750) + 1/298) - 273
                 self.update_data_record(
                     dt,
                     {'control_board_temperature': round(degC, 2)}
@@ -508,13 +518,16 @@ class CDP2(DMTInstrument):
                 # Reject DOF U32
                 # recode = pack('<I', data[8])
                 # rej_dof = unpack('>I', pack('>2H', *unpack('<2H', recode)))[0]
+                # print(f'rej_dof')
                 rej_dof = (data[8] << 16) + data[9]
+                # print(f'rej_dof: {rej_dof}')
                 self.update_data_record(
                     dt,
                     # {'reject_dof': data[8]}
                     {'reject_dof': rej_dof}
                 )
 
+                # print(f'val10={data[10]}')
                 self.update_data_record(
                     dt,
                     # {'average_transit': data[9]}
@@ -559,11 +572,14 @@ class CDP2(DMTInstrument):
                     # bin_count U32 - reorder bytes
                     # recode = pack('<I', data[15+i])
                     # count = unpack('>I', pack('>2H', *unpack('<2H', recode)))[0]
+                    # print(f"i={i}, {data[17+i]}, {data[18+i]}")
                     count = (data[17+i] << 16) + data[18+i]
+                    # print(f"count={count}")
                     # bc.append(data[15+i])
                     bc.append(count)
                     # intN += data[15+i]
                     intN += count
+                for i in range(0, self.bin_count):
                     dp.append(
                         (self.lower_dp_bnd[i] + self.uppder_dp_bnd[i])/2
                     )
@@ -583,6 +599,7 @@ class CDP2(DMTInstrument):
                     {'integral_counts': intN}
                 )
 
+                print(f"dt: {dt}")
                 return dt
 
             except Exception as e:
