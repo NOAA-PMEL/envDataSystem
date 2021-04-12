@@ -7,12 +7,14 @@
         
         <title>{% block title %}envDataSystem{% endblock title %}</title>
 
-        <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+        {% comment %} <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css"> {% endcomment %}
+        <link rel="stylesheet" href="{% static 'css/envdsys.css' %}">
         <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
         <link rel="stylesheet" href="https://www.w3schools.com/lib/w3-theme-blue-grey.css">
         {% comment %} <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"><style> {% endcomment %}
  
+        
         <style>
             body {font-family: "Roboto", sans-serif}
 
@@ -107,19 +109,27 @@
                 <a class="w3-right w3-hide-large w3-large" href="javascript:void(0)" onclick="w3_close()" title="Close">
                     <i style="position:relative;left:10px;vertical-align:middle;" class="material-icons">close</i>
                 </a>
+                {% block localmenu %}{% endblock localmenu %}
                 <a class="w3-bar-item w3-button" href="/">Home</a>
                 <a class="w3-bar-item w3-button" href="/envdaq">DAQ</a>
                 <a class="w3-bar-item w3-button" href="#">Data Server</a>
-                <a class="w3-bar-item w3-button" href="#">Projects</a>
-                <a class="w3-bar-item w3-button" href="#">Sampling Systems</a>
-                <a class="w3-bar-item w3-button" href="/envcontacts">Contacts</a>
-                <a class="w3-bar-item w3-button" href="/envinventory">Inventory</a>
                 <div>
-                    <a class="w3-bar-item w3-button" onclick="menuAccordion('services')" href="javascript:void(0)">Services<i id="services-menu-icon" style="position:relative;left:10px;vertical-align:middle;" class="material-icons">expand_more</i></a>
+                    <a class="w3-bar-item w3-button" onclick="doAccordion('datamanagement-menu')" href="javascript:void(0)">Data Management<i id="datamanagement-menu-icon" style="position:relative;left:10px;vertical-align:middle;" class="material-icons">expand_more</i></a>
+                    <div id="datamanagement-menu" class="w3-hide">
+                    <a style="text-indent:10px;" class="w3-bar-item w3-button" href="#">Projects</a>
+                    {% comment %} <a style="text-indent:10px;" class="w3-bar-item w3-button" href="/envdaq">UI Servers</a> {% endcomment %}
+                    <a style="text-indent:10px;" class="w3-bar-item w3-button" href="#">Sampling Systems</a>
+                    </div>
+                </div>
+
+                <div>
+                    <a class="w3-bar-item w3-button" onclick="doAccordion('services-menu')" href="javascript:void(0)">Services<i id="services-menu-icon" style="position:relative;left:10px;vertical-align:middle;" class="material-icons">expand_more</i></a>
                     <div id="services-menu" class="w3-hide">
                     <a style="text-indent:10px;" class="w3-bar-item w3-button" href="/envnet">Network</a>
-                    <a style="text-indent:10px;" class="w3-bar-item w3-button" href="/envdaq">UI Servers</a>
+                    {% comment %} <a style="text-indent:10px;" class="w3-bar-item w3-button" href="/envdaq">UI Servers</a> {% endcomment %}
                     <a style="text-indent:10px;" class="w3-bar-item w3-button" href="/envdaq">InstrumentInterfaces</a>
+                    <a style="text-indent:10px;" class="w3-bar-item w3-button" href="/envcontacts">Contacts</a>
+                    <a style="text-indent:10px;" class="w3-bar-item w3-button" href="/envinventory">Inventory</a>
                     </div>
                 </div>
                 <a class="w3-bar-item w3-button" href="/admin">Admin</a>
@@ -188,11 +198,11 @@
             }
             }
 
-            // Accordions
+            {% comment %} // Accordions
             function menuAccordion(id) {
                 var menu = document.getElementById(id+'-menu');
-                var icon = document.getElementById(id+"-icon");
-                // console.log(menu, icon, id)
+                var icon = document.getElementById(id+"-menu-icon");
+                console.log(menu, icon, id)
                 if (menu.className.indexOf("w3-show") == -1) {
                     menu.className += " w3-show";
                     icon.innerText = "expand_less"
@@ -213,8 +223,11 @@
                     x.className = x.className.replace("w3-show", "");
                     bi.innerText = "expand_more"
                 }
-            }
+            } {% endcomment %}
         
         </script>
+
+        <script src="{% static 'js/envdsys.js' %}"></script>
+
     </body>
 </html>
