@@ -177,25 +177,25 @@
         <script type="text/javascript">
 
             function w3_open() {
-            document.getElementById("menuBar").style.display = "block";
-            document.getElementById("menuOverlay").style.display = "block";
+                document.getElementById("menuBar").style.display = "block";
+                document.getElementById("menuOverlay").style.display = "block";
             }
 
             function w3_close() {
-            document.getElementById("menuBar").style.display = "none";
-            document.getElementById("menuOverlay").style.display = "none";
+                document.getElementById("menuBar").style.display = "none";
+                document.getElementById("menuOverlay").style.display = "none";
             }
 
             // Change style of top container on scroll
             window.onscroll = function() {myFunction()};
             function myFunction() {
-            if (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) {
-                document.getElementById("dataTop").classList.add("w3-card-4", "w3-animate-opacity");
-                document.getElementById("dataIntro").classList.add("w3-show-inline-block");
-            } else {
-                document.getElementById("dataIntro").classList.remove("w3-show-inline-block");
-                document.getElementById("dataTop").classList.remove("w3-card-4", "w3-animate-opacity");
-            }
+                if (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) {
+                    document.getElementById("dataTop").classList.add("w3-card-4", "w3-animate-opacity");
+                    document.getElementById("dataIntro").classList.add("w3-show-inline-block");
+                } else {
+                    document.getElementById("dataIntro").classList.remove("w3-show-inline-block");
+                    document.getElementById("dataTop").classList.remove("w3-card-4", "w3-animate-opacity");
+                }
             }
 
             {% comment %} // Accordions

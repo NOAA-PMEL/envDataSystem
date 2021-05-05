@@ -1,10 +1,13 @@
 from django.shortcuts import render
+
+from envtags.models import Configuration
 from .models import InstrumentAlias, Controller
 from django.utils.safestring import mark_safe
 import json
 from bokeh.embed import server_document
 from plots.plots import PlotManager
 from django.conf import settings
+from envnet.models import DAQRegistration
 
 
 # # Create your views here.
@@ -19,21 +22,68 @@ from django.conf import settings
 # from django.shortcuts import render
 
 def index(request):
-    return render(request, 'envdaq/index.html', {})
+
+    # print(f"request: {request}")
+    # try:
+    #     regs = DAQRegistration.objects.all()
+    #     print(f'regs: {regs}')
+
+    # except DAQRegistration.DoesNotexist:
+    #     # TODO: return 404 ... lookup how
+    #     pass
+    #     regs = []
+
+    # daq_registration_map = {}
+    # if regs:
+    #     for reg in regs:
+    #         # daq_registration_map[reg["namespace"]] = {
+
+    #         # }
+
+    #         daq_registration_map[reg.namespace] = reg.get_registration()
+    #         # {
+    #         #     "config": json.loads(reg.config),
+    #         #     "status": reg.status
+    #         # }
+    #         # print(f"reg: {reg.get_registration()}")
+
+    # context = {
+    #     "daq_map": daq_registration_map,
+    # }
+    # print(f"context: {context}")
+    context = {}
+    return render(request, 'envdaq/index.html', context=context)
 
 
-def daqserver(request, daq_id):
+def daqserver(request, daq_namespace):
     # TODO: This will be based on current "Project"
+
+    print(f'%%%%% request: {request}')
+
+    # get list of available configurations
+    # config_list = []
+    # try:
+    #     configs = Configuration.objects.all()
+    #     for config in configs:
+    #         try:
+    #             cfg = json.loads(config.config)
+    #             if "ENVDAQ" in cfg:
+    #                 config_list.append(config.config)
+    #         except TypeError:
+    #             pass
+    # except Configuration.DoesNotExist:
+    #     pass
 
     # list needs to be filtered based on controller
     # instrument_list = InstrumentMask.objects.all()
     # print(instrument_list)
     # context = {'instrument_list': instrument_list}
 
-    # context = {
-    #     'controller_name_json': mark_safe(json.dumps(controller_name))
-    # }
-    return render(request, 'envdaq/daqserver.html')
+    context = {
+        'daq_namespace': daq_namespace,
+        # 'config_list': config_list,
+    }
+    return render(request, 'envdaq/daqserver.html', context=context)
 
 
 def controller(request, daq_namespace, controller_namespace):

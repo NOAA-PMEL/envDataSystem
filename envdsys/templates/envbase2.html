@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+{% load static%}
+<html lang="en">
+    <head>
+        <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="ACG Datasets">
+        
+        <title>{% block title %}envDataSystem Title{% endblock title %}</title>
+
+        <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <link rel="stylesheet" href="https://www.w3schools.com/lib/w3-theme-blue-grey.css">
+        {% comment %} <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"><style> {% endcomment %}
+
+        <style>
+            body {font-family: "Roboto", sans-serif}
+
+            .footer {
+                position: sticky;
+                left: 0;
+                bottom: 0;
+                width: 100%;
+            }
+
+            .w3-bar-block .w3-bar-item {
+                padding: 16px;
+                {% comment %} font-weight: bold; {% endcomment %}
+            }
+
+        </style>
+
+    </head>
+
+    <body>
+
+        <nav class="w3-sidebar w3-bar-block w3-collapse w3-animate-left w3-card" style="z-index:3;width:200px;" id="menuSidebar">
+            {% comment %} <a class="w3-bar-item w3-button w3-border-bottom w3-large" href="https://saga.pmel.noaa.gov"><img src="https://saga.pmel.noaa.gov/sites/default/files/header-logo.png" style="width:80%;"></a> {% endcomment %}
+            <a class="w3-bar-item w3-button w3-hide-large w3-large" href="javascript:void(0)" onclick="w3_close()">Close<i style="position:relative;left:10px;vertical-align:middle;" class="material-icons">close</i></a>
+                <a class="w3-bar-item w3-button" href="/">Home</a>
+                <a class="w3-bar-item w3-button" href="/envdaq">DAQ</a>
+                <a class="w3-bar-item w3-button" href="#">Data Server</a>
+                <a class="w3-bar-item w3-button" href="#">Projects</a>
+                <a class="w3-bar-item w3-button" href="#">Sampling Systems</a>
+                <a class="w3-bar-item w3-button" href="/envcontacts">Contacts</a>
+                <a class="w3-bar-item w3-button" href="/envinventory">Inventory</a>
+                <div>
+                    <a class="w3-bar-item w3-button" onclick="menuAccordion('services')" href="javascript:void(0)">Services<i id="services-menu-icon" style="position:relative;left:10px;vertical-align:middle;" class="material-icons">expand_more</i></a>
+                    <div id="services-menu" class="w3-hide">
+                    <a style="text-indent:10px;" class="w3-bar-item w3-button" href="/envnet">Network</a>
+                    <a style="text-indent:10px;" class="w3-bar-item w3-button" href="/envdaq">UI Servers</a>
+                    <a style="text-indent:10px;" class="w3-bar-item w3-button" href="/envdaq">InstrumentInterfaces</a>
+                    </div>
+                </div>
+                <a class="w3-bar-item w3-button" href="/admin">Admin</a>
+            </nav>
+        </nav>
+
+        {% comment %} <div class="w3-overlay w3-hide w3-animate-opacity" onclick="w3_close()" style="cursor:pointer" id="dataOverlay"></div> {% endcomment %}
+        <div class="w3-overlay w3-hide-large w3-animate-opacity" onclick="w3_close()" style="cursor:pointer" id="menuOverlay"></div>
+        
+        <div class="w3-main" style="margin-left:200px;">
+
+            <div id="dataTop" class="w3-container w3-top w3-theme">
+                <p>
+                {% comment %} <p><i class="material-icons w3-button w3-blue w3-hide-large w3-xlarge" onclick="w3_open()">open</i> {% endcomment %}
+                {% comment %} <i class="material-icons w3-button w3-hide" onclick="w3_open()">menu</i> {% endcomment %}
+                <i class="material-icons w3-button w3-hide-large w3-xlarge" onclick="w3_open()">menu</i>
+                <span id="dataIntro" class="w3-hide">{% block header-intro %}ACG Datasets{% endblock header-intro %}</span>
+                </p>
+            </div>
+
+            <header class="w3-container w3-theme" style="padding:50px 20px">
+                <h2>
+                {% block header %}
+                ACG Datasets
+                {% endblock header %}
+                </h2>
+
+                {% block subheader %}
+                <p><i>create and maintain project datasets</p>
+                {% endblock subheader %}
+            </header>
+
+            <div class="w3-container w3-margin">
+            {% block content %}
+            Content goes here
+            {% endblock content %}
+            </div>
+            
+        </div>
+
+        <script type="text/javascript">
+
+            function w3_open() {
+            document.getElementById("menuSidebar").style.display = "block";
+            document.getElementById("menuOverlay").style.display = "block";
+            }
+
+            function w3_close() {
+            document.getElementById("menuSidebar").style.display = "none";
+            document.getElementById("menuOverlay").style.display = "none";
+            }
+
+            // Change style of top container on scroll
+            window.onscroll = function() {myFunction()};
+            function myFunction() {
+            if (document.body.scrollTop > 80 || document.documentElement.scrollTop > 80) {
+                document.getElementById("dataTop").classList.add("w3-card-4", "w3-animate-opacity");
+                document.getElementById("dataIntro").classList.add("w3-show-inline-block");
+            } else {
+                document.getElementById("dataIntro").classList.remove("w3-show-inline-block");
+                document.getElementById("dataTop").classList.remove("w3-card-4", "w3-animate-opacity");
+            }
+            }
+
+            // Accordions
+            function menuAccordion(id) {
+                var menu = document.getElementById(id+'-menu');
+                var icon = document.getElementById(id+"-icon");
+                // console.log(menu, icon, id)
+                if (menu.className.indexOf("w3-show") == -1) {
+                    menu.className += " w3-show";
+                    icon.innerText = "expand_less"
+                } else { 
+                    menu.className = menu.className.replace("w3-show", "");
+                    icon.innerText = "expand_more"
+                }
+            }
+
+            function myAccordion(id) {
+                var x = document.getElementById('accordion-'+id);
+                var bi = document.getElementById('button-icon-'+id);
+                // console.log(x, id)
+                if (x.className.indexOf("w3-show") == -1) {
+                    x.className += " w3-show";
+                    bi.innerText = "expand_less"
+                } else { 
+                    x.className = x.className.replace("w3-show", "");
+                    bi.innerText = "expand_more"
+                }
+            }
+        
+        </script>
+    </body>
+</html>

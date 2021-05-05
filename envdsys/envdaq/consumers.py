@@ -1,12 +1,17 @@
 # envdaq/consumers.py
+from json.decoder import JSONDecodeError
+from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer, AsyncConsumer
 import channels.db
 import json
 import asyncio
 import os
+from envdaq.models import DAQServer
 
 from envdaq.util.daq import ConfigurationUtility
+from envnet.models import DAQRegistration
 from envnet.registry.registry import ServiceRegistry, DAQRegistry
+from envtags.models import Configuration
 
 # import envdaq.util.util as time_util
 from shared.utilities.util import dt_to_string
@@ -16,6 +21,8 @@ from plots.plots import PlotManager
 from envdaq.util.registration import RegistrationManager
 from django.conf import settings
 from datamanager.datamanager import DataManager
+from channels.db import database_sync_to_async
+
 
 
 class DataConsumer(AsyncWebsocketConsumer):
@@ -108,7 +115,7 @@ class ControllerConsumer(AsyncWebsocketConsumer):
             f"{self.daqserver_namespace}-controller-{self.controller_namespace}"
         )
 
-        self.namespace = f"{self.daqserver_namespace}-{self.controller_namespace}"
+        self.controller_id = f"{self.daqserver_namespace}-{self.controller_namespace}"
         # print(f'name = {self.namespace}')
 
         self.ui_save_base_path = "/tmp/envDataSystem/UIServer"
@@ -184,7 +191,7 @@ class ControllerConsumer(AsyncWebsocketConsumer):
         elif message["SUBJECT"] == "PING":
             # RegistrationManager.ping(message['BODY']['namespace']['daq_server'])
             # RegistrationManager.ping(self.namespace, type="Controller")
-            await DAQRegistry.ping(namespace=self.namespace, type="Controller")
+            await DAQRegistry.ping(reg_id=self.controller_id, type="Controller")
 
         elif message["SUBJECT"] == "REGISTRATION":
             body = message["BODY"]
@@ -231,10 +238,10 @@ class ControllerConsumer(AsyncWebsocketConsumer):
                 #             type="Controller",
                 #         )
 
-                # namespace = body["namespace"]
+                namespace = body["namespace"]
                 registration = await DAQRegistry.get_registration(
                     # namespace=self.daqserver_namespace, type="Controller"
-                    namespace=self.namespace,
+                    reg_id=self.controller_id,
                     type="Controller",
                 )
                 # print(f"registration2-get: {registration}")
@@ -253,7 +260,8 @@ class ControllerConsumer(AsyncWebsocketConsumer):
                             # RegistrationManager.update(daq_namespace, registration, type="DAQServer")
                             registration = await DAQRegistry.update_registration(
                                 # namespace=self.daqserver_namespace,
-                                namespace=self.namespace,
+                                reg_id=self.controller_id,
+                                namespace=namespace,
                                 registration=registration,
                                 type="Controller",
                             )
@@ -268,14 +276,16 @@ class ControllerConsumer(AsyncWebsocketConsumer):
                         # RegistrationManager.update(daq_namespace, registration, type="DAQServer")
                         registration = await DAQRegistry.update_registration(
                             # self.daqserver_namespace, registration, type="Controller"
-                            namespace=self.namespace,
+                            reg_id=self.controller_id,
+                            namespace=namespace,
                             registration=registration,
                             type="Controller",
                         )
                     else:  # daq has started
                         registration = await DAQRegistry.register(
                             # body['id'],
-                            namespace=self.namespace,
+                            reg_id=self.controller_id,
+                            namespace=namespace,
                             # self.daqserver_namespace,
                             config=body["config"],
                             type="Controller",
@@ -310,7 +320,7 @@ class ControllerConsumer(AsyncWebsocketConsumer):
                 # RegistrationManager.remove(body['id'])
                 # RegistrationManager.remove(self.namespace, type="Controller")
                 await DAQRegistry.unregister(
-                    namespace=self.namespace, type="Controller"
+                    reg_id=self.controller_id, type="Controller"
                 )
 
         elif message["SUBJECT"] == "CONFIG":
@@ -429,7 +439,7 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
 
         self.instrument_group_name = f"{self.daqserver_namespace}-{self.controller_namespace}-instrument-{self.instrument_namespace}"
 
-        self.namespace = f"{self.daqserver_namespace}-{self.controller_namespace}-{self.instrument_namespace}"
+        self.instrument_id = f"{self.daqserver_namespace}-{self.controller_namespace}-{self.instrument_namespace}"
 
         self.ui_save_base_path = "/tmp/envDataSystem/UIServer"
         self.ui_save_data = False
@@ -540,19 +550,20 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
             )
 
         elif message["SUBJECT"] == "PING":
-            await DAQRegistry.ping(namespace=self.namespace, type="Instrument")
+            await DAQRegistry.ping(reg_id=self.instrument_id, type="Instrument")
 
         elif message["SUBJECT"] == "REGISTRATION":
             body = message["BODY"]
             if body["purpose"] == "ADD":
                 daq_namespace = body["namespace"]["daq_server"]
+                namespace = body["namespace"]
                 # print(f'namespace: {self.daqserver_namespace}, {daq_namespace}')
                 # registration = RegistrationManager.get(body['id'])
                 # registration = RegistrationManager.get(daq_namespace, type="DAQServer")
                 ui_reconfig_request = False
 
                 registration = await DAQRegistry.get_registration(
-                    namespace=self.namespace, type="Instrument"
+                    reg_id=self.instrument_id, type="Instrument"
                 )
                 # print(f"registration2-get: {registration}")
                 # registration2 = await DAQRegistry.register(
@@ -569,7 +580,8 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
                             # RegistrationManager.update(body['id'], registration)
                             # RegistrationManager.update(daq_namespace, registration, type="DAQServer")
                             registration = await DAQRegistry.update_registration(
-                                namespace=self.namespace,
+                                reg_id=self.instrument_id,
+                                namespace=namespace,
                                 registration=registration,
                                 type="Instrument",
                             )
@@ -583,14 +595,16 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
                         # RegistrationManager.update(body['id'], registration)
                         # RegistrationManager.update(daq_namespace, registration, type="DAQServer")
                         registration = await DAQRegistry.update_registration(
-                            namespace=self.namespace,
+                            reg_id=self.instrument_id,
+                            namespace=namespace,
                             registration=registration,
                             type="Instrument",
                         )
                     else:  # daq has started
                         registration = await DAQRegistry.register(
                             # body['id'],
-                            self.namespace,
+                            reg_id=self.instrument_id,
+                            namespace=namespace,
                             config=body["config"],
                             type="Instrument",
                         )
@@ -674,7 +688,7 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
                 # RegistrationManager.remove(body['id'])
                 # RegistrationManager.remove(self.daqserver_namespace, type="DAQServer")
                 await DAQRegistry.unregister(
-                    namespace=self.namespace, type="Instrument"
+                    namespace=self.instrument_id, type="Instrument"
                 )
 
         elif message["SUBJECT"] == "CONFIG":
@@ -745,7 +759,7 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
                     "SUBJECT": "STATUS",
                     "BODY": body,
                 }
-                print(f'consumer: {message}')
+                print(f"consumer: {message}")
                 await self.channel_layer.group_send(
                     self.instrument_group_name,
                     {"type": "instrument_message", "message": msg},
@@ -1074,6 +1088,9 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
             self.daqserver_namespace = "default"
             self.daqserver_group_name = "daq_default_messages"
 
+        self.manage_group_name = "envdaq-manage"
+        self.registry_group_name = "envnet-manage"
+
         # self.server_name = (
         #     self.scope['url_route']['kwargs']['server_name']
         # )
@@ -1084,6 +1101,8 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
 
         # Join room group
         await self.channel_layer.group_add(self.daqserver_group_name, self.channel_name)
+        await self.channel_layer.group_add(self.manage_group_name, self.channel_name)
+        await self.channel_layer.group_add(self.registry_group_name, self.channel_name)
 
         await self.accept()
 
@@ -1107,6 +1126,12 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard(
             self.daqserver_group_name, self.channel_name
         )
+        await self.channel_layer.group_discard(
+            self.manage_group_name, self.channel_name
+        )
+        await self.channel_layer.group_discard(
+            self.registry_group_name, self.channel_name
+        )
 
     # Receive message from WebSocket
     async def receive(self, text_data):
@@ -1125,21 +1150,41 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
         if message["SUBJECT"] == "PING":
             # RegistrationManager.ping(message['BODY']['namespace']['daq_server'])
             # RegistrationManager.ping(self.daqserver_namespace)
-            await DAQRegistry.ping(namespace=self.daqserver_namespace, type="DAQServer")
+
+            # await self.channel_layer.group_send(
+            #     self.registry_group_name,
+            #     {"type": "daq_message", "message": message},
+            # )
+            await DAQRegistry.ping(reg_id=self.daqserver_namespace, type="DAQServer")
 
         elif message["SUBJECT"] == "REGISTRATION":
             body = message["BODY"]
+
+            #TODO do I need this?
+            await self.channel_layer.group_send(
+                self.registry_group_name,
+                {"type": "daq_message", "message": message},
+            )
+
             if body["purpose"] == "ADD":
                 # print('add')
-                # print(f'add: {self.scope}')
-                daq_namespace = body["namespace"]["daq_server"]
+                # print(f"add: {self.scope}")
+                print(f"body: {body}")
+                daq_id = body["namespace"]["daq_server"]
+                namespace = body["namespace"]
+                uri = body["uri"]
+
+                daq_server = await self.get_daq_server(uri, daq_id)
+                print(f"daq_server: {uri}, {daq_id}, {daq_server}")
+
                 # print(f'namespace: {self.daqserver_namespace}, {daq_namespace}')
                 # registration = RegistrationManager.get(body['id'])
                 # registration = RegistrationManager.get(daq_namespace, type="DAQServer")
                 ui_reconfig_request = False
 
                 registration = await DAQRegistry.get_registration(
-                    namespace=self.daqserver_namespace, type="DAQServer"
+                    # namespace=self.daqserver_namespace, type="DAQServer"
+                    reg_id=self.daqserver_namespace, type="DAQServer"
                 )
                 # print(f"registration2-get: {registration}")
                 # registration2 = await DAQRegistry.register(
@@ -1147,16 +1192,19 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
                 #     type="DAQServer",
                 #     config=body["config"],
                 # )
-                # print(f"registration2: {registration2}")
+                print(f"registration: {registration}")
                 if registration:
                     if body["regkey"]:  # daq running (likely a reconnect)
                         # same: daq_server config takes precedence
                         if body["regkey"] == registration["regkey"]:
                             registration["config"] = body["config"]
+                            registration["config2"] = json.loads(body["config2"])
                             # RegistrationManager.update(body['id'], registration)
                             # RegistrationManager.update(daq_namespace, registration, type="DAQServer")
                             registration = await DAQRegistry.update_registration(
-                                namespace=self.daqserver_namespace,
+                                # namespace=self.daqserver_namespace,
+                                reg_id=self.daqserver_namespace,
+                                namespace=namespace,
                                 registration=registration,
                                 type="DAQServer",
                             )
@@ -1166,22 +1214,29 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
                         registration = {
                             # "regkey": body["regkey"],
                             "config": body["config"],
+                            "config2": json.loads(body["config2"]),
                         }
                         # RegistrationManager.update(body['id'], registration)
                         # RegistrationManager.update(daq_namespace, registration, type="DAQServer")
                         registration = await DAQRegistry.update_registration(
-                            namespace=self.daqserver_namespace,
+                            # namespace=self.daqserver_namespace,
+                            reg_id=self.daqserver_namespace,
+                            namespace=namespace,
                             registration=registration,
                             type="DAQServer",
                         )
                     else:  # daq has started
                         registration = await DAQRegistry.register(
                             # body['id'],
-                            namespace=self.daqserver_namespace,
+                            # namespace=self.daqserver_namespace,
+                            reg_id=self.daqserver_namespace,
+                            namespace=namespace,
                             config=body["config"],
+                            config2=json.loads(body["config2"]),
                             type="DAQServer",
                         )
-
+                print(f"config2: {json.loads(body['config2'])}")
+                print(f"registration: {registration}")
                 reply = {
                     "TYPE": "UI",
                     "SENDER_ID": "DAQServerConsumer",
@@ -1194,60 +1249,7 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
                         "ui_reconfig_request": ui_reconfig_request,
                     },
                 }
-                # print(f"reply2: {json.dumps(reply)}")
-
-                # ui_reconfig_request = False
-                # registration = RegistrationManager.get(
-                #     self.daqserver_namespace, type="DAQServer"
-                # )
-                # if registration:  # reg exists - UI running, unknown daq state
-                #     # if daq_server has key, check against current registration
-                #     if body["regkey"]:  # daq running (likely a reconnect)
-                #         # same: daq_server config takes precedence
-                #         if body["regkey"] == registration["regkey"]:
-                #             registration["config"] = body["config"]
-                #             # RegistrationManager.update(body['id'], registration)
-                #             # RegistrationManager.update(daq_namespace, registration, type="DAQServer")
-                #             RegistrationManager.update(
-                #                 self.daqserver_namespace, registration, type="DAQServer"
-                #             )
-
-                # else:  # no reg, no connection to daq since UI start
-                #     if body["regkey"]:  # daq has been running
-                #         ui_reconfig_request = True
-                #         registration = {
-                #             "regkey": body["regkey"],
-                #             "config": body["config"],
-                #         }
-                #         # RegistrationManager.update(body['id'], registration)
-                #         # RegistrationManager.update(daq_namespace, registration, type="DAQServer")
-                #         RegistrationManager.update(
-                #             self.daqserver_namespace, registration, type="DAQServer"
-                #         )
-                #     else:  # daq has started
-                #         registration = RegistrationManager.add(
-                #             # body['id'],
-                #             self.daqserver_namespace,
-                #             config=body["config"],
-                #             type="DAQServer",
-                #         )
-
-                # print("before reply")
-                # reply = {
-                #     "TYPE": "UI",
-                #     "SENDER_ID": "DAQServerConsumer",
-                #     "TIMESTAMP": dt_to_string(),
-                #     "SUBJECT": "REGISTRATION",
-                #     "BODY": {
-                #         "purpose": "SUCCESS",
-                #         "regkey": registration["regkey"],
-                #         "config": registration["config"],
-                #         "ui_reconfig_request": ui_reconfig_request,
-                #     },
-                # }
-                # print(f"reply: {reply}")
-                # print(json.dumps(reply))
-                await self.data_message({"message": reply})
+                await self.daq_message({"message": reply})
 
                 # body={
                 #     "purpose": "ADD",
@@ -1256,12 +1258,136 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
                 #     "config": self.config,
                 # },
 
-            if body["purpose"] == "REMOVE":
+            elif body["purpose"] == "REMOVE":
                 print("remove")
                 # RegistrationManager.remove(body['id'])
                 # RegistrationManager.remove(self.daqserver_namespace, type="DAQServer")
                 await DAQRegistry.unregister(
-                    namespace=self.daqserver_namespace, type="DAQServer"
+                    reg_id=self.daqserver_namespace, type="DAQServer"
+                )
+                reply = {
+                    "TYPE": "UI",
+                    "SENDER_ID": "DAQServerConsumer",
+                    "TIMESTAMP": dt_to_string(),
+                    "SUBJECT": "UNREGISTRATION",
+                    "BODY": {
+                        "purpose": "SUCCESS",
+                    },
+                }
+                print(f"success: {reply}")
+                await self.daq_message({"message": reply})
+
+            # # update registrations on clients
+            # try:
+            #     regs = DAQRegistration.objects.all()
+            #     # print(f'regs: {regs}')
+            # except DAQRegistration.DoesNotexist:
+            #     regs = []
+
+            # daq_registration_map = {}
+            # if regs:
+            #     for reg in regs:
+            #         daq_registration_map[reg.namespace] = reg.get_registration()
+
+            body = {
+                "update": "DAQRegistry",
+                # "daq_registry": daq_registration_map,
+            }
+            reply = Message(
+                msgtype="UI",
+                sender_id="DAQServerConsumer",
+                subject="UPDATE_CLIENT",
+                body=body,
+            )
+            await self.channel_layer.group_send(
+                self.manage_group_name,
+                {"type": "daq_message", "message": message},
+            )
+
+        elif message["SUBJECT"] == "DAQServerStatus":
+
+            body = message["BODY"]
+            if body["purpose"] == "REQUEST":
+
+                body = {
+                    "purpose": "REQUEST",
+                }
+                message = Message(
+                    msgtype="UI",
+                    sender_id="DAQServerConsumer",
+                    subject="STATUS",
+                    body=body,
+                )
+                print(f"request_status: {message.to_dict()}")
+                # await self.daq_message(message.to_dict())
+                await self.channel_layer.group_send(
+                    self.daqserver_group_name,
+                    {"type": "daq_message", "message": message.to_dict()["message"]},
+                )
+
+            elif body["purpose"] == "UPDATE":
+
+                body = {
+                    "purpose": "UPDATE",
+                    "status": body["status"]
+                }
+                message = Message(
+                    msgtype="UI",
+                    sender_id="DAQServerConsumer",
+                    subject="DAQServerStatus",
+                    body=body,
+                )
+                print(f"update_status: {message.to_dict()}")
+                # await self.daq_message(message.to_dict())
+                await self.channel_layer.group_send(
+                    self.daqserver_group_name,
+                    {"type": "daq_message", "message": message.to_dict()["message"]},
+                )
+
+
+        elif message["SUBJECT"] == "DAQServerConfig":
+
+            body = message["BODY"]
+            if body["purpose"] == "REQUEST":
+                current_reg = await DAQRegistry.get_registration(reg_id=self.daqserver_namespace, type="DAQServer")
+                print(f'id={self.daqserver_namespace}, reg={current_reg}')
+                current_config = {}
+                if current_reg:
+                    current_config = current_reg["config2"]
+
+                print(f"()()current_config: {current_config}, {type(current_config)}")
+                config_list = await self.get_config_list()
+                # print(f"&&& {config_list}")
+                # get list of available configurations
+                # config_list = []
+                # try:
+                #     configs = await database_sync_to_async(Configuration.objects.all)()
+                #     for config in configs:
+                #         try:
+                #             cfg = json.loads(config.config)
+                #             if "ENVDAQ" in cfg:
+                #                 config_list.append(config.config)
+                #         except TypeError:
+                #             pass
+                # except Configuration.DoesNotExist:
+                #     pass
+
+                body = {
+                    "purpose": "UPDATE",
+                    "current_config": current_config,
+                    "config_list": config_list,
+                }
+                message = Message(
+                    msgtype="UI",
+                    sender_id="DAQConsumer",
+                    subject="DAQServerConfig",
+                    body=body,
+                )
+                print(f"message_to_dict: {message.to_dict()}")
+                # await self.daq_message(message.to_dict())
+                await self.channel_layer.group_send(
+                    self.daqserver_group_name,
+                    {"type": "daq_message", "message": message.to_dict()["message"]},
                 )
 
         elif message["SUBJECT"] == "CONFIG":
@@ -1284,7 +1410,7 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
                         },
                     }
                 # print(f'reply: {reply}')
-                await self.data_message({"message": reply})
+                await self.daq_message({"message": reply})
             elif body["purpose"] == "SYNC":
                 if body["type"] == "SYSTEM_DEFINITION":
                     # TODO: add field to force sync option
@@ -1313,12 +1439,40 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
         # )
 
     # Receive message from room group
-    async def data_message(self, event):
+    async def daq_message(self, event):
         message = event["message"]
         # print(f'data_message: {json.dumps(message)}')
         # Send message to WebSocket
         await self.send(text_data=json.dumps({"message": message}))
 
+    @database_sync_to_async
+    def get_daq_server(self, uri, name):
+        try:
+            daq_server = DAQServer.objects.get(name=name, host=uri)
+            print(f"daq_server_exists: {daq_server}")
+        except DAQServer.DoesNotExist:
+            daq_server = DAQServer(name=name, host=uri)
+            daq_server.save()
+            print(f"daq_server_new: {daq_server}")
+            
+        return daq_server
+
+    @database_sync_to_async
+    def get_config_list(self):
+        config_list = []
+        try:
+            configs = Configuration.objects.all()
+            print(configs)
+            for config in configs:
+                try:
+                    cfg = json.loads(config.config)
+                    if "ENVDAQ_CONFIG" in cfg:
+                        config_list.append(cfg["NAME"])
+                except (TypeError, JSONDecodeError):
+                    pass
+        except Configuration.DoesNotExist:
+            pass
+        return config_list
 
 # class InitConsumer(SyncConsumer):
 #     def test():
@@ -1337,6 +1491,175 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
 #     #     # except KeyError:
 #     #     #     self.daqserver_namespace = "default"
 #     #     #     self.daqserver_group_name = "daq_default_messages"
+
+
+class DAQConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+
+        print(f"scope: {self.scope}")
+        # try:
+        #     self.daqserver_namespace = self.scope["url_route"]["kwargs"][
+        #         "daq_namespace"
+        #     ]
+        #     self.daqserver_group_name = f"daqserver_{self.scope['url_route']['kwargs']['daq_namespace']}_messages"
+        # except KeyError:
+        #     self.daqserver_namespace = "default"
+        #     self.daqserver_group_name = "daq_default_messages"
+
+        self.daq_group_name = ""
+        self.manage_group_name = "envdaq-manage"
+        self.registry_group_name = "envnet-manage"
+
+        # self.server_name = (
+        #     self.scope['url_route']['kwargs']['server_name']
+        # )
+        self.hostname = self.scope["server"][0]
+        self.port = self.scope["server"][1]
+        self.daq_group_name = f"daq-{self.hostname}-{self.port}"
+        # print(f'hostname:port : {self.hostname}:{self.port}')
+        # self.daqserver_group_name = 'daq_messages'
+
+        # Join room group
+        await self.channel_layer.group_add(self.daq_group_name, self.channel_name)
+        await self.channel_layer.group_add(self.manage_group_name, self.channel_name)
+        # await self.channel_layer.group_add(self.registry_group_name, self.channel_name)
+
+        await self.accept()
+
+        # get current daq
+        # TODO: add ability to key this with name, tags, project, etc
+        # daq = envdaq.util.daq.get_daq()
+        # cfg = ConfigurationUtility().get_config()
+        # print(f'consumer:cfg = {cfg}')
+
+        # await self.data_message({'message': 'hi'})
+        # await self.channel_layer.group_send(
+        #     self.data_win_group_name,
+        #     {
+        #         'type': 'message',
+        #         'message': 'hi again'
+        #     }
+        # )
+
+    async def disconnect(self, close_code):
+        # Leave room group
+        await self.channel_layer.group_discard(self.daq_group_name, self.channel_name)
+        # await self.channel_layer.group_discard(
+        #     self.manage_group_name, self.channel_name
+        # )
+        # await self.channel_layer.group_discard(
+        #     self.registry_group_name, self.channel_name
+        # )
+
+    # Receive message from WebSocket
+    async def receive(self, text_data):
+        print(text_data)
+        # # text_data_json = json.loads(text_data)
+
+        # try:
+        #     data = json.loads(text_data)
+        # except json.JSONDecodeError as e:
+        #     print(f"DAQServerConsumer error {e}")
+        #     return
+
+        # message = data["message"]
+        # # print(f'999999 message: {message}')
+
+        # new_message = "hi"
+        # await self.daq_message({"message": "hi"})
+
+        # # print(text_data)
+        # # text_data_json = json.loads(text_data)
+
+        try:
+            data = json.loads(text_data)
+        except json.JSONDecodeError as e:
+            print(f"DAQConsumer error {e}")
+            return
+
+        message = data["message"]
+        # print(f'999999 message: {message}')
+
+        if message["SUBJECT"] == "DAQServerRegistry":
+            body = message["BODY"]
+
+            if body["purpose"] == "UPDATE_CLIENT":
+                pass
+                # await self.channel_layer.group_send(
+                #     self.registry_group_name,
+                #     {"type": "daq_message", "message": message},
+                # )
+
+            elif body["purpose"] == "REQUEST":
+                # print('add')
+                # print(f'add: {self.scope}')
+                # print(f"body: {body}")
+                # daq_namespace = body["namespace"]["daq_server"]
+
+                # try:
+                #     regs = await database_sync_to_async(DAQRegistration.objects.all())
+                #     print(f"regs: {regs}")
+
+                # except DAQRegistration.DoesNotexist:
+                #     # TODO: return 404 ... lookup how
+                #     pass
+                #     regs = []
+
+                # daq_registration_map = {}
+                # if regs:
+                #     for reg in regs:
+                #         daq_registration_map[reg.namespace] = reg.get_registration()
+
+                # daq_registration_map = await self.get_daq_registry()
+                daqserver_registration_map = await DAQRegistry.get_registry(type="DAQServer")
+                controller_registration_map = await DAQRegistry.get_registry(type="Controller")
+                instrument_registration_map = await DAQRegistry.get_registry(type="Instrument")
+                print(f"<<< daqserver_registration_map: {daqserver_registration_map}")
+                print(f"<<< controller_registration_map: {controller_registration_map}\n\n")
+                print(f"<<< instrument_registration_map: {instrument_registration_map}\n\n")
+                body = {
+                    "purpose": "REGISTRY",
+                    "daqserver_registry": daqserver_registration_map,
+                    "controller_registry": controller_registration_map,
+                    "instrument_registry": instrument_registration_map,
+                }
+                message = Message(
+                    msgtype="UI",
+                    sender_id="DAQConsumer",
+                    subject="DAQServerRegistry",
+                    body=body,
+                )
+                print(f"message_to_dict: {message.to_dict()}")
+                # await self.daq_message(message.to_dict())
+                await self.channel_layer.group_send(
+                    self.daq_group_name,
+                    {"type": "daq_message", "message": message["message"]},
+                )
+
+
+    @database_sync_to_async
+    def get_daq_registry(self):
+        try:
+            regs = DAQRegistration.objects.all()
+            print(f"regs: {regs}")
+
+        except DAQRegistration.DoesNotexist:
+            # TODO: return 404 ... lookup how
+            pass
+            regs = []
+
+        daq_registration_map = {}
+        if regs:
+            for reg in regs:
+                daq_registration_map[reg.namespace] = reg.get_registration()
+        
+        return daq_registration_map
+
+    async def daq_message(self, event):
+        message = event["message"]
+        print(f'data_message: {json.dumps(message)}')
+        # Send message to WebSocket
+        await self.send(text_data=json.dumps({"message": message}))
 
 
 class ManagementConsumer(AsyncConsumer):
@@ -1368,3 +1691,25 @@ class ManagementConsumer(AsyncConsumer):
                     pass
         except KeyError:
             pass
+
+    async def connect(self):
+        # self.room_name = self.scope['url_route']['kwargs']['room_name']
+        self.data_group_name = "DAQManagementConsumer"
+        self.data_win_group_name = "daqmanage"
+        print(f"scope={self.scope}")
+        # Join room group
+        # await self.channel_layer.group_add(self.data_group_name, self.channel_name)
+
+        await self.accept()
+
+    async def receive(self, text_data):
+        # print(text_data)
+        # text_data_json = json.loads(text_data)
+
+        try:
+            data = json.loads(text_data)
+        except json.JSONDecodeError as e:
+            print(f"DAQServerConsumer error {e}")
+            return
+
+        message = data["message"]

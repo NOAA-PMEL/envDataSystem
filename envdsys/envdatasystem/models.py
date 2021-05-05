@@ -12,7 +12,7 @@ from envtags.models import Tag
 
 class DataSystem(models.Model):
 
-    name = models.CharField(_("TmpName"), max_length=50, blank=True, null=True)
+    name = models.CharField(_("Name"), max_length=50, default="default")
 
     project = models.ForeignKey(
         "envdatasystem.Project",
@@ -38,7 +38,7 @@ class DataSystem(models.Model):
         verbose_name_plural = _("Data Systems")
 
     def __str__(self):
-        return f"{self.project}-{self.platform}"
+        return f"{self.project}-{self.platform}-{self.name}"
 
     def get_absolute_url(self):
         return reverse("DataSystem_detail", kwargs={"pk": self.pk})
@@ -498,11 +498,11 @@ class InstrumentComponent(models.Model):
 
     Instrument = models.ForeignKey(
         "envdatasystem.InstrumentSystem",
-        verbose_name=_("Controller"),
+        verbose_name=_("Instrument"),
         on_delete=models.CASCADE,
         # related_name="instrumentcomponent_instrument",
     )
-    name = models.CharField(_("Name"), max_length=50)
+    name = models.CharField(_("Name"), max_length=50, default="default")
 
     type = models.CharField(
         _("Type"), max_length=50, choices=component_type_choices, default="interface"
@@ -525,7 +525,7 @@ class InstrumentComponent(models.Model):
         verbose_name_plural = _("InstrumentComponents")
 
     def __str__(self):
-        return self.name
+        return f"{self.Instrument}-{self.type}-{self.name}"
 
     def get_absolute_url(self):
         return reverse("InstrumentComponent_detail", kwargs={"pk": self.pk})
@@ -552,10 +552,11 @@ class InstrumentComponentInterface(models.Model):
         on_delete=models.CASCADE,
         # related_name="instrumentcomponentinterface_component",
     )
+    interface = models.ForeignKey("envdaq.Interface", verbose_name="Interface", on_delete=models.CASCADE, blank=True, null=True)
     # interface = models.ForeignKey("envdatasystem.InterfaceSystem", verbose_name=_("Interface"), on_delete=models.CASCADE, related_name="instrumentcomponentinterface_interface")
-    interface = models.CharField(
-        _("Interface"), max_length=100, default="default_interface"
-    )
+    # interface = models.CharField(
+    #     _("Interface"), max_length=100, default="default_interface"
+    # )
     primary = models.BooleanField(_("Primary Component"), default=False)
 
     class Meta:
@@ -563,7 +564,7 @@ class InstrumentComponentInterface(models.Model):
         verbose_name_plural = _("InstrumentComponent Interfaces")
 
     def __str__(self):
-        return f"{self.controller}-interface-{self.component}"
+        return f"{self.component}-{self.interface}"
 
     def get_absolute_url(self):
         return reverse("instrumentcomponentinterface_detail", kwargs={"pk": self.pk})

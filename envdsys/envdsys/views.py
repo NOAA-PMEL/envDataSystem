@@ -22,7 +22,7 @@ def index(request):
     daq_reg_map = {}
     daq_regs = DAQRegistration.objects.all()
     for reg in daq_regs:
-        daq_reg_map[reg.namespace] = {
+        daq_reg_map[reg.reg_id] = {
             "type": reg.daq_type,
             "status": reg.status
         }

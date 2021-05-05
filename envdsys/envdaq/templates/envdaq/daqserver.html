@@ -1,146 +1,302 @@
-<!-- envdaq/templates/envdaq/daqserver.html -->
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8"/>
-    <title>envDAQ:DAQServer</title>
-</head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<body>
-    <style>
-    #data-table {
-        {% comment %} width: 100%; {% endcomment %}
-         -webkit-overflow-scrolling: touch;
-        overflow-x: auto;
-        display: block;
-        {% comment %} table-layout: fixed; {% endcomment %}
-    }
-     {% comment %} #data-table-namecol {
-        width=200px;
-    }
-     #data-table-valuecol {
-        width=200px;
-    } {% endcomment %}
-    </style>                                                                                                                                                                     </style>
+{% extends "envdaq/envdaq_base.html" %}
+{% load static%}
 
-    Message Buffer (msg):<br/>
-    <textarea id="msg-window" cols="100" rows="5"></textarea><br/>
-    <br/>
-    Data Buffer (data):<br/>
-    <textarea id="data-window" cols="100" rows="5"></textarea><br/>
-    {% comment %} <input id="inst-name-input" type="text" size="100"/><br/> {% endcomment %}
-    {% comment %} <input id="inst-name-submit" type="button" value="Enter"/> {% endcomment %}
+{% block title%}envDataSystem DAQ{% endblock title%}
 
-    <br/>
-    <input id="daqserver-start-button" type="button" value="Start"/>
-    <input id="daqserver-stop-button" type="button" value="Stop"/>
-    
+{% block navpath%}
+    <div id="daqserver-navpath">
+    </div>
+    {% comment %} Home / DAQ Server / {{daq_namespace}} {% endcomment %}
+{% endblock navpath %}
 
-    {% comment %} <p id="time-stamp"></p><br/> {% endcomment %}
-    {% comment %} <textarea>{{ cellvalue }}</textarea> {% endcomment %}
-    {% comment %} <table id="data-table">
+{% block content %}
 
-    </table> {% endcomment %}
-    <script>
-        
-        window.onload=init;
+    <div id="server-manage-div" class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
 
-
-        function init() {
-
-            {% comment %} build_table() {% endcomment %}
-
+        <h5>Server Configuration: </h5>
+        <div id="config-manager-div">
+            {% comment %} <p id="server-name">{{ daq_namespace }}</p> {% endcomment %}
             
+        </div
+        <div id="oldcontroller-table-div" class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
+        </div>
 
+        {% comment %} <div id="instrument-table-div" class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
+        </div> {% endcomment %}
+
+    </div>
+
+    <div id="server-component-div" class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
+
+        <h5>Server Components: </h5>
+        <div id="component-manager-div">
+            {% comment %} <p id="server-name">{{ daq_namespace }}</p> {% endcomment %}
+            
+        </div
+        <div id="controller-table-div" class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
+        </div>
+
+        {% comment %} <div id="instrument-table-div" class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
+        </div> {% endcomment %}
+
+    </div>
+
+<script>
+
+    // globals
+    var daq_namespace = "{{ daq_namespace }}"
+
+    var daq_current_config
+    var daq_config_list = []
+    var daq_status
+
+    window.onload=function() {
+        console.log("init")
+        //console.log('ws://' + window.location.host +'/ws/envdaq/')
+        build_path();
+        build_config_manager();
+        //build_server_table();
+        //build_controller_table();
+        //build_instrument_table();
+
+        // request table data
+        //request_registry_data();
+        //window["websocket"] = new WebSocket(
+        //    'ws://' + window.location.host +'/ws/envdaq/'
+        //);
+        //console.log(websocket)
+    };
+
+    function build_path() {
+        console.log(window.location.host)
+        var home = "http://"+window.location.host+"/"
+        home = "/"
+        var daq = home + "envdaq/"
+        var server = daq + "daqserver/" + daq_namespace +"/"
+
+        var path = '<a href='+home+' style="text-decoration: none">Home</a> / '
+        path += '<a href='+daq+' style="text-decoration: none">DAQ</a> / '
+        path += 'DAQServer / ' + daq_namespace
+        //path += '<a href='+server+' style="text-decoration: none">'+daq_namespace+'</a>'
+        var navpath = document.getElementById("daqserver-navpath")
+        navpath.innerHTML = path
+        //navpath.appendChild(text)
+        //console.log(navpath)
+    };
+
+    function build_config_manager() {
+        var mgr = document.getElementById("config-manager-div")
+
+        var mgr_table = document.createElement("table")
+        mgr_table.setAttribute('id','daqserver-manager-table')
+        mgr_table.setAttribute('class', 'w3-table')
+
+        var row = mgr_table.insertRow(-1);
+        //var cell = row.insertCell(0);
+        var cell = document.createElement('td')
+        //cell.setAttribute('class', 'w3-container w3-cell')
+        cell.innerHTML = "<b>Name: <b>"
+        row.appendChild(cell)
+
+        cell = document.createElement('td')
+        //cell.setAttribute('class', 'w3-container w3-cell')
+        cell.setAttribute('id', 'daqserver-name')
+        cell.innerHTML = daq_namespace
+        row.appendChild(cell)
+
+        cell = document.createElement('td')
+        row.appendChild(cell)
+        cell = document.createElement('td')
+        row.appendChild(cell)
+
+        row = mgr_table.insertRow(-1);
+        //var cell = row.insertCell(0);
+        cell = document.createElement('td')
+        //cell.setAttribute('class', 'w3-container w3-cell')
+        cell.innerHTML = "<b>Configuration: <b>"
+        row.appendChild(cell)
+
+        cell = document.createElement('td')
+        //cell.setAttribute('class', 'w3-container w3-cell')
+        cell.setAttribute('id', 'daqserver-config')
+        var config = document.createElement("select")
+        config.setAttribute("id", "daqserver-config-select")
+        config.setAttribute("class", "w3-select")
+        config.setAttribute("onchange", "update_config_selection()")
+        cell.appendChild(config)
+        row.appendChild(cell)
+        cell = document.createElement('td')
+        cell.innerHTML = "reset"
+        row.appendChild(cell)
+        cell = document.createElement('td')
+        cell.innerHTML = "apply"
+        row.appendChild(cell)
+
+        mgr.appendChild(mgr_table)
+    }
+
+    function build_table() {
+
+    }
+
+    function build_server_table() {
+        var tablediv = document.getElementById('server-table-div');
+
+        var table = document.createElement('table');
+        table.setAttribute('id', 'server-table')
+        table.setAttribute('class', 'w3-table w3-bordered')
+        table.setAttribute('style', 'table-layout:fixed')
+
+        var caption = table.createCaption()
+        caption.innerHTML = "DAQ Servers"
+
+        var header = table.createTHead();
+        var row = header.insertRow(0);
+        //var cell = row.insertCell(0);
+        var cell = document.createElement('th')
+        cell.innerHTML = "Namespace"
+        row.appendChild(cell)
+        cell = document.createElement('th')
+        cell.innerHTML = "Configuration"
+        row.appendChild(cell)
+        cell = document.createElement('th')
+        cell.innerHTML = "Enabled"
+        row.appendChild(cell)
+
+        tablediv.appendChild(table)
+
+    };
+
+    function update_status() {
+        console.log(daq_status)
+    }
+
+    function populate_config_selection() {
+
+        config_list = document.getElementById("daqserver-config-select")
+        console.log("config_list:" + daq_config_list)
+        console.log("current config: " + daq_current_config)
+        var length = daq_config_list.length
+        for (i=length-1; i>=0; i--) {
+            config_list.remove(i)
         }
-
-        function build_table() {
-
-            {% comment %} alert("loaded"); {% endcomment %}
-            
-            var body = document.getElementsByTagName('body')[0];
-
-            var table = document.createElement('table');
-            table.setAttribute('id', 'data-table');
-            table.setAttribute('style', 'border-collapse: collapse;')
-            {% comment %} table.id = 'data-table'; {% endcomment %}
-
-            {% comment %} var table = document.querySelector('#data-table'); {% endcomment %}
-            var header = table.createTHead();
-            var row = header.insertRow(0);
-            row.setAttribute('style', 'border: 1px solid black')
-            var cell = row.insertCell(0);
-            cell.setAttribute('id', 'data-table-namecol');
-            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
-            cell.innerHTML = "<b>Name</b>";
-            cell = row.insertCell(1);
-            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
-            cell.innerHTML = "<b>Value</b>";
-            cell.setAttribute('id', 'data-table-valuecol');
-
-            row = table.insertRow(1);
-            cell = row.insertCell(0);
-            cell.setAttribute('id', 'cell0');
-            cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center')
-            cell.innerHTML = "Concentration";
-            cell = row.insertCell(1);
-            cell.setAttribute('id', 'cell1');
-            cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
-            cell.innerHTML = '';
-
-            var td = table.rows[0].cells[0];
-            td.width = '200px';
-            td = table.rows[0].cells[1];
-            td.width = '200px';
-           
-            body.appendChild(table);
-        };
-
-        var msgSocket = new WebSocket(
-            'ws://' + window.location.host +
-            '/ws/envdaq/daqserver/');
-
-        {% comment %} var dataSocket = new WebSocket(
-            'ws://' + window.location.host +
-            '/ws/envdaq/server/data'); {% endcomment %}
-
-        msgSocket.onmessage = function(e) {
-
-            var data = JSON.parse(e.data);
-
-
-            {% comment %} var message = data['message']['DATA'];
-
-            document.querySelector('#time-stamp').innerHTML =  (message['DATETIME']);
-            cell2 = 'cell1';
-            cell_id = '#'+cell2;
-            document.querySelector(cell_id).innerHTML = message['MEASUREMENTS']['concentration']['VALUE']; {% endcomment %}
-
-            {% comment %} document.querySelector('#msg-window').value = (JSON.stringify(data['message']) + '\n'); {% endcomment %}
-            document.querySelector('#msg-window').value = (e.data + '\n');
-        };
-
- 
-        {% comment %} document.querySelector('#inst-name-input').focus();
-        document.querySelector('#inst-name-input').onkeyup = function(e) {
-            if (e.keyCode === 13) {  // enter, return
-                document.querySelector('#inst-name-submit').click();
+        var selected = -1
+        length = daq_config_list.length
+        for (i=0; i<length; i++) {
+            var option = document.createElement("option");
+            option.value = daq_config_list[i]
+            option.text = daq_config_list[i]
+            // if same as current, set selected
+            config_list.add(option)
+            console.log(daq_current_config.NAME + " == " + daq_config_list[i])
+            if (daq_current_config.NAME == daq_config_list[i]) {
+                selected = i
             }
-        }; {% endcomment %}
+        }
+        console.log(daq_current_config.NAME+selected)
+        //console.log(JSON.parse(daq_current_config));
+        config_list.selectedIndex = daq_current_config.NAME
+        //config_list.selectedIndex = selected
 
-        document.querySelector('#daqserver_start_button').onclick = function(e) {
-            {% comment %} var instName = document.querySelector('#inst-name-input').value; {% endcomment %}
-            window.location.pathname = '/envdaq/' + instName + '/';
+        //config_list.options.length=0
+        //var cnt = daq_config_list.length
+        //for (var i; i<cnt; i++) {
+        //    config.options[0] = new Option("A", "a", false, false)
+        //}
 
-            var message = {
-                    
+
+    }
+
+    function update_config_selection() {
+        
+    };
+
+    var websocket = new WebSocket(
+            'ws://' + window.location.host +'/ws/envdaq/daqserver/'+daq_namespace+'/'
+        );
+    
+    //console.log(websocket)
+    websocket.onmessage = function(e) {
+        var data = JSON.parse(e.data)
+        console.log(data)
+        if ("message" in data) {
+            var message = data.message
+
+            if (message['SUBJECT'] == 'DAQServerConfig') {
+                console.log("subject")
+                if ("purpose" in message.BODY) {
+                    console.log("update")
+                    if (message.BODY.purpose == "UPDATE") {
+                        
+                        daq_current_config = message.BODY.current_config
+                        //console.log(daq_current_config)
+                        daq_config_list = message.BODY.config_list
+                        populate_config_selection()
+                        //console.log(current_config)
+                        // how to deal with enable, autoenable.
+                        //update_config_list(config_list)
+                        //update_server_config(current_config.NAME)
+
+                        //var registry = message.BODY.daqserver_registry;
+                        //update_server_table(registry)
+                        //registry = message.BODY.controller_registry;
+                        //update_controller_table(registry)
+                        //registry = message.BODY.instrument_registry;
+                        //update_instrument_table(registry)
+                        //for (reg in registry) {
+                        //    row = document.getElementById(reg["namespace"]+"-row");
+                        //    console.log("row: "+row);                          
+                        //};
+                    };
                 };
-            
-            chatSocket.send(JSON.stringify({
-            'message': message
-            }));
-
+            };
+            if (message['SUBJECT'] == 'DAQServerStatus') {
+                if ("purpose" in message.BODY) {
+                    if (message.BODY.purpose == "UPDATE") {
+                        daq_status = data.message.BODY.status
+                        update_status()
+                    };
+                };
+            };
         };
-    </script>
-</body>
-</html>
+    };
+
+    websocket.onopen = function(event) {
+        console.log('Connected to: ' + event.currentTarget.url)
+//        while (wait_for_setup) {
+//            console.log('waiting for setup: '+wait_for_setup)
+//        }
+        //start_consumer()
+        console.log('request_config_data')
+        request_config_data()
+        request_status()
+        //request_registry_data();
+    }
+
+    function request_config_data() {
+        var message = {}
+        message['SUBJECT'] = 'DAQServerConfig'
+        message['BODY'] = {
+            'purpose': 'REQUEST',
+        }
+        console.log(JSON.stringify(message))
+        websocket.send(
+            JSON.stringify({'message': message})
+        )
+    };
+
+    function request_status() {
+        var message = {}
+        message['SUBJECT'] = 'DAQServerStatus'
+        message['BODY'] = {
+            'purpose': 'REQUEST',
+        }
+        console.log(JSON.stringify(message))
+        websocket.send(
+            JSON.stringify({'message': message})
+        )
+    };
+
+
+</script>
+{% endblock content %}
