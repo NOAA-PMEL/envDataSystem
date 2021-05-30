@@ -76,6 +76,7 @@ class Interface(DAQ):
 #        print(self.dev_mananger)
 
     def setup(self):
+        self.do_ui_connection = False
         super().setup()
         self.add_ifdevice()
 
@@ -123,7 +124,9 @@ class Interface(DAQ):
         )
 
     def disable(self):
+        print("interface disable dereg parent")
         self.ifdevice.deregister_parent(self.get_id())
+        print("interface disable super")
         super().disable()
 
     def start(self, cmd=None):
@@ -167,7 +170,8 @@ class Interface(DAQ):
 
         super().stop(cmd)
 
-    def shutdown(self):
+    async def shutdown(self):
+        pass
         # for instrument in self.inst_map:
         #     # print(sensor)
         #     instrument.stop()
@@ -180,8 +184,10 @@ class Interface(DAQ):
         # if self.ifdevice is not None:
         #     self.ifdevice.deregister_parent(self.get_id())
         #     self.ifdevice.shutdown()
+        # while self.status2.get_registration_status() != Status.UNREGISTERING:
 
-        super().shutdown()
+        # TODO use if we start connecting to UI
+        # await super().shutdown()
 
     # def disconnect(self, cmd=None):
     #     pass
@@ -332,9 +338,20 @@ class DummyInterface(Interface):
 
         self.name = 'DummyInterface'
 
-        self.dummy_port = 1
-        if 'dummy_port' in config:
-            self.dummy_port = config['dummy_port']
+        # self.host = "localhost"
+        # self.port = 1
+
+        try: 
+            self.uri = config["URI"]
+            parts = self.uri.split(":")
+            self.host = parts[0]
+            self.port = parts[1]
+        except KeyError:
+            self.host = "localhost"
+            self.port = 1
+
+        # if 'dummy_port' in config:
+        #     self.port = config['dummy_port']
 
         self.setup()
 
@@ -369,7 +386,8 @@ class DummyInterface(Interface):
             "IFDEVCONFIG": {
                 "DESCRIPTION": {
                     "LABEL": self.label,
-                    "DUMMY_PORT": self.dummy_port,
+                    "HOST": self.host,
+                    "PORT": self.port,
                 }
             }
         }
@@ -383,6 +401,21 @@ class DummyInterface(Interface):
             **self.kwargs
         )
         # self.ifdevice.to_parent_buf = self.from_child_buf
+
+    def start(self, cmd=None):
+        print('Starting Interface')
+        super().start(cmd)
+
+        if self.ifdevice is not None:
+            self.ifdevice.start()
+
+    # TODO: howto clean up managers?
+    def stop(self, cmd=None):
+
+        if self.ifdevice is not None:
+            self.ifdevice.stop()
+
+        super().stop(cmd)
 
     async def handle(self, msg, type=None):
 
@@ -434,7 +467,16 @@ class SerialPortInterface(Interface):
 
         self.name = 'SerialPortInterface'
         self.label = config['LABEL']
-        self.address = config['ADDRESS']
+        # self.address = config['ADDRESS']
+
+        self.uri = config["URI"]
+        parts = self.uri.split(":")
+        if len(parts) > 1:
+            self.host = parts[0]
+            self.address = parts[1]
+        else:
+            self.host = "localhost"
+            self.address = parts[0]
 
         self.baudrate = 9600
         if 'baudrate' in config:
@@ -559,12 +601,18 @@ class TCPPortInterface(Interface):
 
         self.name = 'TCPPortInterface'
         self.label = config['LABEL']
-        self.host = 'localhost'
-        if 'HOST' in config:
-            self.host = config['HOST']
-        self.port = 4001
-        if 'PORT' in config:
-            self.port = config['PORT']
+
+        self.uri = config["URI"]
+        parts = self.uri.split(":")
+        self.host = parts[0]
+        self.port = parts[1]
+
+        # self.host = 'localhost'
+        # if 'HOST' in config:
+        #     self.host = config['HOST']
+        # self.port = 4001
+        # if 'PORT' in config:
+        #     self.port = config['PORT']
         self.address = (self.host, self.port)
         self.setup()
 

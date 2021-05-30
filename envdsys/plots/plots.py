@@ -1,6 +1,7 @@
 # import asyncio
 # import json
 # from asyncio.queues import Queue
+from bokeh.models.plots import Plot
 from .plot_server import PlotServer
 from plots.apps.plot_app import TimeSeries1D, SizeDistribution, GeoMapPlot
 from django.conf import settings
@@ -100,6 +101,8 @@ class PlotManager():
         # print(f'get_app_list: {key}, {PlotManager().__app_list_map}')
         if key in PlotManager().__app_list_map:
             return PlotManager().__app_list_map[key]
+        else:
+            return []
 
     @staticmethod
     # def add_app(
@@ -148,6 +151,21 @@ class PlotManager():
                                   app_list=app_list,
                                   force=True)
 
+    def remove_server(server_id=None):
+        if not server_id:
+            server_id = PlotManager.DEFAULT_ID
+
+        if server_id in PlotManager().__server_map:
+            print("stopping plot server")
+            # PlotManager().__server_map[server_id].unlisten()
+            PlotManager().__server_map[server_id].stop()
+            # PlotManager().__server_map[server_id].io_loop.close()
+            PlotManager().__server_map.pop(server_id)
+            # TODO make this based on plot server_id 
+            PlotManager().__app_list_map.clear()
+            PlotManager().__app_source_map.clear()
+            print(f"plot server stopped: {PlotManager().__server_map}")
+
     @staticmethod
     def update_server(config=None, server_id=None, app_list=None, force=False):
 
@@ -177,12 +195,12 @@ class PlotManager():
 
     @staticmethod
     async def update_data_by_source(src_id, data, server_id=None):
-        # print(f'update: {src_id}')
+        print(f'update: {src_id}')
         if src_id in PlotManager().__app_source_map:
-            # print(f'    found src_id')
+            print(f'    found src_id')
             server = PlotManager.get_server(server_id=server_id)
             for app_name in PlotManager().__app_source_map[src_id]:
-                # print(f'        app: {app_name}')
+                print(f'        app: {app_name}')
                 if server:
                     app = server.get_app(app_name)
                     if app:

@@ -46,6 +46,8 @@ class PlotServer():
         # if (self.running):
         #     return
 
+        # self.stop()
+
         # print(f'****start server****')
         app_list = []
         for name, app in self.app_map.items():
@@ -90,4 +92,10 @@ class PlotServer():
 
     def stop(self, wait=True):
         if self.server:
+            for name, app in self.app_map.items():
+                app.stop(self.id)
+
+            self.server.unlisten()
             self.server.stop(wait)
+            self.server = None
+            # self.server.io_loop.close()

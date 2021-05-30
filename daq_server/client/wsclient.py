@@ -87,6 +87,7 @@ class WSClient(ClientConnection):
         while True:
             # print(f'sendq: {self.sendq}')
             msg = await self.sendq.get()
+            # print(f"WS send loop: {msg}")
             # print('send loop: {}'.format(msg))
             # print(f'websocket: {websocket}')
             await websocket.send(msg)

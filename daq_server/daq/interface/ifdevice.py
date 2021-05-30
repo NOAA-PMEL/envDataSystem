@@ -82,6 +82,10 @@ class IFDevice(DAQ):
     #     # id = 'tmp'
     #     return id
 
+    def setup(self):
+        self.do_ui_connection = False
+        super().setup()
+
     def register_parent(
         self,
         parent_id,
@@ -109,6 +113,10 @@ class IFDevice(DAQ):
         #     del self.parent_map[parent_id]
         # except KeyError:
         #     pass
+
+        super().register_parent(
+            parent_id,
+        )
 
         if (
             # self.started and
@@ -155,19 +163,23 @@ class IFDevice(DAQ):
     # def disconnect(self, msg=None):
     #     pass
 
-    def shutdown(self):
+    async def shutdown(self):
+
+        self.stop()
+        self.disable()
 
         if self.started:
             print(f'waiting registered devices to clear')
             return
 
         for k, iface in self.iface_map.items():
-            iface.shutdown()
+            await iface.shutdown()
 
         # for id, parent in self.parent_map.items():
         #     self.deregister_parent(id)
 
-        super().shutdown()
+        # TODO: IFDevice: use if we start connecting to UI
+        # await super().shutdown()
 
         self.started = False
 
@@ -212,20 +224,26 @@ class DummyIFDevice(IFDevice):
         # super().__init__(config)
 
         # TODO: fix label
-        self.label = "DummyIFDevice"
+        self.label = config['DESCRIPTION']['LABEL']
         self.name = "DummyIFDevice"
 
-        if 'DUMMY_PORT' in config['DESCRIPTION']:
-            self.dummy_port = config['DESCRIPTION']['DUMMY_PORT']
+        if 'HOST' in config['DESCRIPTION']:
+            self.host = config['DESCRIPTION']['HOST']
         else:
-            self.dummy_port = 1
+            self.host = "localhost"
+
+        if 'PORT' in config['DESCRIPTION']:
+            self.port = config['DESCRIPTION']['PORT']
+        else:
+            self.port = 1
     # def get_id(self):
     #     return ('DummyIFDevice')
 
+        self.data_loop_task = None
         self.setup()
 
     def get_id(self):
-        return self.__class__.__name__ + '_' + str(self.dummy_port)
+        return self.__class__.__name__ + '_' + str(self.port)
 
     def setup(self):
         super().setup()
@@ -234,8 +252,31 @@ class DummyIFDevice(IFDevice):
         super().start(cmd)
         print('Starting IFDevice')
         # start dummy data loop
-        task = asyncio.ensure_future(self.data_loop())
-        self.task_list.append(task)
+        self.data_loop_task = asyncio.create_task(self.data_loop())
+        # self.data_loop_task_list.append(task)
+
+    def stop(self, cmd=None):
+        print('Stopping IFDevice')
+
+        if self.data_loop_task:
+            self.data_loop_task.cancel()
+        super().stop(cmd)
+
+    def enable(self):
+        super().enable()
+
+        # self.client = TCPPortClient(
+        #     address=self.address,
+        #     **self.kwargs,
+        # )
+        # print(f'tcp port: {self.client}')
+
+        # # start dummy data loop
+        # task = asyncio.ensure_future(self.data_loop())
+        # self.task_list.append(task)
+        # self.task_list.append(
+        #     asyncio.ensure_future(self.data_loop())
+        # )
 
     async def data_loop(self):
 

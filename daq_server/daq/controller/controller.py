@@ -8,10 +8,6 @@ from shared.data.message import Message
 from shared.data.status import Status
 import math
 
-# from plots.plots import PlotManager
-# from plots.apps.plot_app import TimeSeries1D
-# from daq.manager.manager import DAQManager
-
 
 class ControllerFactory:
     @staticmethod
@@ -21,6 +17,10 @@ class ControllerFactory:
         alias = None
         if "ALIAS" in config:
             alias = config["ALIAS"]
+
+        namespace = None
+        if "namespace" in config:
+            namespace = config["namespace"]
         # print("module: " + create_cfg["MODULE"])
         # print("class: " + create_cfg["CLASS"])
 
@@ -29,7 +29,7 @@ class ControllerFactory:
             print(mod_)
             cls_ = getattr(mod_, create_cfg["CLASS"])
             print(cls_)
-            return cls_(contconfig, alias=alias, **kwargs)
+            return cls_(contconfig, alias=alias, namespace=namespace, **kwargs)
 
         except Exception as e:  # better to catch ImportException?
             print(f"Controller: Unexpected error: {e}")
@@ -105,9 +105,9 @@ class Controller(DAQ):
         self.data_record = dict()
 
         # set daq_id: this will be there plot-server id
-        self.namespace["controller"] = f"{self.label}".replace(" ", "")
-        if self.alias and ("name" in self.alias):
-            self.namespace["controller"] = f"{self.alias['name']}".replace(" ", "")
+        # self.namespace["controller"] = f"{self.label}".replace(" ", "")
+        # if self.alias and ("name" in self.alias):
+        #     self.namespace["controller"] = f"{self.alias['name']}".replace(" ", "")
 
         self.keepalive_ping = True
 
@@ -162,7 +162,10 @@ class Controller(DAQ):
 
         self.status2.set_config_status(Status.CONFIGURED)
         # tell ui to build controller
-        self.send_config_to_ui()
+
+        # TODO do I need this?
+        if False:
+            self.send_config_to_ui()
 
         # check to see if all instruments are ready
         asyncio.create_task(self.check_ready_to_run())
@@ -183,7 +186,7 @@ class Controller(DAQ):
 
         # add namespace to metadata
         meta = self.get_metadata()
-        meta["namespace"] = self.namespace
+        # meta["namespace"] = self.namespace.to_dict()
 
         # tell ui to build controller
         msg = Message(
@@ -243,17 +246,20 @@ class Controller(DAQ):
                 "purpose": "ADD",
                 "regkey": self.registration_key,
                 # "id": self.daq_id,
-                "namespace": self.namespace,
+                "namespace": self.namespace.to_dict(),
                 "config": self.config,
+                "metadata": self.get_metadata(),
+                # "config2": self.config,
+                "status": self.status2.to_dict(),
             },
         )
-        print(f"Registering with UI server: {self.namespace}")
+        print(f"Registering with UI server: {self.namespace.to_dict()}")
         await self.to_ui_buf.put(req)
         self.run_state = "REGISTERING"
         self.status2.set_registration_status(Status.REGISTERING)
         # await reg_client.close()
 
-    async def unregister_with_UI(self):
+    async def deregister_from_UI(self):
 
         # ui_config = self.ui_config
         # ui_ws_address = f'ws://{ui_config["host"]}:{ui_config["port"]}/'
@@ -274,11 +280,11 @@ class Controller(DAQ):
                 "purpose": "REMOVE",
                 "regkey": self.registration_key,
                 # "id": self.daq_id,
-                "namespace": self.namespace,
-                "config": self.config,
+                "namespace": self.namespace.to_dict(),
+                # "config": self.config,
             },
         )
-        print(f"Unregistering with UI server: {self.namespace}")
+        print(f"Unregistering with UI server: {self.namespace.to_dict()}")
         await self.to_ui_buf.put(req)
         self.run_state = "UNREGISTERING"
         self.status2.set_run_status(Status.UNREGISTERING)
@@ -294,7 +300,16 @@ class Controller(DAQ):
         # else:
         #     # address = "envdaq/controller/" + self.label + "/"
         #     address = f"{base_address}controller/{self.label}/"
-        address = f"envdaq/{self.namespace['daq_server']}/controller/{self.namespace['controller']}/"
+        address_parts = [
+            "envdaq",
+            f"{self.namespace.get_host()}",
+            f"{self.namespace.get_namespace_sig(section='PARENT')['namespace']}",
+            "controller",
+            f"{self.namespace.get_namespace_sig(section='LOCAL')['namespace']}",
+            "",
+        ]
+        address = "/".join(address_parts)
+        # address = f"envdaq/{self.namespace['daq_server']}/controller/{self.namespace['controller']}/"
         # print(f"get_ui_address: {address}")
         return address
 
@@ -321,13 +336,13 @@ class Controller(DAQ):
 
         # TODO: stop should clean up tasks
         for k, instrument in self.instrument_map.items():
-            # print(instrument)
+            print(f"instrument.stop: {k}")
             instrument.stop()
 
         # Do super last to finish clean up
         super().stop(cmd)
 
-    def shutdown(self):
+    async def shutdown(self):
         print("controller:shutdown")
 
         # TODO: need to add a check in stop() to see if
@@ -341,7 +356,13 @@ class Controller(DAQ):
 
         for k, instrument in self.instrument_map.items():
             # print(sensor)
-            instrument.shutdown()
+            await instrument.shutdown()
+
+        # self.loop.create_task(self.deregister_from_UI())
+        # timer = 0
+        # while self.status2.get_connection_status() != Status.NOT_CONNECTED or timer<5:
+        #     timer += 1
+        #     time.sleep(1)
 
         # tasks = asyncio.Task.all_tasks()
         # for t in self.task_list:
@@ -355,7 +376,7 @@ class Controller(DAQ):
         #         await self.handle(msg)
         #         # await asyncio.sleep(.1)
 
-        super().shutdown()
+        await super().shutdown()
 
     # def get_data_entry(self, timestamp, force_add_meta=False):
     #     self.include_metadata = False
@@ -461,6 +482,7 @@ class Controller(DAQ):
 
     def add_instruments(self):
         print("Add instruments")
+
         # has_map = False
         # if 'INST_MAP' in self.config:
         #     has_map = True
@@ -479,7 +501,7 @@ class Controller(DAQ):
                 icfg,
                 base_file_path=self.get_base_filepath(),
                 ui_config=self.ui_config,
-                namespace=self.namespace,
+                # namespace=self.namespace,
             )
             # inst.msg_buffer = self.inst_msg_buffer
             inst.to_parent_buf = self.from_child_buf
@@ -496,11 +518,15 @@ class Controller(DAQ):
                                         "class": "CONTROLLER",
                                         "id": self.label,
                                         "alias": self.alias,
+                                        "namespace": self.namespace.to_dict(),
                                         "ui_address": self.get_ui_address(),
                                     }
                                 )
                     if "PRIMARY" in imap:
-                        comp_inst[itype]["PRIMARY"] = imap["PRIMARY"]
+                        try:
+                            comp_inst[itype]["PRIMARY"] = imap["PRIMARY"]
+                        except KeyError:
+                            pass
 
         self.build_controller_meta()
 
@@ -553,6 +579,7 @@ class Controller(DAQ):
             "NAME": self.name,
             "LABEL": self.label,
             "alias": self.alias,
+            "namespace": self.namespace.to_dict(),
             "instrument_meta": instrument_meta,
             "measurement_meta": self.measurements["meta"],
             "plot_meta": self.plot_config,
@@ -628,6 +655,7 @@ class DummyController(Controller):
     def setup(self):
         super().setup()
         # add extra here
+        self.enable()
 
         # build dummy istrument map
         # self.dummy_instrument_map = dict()
@@ -641,14 +669,25 @@ class DummyController(Controller):
 
         # print(f'dummy_map: {self.dummy_instrument_map}')
 
-    # def configure_components(self):
+    def configure_components(self):
 
-    #     self.component_map["INSTRUMENTS"] = {
-    #         "GPS": {"LIST": [], "PRIMARY": None},
-    #         "DUMMY": {
-    #             "LIST": [],
-    #         },
-    #     }
+        self.component_map["INSTRUMENTS"] = {
+            "GPS": {"LIST": [], "PRIMARY": None},
+            "DUMMY": {"LIST": [], "PRIMARY": None},
+        }
+
+    async def shutdown(self):
+        print("DummyController shutdown")
+        print("dummy controller stop")
+        self.stop()
+        print("dummy controller disable")
+        self.disable()
+        print("dummy controller dereg")
+        await self.deregister_from_UI()
+        print("dummy controller super shutdown")
+
+        # TODO need to wait for deregister before closing loops and connection
+        await super().shutdown()
 
     def build_controller_meta(self):
 
@@ -1123,6 +1162,15 @@ class DummyController(Controller):
 
     async def handle_control_action(self, control, value):
         await super().handle_control_action(control, value)
+        if control and value:
+            if control == "start_stop":
+                if value == "START":
+                    self.start()
+                elif value == "STOP":
+                    self.stop()
+
+            await super(DummyController, self).handle_control_action(control, value)
+
         # if control and value:
         #     if control == "start_stop":
         #         if value == "START":
@@ -1179,7 +1227,6 @@ class DummyController(Controller):
                 },
             }
         }
-
 
         return {"DEFINITION": definition}
         # DAQ.daq_definition['DEFINITION'] = definition

@@ -2,9 +2,10 @@ import abc
 import asyncio
 import json
 from json.decoder import JSONDecodeError
-import os
 from pathlib import Path
 from client.wsclient import WSClient
+from shared.data.namespace import Namespace
+
 # from plots.apps.plot_app import PlotApp
 from shared.data.message import Message
 from shared.data.status import Status
@@ -28,7 +29,7 @@ class DAQ(abc.ABC):
         base_file_path=None,
         auto_connect_ui=True,
         namespace=None,
-        **kwargs
+        **kwargs,
     ):
         # non-abstract DAQ children need to set this to True
         #   in order for system to recognize as valid
@@ -36,13 +37,15 @@ class DAQ(abc.ABC):
         #       to force children to deal with it?
 
         # TODO: Should DAQ have generic in/out buffers?
-        print('init DAQ')
+        print("init DAQ")
         self.loop = asyncio.get_event_loop()
         self.config = config
         self.ui_config = ui_config
         self.do_ui_connection = auto_connect_ui
         self.task_list = []
         self.ui_task_list = []
+        self.enable_task_list = []
+        self.message_loop_tasks = []
         self.registration_key = None
 
         self.plot_app = None
@@ -68,16 +71,17 @@ class DAQ(abc.ABC):
 
         self.name = None
         self.label = None
-        if 'LABEL' in config:
-            self.label = config['LABEL']
+        if "LABEL" in config:
+            self.label = config["LABEL"]
         # print(f"id: {self.get_id()}")
 
         # print(f"16namespace = {self.namespace} - {self.alias}")
 
         # if namespace is passed, store a copy
-        self.namespace = {}
+        self.namespace = Namespace()
         if namespace:
-            self.namespace = namespace.copy()
+            self.namespace = Namespace().from_dict(namespace)
+            # self.namespace = namespace.copy()
         # self.parent_id = "parent-default"
         # if parent_id:
         #     self.parent_id = parent_id
@@ -111,10 +115,10 @@ class DAQ(abc.ABC):
         # controls
         self.controls = dict()
         self.status = {
-            'run_status': 'STOPPED',
-            'ready_to_run': False,
-            'connected_to_ui': False,
-            'health': 'OK'
+            "run_status": "STOPPED",
+            "ready_to_run": False,
+            "connected_to_ui": False,
+            "health": "OK",
         }
         self.status2 = Status()
         self.current_run_settings = dict()
@@ -138,7 +142,7 @@ class DAQ(abc.ABC):
         names = [k for k, v in self.namespace.items()]
         ns = "-".join(names)
         return ns
-        
+
     def open_datafile(self):
 
         cfg = self.get_datafile_config()
@@ -154,7 +158,7 @@ class DAQ(abc.ABC):
         bfp = self.get_base_filepath()
         if bfp:
             config = {
-                'base_path': self.get_base_filepath(),
+                "base_path": self.get_base_filepath(),
             }
             return config
         return None
@@ -169,14 +173,14 @@ class DAQ(abc.ABC):
         # inst_base += self.serial_number+'/'
 
         if self.base_file_path:
-            return self.base_file_path + '/' + self.alias['name']
+            return self.base_file_path + "/" + self.alias["name"]
 
         return None
         # return system_base+inst_base
 
     @abc.abstractmethod
     def setup(self):
-        print('daq.setup')
+        print("daq.setup")
 
         self.start_connections()
 
@@ -185,27 +189,19 @@ class DAQ(abc.ABC):
         pass
 
     def start_connections(self):
-        print('start_connections')
+        print("start_connections")
         self.start_ui_connection()
 
     def start_ui_connection(self):
-        print('start_ui_connection')
-        self.task_list.append(
-            asyncio.ensure_future(self.run_ui_connection())
-        )
+        print("start_ui_connection")
+        self.task_list.append(asyncio.ensure_future(self.run_ui_connection()))
 
     # TODO: convert all to_parent_buffers to
     #       registration process
-    def register_parent(
-        self,
-        parent_id,
-        to_parent_buffer=None
-    ):
+    def register_parent(self, parent_id, to_parent_buffer=None):
         if parent_id in self.parent_map:
             return
-        self.parent_map[parent_id] = {
-            'to_parent_buffer': to_parent_buffer
-        }
+        self.parent_map[parent_id] = {"to_parent_buffer": to_parent_buffer}
 
     def deregister_parent(self, parent_id):
 
@@ -215,17 +211,16 @@ class DAQ(abc.ABC):
             pass
 
     def register_data_request(self, entry):
-        if (
-            entry and
-            entry not in self.data_request_list
-        ):
+        if entry and entry not in self.data_request_list:
 
             self.data_request_list.append(entry)
 
     def get_id(self):
         id = self.__class__.__name__
-        if self.label is not None:
-            id += "_"+self.label
+        if self.namespace:
+            id += "_" + self.namespace.get_namespace_sig()["namespace"]
+        # if self.label is not None:
+        #     id += "_"+self.label
 
         return id
 
@@ -233,18 +228,21 @@ class DAQ(abc.ABC):
         ns_path = Path("config") / "run"
         # ns_path = ["config", "run"]
 
-        if "daq_server" in self.namespace:
-            # ns_path.append(self.namespace['daq_server'])
-            ns_path /= self.namespace['daq_server']
-        if "controller" in self.namespace:
-            # ns_path.append(self.namespace['controller'])
-            ns_path /= self.namespace['controller']
-        if "instrument" in self.namespace:
-            # ns_path.append(self.namespace['instrument'])
-            ns_path /= self.namespace['instrument']
-        # if not os.path.exists(os.path.join(ns_path)):
-        #     os.makedirs(ns_path)
-        # Path.mkdir(ns_path, parents=True, exist_ok=True)
+        # if "daq_server" in self.namespace:
+        #     # ns_path.append(self.namespace['daq_server'])
+        #     ns_path /= self.namespace['daq_server']
+        # if "controller" in self.namespace:
+        #     # ns_path.append(self.namespace['controller'])
+        #     ns_path /= self.namespace['controller']
+        # if "instrument" in self.namespace:
+        #     # ns_path.append(self.namespace['instrument'])
+        #     ns_path /= self.namespace['instrument']
+        # # if not os.path.exists(os.path.join(ns_path)):
+        # #     os.makedirs(ns_path)
+        # # Path.mkdir(ns_path, parents=True, exist_ok=True)
+
+        ns_path = self.namespace.get_namespace_as_path()
+
         fname = ns_path / "current_run_settings.json"
         return fname
 
@@ -253,7 +251,9 @@ class DAQ(abc.ABC):
         if not self.controls:
             definition = self.get_definition_instance()
             try:
-                self.controls = definition['DEFINITION']['measurement_config']['controls']
+                self.controls = definition["DEFINITION"]["measurement_config"][
+                    "controls"
+                ]
             except KeyError:
                 print("no run settings to get")
                 return
@@ -273,8 +273,8 @@ class DAQ(abc.ABC):
             if control not in self.current_run_settings:
                 self.current_run_settings[control] = None
                 need_save = True
-                if 'default_value' in config:
-                    self.current_run_settings[control] =config['default_value']
+                if "default_value" in config:
+                    self.current_run_settings[control] = config["default_value"]
         if need_save:
             self.save_current_run_settings()
 
@@ -300,23 +300,25 @@ class DAQ(abc.ABC):
                 with open(fname, "w") as cfg:
                     json.dump(self.current_run_settings, cfg)
             except (FileNotFoundError, JSONDecodeError, TypeError) as e:
-                print(f"Could not save current_run_settigns: {fname}: {e}")             
+                print(f"Could not save current_run_settigns: {fname}: {e}")
 
     def set_current_run_settings_default(self):
         if not self.controls:
             definition = self.get_definition_instance()
             try:
-                self.controls = definition['DEFINITION']['measurement_config']['controls']
+                self.controls = definition["DEFINITION"]["measurement_config"][
+                    "controls"
+                ]
             except KeyError:
                 print("no run settings to get")
                 return
 
             for control, config in self.controls.items():
                 self.current_run_settings[control] = None
-                if 'default_value' in config:
+                if "default_value" in config:
                     # TODO: on start, have to go through and send all
                     #       control values to instrument
-                    self.current_run_settings[control] =config['default_value']
+                    self.current_run_settings[control] = config["default_value"]
                     # self.set_control_att(
                     #     control, 'value', config['default_value']
                     # )
@@ -341,11 +343,11 @@ class DAQ(abc.ABC):
     async def set_control(self, control, value):
         if control and value:
             await self.handle_control_action(control, value)
-            if (await self.control_action_success(control)):
-                self.set_control_att(control, 'value', value)
+            if await self.control_action_success(control):
+                self.set_control_att(control, "value", value)
                 self.update_current_run_settings()
             else:
-                print(f'Setting {control} unsuccessful')
+                print(f"Setting {control} unsuccessful")
 
         # TODO: setting control should trigger action
         # print(f'set_control[{control}] = {value}')
@@ -368,7 +370,7 @@ class DAQ(abc.ABC):
             self.controls[control][att] = value
             # self.controls[control]['action_state'] = state
         except Exception as e:
-            print(f'exc: {e}')
+            print(f"exc: {e}")
 
     def get_control_att(self, control, att):
 
@@ -376,8 +378,8 @@ class DAQ(abc.ABC):
             try:
                 return self.controls[control][att]
             except Exception as e:
-                print(f'No attribute {att} in {control}: {e}')
-                return ''
+                print(f"No attribute {att} in {control}: {e}")
+                return ""
 
     async def control_action_success(self, control):
 
@@ -388,14 +390,14 @@ class DAQ(abc.ABC):
                 # print(
                 #     f'success; {self.get_control_att(control, "action_state")}'
                 # )
-                if self.get_control_att(control, 'action_state') == 'OK':
-                    self.set_control_att(control, 'action_state', 'IDLE')
+                if self.get_control_att(control, "action_state") == "OK":
+                    self.set_control_att(control, "action_state", "IDLE")
                     return True
             except Exception as e:
-                print(f'exception: {e}')
-                await asyncio.sleep(.1)
+                print(f"exception: {e}")
+                await asyncio.sleep(0.1)
                 cnt += 0.1
-            
+
         return False
 
     # TODO: add this abstract method to all daq
@@ -429,14 +431,17 @@ class DAQ(abc.ABC):
     async def register_with_UI(self):
         pass
 
+    async def deregister_from_UI(self):
+        pass
+
     async def connect_to_ui(self):
-        print(f'connecting to ui: {self}')
+        print(f"connecting to ui: {self}")
         # build ui_address
         ui_address = f'ws://{self.ui_config["host"]}'
         ui_address += f':{self.ui_config["port"]}'
-        ui_address += '/ws/'+self.get_ui_address().replace(" ", "")
+        ui_address += "/ws/" + self.get_ui_address().replace(" ", "")
         # ui_address.replace(" ", "")
-        print(f'ui_address: {ui_address}')
+        print(f"ui_address: {ui_address}")
 
         # self.ui_client = WSClient(uri=quote(ui_address))
         self.ui_client = WSClient(uri=ui_address)
@@ -456,10 +461,8 @@ class DAQ(abc.ABC):
         # )
 
         while True:
-            if (
-                self.do_ui_connection and (
-                    self.ui_client is None or not self.ui_client.isConnected()
-                )
+            if self.do_ui_connection and (
+                self.ui_client is None or not self.ui_client.isConnected()
             ):
                 self.status2.set_connection_status(Status.CONNECTING)
                 # close tasks for current ui if any
@@ -467,20 +470,14 @@ class DAQ(abc.ABC):
                     t.cancel()
 
                 # make connection
-                print('connect to ui')
+                print("connect to ui")
                 await self.connect_to_ui()
 
                 # start ui queues
-                self.ui_task_list.append(
-                    asyncio.ensure_future(self.to_ui_loop())
-                )
-                self.ui_task_list.append(
-                    asyncio.ensure_future(self.from_ui_loop())
-                )
+                self.ui_task_list.append(asyncio.ensure_future(self.to_ui_loop()))
+                self.ui_task_list.append(asyncio.ensure_future(self.from_ui_loop()))
                 if self.keepalive_ping:
-                    self.ui_task_list.append(
-                        asyncio.create_task(self.ping_ui_server())
-                    )
+                    self.ui_task_list.append(asyncio.create_task(self.ping_ui_server()))
 
                 await self.register_with_UI()
 
@@ -493,17 +490,17 @@ class DAQ(abc.ABC):
     #         # if self.ui_client.isConnected() is False:
     #         self.ui_client = self.connect_to_ui()
 
-    def send_status(self, note=''):
+    def send_status(self, note=""):
         # print(f'send_status: {self.name}, {self.status}')
         status = Message(
             sender_id=self.get_id(),
-            msgtype='GENERIC',
+            msgtype="GENERIC",
             subject="STATUS",
             body={
-                'purpose': 'UPDATE',
-                'status': self.status,
+                "purpose": "UPDATE",
+                "status": self.status,
                 # 'note': note,
-            }
+            },
         )
         status = self.status2.to_message(sender_id=self.get_id())
         # print(f'send no wait: {self.name}, {self.status}')
@@ -517,16 +514,16 @@ class DAQ(abc.ABC):
                 msgtype=self.class_type,
                 subject="SETTINGS",
                 body={
-                    'purpose': 'UPDATE',
-                    'settings': self.current_run_settings,
+                    "purpose": "UPDATE",
+                    "settings": self.current_run_settings,
                     # 'note': note,
-                }
+                },
             )
             await self.message_to_ui(settings)
-           
+
     async def update_settings_loop(self):
         # overload this function if you want an update
-        #   settings loop. 
+        #   settings loop.
         pass
         # # print(f'send_status: {self.name}, {self.status}')
         # if not self.current_run_settings:
@@ -555,11 +552,7 @@ class DAQ(abc.ABC):
                 #     self.include_metadata_interval
                 # )
                 # print(f'wait time: {wt}')
-                await asyncio.sleep(
-                    time_to_next(
-                        self.include_metadata_interval
-                    )
-                )
+                await asyncio.sleep(time_to_next(self.include_metadata_interval))
                 self.include_metadata = True
             else:
                 self.include_metadata = True
@@ -567,25 +560,27 @@ class DAQ(abc.ABC):
 
     def enable(self):
         if self.status2.get_enabled_status() != Status.ENABLED:
-        # if self.status['run_status'] != 'STARTED':
-            self.task_list.append(
-                asyncio.ensure_future(self.from_parent_loop())
-            )
+            # if self.status['run_status'] != 'STARTED':
 
-            self.task_list.append(
-                asyncio.ensure_future(self.from_child_loop())
-            )
+            self.enable_task_list.append(asyncio.ensure_future(self.from_parent_loop()))
 
-            self.task_list.append(
+            self.enable_task_list.append(asyncio.ensure_future(self.from_child_loop()))
+
+            self.enable_task_list.append(
                 asyncio.create_task(self.update_settings_loop())
             )
             self.status2.set_enabled_status(Status.ENABLED)
 
     def disable(self):
-        self.stop()
-        for t in self.task_list:
-            t.cancel()
-        self.status2.set_enabled_status(Status.DISABLED)
+        if self.status2.get_enabled_status() == Status.ENABLED:
+            print("here:01")
+            self.stop()
+            print("here:02")
+            for t in self.enable_task_list:
+                print("here:03")
+                t.cancel()
+            print("here:04")
+            self.status2.set_enabled_status(Status.DISABLED)
 
     def start(self, cmd=None):
         # self.create_msg_buffers()
@@ -593,11 +588,7 @@ class DAQ(abc.ABC):
         # only need to start this, will be cancelled by
         #   daq on stop
         self.include_metadata = True
-        self.task_list.append(
-            asyncio.ensure_future(
-                self.send_metadata_loop()
-            )
-        )
+        self.task_list.append(asyncio.ensure_future(self.send_metadata_loop()))
 
         # if self.status2.get_run_status() != Status.RUNNING:
         # # if self.status['run_status'] != 'STARTED':
@@ -608,19 +599,25 @@ class DAQ(abc.ABC):
         #     self.task_list.append(
         #         asyncio.ensure_future(self.from_child_loop())
         #     )
-        self.status['run_status'] = 'STARTED'
+        self.status["run_status"] = "STARTED"
         self.status2.set_run_status(Status.RUNNING)
 
         self.send_status()
 
     def stop(self, cmd=None):
+        print("here:01")
+
         self.status2.set_run_status(Status.STOPPING)
         # for t in self.task_list:
         #     t.cancel()
 
-        self.status['run_status'] = 'STOPPED'
+        print("here:01")
+        self.status["run_status"] = "STOPPED"
+        print("here:02")
         self.status2.set_run_status(Status.STOPPED)
+        print("here:03")
         self.send_status()
+        print("here:04")
 
     async def ping_ui_server(self):
 
@@ -634,30 +631,39 @@ class DAQ(abc.ABC):
                 subject="PING",
                 body={
                     # "id": self.daq_id
-                    "namespace": self.namespace
-                }
+                    "namespace": self.namespace.to_dict()
+                },
             )
             await self.to_ui_buf.put(msg)
             await asyncio.sleep(2)
 
-    def shutdown(self):
+    async def shutdown(self):
 
+        print("daq shutdown")
         # if self.started:
         #     print(f'wait for shutdown...')
         #     return
         self.status2.set_run_status(Status.SHUTTING_DOWN)
+
+        while self.status2.get_registration_status() != Status.UNREGISTERING:
+            await asyncio.sleep(1)
+
+        for t in self.ui_task_list:
+            # print(t)
+            t.cancel()
+
         if self.ui_client is not None:
             # self.loop.run_until_complete(self.gui_client.close())
             self.ui_client.sync_close()
-        self.disable()
+        # self.disable()
         # for t in self.ui_task_list:
         #     t.cancel()
         self.status2.set_run_status(Status.SHUTDOWN)
 
     def create_msg_buffers(self, config=None):
-        '''
+        """
         Create all buffers controlled by this instance.
-        '''
+        """
 
         self.from_parent_buf = asyncio.Queue(loop=self.loop)
         self.from_child_buf = asyncio.Queue(loop=self.loop)
@@ -689,10 +695,16 @@ class DAQ(abc.ABC):
                     # if content["BODY"]["config"]:
 
                     # self.config = content["BODY"]["config"]
-                        # self.save_current_config(json.loads(content["BODY"]["config"]))
+                    # self.save_current_config(json.loads(content["BODY"]["config"]))
                     self.status2.set_registration_status(Status.REGISTERED)
                     # if content["BODY"]["ui_reconfig_request"]:
                     #     await self.resend_config_to_ui()
+
+            elif msg.subject == "UNREGISTRATION":
+                # print(f"unreg: {content['BODY']}")
+                if msg.body["purpose"] == "SUCCESS":
+                    self.status2.set_registration_status(Status.NOT_REGISTERED)
+                    # print(f"unreg: {self.status2.get_registration_status()}")
 
     async def from_parent_loop(self):
         while True:
@@ -724,7 +736,7 @@ class DAQ(abc.ABC):
         while True:
             message = await self.ui_client.read_message()
             # print(f'message = {message.to_json()}')
-            await self.handle(message, type='FromUI')
+            await self.handle(message, type="FromUI")
 
     async def message_to_parent(self, msg):
         # while True:
@@ -735,9 +747,9 @@ class DAQ(abc.ABC):
         # while True:
         # print(f'message_to_parents: {self.get_id()}, {msg.to_json()}')
         for id, parent in self.parent_map.items():
-            if parent['to_parent_buffer']:
+            if parent["to_parent_buffer"]:
                 # print(f'mtp: {msg.to_json()}')
-                await parent['to_parent_buffer'].put(msg)
+                await parent["to_parent_buffer"].put(msg)
 
     def message_to_ui_nowait(self, msg):
         # print(f'no wait: {msg.to_json()}')
@@ -750,9 +762,9 @@ class DAQ(abc.ABC):
         await self.to_ui_buf.put(msg)
 
     async def message_from_parent(self, msg):
-        '''
+        """
         This is to be used by parent to send messages to
         children
-        '''
+        """
         # while True:
         await self.from_parent_buf.put(msg)

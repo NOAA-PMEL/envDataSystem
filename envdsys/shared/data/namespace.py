@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 from jedi.inference.compiled.access import NOT_CLASS_TYPES
 
@@ -159,6 +160,64 @@ class Namespace:
 
         # print(f"self.name: {ns}")
         return ns
+
+    def get_namespace_sig(self, section="ALL"):
+
+        sig = dict()
+        if section == "PARENT":
+            sig = None
+            if self.parent:
+                sig = self.parent.get_namespace_sig()
+            return sig
+        elif section == "LOCAL":
+            sig["host"] = self.get_host()
+            sig["name"] = self.name
+            sig["type"] = self.ns_type
+            sig["namespace"] = f"{self.name}"
+            return sig
+        else:
+            sig["host"] = self.get_host()
+            sig["name"] = self.name
+            sig["type"] = self.ns_type
+            namespace = ""
+            if self.parent:
+                parent_sig = self.parent.get_namespace_sig()
+                sig["namespace"] = f"{parent_sig['namespace']}-{self.name}"
+            else:
+                sig["namespace"] = f"{self.name}"
+            
+            return sig
+
+    def get_host(self):
+
+        if self.parent:
+            host = self.parent.get_host()
+        else:
+            if not self.host:
+                self.host = Namespace.DEFAULT_HOST
+            host = self.host
+        
+        return host
+
+    def get_parent_namespace(self):
+        ns = None
+        if self.parent:
+            ns = f"{self.parent.get_namespace()}"
+        return ns
+
+    def get_local_namespace(self):
+        if not self.host:
+            self.host = Namespace.DEFAULT_HOST
+        return f"{self.host}-{self.name}"
+
+    def get_namespace_as_path(self):
+        parent_path = None
+        if self.parent:
+            ns_path = self.parent.get_namespace_as_path()
+            ns_path /= self.name
+            return ns_path
+        else:
+            return Path(self.name)
 
     # return dictionary repr of ns
     def to_dict(self):

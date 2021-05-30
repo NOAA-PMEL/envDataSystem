@@ -121,7 +121,8 @@ class Inventory(models.Model):
         Person,
         blank=True,
     )
-
+    tracking_help = "An id used by organization to track inventory"
+    tracking_number = models.CharField("Tracking Number", max_length=100, blank=True, null=True)
     # Location will eventually be a model
     # location = models.CharField(max_length=100)
 
@@ -252,6 +253,14 @@ class InstrumentDef(InventoryDef):
                 self.measurement_config = cfg
                 self.save()
 
+    def get_config(self):
+
+        config = {
+            "MODULE": self._module,
+            "CLASS": self._class
+            }
+
+        return config
 
 class Instrument(Inventory):
 
@@ -295,6 +304,51 @@ class Instrument(Inventory):
     def __str__(self):
         '''String representation of Controller object. '''
         return (f'{self.definition} : {self.serial_number}')
+
+    def get_config(self):
+        config = dict()
+        config["INSTRUMENT"] = self.definition.get_config()
+        instconfig = dict()
+
+        instconfig["DESCRIPTION"] = {
+            "LABEL": self.nickname,
+            "SERIAL_NUMBER": self.serial_number,
+            "PROPERTY_NUMBER": self.tracking_number
+        }
+
+        # TODO how to implement interfaces
+        iface_list = dict()
+        instconfig["IFACE_LIST"] = iface_list
+
+        config["INSTCONFIG"] = instconfig
+
+        return config
+
+
+        # "INSTCONFIG": {
+        #     "DESCRIPTION": {
+        #         "LABEL": "MSEMS",
+        #         "SERIAL_NUMBER": "001",
+        #         "PROPERTY_NUMBER": "CD0001239"
+        #     },
+        #     "IFACE_LIST": {
+        #         "tcp_nb2_2_23": {
+        #             "INTERFACE": {
+        #                 "MODULE": "daq.interface.interface",
+        #                 "CLASS": "TCPPortInterface"
+        #             },
+        #             "IFCONFIG": {
+        #                 "LABEL": "tcp_nb2_2_23",
+        #                 "HOST": "10.55.169.53",
+        #                 "PORT": "23",
+        #                 "SerialNumber": "0001"
+        #             }
+        #         }
+        #     }
+
+        
+
+
 
     # def __repr__(self):
     #     return (f'{self.serial_number}_{self.uniqueID}')

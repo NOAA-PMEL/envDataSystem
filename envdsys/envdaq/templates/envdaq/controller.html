@@ -171,14 +171,17 @@
 
     var controller_name = {{ controller_name }}
 
-    var daq_namespace = {{ daq_namespace }}
-    var controller_namespace = {{ controller_namespace }}
+    //var daq_namespace = {{ daq_namespace }}
+    var daq_host = "{{ daq_host }}"
+    var parent_namespace = "{{ parent_namespace }}"
+    var controller_namespace = "{{ controller_namespace }}"
 
   // console.log(controller_name)
     var websocket = new WebSocket(
         'ws://' + window.location.host +
         // '/ws/envdaq/controller/'+controller_name+'/');
-        '/ws/envdaq/'+daq_namespace+'/controller/'+controller_namespace+'/');
+        // '/ws/envdaq/'+daq_namespace+'/controller/'+controller_namespace+'/');
+        '/ws/envdaq/'+daq_host+"/"+parent_namespace+'/controller/'+controller_namespace+'/');
 
 
     websocket.onmessage = function(e) {

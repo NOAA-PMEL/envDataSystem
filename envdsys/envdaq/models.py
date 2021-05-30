@@ -166,10 +166,12 @@ class DAQServer(models.Model):
     # ip_address = models.GenericIPAddressField(null=True)
     # port = models.IntegerField(null=True)
 
+    autoenable = models.BooleanField(_("Auto Enable"), default=False)
+
     namespace = models.CharField(
         _("Namespace"), max_length=100, default="localhost-default"
     )
-    # namespace  = models.JSONField(_("Namespace"), default=dict)
+    namespace2  = models.JSONField(_("NamespaceJSON"), blank=True, default=dict)
 
     configuration = models.ForeignKey(
         "envtags.Configuration",
@@ -195,19 +197,40 @@ class DAQServer(models.Model):
 
     def __str__(self):
         """String representation of Controller object. """
-        return f"{self.host}-{self.name}"
+        return f"{self.host}:{self.name}"
 
     # def __repr__(self):
     #     return f"{self.name}.{self.uniqueID}"
 
     def get_config(self):
-        pass
+        config = dict()
+
         # add server specific config
+        config["NAME"] = self.name
+        config["namespace"] = self.get_namespace().to_dict()
+        config["uri"] = self.host
+        config["autoenable_daq"] = self.autoenable
+        envdaq_config = dict()
+        envdaq_config["namespace"] = self.get_namespace().to_dict()
+
         # get all controller configs
-        # build component map
+        controllers = DAQController.objects.filter(server=self)
+        # print(f"{controllers}")
+        cont_list = dict()
+        for cont in controllers:
+            # print(f"cont: {cont.get_config()}")
+            cont_list[cont.name] = cont.get_config()
+
+        # print(f"{cont_list}")
+        envdaq_config["CONT_LIST"] = cont_list
+        config["ENVDAQ_CONFIG"] = envdaq_config
+
+        # self.daq_config = config
+        return config
 
     def save(self, *args, **kwargs):
         self.update_namespace()
+        # self.update_config()
         super(DAQServer, self).save(*args, **kwargs)
 
     def get_namespace(self):
@@ -217,8 +240,8 @@ class DAQServer(models.Model):
     def update_namespace(self):
         ns = self.get_namespace()
         self.namespace = ns.get_namespace()
+        self.namespace2 = ns.get_namespace_sig()
         # pass
-
 
 class DAQController(models.Model):
 
@@ -246,6 +269,7 @@ class DAQController(models.Model):
     name_help = "Short, descriptive name to be used as id in urls, paths, etc (<b>no whitespace</b>)"
     name = models.CharField(_("Name"), max_length=50, help_text=name_help)
     long_name = models.CharField(_("Long Name"), max_length=100, null=True, blank=True)
+    prefix = models.CharField(_("Prefix"), max_length=30, default="default")
     # label_help = "use if using more than one of this type of controller on this server"
     # label = models.CharField(
     #     _("Label"), max_length=50, null=True, blank=True, help_text=label_help
@@ -254,15 +278,18 @@ class DAQController(models.Model):
     namespace = models.CharField(
         _("Namespace"), max_length=100, default=uuid.uuid1
     )
+    namespace2  = models.JSONField(_("NamespaceJSON"), blank=True, default=dict)
 
-    component = models.ForeignKey(
-        "envdaq.ControllerComponent",
-        verbose_name=_("Component"),
-        on_delete=models.CASCADE,
-        blank=True,
-        null=True,
-        related_name="controller_components",
-    )
+    component = models.CharField(_("Component Name"), max_length=100, default="default")
+    primary_component = models.BooleanField(_("Primary Component"), default=False)
+    # component = models.ForeignKey(
+    #     "envdaq.ControllerComponent",
+    #     verbose_name=_("Component"),
+    #     on_delete=models.CASCADE,
+    #     blank=True,
+    #     null=True,
+    #     related_name="controller_components",
+    # )
     measurement_sets = models.JSONField(_("Measurement Sets"), blank=True, default=dict)
 
     class Meta:
@@ -283,18 +310,70 @@ class DAQController(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.server}-{self.controller_def}-{self.name}"
+        parent = "MISSING_PARENT"
+        if self.server:
+            parent = f"{self.server}"
+        elif self.parent_controller:
+            parent = f"{self.parent_controller}"
+
+        return f"{parent}-{self.controller_def}-{self.name}"
 
     def get_absolute_url(self):
         return reverse("DAQController_detail", kwargs={"pk": self.pk})
 
     def get_config(self):
-        pass
+        config = dict()
 
-        # add controller specific
-        # add child controllers
-        # add instruments
-        # build component map
+        config["ALIAS"] = {
+            "name": self.name,
+            "prefix": self.prefix
+        }
+        config["namespace"] = self.get_namespace().to_dict()
+
+        config["CONTROLLER"] = self.controller_def.get_config()
+
+        contconfig = dict()
+        contconfig["LABEL"] = self.long_name # ?
+
+        contconfig["component"] = {
+            "name": self.component,
+            "primary": self.primary_component
+        }
+
+        # # add search for child_controllers - not implemented yet
+        child_controllers = DAQController.objects.filter(parent_controller=self)
+        ch_cont_list = dict()
+        ch_cont_map = dict()
+        for ch_cont in child_controllers:
+            ch_cont_list[ch_cont.name] = ch_cont.get_config()
+            if ch_cont.component not in ch_cont_map:
+                ch_cont_map[ch_cont.component] = {
+                    "LIST": [],
+                    "PRIMARY": False
+                }
+            ch_cont_map[ch_cont.component]["LIST"].append(ch_cont.name)
+            ch_cont_map[ch_cont.component]["PRIMARY"] = ch_cont.primary_component
+            
+        instruments = DAQInstrument.objects.filter(controller=self)
+        inst_list = dict()
+        inst_map = dict()
+        for inst in instruments:
+            inst_list[inst.name] = inst.get_config()
+            if inst.component not in inst_map:
+                inst_map[inst.component] = {
+                    "LIST": [],
+                    "PRIMARY": None
+                }
+            inst_map[inst.component]["LIST"].append(inst.name)
+            if inst.primary_component:
+                inst_map[inst.component]["PRIMARY"] = inst.name
+        print(f"inst_map: {inst_map}")
+        contconfig["INST_LIST"] = inst_list
+        contconfig["INST_MAP"] = inst_map
+        contconfig["AUTO_START"] = False
+        config["CONTCONFIG"] = contconfig
+
+        return config
 
     def clean(self):
         cleaned_data = super(DAQController, self).clean()
@@ -321,7 +400,7 @@ class DAQController(models.Model):
         else:
             return None
         ns = Namespace(name=self.name, ns_type=Namespace.CONTROLLER, parent_ns=parent_ns)
-        print(f"ns::: {ns.to_dict()}")
+        # print(f"ns::: {ns.to_dict()}")
         return ns
 
     def update_namespace(self):
@@ -340,6 +419,7 @@ class DAQController(models.Model):
         print(f'ns: {ns.to_dict()}')
         if ns:
             self.namespace = ns.get_namespace()
+            self.namespace2 = ns.get_namespace_sig()
 
 
 class DAQInstrument(models.Model):
@@ -361,15 +441,20 @@ class DAQInstrument(models.Model):
         _("Namespace"), max_length=100, default=uuid.uuid1
     )
 
-    component = models.ForeignKey(
-        "envdaq.InstrumentComponent",
-        verbose_name=_("Component"),
-        on_delete=models.CASCADE,
-        blank=True,
-        null=True,
-        related_name="instrument_components",
-    )
-    primary_component = models.BooleanField(_("Primary component"), default=True)
+    component = models.CharField(_("Component Name"), max_length=100, default="default")
+    primary_component = models.BooleanField(_("Primary Component"), default=False)
+
+    measurement_sets = models.JSONField(_("Measurement Sets"), blank=True, default=dict)
+
+    # # component = models.ForeignKey(
+    # #     "envdaq.InstrumentComponent",
+    # #     verbose_name=_("Component"),
+    # #     on_delete=models.CASCADE,
+    # #     blank=True,
+    # #     null=True,
+    # #     related_name="instrument_components",
+    # # )
+    # primary_component = models.BooleanField(_("Primary component"), default=True)
 
     class Meta:
         verbose_name = _("DAQ Instrument")
@@ -398,49 +483,103 @@ class DAQInstrument(models.Model):
         if ns:
             self.namespace = ns.get_namespace()
 
+    def get_config(self):
+        config = dict()
 
-class ControllerComponent(models.Model):
+        config["ALIAS"] = {
+            "name": self.name,
+            "prefix": self.prefix
+        }
+        config["namespace"] = self.get_namespace().to_dict()
 
-    controller_def = models.ForeignKey(
-        "envdaq.ControllerDef",
-        verbose_name=_("ControllerDef"),
-        on_delete=models.CASCADE,
-    )
-    component_type = "Controller"
-    name = models.CharField(_("Name"), max_length=50)
-    # primary = models.BooleanField(_("Primary"), default=False)
+        inst_config = self.instrument.get_config()
+        config["INSTRUMENT"] = inst_config["INSTRUMENT"]
+        # contconfig = dict()
+        # contconfig["LABEL"] = self.long_name # ?
 
-    class Meta:
-        verbose_name = _("Controller Component")
-        verbose_name_plural = _("Controller Components")
+        inst_config["INSTCONFIG"]["component"] = {
+            "name": self.component,
+            "primary": self.primary_component
+        }
 
-    def __str__(self):
-        return f"controller_def-controller-{self.name}"
+        # add search for child_controllers - not implemented yet
+        # child_controllers = DAQController.objects.filter(parent_controller=self)
+        interfaces = InterfaceComponent.objects.filter(instrument=self)
+        print(f"interfaces: {interfaces}")
+        iface_list = dict()
+        for iface in interfaces:
+            iface_list[iface.interface.name] = iface.get_config()
 
-    def get_absolute_url(self):
-        return reverse("controllercomponent_detail", kwargs={"pk": self.pk})
+        inst_config["INSTCONFIG"]["IFACE_LIST"] = iface_list
+        config["INSTCONFIG"] = inst_config["INSTCONFIG"]
+
+        # contconfig["INST_LIST"] = inst_list
+        # config["CONTCONFIG"] = contconfig
+
+        return config
+
+        # name:
+        #   alias
+        #   instrument
+        #   instconfig
+        #       description
+        #       iface_list
+        #           ifconfig
 
 
-class InstrumentComponent(models.Model):
 
-    controller_def = models.ForeignKey(
-        "envdaq.ControllerDef",
-        verbose_name=_("ControllerDef"),
-        on_delete=models.CASCADE,
-    )
-    component_type = "Instrument"
-    name = models.CharField(_("Name"), max_length=50)
-    # primary = models.BooleanField(_("Primary"), default=False)
+# class ControllerComponent(models.Model):
 
-    class Meta:
-        verbose_name = _("Instrument Component")
-        verbose_name_plural = _("Instrument Components")
+#     parent = models.ForeignKey("envdaq.DAQController", verbose_name=_("Parent Controller"), on_delete=models.CASCADE)
+#     component = models.CharField(_("Component Name"), max_length=100, default="default")
+#     controller = models.ForeignKey("envdaq.Interface", verbose_name=_("Interface"), on_delete=models.CASCADE)
+#     primary = models.BooleanField(_("Primary Component"), default=False)
 
-    def __str__(self):
-        return f"controller_def-instrument-{self.name}"
+#     # controller_def = models.ForeignKey(
+#     #     "envdaq.ControllerDef",
+#     #     verbose_name=_("ControllerDef"),
+#     #     on_delete=models.CASCADE,
+#     # )
+#     # component_type = "Controller"
+#     # name = models.CharField(_("Name"), max_length=50)
+#     # # primary = models.BooleanField(_("Primary"), default=False)
 
-    def get_absolute_url(self):
-        return reverse("instrumentcomponent_detail", kwargs={"pk": self.pk})
+#     class Meta:
+#         verbose_name = _("Controller Component")
+#         verbose_name_plural = _("Controller Components")
+
+#     def __str__(self):
+#         return f"controller_def-controller-{self.name}"
+
+#     def get_absolute_url(self):
+#         return reverse("controllercomponent_detail", kwargs={"pk": self.pk})
+
+
+# class InstrumentComponent(models.Model):
+
+#     parent = models.ForeignKey("envdaq.DAQController", verbose_name=_("Parent Controller"), on_delete=models.CASCADE)
+#     component = models.CharField(_("Component Name"), max_length=100, default="default")
+#     controller = models.ForeignKey("envdaq.Interface", verbose_name=_("Interface"), on_delete=models.CASCADE)
+#     primary = models.BooleanField(_("Primary Component"), default=False)
+
+#     # controller_def = models.ForeignKey(
+#     #     "envdaq.ControllerDef",
+#     #     verbose_name=_("ControllerDef"),
+#     #     on_delete=models.CASCADE,
+#     # )
+#     # component_type = "Instrument"
+#     # name = models.CharField(_("Name"), max_length=50)
+#     # # primary = models.BooleanField(_("Primary"), default=False)
+
+#     class Meta:
+#         verbose_name = _("Instrument Component")
+#         verbose_name_plural = _("Instrument Components")
+
+#     def __str__(self):
+#         return f"controller_def-instrument-{self.name}"
+
+#     def get_absolute_url(self):
+#         return reverse("instrumentcomponent_detail", kwargs={"pk": self.pk})
 
 
 class ControllerDef(models.Model):
@@ -483,6 +622,12 @@ class ControllerDef(models.Model):
             print(self.component_map)
             self.save()
 
+    def get_config(self):
+        config = {
+            "MODULE": self._module,
+            "CLASS": self._class
+        }
+        return config
 
 class Controller(models.Model):
 
@@ -685,8 +830,8 @@ class InstrumentAlias(models.Model):
 class InterfaceDef(models.Model):
 
     name = models.CharField(max_length=30, help_text="Enter Interface type name")
-    _class = models.CharField(max_length=30, help_text="Enter class name")
     _module = models.CharField(max_length=50, help_text="Enter module name")
+    _class = models.CharField(max_length=30, help_text="Enter class name")
 
     interface_types = [
         ("SerialPort", "Serial"),
@@ -695,6 +840,7 @@ class InterfaceDef(models.Model):
         ("A2D", "A/D"),
         ("D2A", "D/A"),
         ("GPIO", "GPIO"),
+        ("DUMMY", "DUMMY")
     ]
     type = models.CharField(max_length=15, choices=interface_types, default="TCPPort")
 
@@ -718,6 +864,26 @@ class InterfaceDef(models.Model):
 
     def get_absolute_url(self):
         return reverse("model-detail-view", args=[str(self.id)])
+
+    # def get_config(self):
+    #     config = {
+    #         "INTERFACE": {
+    #             "MODULE": self._module,
+    #             "CLASS": self._class
+    #         }
+    #     }
+
+    #     return ("INTERFACE", config)
+
+    def get_config(self):
+
+        config = {
+            "MODULE": self._module,
+            "CLASS": self._class
+            }
+
+        return (config)
+
 
     # def update(self, definition):
     #     # print(f'definition: {definition}')
@@ -799,6 +965,73 @@ class Interface(models.Model):
 
     def __repr__(self):
         return f"{self.name}-{self.uri}"
+
+    def get_config(self):
+        config = dict()
+        config["INTERFACE"] = self.definition.get_config()
+        ifconfig = dict()
+
+        config["IFCONFIG"] = {
+            "LABEL": self.name,
+            "URI": self.uri,
+            # "SERIAL_NUMBER": self.serial_number,
+            # "PROPERTY_NUMBER": "NEED_TO_IMPLEMENT"
+        }
+
+        return config
+        
+class InterfaceComponent(models.Model):
+
+    instrument = models.ForeignKey("envdaq.DAQInstrument", verbose_name=_("Instrument"), on_delete=models.CASCADE)
+    component = models.CharField(_("Component Name"), max_length=100, default="default")
+    interface = models.ForeignKey("envdaq.Interface", verbose_name=_("Interface"), on_delete=models.CASCADE)
+
+
+    class Meta:
+        verbose_name = _("Interface Component")
+        verbose_name_plural = _("Interface Components")
+
+    def __str__(self):
+        return f"{self.instrument}-{self.component}-{self.interface}"
+
+    def get_absolute_url(self):
+        return reverse("interfacecomponent_detail", kwargs={"pk": self.pk})
+
+    def get_config(self):
+        config = dict()
+
+        iface_config = self.interface.get_config()
+        config["INTERFACE"] = iface_config["INTERFACE"]
+
+        # add component name
+        iface_config["IFCONFIG"]["component"] = self.component
+        config["IFCONFIG"] = iface_config["IFCONFIG"]
+
+        # config["ALIAS"] = {
+        #     "name": self.name,
+        #     "prefix": self.prefix
+        # }
+        # config["namespace"] = self.get_namespace().to_dict()
+
+        # inst_config = self.instrument.get_config()
+        # config["INSTRUMENT"] = inst_config["INSTRUMENT"]
+        # contconfig = dict()
+        # contconfig["LABEL"] = self.long_name # ?
+
+        # add search for child_controllers - not implemented yet
+        # child_controllers = DAQController.objects.filter(parent_controller=self)
+        # interfaces = Interface.objects.filter(instrument=self)
+        # iface_list = dict()
+        # for iface in interfaces:
+        #     iface_list[iface.interface.name] = iface.get_config()
+
+        # inst_config["INSTCONFIG"]["IFACE_LIST"] = iface_list()
+        # config["INSTCONFIG"] = inst_config["INSTCONFIG"]
+
+        # contconfig["INST_LIST"] = inst_list
+        # config["CONTCONFIG"] = contconfig
+
+        return config
 
 
 class Measurement(models.Model):

@@ -54,13 +54,13 @@
                 <h5>DAQ Registrations</h5>
                 <table class="w3-table w3-bordered">
                     <tr>
-                        <th>Namespace</th>
+                        <th>Host</th>
+                        <th>Name</th>
                         <th>Type</th>
-                        <th>Status</th>
                     </tr>
                     {% for key, values in daq_reg_map.items %}
                     <tr>
-                        <td>{{ key }}</td>
+                        {% comment %} <td>{{ key }}</td> {% endcomment %}
                         {% for k,v in values.items %}
                             <td>{{v}}</td>
                         {% endfor %}

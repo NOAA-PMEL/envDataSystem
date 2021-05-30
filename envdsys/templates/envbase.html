@@ -187,8 +187,8 @@
             }
 
             // Change style of top container on scroll
-            window.onscroll = function() {myFunction()};
-            function myFunction() {
+           // window.onscroll = function() {myFunction()};
+            {% comment %} function myFunction() {
                 if (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) {
                     document.getElementById("dataTop").classList.add("w3-card-4", "w3-animate-opacity");
                     document.getElementById("dataIntro").classList.add("w3-show-inline-block");
@@ -196,7 +196,7 @@
                     document.getElementById("dataIntro").classList.remove("w3-show-inline-block");
                     document.getElementById("dataTop").classList.remove("w3-card-4", "w3-animate-opacity");
                 }
-            }
+            } {% endcomment %}
 
             {% comment %} // Accordions
             function menuAccordion(id) {

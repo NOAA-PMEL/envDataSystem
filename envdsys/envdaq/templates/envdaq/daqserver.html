@@ -13,28 +13,26 @@
 
     <div id="server-manage-div" class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
 
-        <h5>Server Configuration: </h5>
+        <h5>DAQ Server: </h5>
         <div id="config-manager-div">
             {% comment %} <p id="server-name">{{ daq_namespace }}</p> {% endcomment %}
             
-        </div
-        <div id="oldcontroller-table-div" class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
         </div>
-
-        {% comment %} <div id="instrument-table-div" class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
-        </div> {% endcomment %}
 
     </div>
 
     <div id="server-component-div" class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
 
-        <h5>Server Components: </h5>
-        <div id="component-manager-div">
+        <h5>Server Configuration: </h5>
+
+        <pre id="component-manager-div" class="w3-code notranslate">
+            
             {% comment %} <p id="server-name">{{ daq_namespace }}</p> {% endcomment %}
             
-        </div
-        <div id="controller-table-div" class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
-        </div>
+        </pre>
+
+        {% comment %} <div id="controller-table-div" class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
+        </div> {% endcomment %}
 
         {% comment %} <div id="instrument-table-div" class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
         </div> {% endcomment %}
@@ -44,9 +42,18 @@
 <script>
 
     // globals
+    var daq_host = "{{ daq_host }}"
     var daq_namespace = "{{ daq_namespace }}"
 
+    var daq_current_server
     var daq_current_config
+    var daq_server_map
+    
+    var saved_server
+    var saved_host
+    var saved_name
+    var saved_config
+
     var daq_config_list = []
     var daq_status
 
@@ -72,11 +79,11 @@
         var home = "http://"+window.location.host+"/"
         home = "/"
         var daq = home + "envdaq/"
-        var server = daq + "daqserver/" + daq_namespace +"/"
+        var server = daq + "daqserver/" + daq_host + "/" + daq_namespace +"/"
 
         var path = '<a href='+home+' style="text-decoration: none">Home</a> / '
         path += '<a href='+daq+' style="text-decoration: none">DAQ</a> / '
-        path += 'DAQServer / ' + daq_namespace
+        path += 'DAQServer / ' + daq_host + " / " + daq_namespace
         //path += '<a href='+server+' style="text-decoration: none">'+daq_namespace+'</a>'
         var navpath = document.getElementById("daqserver-navpath")
         navpath.innerHTML = path
@@ -91,6 +98,62 @@
         mgr_table.setAttribute('id','daqserver-manager-table')
         mgr_table.setAttribute('class', 'w3-table')
 
+        row = mgr_table.insertRow(-1);
+        //var cell = row.insertCell(0);
+        cell = document.createElement('td')
+        //cell.setAttribute('class', 'w3-container w3-cell')
+        cell.innerHTML = "<b>Server: <b>"
+        row.appendChild(cell)
+
+        cell = document.createElement('td')
+        //cell.setAttribute('class', 'w3-container w3-cell')
+        cell.setAttribute('id', 'daqserver-config')
+        var config = document.createElement("select")
+        config.setAttribute("id", "daqserver-config-select")
+        config.setAttribute("class", "w3-select")
+        config.setAttribute("onchange", "update_server_selection()")
+        cell.appendChild(config)
+        row.appendChild(cell)
+        cell = document.createElement('td')
+        cell.setAttribute('id', 'daqserver-config-reset')
+        //cell.setAttribute('class', 'w3-container')
+        buttons = document.createElement('div')
+        buttons.setAttribute("class", "w3-bar")
+        var reset_button = document.createElement("button")
+        reset_button.setAttribute("id", "daqserver-config-reset-button")
+        reset_button.setAttribute("class", "w3-button w3-round w3-border")
+        reset_button.setAttribute("onclick", "reset_server_selection()")
+        reset_button.innerHTML = "reset"
+        buttons.appendChild(reset_button)
+        //cell.appendChild(reset_button)
+        //cell.innerHTML = "reset"
+        //row.appendChild(cell)
+        //cell = document.createElement('td')
+        //cell.setAttribute('id', 'daqserver-config-apply')
+        var apply_button = document.createElement("button")
+        apply_button.setAttribute("id", "daqserver-config-apply-button")
+        apply_button.setAttribute("class", "w3-button w3-round w3-border")
+        apply_button.setAttribute("onclick", "apply_server_selection()")
+        apply_button.innerHTML = "apply"
+        buttons.appendChild(apply_button)
+        //cell.appendChild(apply_button)
+        cell.appendChild(buttons)
+        //cell.innerHTML = "apply"
+        row.appendChild(cell)
+
+        var row = mgr_table.insertRow(-1);
+        //var cell = row.insertCell(0);
+        var cell = document.createElement('td')
+        //cell.setAttribute('class', 'w3-container w3-cell')
+        cell.innerHTML = "<b>Host: <b>"
+        row.appendChild(cell)
+
+        cell = document.createElement('td')
+        //cell.setAttribute('class', 'w3-container w3-cell')
+        cell.setAttribute('id', 'daqserver-host')
+        //cell.innerHTML = daq_host
+        row.appendChild(cell)
+
         var row = mgr_table.insertRow(-1);
         //var cell = row.insertCell(0);
         var cell = document.createElement('td')
@@ -101,38 +164,58 @@
         cell = document.createElement('td')
         //cell.setAttribute('class', 'w3-container w3-cell')
         cell.setAttribute('id', 'daqserver-name')
-        cell.innerHTML = daq_namespace
+        //cell.innerHTML = daq_namespace
         row.appendChild(cell)
 
-        cell = document.createElement('td')
-        row.appendChild(cell)
-        cell = document.createElement('td')
+        //cell = document.createElement('td')
+        //row.appendChild(cell)
+        //cell = document.createElement('td')
+        //row.appendChild(cell)
+
+        var row = mgr_table.insertRow(-1);
+        var cell = document.createElement('td')
+        cell.setAttribute('id', 'daqserver-enable-control')
+        //cell.setAttribute('class', 'w3-container')
+        buttons = document.createElement('div')
+        buttons.setAttribute("class", "w3-container w3-cell")
+        //buttons.setAttribute("class", "w3-bar")
+        var enable_button = document.createElement("button")
+        enable_button.setAttribute("id", "daqserver-enable-button")
+        enable_button.setAttribute("class", "w3-button w3-round w3-border")
+        enable_button.setAttribute("onclick", "toggle_enable_server()")
+        enable_button.innerHTML = "enable"
+        buttons.appendChild(enable_button)
+        cell.appendChild(buttons)
+        //cell.appendChild(enable_button)
+        //cell.innerHTML = "reset"
+        //row.appendChild(cell)
+        //cell = document.createElement('td')
+        //cell.setAttribute('id', 'daqserver-autoenable')
+        var cbs = document.createElement('div')
+        cbs.setAttribute("class", "w3-container w3-cell")
+        var autoenable_cb = document.createElement("input")
+        autoenable_cb.type = "checkbox"
+        autoenable_cb.name = "name"
+        autoenable_cb.value = "value"
+        autoenable_cb.setAttribute("id", "autoenable-cb")
+        autoenable_cb.setAttribute("class", "w3-check")
+        autoenable_cb.setAttribute("onchange", "toggle_autoenable_server()")
+        //autoenable_cb.innerHTML = "autoenable"
+        cbs.appendChild(autoenable_cb)
+        //cbs.appendChild(document.createTextNode("autoenable"))
+        var label = document.createElement("label")
+        label.setAttribute("for", "autoenable-cb")
+        label.appendChild(document.createTextNode(" autoenable"))
+        cbs.appendChild(label)
+        //label.innerHTML = "autoenable"
+        //cell.appendChild(apply_button)
+        cell.appendChild(cbs)
+        //cell.innerHTML = "apply"
         row.appendChild(cell)
 
-        row = mgr_table.insertRow(-1);
-        //var cell = row.insertCell(0);
-        cell = document.createElement('td')
-        //cell.setAttribute('class', 'w3-container w3-cell')
-        cell.innerHTML = "<b>Configuration: <b>"
-        row.appendChild(cell)
-
-        cell = document.createElement('td')
-        //cell.setAttribute('class', 'w3-container w3-cell')
-        cell.setAttribute('id', 'daqserver-config')
-        var config = document.createElement("select")
-        config.setAttribute("id", "daqserver-config-select")
-        config.setAttribute("class", "w3-select")
-        config.setAttribute("onchange", "update_config_selection()")
-        cell.appendChild(config)
-        row.appendChild(cell)
-        cell = document.createElement('td')
-        cell.innerHTML = "reset"
-        row.appendChild(cell)
-        cell = document.createElement('td')
-        cell.innerHTML = "apply"
-        row.appendChild(cell)
 
         mgr.appendChild(mgr_table)
+
     }
 
     function build_table() {
@@ -207,12 +290,96 @@
 
     }
 
-    function update_config_selection() {
+    function populate_server_selection() {
+
+    }
+
+    function update_server_selection() {
+        var server_select = document.getElementById("daqserver-config-select")
+        //saved_server = daq_current_server
+        daq_current_server = server_select.value
+        daq_current_config = daq_server_map[daq_current_server]
+
+        console.log("server: " +daq_current_server)
+        console.log(daq_current_config)
+
+        update_server_data(daq_current_server, daq_current_config, daq_server_map)
+
+
         
     };
 
+    function reset_server_selection() {
+        update_server_data(saved_server, saved_config, daq_server_map)
+        //update_server_selection()
+    };
+
+    function apply_server_selection() {
+        var server_select = document.getElementById("daqserver-config-select")
+
+        server = server_select.value
+        config = daq_server_map[server]
+
+        var message = {}
+        message['SUBJECT'] = 'DAQServerConfig'
+        message['BODY'] = {
+            'purpose': 'PUSH',
+            'server': server,
+            'config': config
+        }
+        console.log(JSON.stringify(message))
+        websocket.send(
+            JSON.stringify({'message': message})
+        )
+
+        //console.log("redirect to: " + daq)
+        //console.log(window.location.host)
+        var home = "http://"+window.location.host+"/"
+        home = "/"
+        var daq = home + "envdaq/"
+
+        window.location.replace(daq)
+    };
+
+    function toggle_enable_server() {
+        // TODO send message to server to enable
+    };
+
+    function toggle_autoenable_server() {
+        // TODO change config to autoenable and enable server if not
+    };
+
+    function update_server_data(current_server, current_config, server_map) {
+        
+        var i = 0
+        var server_select = document.getElementById("daqserver-config-select")
+        for (const [server_id, server] of Object.entries(server_map)) {
+            var opt = document.createElement("option")
+            opt.innerHTML = server_id
+            opt.value = server_id
+            server_select.appendChild(opt)
+
+            if (server_id == current_server) {
+                server_select.selectedIndex = i
+                current_host = server.ENVDAQ_CONFIG.namespace.host
+                var cell = document.getElementById("daqserver-host")
+                cell.innerHTML = current_host
+                current_name = server.ENVDAQ_CONFIG.namespace.name
+                cell = document.getElementById("daqserver-name")
+                cell.innerHTML = current_name
+            }
+            i += 1
+        }
+        output = JSON.stringify(current_config, null, 4)
+        //console.log("output: " + output)
+        //output2 = JSON.stringify(JSON.parse({"host": "who.pmel.noaa.gov", "name": "testuas", "namespace": "testuas"}))
+        var code_display = document.getElementById("component-manager-div")
+        code_display.innerHTML = output
+
+    };
+
     var websocket = new WebSocket(
-            'ws://' + window.location.host +'/ws/envdaq/daqserver/'+daq_namespace+'/'
+            'ws://' + window.location.host +'/ws/envdaq/daqserver/'+daq_host+"/"+daq_namespace+'/'
         );
     
     //console.log(websocket)
@@ -227,11 +394,18 @@
                 if ("purpose" in message.BODY) {
                     console.log("update")
                     if (message.BODY.purpose == "UPDATE") {
-                        
+
+                        daq_current_server = message.BODY.current_server
+                        saved_server = daq_current_server
                         daq_current_config = message.BODY.current_config
+                        saved_config = daq_current_config
+                        daq_server_map = message.BODY.server_map
+                        update_server_data(daq_current_server, daq_current_config, daq_server_map)
+
+
                         //console.log(daq_current_config)
-                        daq_config_list = message.BODY.config_list
-                        populate_config_selection()
+                        //daq_config_list = message.BODY.config_list
+                        //populate_config_selection()
                         //console.log(current_config)
                         // how to deal with enable, autoenable.
                         //update_config_list(config_list)

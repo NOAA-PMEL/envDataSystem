@@ -111,6 +111,10 @@ class PlotApp(abc.ABC):
         )
         # print('here')
 
+    def stop(self, server_id):
+        PlotBufferManager.remove_buffer(server_id, self.name)
+        self.msg_buffer = None
+
     async def update_data(self, msg):
         # print(f'update data: {msg}')
         self.update_main_source(msg)

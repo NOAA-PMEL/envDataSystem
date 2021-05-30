@@ -29,8 +29,9 @@ class PlotBufferManager():
 
         def remove_buffer(self, server_id, id):
             if self.get_buffer(server_id, id):
-                self.get_buffer(server_id, id).close()
-                del self.plot_buffer_map[id]
+                self.get_buffer(server_id, id).stop()
+                # self.get_buffer(server_id, id).pop(id)
+                # del self.plot_buffer_map[id]
             pass
 
         def get_buffer(self, server_id, id):

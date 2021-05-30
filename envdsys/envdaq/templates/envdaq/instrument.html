@@ -117,7 +117,11 @@
 
     </table> {% endcomment %}
     <script>
-        
+
+        var daq_host = "{{ daq_host }}"
+        var parent_namespace = "{{ parent_namespace }}"
+        var instrument_namespace = "{{ instrument_namespace }}"
+
         window.onload=init;
 
         var cellvalue = '1234.5';
@@ -370,15 +374,17 @@
 
         // websocket communication
 
-        var instrument_name = {{ instrument_name }}
-        var daq_namespace = {{ daq_namespace }}
-        var controller_namespace = {{ controller_namespace }}
-        var instrument_namespace = {{ instrument_namespace }}
+        {% comment %} var instrument_name = {{ instrument_name }}
+        var parent_namespace = {{ parent_namespace }}
+        //var daq_namespace = {{ daq_namespace }}
+        //var controller_namespace = {{ controller_namespace }}
+        var instrument_namespace = {{ instrument_namespace }} {% endcomment %}
 
         var websocket = new WebSocket(
             'ws://' + window.location.host +
-            {% comment %} '/ws/envdaq/instrument/'+instrument_name+'/'); {% endcomment %}
-            '/ws/envdaq/'+daq_namespace+'/'+controller_namespace+'/instrument/'+instrument_namespace+'/');
+            // '/ws/envdaq/instrument/'+instrument_name+'/'); 
+            // '/ws/envdaq/'+daq_namespace+'/'+controller_namespace+'/instrument/'+instrument_namespace+'/');
+            '/ws/envdaq/'+daq_host+'/'+parent_namespace+'/instrument/'+instrument_namespace+'/');
 
 
         var run_status = "UNKNOWN"

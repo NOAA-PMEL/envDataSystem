@@ -51,6 +51,7 @@
     window.onload=function() {
         console.log("init")
         //console.log('ws://' + window.location.host +'/ws/envdaq/')
+        
         build_server_table();
         build_controller_table();
         build_instrument_table();
@@ -86,13 +87,13 @@
         var row = header.insertRow(0);
         //var cell = row.insertCell(0);
         var cell = document.createElement('th')
+        cell.innerHTML = "Host"
+        row.appendChild(cell)
+        cell = document.createElement('th')
+        cell.innerHTML = "Name"
+        row.appendChild(cell)
+        cell = document.createElement('th')
         cell.innerHTML = "Namespace"
-        row.appendChild(cell)
-        cell = document.createElement('th')
-        cell.innerHTML = "Configuration"
-        row.appendChild(cell)
-        cell = document.createElement('th')
-        cell.innerHTML = "Enabled"
         row.appendChild(cell)
 
         tablediv.appendChild(table)
@@ -114,15 +115,15 @@
         var row = header.insertRow(0);
         //var cell = row.insertCell(0);
         var cell = document.createElement('th')
-        cell.innerHTML = "Namespace"
+        cell.innerHTML = "Host"
         row.appendChild(cell)
         cell = document.createElement('th')
         //cell.setAttribute("class", "w3-centered")
-        cell.innerHTML = "Configuration"
+        cell.innerHTML = "Name"
         row.appendChild(cell)
         cell = document.createElement('th')
         //cell.setAttribute("class", "w3-right")
-        cell.innerHTML = "Enabled"
+        cell.innerHTML = "Namespace"
         row.appendChild(cell)
 
         tablediv.appendChild(table)
@@ -144,13 +145,13 @@
         var row = header.insertRow(0);
         //var cell = row.insertCell(0);
         var cell = document.createElement('th')
+        cell.innerHTML = "Host"
+        row.appendChild(cell)
+        cell = document.createElement('th')
+        cell.innerHTML = "Name"
+        row.appendChild(cell)
+        cell = document.createElement('th')
         cell.innerHTML = "Namespace"
-        row.appendChild(cell)
-        cell = document.createElement('th')
-        cell.innerHTML = "Configuration"
-        row.appendChild(cell)
-        cell = document.createElement('th')
-        cell.innerHTML = "Enabled"
         row.appendChild(cell)
 
         tablediv.appendChild(table)
@@ -161,85 +162,141 @@
         //console.log(window.location.host)
         console.log(registry)
         var table = document.getElementById('server-table');
+        var tableHeaderRowCount = 1;
+        var rowCount = table.rows.length;
+        for (var i = tableHeaderRowCount; i < rowCount; i++) {
+            table.deleteRow(tableHeaderRowCount);
+        }
+        //table.innerHTML=""
         console.log(table)
         for (const [regid, reg] of Object.entries(registry)) {
             console.log("regid: "+regid)
-            var row = document.getElementById('server-table-'+regid+'-row')
+            ns = reg.reg_id
+            row_id = ns.host+"-"+ns.namespace
+
+            console.log("host: "+ns.host)
+            console.log("name: "+ns.name)
+            console.log("namepace: "+ns.namespace)
+            var row = document.getElementById('server-table-'+row_id+'-row')
             if (row == null) {
                 console.log("null")
                 row = table.insertRow(-1);
-                row.setAttribute('id', 'server-table-'+regid+'-row')
+                row.setAttribute('id', 'server-table-'+row_id+'-row')
                 var cell = row.insertCell(0);
                 cell = row.insertCell(1);
                 cell = row.insertCell(2);
             } 
-            link = "http://"+window.location.host+"/envdaq/daqserver/"+regid+"/"
-            row.children[0].innerHTML = "<a href="+link+">"+regid+"</a>"
-            var config_name = "<em>not configured</em>"
-            if ("config2" in reg && "NAME" in reg.config2) {
-                config_name = reg.config2.NAME
-            }
-            row.children[1].innerHTML = config_name
-            row.children[2].innerHTML = reg.status
+            row.children[0].innerHTML = ns.host
+            row.children[1].innerHTML = ns.name
+            var link = "http://"+window.location.host+"/envdaq/daqserver/"+ns.host+"/"+ns.namespace+"/"
+            row.children[2].innerHTML = "<a href="+link+">"+ns.namespace+"</a>"
+            // var config_name = "<em>not configured</em>"
+            //if ("config2" in reg && "NAME" in reg.config2) {
+            //    config_name = reg.config2.NAME
+            //}
+            //row.children[1].innerHTML = config_name
+            //row.children[2].innerHTML = reg.status
         }
     };
 
     function update_controller_table(registry) {
         console.log(registry)
         var table = document.getElementById('controller-table');
-        console.log(table)
+        //console.log(table)
+
+        var tableHeaderRowCount = 1;
+        var rowCount = table.rows.length;
+        for (var i = tableHeaderRowCount; i < rowCount; i++) {
+            table.deleteRow(tableHeaderRowCount);
+        }
+
         for (const [regid, reg] of Object.entries(registry)) {
             console.log("regid: "+regid)
-            var row = document.getElementById('controller-table-'+regid+'-row')
+
+            ns = reg.reg_id
+            row_id = ns.host+"-"+ns.namespace
+            console.log("host: "+ns.host)
+            console.log("name: "+ns.name)
+            console.log("namepace: "+ns.namespace)
+
+            var row = document.getElementById('controller-table-'+row_id+'-row')
             if (row == null) {
-                console.log("null")
+                //console.log("null")
                 row = table.insertRow(-1);
-                row.setAttribute('id', 'controller-table-'+regid+'-row')
+                row.setAttribute('id', 'controller-table-'+row_id+'-row')
                 var cell = row.insertCell(0);
                 cell = row.insertCell(1);
                 cell = row.insertCell(2);
             }
-            console.log(reg.namespace.daq_server)
-            console.log(reg.namespace.controller)
-            var link = "http://"+window.location.host+"/envdaq/"+reg.namespace.daq_server+"/controller/"+reg.namespace.controller+"/"
-            console.log(link)
-            row.children[0].innerHTML = "<a href="+link+">"+regid+"</a>"
-            var config_name = "<em>not configured</em>"
+            //console.log(reg.namespace.daq_server)
+            //console.log(reg.namespace.controller)
+            //var link = "http://"+window.location.host+"/envdaq/"+reg.namespace.daq_server+"/controller/"+reg.namespace.controller+"/"
+            //var link = "http://"+window.location.host+"/envdaq/"+ns.host+"/parent_ns/controller/"+ns.namespace+"/"
+            //console.log(link)
+            //row.children[0].innerHTML = "<a href="+link+">"+row_id+"</a>"
+            // var config_name = "<em>not configured</em>"
             //if ("config" in reg && "LABEL" in reg.config) {
             //    config_name = reg.config2.LABEL
             //}
-            row.children[1].innerHTML = config_name
-            row.children[2].innerHTML = reg.status
+            row.children[0].innerHTML = ns.host
+            row.children[1].innerHTML = ns.name
+            parent_sig = get_namespace_sig(reg.namespace, "PARENT").namespace
+            //console.log("sig: " + get_namespace_sig(reg.namespace, "ALL").namespace)
+            var link = "http://"+window.location.host+"/envdaq/"+ns.host+"/"+parent_sig+"/controller/"+ns.name+"/"
+            console.log(link)
+            row.children[2].innerHTML = "<a href="+link+">"+ns.namespace+"</a>"
         }
     };
 
     function update_instrument_table(registry) {
         console.log(registry)
         var table = document.getElementById('instrument-table');
-        console.log(table)
+
+        var tableHeaderRowCount = 1;
+        var rowCount = table.rows.length;
+        for (var i = tableHeaderRowCount; i < rowCount; i++) {
+            table.deleteRow(tableHeaderRowCount);
+        }
+
+        //console.log(table)
         for (const [regid, reg] of Object.entries(registry)) {
             console.log("regid: "+regid)
-            var row = document.getElementById('instrument-table-'+regid+'-row')
+
+            ns = reg.reg_id
+            row_id = ns.host+"-"+ns.namespace
+            console.log("host: "+ns.host)
+            console.log("name: "+ns.name)
+            console.log("namepace: "+ns.namespace)
+
+            var row = document.getElementById('instrument-table-'+row_id+'-row')
             if (row == null) {
-                console.log("null")
+               // console.log("null")
                 row = table.insertRow(-1);
-                row.setAttribute('id', 'instrument-table-'+regid+'-row')
+                row.setAttribute('id', 'instrument-table-'+row_id+'-row')
                 var cell = row.insertCell(0);
                 cell = row.insertCell(1);
                 cell = row.insertCell(2);
             }
-            console.log(reg.namespace.daq_server)
-            console.log(reg.namespace.controller)
-            console.log(reg.namespace.instrument)
-            var link = "http://"+window.location.host+"/envdaq/"+reg.namespace.daq_server+"/"+reg.namespace.controller+"/instrument/"+reg.namespace.instrument+"/"
-            console.log(link)
-            row.children[0].innerHTML = "<a href="+link+">"+regid+"</a>"
-            var config_name = "<em>not configured</em>"
+            //console.log(reg.namespace.daq_server)
+            //console.log(reg.namespace.controller)
+            //console.log(reg.namespace.instrument)
+            //var link = "http://"+window.location.host+"/envdaq/"+reg.namespace.daq_server+"/"+reg.namespace.controller+"/instrument/"+reg.namespace.instrument+"/"
+            //console.log(link)
+            //row.children[0].innerHTML = "<a href="+link+">"+row_id+"</a>"
+            //var config_name = "<em>not configured</em>"
             //if ("config" in reg && "LABEL" in reg.config) {
             //    config_name = reg.config2.LABEL
             //}
-            row.children[1].innerHTML = config_name
-            row.children[2].innerHTML = reg.status
+            //row.children[1].innerHTML = config_name
+            //row.children[2].innerHTML = reg.status
+            row.children[0].innerHTML = ns.host
+            row.children[1].innerHTML = ns.name
+            parent_sig = get_namespace_sig(reg.namespace, "PARENT").namespace
+            //console.log("sig: " + get_namespace_sig(reg.namespace, "ALL").namespace)
+            var link = "http://"+window.location.host+"/envdaq/"+ns.host+"/"+parent_sig+"/instrument/"+ns.name+"/"
+            console.log(link)
+            row.children[2].innerHTML = "<a href="+link+">"+ns.namespace+"</a>"
+
         }
     };
 
@@ -252,18 +309,34 @@
         var data = JSON.parse(e.data)
         if ("message" in data) {
             var message = data.message
+            console.log("message: " + message)
 
             if (message['SUBJECT'] == 'DAQServerRegistry') {
                 console.log("subject")
                 if ("purpose" in message.BODY) {
-                    console.log("purpose")
+                    console.log(message.BODY.purpose)
                     if (message.BODY.purpose == "REGISTRY") {
-                        var registry = message.BODY.daqserver_registry;
-                        update_server_table(registry)
-                        registry = message.BODY.controller_registry;
-                        update_controller_table(registry)
-                        registry = message.BODY.instrument_registry;
-                        update_instrument_table(registry)
+                        if ("daqserver_registry" in message.BODY) {
+                            console.log("daqserver_registry update")
+                            var registry = message.BODY.daqserver_registry;
+                            update_server_table(registry)
+                        }
+                        if ("controller_registry" in message.BODY) {
+                            console.log("controller_registry update")
+                            var registry = message.BODY.controller_registry;
+                            update_controller_table(registry)
+                        }
+
+                        if ("instrument_registry" in message.BODY) {
+                            console.log("instrument_registry update")
+                            var registry = message.BODY.instrument_registry;
+                            update_instrument_table(registry)
+                        }
+
+                        //registry = message.BODY.controller_registry;
+                        // update_controller_table(registry)
+                        //registry = message.BODY.instrument_registry;
+                        // update_instrument_table(registry)
                         //for (reg in registry) {
                         //    row = document.getElementById(reg["namespace"]+"-row");
                         //    console.log("row: "+row);                          
@@ -308,6 +381,42 @@
         websocket.send(
             JSON.stringify({'message': message})
         )
+
+    };
+
+    // emulates python Namespace functionality
+    function get_namespace_sig(ns, section) {
+        console.log("ns: " + ns.name)
+        //var sig = new Object();
+        if (section == "PARENT") {
+            if ("parent" in ns) {
+                var sig = get_namespace_sig(ns.parent, "ALL")
+                return sig
+            }
+            return null
+        } else if (section == "LOCAL") {
+            var sig = new Object()
+            sig.host = ns.host
+            sig.name = ns.name
+            sig.type = ns.type
+            sig.namespace = ns.namespace
+            return sig
+        } else {
+            var sig = new Object()
+            sig.host = ns.host
+            sig.name = ns.name
+            sig.type = ns.type
+            console.log(sig.host)
+            if ("parent" in ns) {
+                parent = ns.parent
+                console.log("parent: " + parent.name)
+                var parent_sig = get_namespace_sig(ns.parent, "ALL")
+                sig.namespace = parent_sig.namespace + "-" + ns.name
+            } else {
+                sig.namespace = ns.name
+            }
+            return sig
+        }
 
     };
 
