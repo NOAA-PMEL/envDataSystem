@@ -6,4 +6,3 @@ Twisted[tls,http2]
 bokeh
 whitenoise
 psycopg2-binary
-jedi

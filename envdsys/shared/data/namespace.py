@@ -1,8 +1,6 @@
 import json
 from pathlib import Path
 
-from jedi.inference.compiled.access import NOT_CLASS_TYPES
-
 
 class Namespace:
 
@@ -22,12 +20,12 @@ class Namespace:
         self.set_name(name)
         # if not name:
         #     self.name = Namespace.DEFAULT_NAME
-            # self.set_name(name)
+        # self.set_name(name)
 
         self.host = None
         self.parent = None
 
-        self.host=None
+        self.host = None
         if host:
             self.host = host
             # self.set_host_name(host_name)
@@ -51,7 +49,7 @@ class Namespace:
     def set_name(self, name):
         if not name:
             name = Namespace.DEFAULT_NAME
-        
+
         not_allowed = [" ", "/", "<", ">", "?", "@", "&", ",", ";", ":", "!"]
         for na in not_allowed:
             name = name.replace(na, "_")
@@ -61,19 +59,19 @@ class Namespace:
     #     # if not self.host:
     #     #     self.host = dict()
     #     self.host = name
-        # if "server" not in self.namespace:
-        #     self.namespace["server"] = dict()
-        # self.namespace["server"]["host_name"] = name
+    # if "server" not in self.namespace:
+    #     self.namespace["server"] = dict()
+    # self.namespace["server"]["host_name"] = name
 
     # def set_host_ip(self, ip):
     #     self.host["host_ip"] = ip
-        # if "server" not in self.namespace:
-        #     self.namespace["server"] = dict()
-        # self.namespace["server"]["host_ip"] = ip
+    # if "server" not in self.namespace:
+    #     self.namespace["server"] = dict()
+    # self.namespace["server"]["host_ip"] = ip
 
     # def set_server(self, server):
     #     self.namespace["server"] = server
-    
+
     # only top level namespace will hold host?
     def has_host(self):
         if self.host:
@@ -92,12 +90,12 @@ class Namespace:
     #             if "host_name" not in self.host and "host_ip" not in self.host:
     #                 self.set_host_name(Namespace.DEFAULT_HOST)
     #             return self.host
-        # if "server" not in self.namespace:
-        #     self.set_host_name(Namespace.DEFAULT_HOST)
-        #     # self.host_name = Namespace.DEFAULT_HOST
-        #     # self.namespace["server"] = {"host_name": Namespace.DEFAULT_HOST}
-        
-        # return self.namespace["server"]
+    # if "server" not in self.namespace:
+    #     self.set_host_name(Namespace.DEFAULT_HOST)
+    #     # self.host_name = Namespace.DEFAULT_HOST
+    #     # self.namespace["server"] = {"host_name": Namespace.DEFAULT_HOST}
+
+    # return self.namespace["server"]
 
     # def set_name(self, name):
     #     self.namespace["name"] = name
@@ -107,7 +105,7 @@ class Namespace:
 
     # def set_parent(self, parent):
     #     self.namespace["parent"] = parent
-    
+
     # def get_parent(self):
     #     return self.namespace["parent"]
 
@@ -134,8 +132,8 @@ class Namespace:
     def get_namespace(self):
         # ns = ""
         # print(f"self.name: {ns}")
-        parent_ns=""
-        host=""
+        parent_ns = ""
+        host = ""
         if self.parent:
             # print(f"self.name: {ns}")
             parent_ns = self.parent.get_namespace()
@@ -155,7 +153,7 @@ class Namespace:
             #     host = Namespace.DEFAULT_HOST
             #     # print(f"self.host: {host}")
             # # ns = f"{host}-"
-            
+
             ns = f"{self.host}-{self.name}"
 
         # print(f"self.name: {ns}")
@@ -185,7 +183,7 @@ class Namespace:
                 sig["namespace"] = f"{parent_sig['namespace']}-{self.name}"
             else:
                 sig["namespace"] = f"{self.name}"
-            
+
             return sig
 
     def get_host(self):
@@ -196,7 +194,7 @@ class Namespace:
             if not self.host:
                 self.host = Namespace.DEFAULT_HOST
             host = self.host
-        
+
         return host
 
     def get_parent_namespace(self):
@@ -238,7 +236,6 @@ class Namespace:
         #     ns_dict["parent"] = self.parent.to_dict()
         # else:
         #     ns_dict=["host"] = self.host
-        
 
     # create from dictionary repr of ns
     def from_dict(self, ns_dict):
@@ -264,10 +261,5 @@ class Namespace:
                 self.parent = Namespace().from_dict(parent_dict)
             except KeyError:
                 pass
-        
+
         return self
-        
-
-
-
-        
