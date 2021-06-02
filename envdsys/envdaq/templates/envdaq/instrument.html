@@ -1,36 +1,51 @@
-{% extends 'envdaq/base.html' %}
+{% extends 'envdaq/envdaq_base.html' %}
 
-{% block header %}
+{% comment %} {% block header %}
     <h1>envDSys : Instrument : {{ instrument_label|cut:'"' }}</h1>
     <h2>({{ instrument_instance|cut:'"' }})</h2>
-{% endblock %}
+{% endblock %} {% endcomment %}
 
+{% block title%}envDataSystem Instrument{% endblock title%}
 
-{% comment %} <div class="status"></div> {% endcomment %}
-{% block status %}
-    <div class="card">
-    <textarea readonly class="status-box" id="status-window" cols="60" rows="5"></textarea><br/>
-    {% comment %} <textarea id="status-window" width="100%" rows="5"></textarea><br/> {% endcomment %}
-    {% comment %} <div id="status-window" class="status-box"></div> {% endcomment %}
-    <button id="refresh-status-button" class="opsbutton" value="Refresh" onclick=reqest_status()>Refresh</button>
+{% block navpath%}
+    <div id="instrument-navpath">
+    </div>
+    {% comment %} Home / DAQ Server / {{daq_namespace}} {% endcomment %}
+{% endblock navpath %}
+
+{% block data %}
+    <div id="inst-data-table-div" class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
     </div>
 {% endblock %}
 
-{% block data %}
+{% block controls %}
+    <div id="inst-controls-table-div" class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
+    </div>
+{% endblock %}
+
+{% block status %}
+    <div class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
+    {% comment %} <textarea readonly class="status-box" id="status-window" cols="60" rows="5"></textarea><br/> {% endcomment %}
+    <p><em>Status</em></p>
+    <textarea readonly class="w3-round" id="status-window" style="width:100%" rows="5"></textarea><br/>
+    <button id="refresh-status-button" class="w3-button w3-round w3-border" value="Refresh" onclick=request_status()>Refresh</button>
+    </div>
+{% endblock %}
+
+{% comment %} {% block data %}
     <div class="card">
     <b><p id="time-stamp"></p></b><br/>
     <div id="meas-table">
 
-        {% comment %} <script>build_data_table()</script> {% endcomment %}
     </div>
     </div>
-{% endblock %}
+{% endblock %} {% endcomment %}
 
 
 {% block plots %}
     {% for app in plot_scripts %}
     {% comment %} {{ plot_scripts }} {% endcomment %}
-        <div class="card">
+        <div class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
             {% comment %} {{ plot_script | safe }} {% endcomment %}
             {{ app | safe }}
             {% comment %} <div class="iframe-container">
@@ -43,6 +58,12 @@
 {% endblock %}
 
 
+{% block rawdata %}
+    <div id="inst-rawdata-table-div" class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
+    </div>
+{% endblock rawdata %}
+
+
 {% comment %} <label for="input_temperature_sp">Input Temperature SP</label> {% endcomment %}
 {% comment %} <input id="input_temperature_sp" type="number" name="input_temperature_sp" min="10.0" max="30.0" value="25.0"> {% endcomment %}
 {% comment %} <input id"input_temperature_sp_set" type="button" value="Set"> {% endcomment %}
@@ -50,26 +71,27 @@
 {% comment %} </div> {% endcomment %}
 
 
-{% block controls %}
+{% comment %} {% block controls %}
     <div class="card">
             <div class="opsbutton-container">
                 <input type="button" id="start-stop-button" value="Start" class="opsbutton stopped" onclick=opsButtonRequest(this)>
             </div>
         <div id="controls-table"></div>
     </div>
-{% endblock %}
+{% endblock %} {% endcomment %}
+{% block extracontent %}
 
-{% block rawdata %}
+{% comment %} {% block rawdata %}
     <button class="accordion"><em>Raw data from server</em></button>
     <div class="panel">
         <textarea readonly class="status-box" id="metadata-window" cols="10" rows="10"></textarea>
         <textarea readonly class="status-box" id="data-window" cols="10" rows="10"></textarea>
     </div>
-{% endblock %}
+{% endblock %} {% endcomment %}
 
 <div class="children"></div>
 
-{% block content %}
+{% comment %} {% block content %} {% endcomment %}
     
 
     {% comment %} <h2>Instrument:{{ instrument_name_json|cut:'"' }}:{{ instrument_label_json|cut:'"' }}</h2> {% endcomment %}
@@ -159,28 +181,49 @@
         var wait_for_setup = true;
 
         function init() {
-            {% comment %} alert("loaded"); {% endcomment %}
-
-            {% comment %} build_table() {% endcomment %}
-
-            {% comment %} {{ instrument_label_json }} {% endcomment %}
+            build_path()
             build_data_table()
             build_controls_table()
-            setup_accordions()
+            build_rawdata_table()
+            //setup_accordions()
 
             // reqest_status()
             wait_for_setup = false
 
         }
 
+        function build_path() {
+            console.log(window.location.host)
+            var home = "http://"+window.location.host+"/"
+            home = "/"
+            var daq = home + "envdaq/"
+            var server = daq + "daqserver/" + daq_host + "/" + parent_namespace +"/"
+
+            var path = '<a href='+home+' style="text-decoration: none">Home</a> / '
+            path += '<a href='+daq+' style="text-decoration: none">DAQ</a> / '
+            path += 'DAQInstrument / ' + daq_host + " / " + parent_namespace + "/" + instrument_namespace
+            //path += '<a href='+server+' style="text-decoration: none">'+daq_namespace+'</a>'
+            var navpath = document.getElementById("instrument-navpath")
+            navpath.innerHTML = path
+            //navpath.appendChild(text)
+            //console.log(navpath)
+        };
+
         function build_data_table() {
             // var measurements = JSON.parse('{{ instrument_measurements | escapejs }}')
             // var tablediv = document.getElementById('meas-table')[0];
-            var tablediv = document.getElementById('meas-table');
-            
+            var tablediv = document.getElementById('inst-data-table-div');
+
+            var ts = document.createElement('p')
+            ts.setAttribute("id", "time-stamp")
+            ts.style.fontWeight = "bold"
+            tablediv.appendChild(ts)
+
             var table = document.createElement('table');
-            table.setAttribute('id', 'data-table');
-            table.setAttribute('class', 'daq-table')
+            //table.setAttribute('id', 'data-table');
+            table.setAttribute('id', 'meas-inst-data-table');
+            //table.setAttribute('class', 'w3-table w3-striped w3-bordered')
+            table.setAttribute('class', 'w3-table w3-striped w3-bordered')
             //table.setAttribute('style', 'border-collapse: collapse; border-radius: 10px; overflow: hidden')
 
             var caption = table.createCaption()
@@ -188,20 +231,23 @@
 
             var header = table.createTHead();
             var row = header.insertRow(0);
-            row.setAttribute('style', 'border: 1px solid black')
+            //row.setAttribute('style', 'border: 1px solid black')
             var cell = row.insertCell(0);
-            cell.setAttribute('id', 'data-table-namecol');
-            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
+            cell.setAttribute("class", "w3-center")
+            //cell.setAttribute('id', 'data-table-namecol');
+            //cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
             cell.innerHTML = "<b>Name</b>";
             cell = row.insertCell(1);
-            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
-            cell.innerHTML = "<b>Value</b>";
-            cell.setAttribute('id', 'data-table-valuecol');
-            cell.innerHTML = "Value"
+            cell.setAttribute("class", "w3-center")
+            //cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
+            //cell.innerHTML = "Value";
+            //cell.setAttribute('id', 'data-table-valuecol');
+            cell.innerHTML = "<b>Value</b>"
             cell = row.insertCell(2);
-            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
+            cell.setAttribute("class", "w3-center")
+            //cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
             cell.innerHTML = "<b>Units</b>";
-            cell.setAttribute('id', 'data-table-unitcol');
+            //cell.setAttribute('id', 'data-table-unitcol');
 
             for (var meastype in measurements) {
                 if (meastype != "controls") {
@@ -220,15 +266,18 @@
                         row = table.insertRow(-1);
                         cell = row.insertCell(0);
                         cell.setAttribute('id', (meas_id+'-name'));
-                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center')
+                        cell.setAttribute("class", "w3-center")
+                        //cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center')
                         cell.innerHTML = name
                         cell = row.insertCell(1);
+                        cell.setAttribute("class", "w3-center")
                         cell.setAttribute('id', (meas_id+'-value'));
-                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
+                        //cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
                         cell.innerHTML = '';         
                         cell = row.insertCell(2);           
                         cell.setAttribute('id', (meas_id+'-units'));
-                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
+                        cell.setAttribute("class", "w3-center")
+                        //cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
                         cell.innerHTML = mtype[meas]['units']                    
                     }
                 }
@@ -249,8 +298,33 @@
         function build_controls_table() {
             // var measurements = JSON.parse('{{ instrument_measurements | escapejs }}')
             // var tablediv = document.getElementById('meas-table')[0];
-            var tablediv = document.getElementById('controls-table');
+            // var tablediv = document.getElementById('controls-table');
+            var tablediv = document.getElementById('inst-controls-table-div');
             
+            var ops_container = document.createElement("div")
+            ops_container.setAttribute("class", "w3-container w3-border w3-padding")
+            var ops_button = document.createElement("button")
+            ops_button.setAttribute("id", "start-stop-button")
+            ops_button.setAttribute("class", "w3-button w3-round w3-border w3-cell")
+            //ops_button.setAttribute("value", "Start")
+            ops_button.setAttribute("onclick", "opsButtonRequest()")
+            ops_button.value = "Start"
+            ops_button.innerText = "Start"
+            //ops_container.appendChild(ops_button)
+
+            var button_text = document.createElement("label")
+            //button_text.setAttribute("class", "w3-padding")
+            button_text.setAttribute("for", "ops_button")
+            button_text.appendChild(document.createTextNode("Instrument Control: "))
+            //button_text.innerText = "Instrument Control: "
+            ops_container.appendChild(button_text)
+            ops_container.appendChild(ops_button)
+
+            tablediv.appendChild(ops_container)
+            //<div class="opsbutton-container">
+            //    <input type="button" id="start-stop-button" value="Start" class="opsbutton stopped" onclick=opsButtonRequest(this)>
+            //</div>
+
             var control_groups = []
             for (var meastype in measurements) {
                 if (meastype == "controls") {
@@ -269,14 +343,27 @@
                         if (group_box == null) {
                             //console.log('controls-group-box-'+group_id)
                             group_box = document.createElement('div')
+                            group_button = document.createElement('a')
+                            //group_button.setAttribute('id', 'controls-group-box-'+group_id)
+                            group_button.setAttribute('class', 'w3-block w3-button')
+                            var fn_arg = 'controls-group-box-'+group_id+'-contents'
+                            group_button.setAttribute('onclick', "doAccordion('controls-group-box-"+group_id+"-contents')" )
+                            group_button.setAttribute('href', "javascript:void(0)")
+                            group_button.innerHTML= "<em>Settings: "+group_name+"</em><i id='controls-group-box-"+group_id+"-contents-icon' style='position:relative;left:10px;vertical-align:middle;' class='material-icons'>expand_more</i>"
+                            group_box.appendChild(group_button)
+                            group_contents = document.createElement('div')
+                            group_contents.setAttribute('id', 'controls-group-box-'+group_id+'-contents')
+                            group_contents.setAttribute("class", "w3-hide")
+                            //group_box.appendChild(group_close)
+
                             //group_box.setAttribute('class', 'card')
-                            group_button = document.createElement('button')
-                            group_button.setAttribute('id', 'controls-group-box-'+group_id)
-                            group_button.setAttribute('class', 'accordion card')
-                            group_button.innerHTML = '<em>Settings: '+group_name+'</em>'
+                            //group_button = document.createElement('button')
+                            //group_button.setAttribute('id', 'controls-group-box-'+group_id)
+                            //group_button.setAttribute('class', 'accordion card')
+                            //group_button.innerHTML = '<em>Settings: '+group_name+'</em>'
                             
-                            var panel = document.createElement('div')
-                            panel.setAttribute('class', 'panel')
+                            //var panel = document.createElement('div')
+                            //panel.setAttribute('class', 'panel')
                             control_groups.push(group_id)
 
                             //console.log(group_box)
@@ -285,7 +372,8 @@
                             table = document.createElement('table')
                             table_id = 'controls-group-table-'+group_id
                             table.setAttribute('id', table_id)
-                            table.setAttribute('style', 'border-collapse: collapse;')
+                            //table.setAttribute('style', 'border-collapse: collapse;')
+                            table.setAttribute('class', 'w3-table w3-striped w3-bordered')
 
                             var caption = table.createCaption()
                             caption.innerHTML = "<em>Settings</em>"
@@ -295,20 +383,24 @@
                             var row = header.insertRow(0);
                             row.setAttribute('style', 'border: 1px solid black')
                             var cell = row.insertCell(0);
-                            cell.setAttribute('id', table_id+'-namecol');
-                            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
+                            cell.setAttribute("class", "w3-center")
+                            //cell.setAttribute('id', table_id+'-namecol');
+                            //cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
                             cell.innerHTML = "<b>Name</b>";
                             cell = row.insertCell(1);
-                            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
+                            cell.setAttribute("class", "w3-center")
+                            //cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
                             cell.innerHTML = "<b>Value</b>";
-                            cell.setAttribute('id', table_id+'-valuecol');
-                            cell.innerHTML = "Value"
+                            //cell.setAttribute('id', table_id+'-valuecol');
+                            //cell.innerHTML = "Value"
                             cell = row.insertCell(2);
-                            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
+                            cell.setAttribute("class", "w3-center")
+                            //cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
                             cell.innerHTML = "<b>Setting</b>";
-                            cell.setAttribute('id', table_id+'-settingcol');
+                            //cell.setAttribute('id', table_id+'-settingcol');
                             cell = row.insertCell(3);
-                            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
+                            cell.setAttribute("class", "w3-center")
+                            //cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
                             cell.innerHTML = "";
                             cell.setAttribute('id', table_id+'-setbuttoncol');
 
@@ -320,9 +412,12 @@
                             td.width = '100px';
                             td = table.rows[0].cells[3];
                             td.width = '100px'
-                            panel.appendChild(table)
-                            group_box.appendChild(group_button)
-                            group_box.appendChild(panel)
+                            //panel.appendChild(table)
+                            group_contents.appendChild(table)
+                            group_box.appendChild(group_contents)
+                            //group_box.appendChild(group_button)
+                            //group_box.appendChild(group_box)
+                            //group_box.appendChild(panel)
                             //group_box.appendChild(panel)
                             tablediv.appendChild(group_box);
                         }
@@ -372,6 +467,57 @@
            //t.innerHTML = "Settings"
         }
 
+
+        function build_rawdata_table() {
+            // var measurements = JSON.parse('{{ instrument_measurements | escapejs }}')
+            // var tablediv = document.getElementById('meas-table')[0];
+            // var tablediv = document.getElementById('controls-table');
+            var tablediv = document.getElementById('inst-rawdata-table-div');
+            
+            var group_box = document.createElement('div')
+            group_button = document.createElement('a')
+            //group_button.setAttribute('id', 'controls-group-box-'+group_id)
+            group_button.setAttribute('class', 'w3-block w3-button')
+            group_button.setAttribute('onclick', "doAccordion('inst_rawdata-box-metadata-contents')" )
+            group_button.setAttribute('href', "javascript:void(0)")
+            group_button.innerHTML= "<em>Raw Data: Metadata</em><i id='inst_rawdata-box-metadata-contents-icon' style='position:relative;left:10px;vertical-align:middle;' class='material-icons'>expand_more</i>"
+            group_box.appendChild(group_button)
+            group_contents = document.createElement('div')
+            group_contents.setAttribute('id', 'inst_rawdata-box-metadata-contents')
+            group_contents.setAttribute("class", "w3-hide")
+            var metadata = document.createElement("textarea")
+            metadata.setAttribute("id", "metadata-window")
+            metadata.setAttribute("class", "w3-border w3-round w3-code")
+            metadata.style.width = "100%"
+            metadata.rows = 10
+
+            group_contents.appendChild(metadata)
+            group_box.appendChild(group_contents)
+            tablediv.appendChild(group_box)
+
+            var group_box = document.createElement('div')
+            group_button = document.createElement('a')
+            //group_button.setAttribute('id', 'controls-group-box-'+group_id)
+            group_button.setAttribute('class', 'w3-block w3-button')
+            group_button.setAttribute('onclick', "doAccordion('inst_rawdata-box-data-contents')" )
+            group_button.setAttribute('href', "javascript:void(0)")
+            group_button.innerHTML= "<em>Raw Data: Data</em><i id='inst_rawdata-box-data-contents-icon' style='position:relative;left:10px;vertical-align:middle;' class='material-icons'>expand_more</i>"
+            group_box.appendChild(group_button)
+            group_contents = document.createElement('div')
+            group_contents.setAttribute('id', 'inst_rawdata-box-data-contents')
+            group_contents.setAttribute("class", "w3-hide")
+            var metadata = document.createElement("textarea")
+            metadata.setAttribute("id", "data-window")
+            metadata.setAttribute("class", "w3-border w3-round w3-code")
+            metadata.style.width = "100%"
+            metadata.rows = 10
+
+            group_contents.appendChild(metadata)
+            group_box.appendChild(group_contents)
+            tablediv.appendChild(group_box)
+
+        }
+
         // websocket communication
 
         {% comment %} var instrument_name = {{ instrument_name }}
@@ -397,20 +543,22 @@
             // }; {% endcomment %}
 
             var data = JSON.parse(e.data);
-            // console.log(data['message'])
+            //console.log(data['message'])
             if (data['message']['SUBJECT'] == 'DATA') {
 
                 if ("METADATA" in data['message']['BODY']) {
                     var message = data['message']['BODY']['METADATA'];
-                    document.querySelector('#metadata-window').value = (JSON.stringify(data['message']['BODY']['METADATA']) + '\n');
+                    //document.querySelector('#metadata-window').value = (JSON.stringify(data['message']['BODY']['METADATA']) + '\n');
+                    document.querySelector('#metadata-window').innerHTML = (JSON.stringify(data['message']['BODY']['METADATA']) + '\n');
                 }
                 if ('DATA' in data['message']['BODY']) {
                     var message = data['message']['BODY']['DATA'];
-                    document.querySelector('#data-window').value = (JSON.stringify(data['message']['BODY']['DATA']) + '\n');
+                    // document.querySelector('#data-window').value = (JSON.stringify(data['message']['BODY']['DATA']) + '\n');
+                    document.querySelector('#data-window').innerHTML = (JSON.stringify(data['message']['BODY']['DATA']) + '\n');
 
                     document.querySelector('#time-stamp').innerHTML =  (message['DATETIME'].replace(/T|Z/g, " "));
 
-                    {% comment %} console.log(message['MEASUREMENTS']) {% endcomment %}
+                    // console.log(message['MEASUREMENTS'])
                     var cell_value = ''
                     for (var meas in message['MEASUREMENTS']) {
                         if (message['MEASUREMENTS'][meas]['VALUE'] == null) {
@@ -447,9 +595,9 @@
                 }
             } else if (data['message']['SUBJECT'] == 'STATUS') {
 
-                {% comment %} if (data['message']['BODY']['purpose'] == 'UPDATE') { {% endcomment %}
+                // if (data['message']['BODY']['purpose'] == 'UPDATE') {
                 if (data.message.BODY.purpose == 'UPDATE') {
-                   {% comment %} console.log(JSON.stringify(data.message.BODY.status)) {% endcomment %}
+                    console.log(JSON.stringify(data.message.BODY.status))
                     var status = data.message.BODY.status
                     update_status(status)
                 }
@@ -462,7 +610,7 @@
             console.log('setup done')
             
             request_status()
-        }
+        };
 
         {% comment %} document.querySelector('#inst-name-input').focus();
         document.querySelector('#inst-name-input').onkeyup = function(e) {
@@ -541,14 +689,16 @@
             document.getElementById("status-window").value = JSON.stringify(status)
             //document.getElementById("status-window").innerHTML = JSON.stringify(status)
         }
+ 
 
-        function opsButtonRequest(obj) {
+        function opsButtonRequest() {
             button = document.getElementById('start-stop-button')
+            //var req = button.value
             var req = "STOP"
             if (button.value == "Start") {
                 req = "START"
             } 
-
+            console.log(req)
             var message = {}
             message['SUBJECT'] = 'RUNCONTROLS'
             message['BODY'] = {
@@ -566,17 +716,18 @@
         function opsButtonSet(runstate) {
             button = document.getElementById('start-stop-button')
 
-            var class_val = 'opsbutton started'
+            //var class_val = 'opsbutton started'
             var value = "Stop"
 
         if (runstate == "STOPPED" || runstate == "READY_TO_RUN") {
-                class_val = 'opsbutton stopped'
+                //class_val = 'opsbutton stopped'
                 value = "Start"
             }
             button.value = value
-            button.className = class_val
+            button.innerText = value
+            //button.className = class_val
         }
 
     </script>
 
-{% endblock %}
+{% endblock extracontent %}

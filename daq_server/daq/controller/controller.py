@@ -324,7 +324,7 @@ class Controller(DAQ):
             self.instrument_map[k].start()
 
     def stop(self, cmd=None):
-        print("Controller.stop()")
+        # print("Controller.stop()")
 
         # if self.gui_client is not None:
         #     self.loop.run_until_complete(self.gui_client.close())
@@ -336,7 +336,7 @@ class Controller(DAQ):
 
         # TODO: stop should clean up tasks
         for k, instrument in self.instrument_map.items():
-            print(f"instrument.stop: {k}")
+            # print(f"instrument.stop: {k}")
             instrument.stop()
 
         # Do super last to finish clean up
@@ -1162,14 +1162,14 @@ class DummyController(Controller):
 
     async def handle_control_action(self, control, value):
         await super().handle_control_action(control, value)
-        if control and value:
-            if control == "start_stop":
-                if value == "START":
-                    self.start()
-                elif value == "STOP":
-                    self.stop()
+        # if control and value:
+        #     if control == "start_stop":
+        #         if value == "START":
+        #             self.start()
+        #         elif value == "STOP":
+        #             self.stop()
 
-            await super(DummyController, self).handle_control_action(control, value)
+        #     await super(DummyController, self).handle_control_action(control, value)
 
         # if control and value:
         #     if control == "start_stop":

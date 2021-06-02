@@ -123,13 +123,13 @@ class ControllerConsumer(AsyncWebsocketConsumer):
         if "ui_save_data" in settings.DATA_MANAGER:
             self.ui_save_data = settings.DATA_MANAGER["ui_save_data"]
         # TODO get parent_namespace as path or set this later.
-        path_list = [
-            self.ui_save_base_path,
-            self.parent_namespace,
-            self.controller_namespace,
-        ]
-        self.ui_save_path = os.path.join(*path_list)
-        DataManager.open_datafile(self.ui_save_path)
+        # path_list = [
+        #     self.ui_save_base_path,
+        #     self.parent_namespace,
+        #     self.controller_namespace,
+        # ]
+        # self.ui_save_path = os.path.join(*path_list)
+        # DataManager.open_datafile(self.ui_save_path)
 
         self.manage_group_name = "envdaq-manage"
         self.registry_group_name = "envnet-manage"
@@ -242,6 +242,14 @@ class ControllerConsumer(AsyncWebsocketConsumer):
                 # add metadata (measurements, etc)
                 except KeyError:
                     pass
+
+                path_list = [
+                    self.ui_save_base_path,
+                    controller_host,
+                    self.namespace.get_namespace_as_path(),
+                ]
+                self.ui_save_path = os.path.join(*path_list)
+                DataManager.open_datafile(self.ui_save_path)
 
                 # add plot apps from metadata
 
@@ -609,17 +617,17 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
             self.ui_save_base_path = settings.DATA_MANAGER["ui_save_base_path"]
         if "ui_save_data" in settings.DATA_MANAGER:
             self.ui_save_data = settings.DATA_MANAGER["ui_save_data"]
-        path_list = [
-            # self.ui_save_base_path,
-            # self.daqserver_namespace,
-            # self.controller_namespace,
-            # self.instrument_namespace,
-            self.ui_save_base_path,
-            self.parent_namespace,
-            self.instrument_namespace,
-        ]
-        self.ui_save_path = os.path.join(*path_list)
-        DataManager.open_datafile(self.ui_save_path)
+        # path_list = [
+        #     # self.ui_save_base_path,
+        #     # self.daqserver_namespace,
+        #     # self.controller_namespace,
+        #     # self.instrument_namespace,
+        #     self.ui_save_base_path,
+        #     self.parent_namespace,
+        #     self.instrument_namespace,
+        # ]
+        # self.ui_save_path = os.path.join(*path_list)
+        # DataManager.open_datafile(self.ui_save_path)
 
         self.manage_group_name = "envdaq-manage"
         self.registry_group_name = "envnet-manage"
@@ -697,30 +705,39 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
             )
             # print(f'123123123 data: {message}')
             src_id = message["SENDER_ID"]
-            print(f"*** update plot: {src_id}, {data}")
+            # print(f"*** update plot: {src_id}, {data}")
             await PlotManager.update_data_by_source(src_id, data)
-            # if self.ui_save_data:
-            #     await DataManager.send_data(self.ui_save_path, data)
+            if self.ui_save_data:
+                # print(f"save data")
+                await DataManager.send_data(self.ui_save_path, data)
 
             # print(f'message ***111***: {message}')
             if "BODY" in message and "DATA_REQUEST_LIST" in message["BODY"]:
                 # TODO: make this a utility function
                 for dr in message["BODY"]["DATA_REQUEST_LIST"]:
+                    # print("here:1")
                     if dr["class"] == "CONTROLLER":
+                        # print("here:2")
                         controller_ns = Namespace().from_dict(dr["namespace"])
+                        # print("here:3")
                         controller_parent_ns_sig = controller_ns.get_namespace_sig(
                             section="PARENT"
                         )["namespace"]
+                        # print("here:4")
 
                         # group_name = f'controller_{dr["alias"]["name"]}'
                         # group_name = f"{self.daqserver_namespace}-controller-{self.controller_namespace}"
                         group_name = f"{self.daq_host}-{controller_parent_ns_sig}-controller-{controller_ns.name}"
+                        # print("here:5")
 
                         await self.channel_layer.group_send(
-                            group_name.replace(" ", ""),
+                            # group_name.replace(" ", ""),
+                            group_name,
                             {"type": "daq_message", "message": message},
                         )
+                        # print("here:6")
 
+            # print(f'Done with Data!!!')
             # if 'alias' in message['BODY']:
             #     alias_name = message['BODY']['alias']['name']
             # alias_name = message.BODY.alias.name
@@ -777,6 +794,17 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
                     PlotManager.add_apps(metadata)
                 except KeyError:
                     pass
+
+                # open Datafile for saving data on UI side
+
+                path_list = [
+                    self.ui_save_base_path,
+                    instrument_host,
+                    self.namespace.get_namespace_as_path(),
+                ]
+                self.ui_save_path = os.path.join(*path_list)
+                DataManager.open_datafile(self.ui_save_path)
+
 
                 registration = await DAQRegistry.get_registration(
                     # reg_id=self.instrument_id, type="Instrument"
@@ -1067,7 +1095,7 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
                 )
 
             else:
-                # print(f'message: {message}')
+                print(f'message: {message}')
                 await self.channel_layer.group_send(
                     self.instrument_group_name,
                     {"type": "daq_message", "message": message},

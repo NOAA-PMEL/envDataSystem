@@ -536,36 +536,37 @@ class MSEMS(BrechtelInstrument):
     async def handle_control_action(self, control, value):
         if control and value:
             # print(f"msems control action: {control}, {value}")
-            if control == "start_stop":
-                if value == "START":
-                    self.start()
-                elif value == "STOP":
-                    self.stop()
+            # if control == "start_stop":
+            #     if value == "START":
+            #         self.start()
+            #     elif value == "STOP":
+            #         self.stop()
+
+            #     self.set_control_att(control, "action_state", "OK")
+
+            # else:
+            try:
+                # print(
+                #     f'send command to msems: {self.controls[control]["parse_label"]}={value}'
+                # )
+                if self.iface_components["default"]:
+                    if_id = self.iface_components["default"]
+                    cmd = f'{self.controls[control]["parse_label"]}={value}\n'
+                    # print(f"msems control: {cmd.strip()}")
+                    # cmd = "msems_mode=2\n"
+                    msg = Message(
+                        sender_id=self.get_id(),
+                        msgtype=Instrument.class_type,
+                        subject="SEND",
+                        body=cmd,
+                    )
+                    await self.iface_map[if_id].message_from_parent(msg)
 
                 self.set_control_att(control, "action_state", "OK")
-
-            else:
-                try:
-                    # print(
-                    #     f'send command to msems: {self.controls[control]["parse_label"]}={value}'
-                    # )
-                    if self.iface_components["default"]:
-                        if_id = self.iface_components["default"]
-                        cmd = f'{self.controls[control]["parse_label"]}={value}\n'
-                        # print(f"msems control: {cmd.strip()}")
-                        # cmd = "msems_mode=2\n"
-                        msg = Message(
-                            sender_id=self.get_id(),
-                            msgtype=Instrument.class_type,
-                            subject="SEND",
-                            body=cmd,
-                        )
-                        await self.iface_map[if_id].message_from_parent(msg)
-
-                    self.set_control_att(control, "action_state", "OK")
-                except KeyError:
-                    print(f"can't set {control}")
-                    self.set_control_att(control, "action_state", "NOT_OK")
+            except KeyError:
+                print(f"can't set {control}")
+                self.set_control_att(control, "action_state", "NOT_OK")
+        await super(MSEMS, self).handle(msg, type)
 
     def parse(self, msg):
         # print(f'parse: {msg.to_json()}')

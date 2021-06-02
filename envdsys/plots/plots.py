@@ -195,12 +195,12 @@ class PlotManager():
 
     @staticmethod
     async def update_data_by_source(src_id, data, server_id=None):
-        print(f'update: {src_id}')
+        # print(f'update: {src_id}')
         if src_id in PlotManager().__app_source_map:
-            print(f'    found src_id')
+            # print(f'    found src_id')
             server = PlotManager.get_server(server_id=server_id)
             for app_name in PlotManager().__app_source_map[src_id]:
-                print(f'        app: {app_name}')
+                # print(f'        app: {app_name}')
                 if server:
                     app = server.get_app(app_name)
                     if app:

@@ -496,13 +496,13 @@ class Instrument(DAQ):
         #     iface.start()
 
     def stop(self, cmd=None):
-        print("Instrument.stop()")
+        # print("Instrument.stop()")
 
         if self.datafile:
             self.datafile.close()
 
-        # for k, iface in self.iface_map.items():
-        #     iface.stop()
+        for k, iface in self.iface_map.items():
+            iface.stop()
 
         super().stop(cmd)
 
@@ -753,14 +753,14 @@ class DummyInstrument(Instrument):
         self.enable()
 
     async def shutdown(self):
-        print("DummyInstrument shutdown")
-        print("dummy instrument stop")
+        # print("DummyInstrument shutdown")
+        # print("dummy instrument stop")
         self.stop()
-        print("dummy instrument disable")
+        # print("dummy instrument disable")
         self.disable()
-        print("dummy instrument dereg")
+        # print("dummy instrument dereg")
         await self.deregister_from_UI()
-        print("dummy instrument super shutdown")
+        # print("dummy instrument super shutdown")
 
         # TODO need to wait for deregister before closing loops and connection
         await super().shutdown()
@@ -777,10 +777,12 @@ class DummyInstrument(Instrument):
         # print(f'%%%%%Instrument.handle: {msg.to_json()}')
         # handle messages from multiple sources. What ID to use?
         if type == "FromChild" and msg.type == Interface.class_type:
+            # print(f'+++++FromChild.handle: {msg.to_json()}')
             # # id = msg.sender_id
             # entry = self.parse(msg)
             # self.last_entry = entry
             # # print('entry = \n{}'.format(entry))
+            # print(f"dummy handle: {")
 
             dt = self.parse(msg)
             # print(f'dt = {dt}')
@@ -808,7 +810,7 @@ class DummyInstrument(Instrument):
 
             # await self.msg_buffer.put(data)
             # await self.to_parent_buf.put(data)
-            # print(f'instrument data: {data.to_json()}')
+            print(f'instrument data: {data.to_json()}')
 
             await self.message_to_ui(data)
             await self.to_parent_buf.put(data)
@@ -850,15 +852,15 @@ class DummyInstrument(Instrument):
 
     async def handle_control_action(self, control, value):
         if control and value:
-            if control == "start_stop":
-                if value == "START":
-                    self.start()
-                elif value == "STOP":
-                    self.stop()
+        #     if control == "start_stop":
+        #         if value == "START":
+        #             self.start()
+        #         elif value == "STOP":
+        #             self.stop()
 
-                self.set_control_att(control, "action_state", "OK")
+        #         self.set_control_att(control, "action_state", "OK")
 
-            elif control == "inlet_temperature_sp":
+            if control == "inlet_temperature_sp":
                 # check bounds
                 # send command to instrument via interface
                 cmd = Message(
@@ -893,7 +895,7 @@ class DummyInstrument(Instrument):
                 self.set_control_att(control, "action_state", "OK")
 
             # await super().handle_control_action(control, value)
-            await super(DummyInstrument, self).handle_control_action(control, value)
+        await super(DummyInstrument, self).handle_control_action(control, value)
 
     def parse(self, msg):
         # print(f'parse: {msg.to_json()}')
@@ -1327,6 +1329,13 @@ class DummyGPS(Instrument):
         self.status2.set_run_status(Status.READY_TO_RUN)
         self.enable()
 
+    def start(self, cmd=None):
+        # task = asyncio.ensure_future(self.read_loop())
+        print(f"Starting Instrument {self}")
+        super().start(cmd)
+        for k, iface in self.iface_map.items():
+            iface.start()
+
     async def shutdown(self):
         print("DummyInstrument shutdown")
         self.stop()
@@ -1418,6 +1427,14 @@ class DummyGPS(Instrument):
 
     async def handle_control_action(self, control, value):
         await super().handle_control_action(control, value)
+        # if control and value:
+        #     if control == "start_stop":
+        #         if value == "START":
+        #             self.start()
+        #         elif value == "STOP":
+        #             self.stop()
+
+        #         self.set_control_att(control, "action_state", "OK")
         # if control and value:
         #     if control == 'start_stop':
         #         if value == 'START':

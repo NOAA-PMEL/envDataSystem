@@ -573,13 +573,13 @@ class DAQ(abc.ABC):
 
     def disable(self):
         if self.status2.get_enabled_status() == Status.ENABLED:
-            print("here:01")
+            # print("here:01")
             self.stop()
-            print("here:02")
+            # print("here:02")
             for t in self.enable_task_list:
-                print("here:03")
+                # print("here:03")
                 t.cancel()
-            print("here:04")
+            # print("here:04")
             self.status2.set_enabled_status(Status.DISABLED)
 
     def start(self, cmd=None):
@@ -605,19 +605,19 @@ class DAQ(abc.ABC):
         self.send_status()
 
     def stop(self, cmd=None):
-        print("here:01")
+        # print("here:01")
 
         self.status2.set_run_status(Status.STOPPING)
         # for t in self.task_list:
         #     t.cancel()
 
-        print("here:01")
+        # print("here:01")
         self.status["run_status"] = "STOPPED"
-        print("here:02")
+        # print("here:02")
         self.status2.set_run_status(Status.STOPPED)
-        print("here:03")
+        # print("here:03")
         self.send_status()
-        print("here:04")
+        # print("here:04")
 
     async def ping_ui_server(self):
 

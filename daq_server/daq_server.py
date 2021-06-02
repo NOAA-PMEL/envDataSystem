@@ -544,7 +544,7 @@ class DAQServer:
                     self.autoenable = self.config["autoenable_daq"]
                 except KeyError:
                     pass
-            print(f"self.config***: {self.config}")
+            # print(f"self.config***: {self.config}")
         except FileNotFoundError as e:
             print(e)
             pass

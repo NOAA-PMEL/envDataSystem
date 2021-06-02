@@ -252,7 +252,8 @@ class DummyIFDevice(IFDevice):
         super().start(cmd)
         print('Starting IFDevice')
         # start dummy data loop
-        self.data_loop_task = asyncio.create_task(self.data_loop())
+        if not self.data_loop_task:
+            self.data_loop_task = asyncio.create_task(self.data_loop())
         # self.data_loop_task_list.append(task)
 
     def stop(self, cmd=None):
@@ -260,6 +261,7 @@ class DummyIFDevice(IFDevice):
 
         if self.data_loop_task:
             self.data_loop_task.cancel()
+            self.data_loop_task = None
         super().stop(cmd)
 
     def enable(self):

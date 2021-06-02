@@ -7,7 +7,7 @@ from bokeh.application.handlers.function import FunctionHandler
 class PlotServer():
     def __init__(self, server_id, app_list=[]):
 
-        print(f'plotserver.init')
+        # print(f'plotserver.init')
         self.id = server_id
         self.address = self.id[0]
         self.port = self.id[1]

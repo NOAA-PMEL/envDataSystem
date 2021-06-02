@@ -818,7 +818,9 @@ class TimeSeries1D(PlotApp):
                 [traces],
                 [fig],
             ],
-            sizing_mode="stretch_width"
+            sizing_mode="scale_width"
+            # width_policy="fit"
+            # sizing_mode="stretch_width"
         )
         doc.add_root(doc_layout)
         # doc.add_root(fig)
@@ -1458,7 +1460,9 @@ class SizeDistribution(PlotApp):
                 [traces],
                 [fig],
             ],
-            sizing_mode="stretch_width"
+            sizing_mode="scale_width"
+            # width_policy="fit"
+            # sizing_mode="stretch_width"
         )
         # time.sleep(0.5)
         doc.add_root(doc_layout)
