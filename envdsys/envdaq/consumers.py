@@ -617,6 +617,9 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
             self.ui_save_base_path = settings.DATA_MANAGER["ui_save_base_path"]
         if "ui_save_data" in settings.DATA_MANAGER:
             self.ui_save_data = settings.DATA_MANAGER["ui_save_data"]
+        
+        self.ui_save_path = self.ui_save_base_path
+
         # path_list = [
         #     # self.ui_save_base_path,
         #     # self.daqserver_namespace,

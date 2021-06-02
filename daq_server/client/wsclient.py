@@ -31,7 +31,8 @@ class WSClient(ClientConnection):
         self.connect_state = ClientConnection.CONNECTING
         try:
             print(f'WSClient.connect.uri: {self.uri}')
-            self.client = await websockets.client.connect(self.uri)
+            # self.client = await websockets.client.connect(self.uri)
+            self.client = await websockets.connect(self.uri)
             self.is_connected = True
             # print(f'WSClient.connect(): {self.client}')
             self.connect_state = ClientConnection.CONNECTED
@@ -46,7 +47,8 @@ class WSClient(ClientConnection):
         # print('WSClient.open')
         # timeout = 10
         try:
-            self.client = await websockets.client.connect(self.uri)
+            # self.client = await websockets.client.connect(self.uri)
+            self.client = await websockets.connect(self.uri)
             self.is_connected = True
         except ConnectionError:
             print("not connected")

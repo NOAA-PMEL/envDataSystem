@@ -192,6 +192,8 @@ CHANNEL_LAYERS = {
     },
 }
 
+DEFAULT_AUTO_FIELD='django.db.models.AutoField'
+
 # Plot Server settings..use this?
 # PLOT_SERVER = {
 #     'server_id': ('localhost', 5001),
