@@ -110,7 +110,12 @@ class CDP2(DMTInstrument):
         super().setup()
 
         # only has one interface
-        self.iface = next(iter(self.iface_map.values()))
+        self.iface = None
+        if self.iface_components["default"]:
+            if_id = self.iface_components["default"]
+            self.iface = self.iface_map[if_id]
+        else:
+            self.iface = next(iter(self.iface_map.values()))
 
         # default coms: RS-422
         #   57600 8-N-1
@@ -138,6 +143,18 @@ class CDP2(DMTInstrument):
         self.status['ready_to_run'] = True
         self.status2.set_run_status(Status.READY_TO_RUN)
         self.enable()
+
+    async def shutdown(self):
+        # print("MSEMS shutdown")
+        # print("msems stop")
+        self.stop()
+        print("msems disable")
+        self.disable()
+        # print("msems dereg")
+        await self.deregister_from_UI()
+        # print("msems super shutdown")
+        # TODO need to wait for deregister before closing loops and connection
+        await super().shutdown()
 
     def enable(self):
 
@@ -381,12 +398,13 @@ class CDP2(DMTInstrument):
     async def handle_control_action(self, control, value):
         if control and value:
             if control == 'start_stop':
-                if value == 'START':
-                    self.start()
-                elif value == 'STOP':
-                    self.stop()
+                await super(CDP2, self).handle_control_action(control, value)
+                # if value == 'START':
+                #     self.start()
+                # elif value == 'STOP':
+                #     self.stop()
 
-                self.set_control_att(control, 'action_state', 'OK')
+                # self.set_control_att(control, 'action_state', 'OK')
 
             # TODO: for when controls are added
             # else:

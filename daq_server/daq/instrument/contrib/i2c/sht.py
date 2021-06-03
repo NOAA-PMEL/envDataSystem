@@ -79,7 +79,13 @@ class SHT31(SHTInstrument):
         super().setup()
 
         # only has one interface
-        self.iface = next(iter(self.iface_map.values()))
+        # self.iface = next(iter(self.iface_map.values()))
+        self.iface = None
+        if self.iface_components["default"]:
+            if_id = self.iface_components["default"]
+            self.iface = self.iface_map[if_id]
+        else:
+            self.iface = next(iter(self.iface_map.values()))
 
         # default coms: serial
         #   9600 8-N-1
@@ -107,6 +113,18 @@ class SHT31(SHTInstrument):
         self.status['ready_to_run'] = True
         self.status2.set_run_status(Status.READY_TO_RUN)
         self.enable()
+
+    async def shutdown(self):
+        # print("MSEMS shutdown")
+        # print("msems stop")
+        self.stop()
+        print("msems disable")
+        self.disable()
+        # print("msems dereg")
+        await self.deregister_from_UI()
+        # print("msems super shutdown")
+        # TODO need to wait for deregister before closing loops and connection
+        await super().shutdown()
 
     def enable(self):
         super().enable()
@@ -257,14 +275,16 @@ class SHT31(SHTInstrument):
         #     await asyncio.sleep(0.01)
 
     async def handle_control_action(self, control, value):
-        if control and value:
-            if control == 'start_stop':
-                if value == 'START':
-                    self.start()
-                elif value == 'STOP':
-                    self.stop()
+        await super(SHT31, self).super(control, value)
 
-                self.set_control_att(control, 'action_state', 'OK')
+        # if control and value:
+        #     if control == 'start_stop':
+        #         if value == 'START':
+        #             self.start()
+        #         elif value == 'STOP':
+        #             self.stop()
+
+        #         self.set_control_att(control, 'action_state', 'OK')
 
     def parse(self, msg):
         # print(f'parse: {msg.to_json()}')
