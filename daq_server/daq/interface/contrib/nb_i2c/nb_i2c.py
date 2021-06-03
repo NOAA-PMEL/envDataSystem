@@ -23,13 +23,28 @@ class NB_I2C_Interface(Interface):
         self.name = 'NB_I2C_Interface'
         self.label = config['LABEL']
 
-        self.address = None
-        if 'I2C_ADDRESS' in config:
-            self.i2c_address = config['I2C_ADDRESS']
+        self.uri = config["URI"]
+        parts = self.uri.split(":")
+        if len(parts) > 1:
+            self.host = parts[0]
+            self.i2c_address = parts[1]
+        else:
+            self.host = "localhost"
+            self.i2c_address = parts[0]
 
-        self.host_interface_cfg = None
-        if 'HOST_IFACE' in config:
-            self.host_interface_cfg = config['HOST_IFACE']
+        # self.address = None
+        # if 'I2C_ADDRESS' in config:
+        #     self.i2c_address = config['I2C_ADDRESS']
+
+        try:
+            extra_config = config["extra"]
+            self.host_interface_cfg = extra_config['HOST_IFACE']
+        except KeyError:
+            self.host_interface_cfg = None
+
+        # self.host_interface_cfg = None
+        # if 'HOST_IFACE' in config:
+        #     self.host_interface_cfg = config['HOST_IFACE']
 
         self.host_ui_config = ui_config
 
