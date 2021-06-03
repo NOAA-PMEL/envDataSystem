@@ -15,11 +15,17 @@
 
 {% block data %}
     <div id="inst-data-table-div" class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
+        <div class="w3-bar w3-center">
+            <h6>Data</h6>
+        </div>
     </div>
 {% endblock %}
 
 {% block controls %}
     <div id="inst-controls-table-div" class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
+        <div class="w3-bar w3-center">
+            <h6>Controls &amp Settings</h6>
+        </div>
     </div>
 {% endblock %}
 
@@ -214,20 +220,32 @@
             // var tablediv = document.getElementById('meas-table')[0];
             var tablediv = document.getElementById('inst-data-table-div');
 
-            var ts = document.createElement('p')
+            var ts_box = document.createElement("div")
+            ts_box.setAttribute("class", "w3-container") 
+
+            var ts = document.createElement('text')
             ts.setAttribute("id", "time-stamp")
-            ts.style.fontWeight = "bold"
-            tablediv.appendChild(ts)
+            //ts.style.fontWeight = "bold"
+
+            var ts_text = document.createElement("label")
+            ts_text.setAttribute("for", "ts")
+            ts_text.appendChild(document.createTextNode("Timestamp: "))
+            //ts_text.style.fontWeight = "bold"
+
+            ts_box.appendChild(ts_text)
+            ts_box.appendChild(ts)
+            tablediv.appendChild(ts_box)
 
             var table = document.createElement('table');
             //table.setAttribute('id', 'data-table');
             table.setAttribute('id', 'meas-inst-data-table');
             //table.setAttribute('class', 'w3-table w3-striped w3-bordered')
-            table.setAttribute('class', 'w3-table w3-striped w3-bordered')
+            //table.setAttribute('class', 'w3-table w3-striped w3-bordered w3-small')
+            table.setAttribute('class', 'w3-table-all')
             //table.setAttribute('style', 'border-collapse: collapse; border-radius: 10px; overflow: hidden')
 
-            var caption = table.createCaption()
-            caption.innerHTML = "<em>Data</em>"
+            //var caption = table.createCaption()
+            //caption.innerHTML = "<em>Data</em>"
 
             var header = table.createTHead();
             var row = header.insertRow(0);
@@ -343,8 +361,9 @@
                         if (group_box == null) {
                             //console.log('controls-group-box-'+group_id)
                             group_box = document.createElement('div')
+                            //group_box.setAttribute("id", )
                             group_button = document.createElement('a')
-                            //group_button.setAttribute('id', 'controls-group-box-'+group_id)
+                            group_button.setAttribute('id', 'controls-group-box-'+group_id)
                             group_button.setAttribute('class', 'w3-block w3-button')
                             var fn_arg = 'controls-group-box-'+group_id+'-contents'
                             group_button.setAttribute('onclick', "doAccordion('controls-group-box-"+group_id+"-contents')" )
@@ -373,15 +392,16 @@
                             table_id = 'controls-group-table-'+group_id
                             table.setAttribute('id', table_id)
                             //table.setAttribute('style', 'border-collapse: collapse;')
-                            table.setAttribute('class', 'w3-table w3-striped w3-bordered')
+                            table.setAttribute('class', 'w3-table w3-bordered w3-border')
+                            // table.setAttribute('class', 'w3-table-all')
 
-                            var caption = table.createCaption()
-                            caption.innerHTML = "<em>Settings</em>"
+                            //var caption = table.createCaption()
+                            //caption.innerHTML = "<em>Settings</em>"
                         
 
                             var header = table.createTHead();
                             var row = header.insertRow(0);
-                            row.setAttribute('style', 'border: 1px solid black')
+                            //row.setAttribute('style', 'border: 1px solid black')
                             var cell = row.insertCell(0);
                             cell.setAttribute("class", "w3-center")
                             //cell.setAttribute('id', table_id+'-namecol');
@@ -444,21 +464,23 @@
                         row = table.insertRow(-1);
                         cell = row.insertCell(0);
                         cell.setAttribute('id', (meas_id+'-name'));
-                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center')
+                        //cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center')
                         cell.innerHTML = name
                         cell = row.insertCell(1);
                         cell.setAttribute('id', (meas_id+'-value'));
-                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
+                        //cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
                         cell.innerHTML = '';         
                         cell = row.insertCell(2);           
                         cell.setAttribute('id', (meas_id+'-input'));
-                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
+                        //cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
                         cell.innerHTML = '<input id='+meas_id+'-setting-input type=number min='+rng_min+' max='+rng_max+' step=any>'                                
                         cell = row.insertCell(3);           
                         cell.setAttribute('id', (meas_id+'-setting-set'));
-                        cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
+                        //cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
                         cell.innerHTML = 
-                            '<input id='+meas_id+'-setting-button type=button value="apply" onclick="apply_setting(this)">'                  
+                            //'<input id='+meas_id+'-setting-button class="w3-button" type=button value="apply" onclick="apply_setting(this)">'                  
+                            '<button id='+meas_id+'-setting-button class="w3-button w3-round w3-border" value="apply" onclick=apply_setting(this)>apply</button>'
+
                     }
                 }
             }
