@@ -974,6 +974,7 @@ class Interface(models.Model):
         config["IFCONFIG"] = {
             "LABEL": self.name,
             "URI": self.uri,
+            "extra": self.config,
             # "SERIAL_NUMBER": self.serial_number,
             # "PROPERTY_NUMBER": "NEED_TO_IMPLEMENT"
         }
