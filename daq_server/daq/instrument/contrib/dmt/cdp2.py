@@ -396,7 +396,7 @@ class CDP2(DMTInstrument):
         #     await asyncio.sleep(0.01)
 
     async def handle_control_action(self, control, value):
-        if control and value:
+        if control and value is not None:
             if control == 'start_stop':
                 await super(CDP2, self).handle_control_action(control, value)
                 # if value == 'START':

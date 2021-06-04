@@ -347,7 +347,7 @@ class POPS(HandixInstrument):
         #     await asyncio.sleep(0.01)
 
     async def handle_control_action(self, control, value):
-        if control and value:
+        if control and value is not None:
             if control == 'start_stop':
                 if value == 'START':
                     self.start()

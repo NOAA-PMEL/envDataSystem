@@ -1267,7 +1267,7 @@ class UASCloudyPayload(Controller):
 
     async def handle_control_action(self, control, value):
         pass
-        if control and value:
+        if control and value is not None:
             if control == 'start_stop':
                 if value == 'START':
                     self.start()

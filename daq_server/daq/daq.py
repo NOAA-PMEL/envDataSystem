@@ -341,7 +341,7 @@ class DAQ(abc.ABC):
         # self.controls = controls
 
     async def set_control(self, control, value):
-        if control and value:
+        if control and value is not None:
             await self.handle_control_action(control, value)
             if await self.control_action_success(control):
                 self.set_control_att(control, "value", value)
@@ -356,7 +356,7 @@ class DAQ(abc.ABC):
     # @abc.abstractmethod
     async def handle_control_action(self, control, value):
         # default control actions
-        if control and value:
+        if control and value is not None:
             if control == "start_stop":
                 if value == "START":
                     self.start()
