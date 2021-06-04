@@ -1,14 +1,63 @@
-{% extends 'envdaq/base.html' %}
+{% extends 'envdaq/envdaq_base.html' %}
 
-{% block header %}
+{% block title%}envDataSystem Controller{% endblock title%}
+
+{% block navpath%}
+    <div id="controller-navpath">
+    </div>
+    {% comment %} Home / DAQ Server / {{daq_namespace}} {% endcomment %}
+{% endblock navpath %}
+
+{% comment %} {% block header %}
     <h1>envDSys : Controller : {{ controller_label|cut:'"' }}</h1>
+{% endblock %} {% endcomment %}
+
+{% block data %}
+    <div id="cont-data-table-div" class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
+        <div class="w3-bar w3-center">
+            <h6>Data</h6>
+        </div>
+    </div>
+{% endblock %}
+
+{% block controls %}
+    <div id="cont-controls-table-div" class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
+        <div class="w3-bar w3-center">
+            <h6>Controls &amp Settings</h6>
+        </div>
+    </div>
 {% endblock %}
 
 {% block status %}
+    <div class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
+    {% comment %} <textarea readonly class="status-box" id="status-window" cols="60" rows="5"></textarea><br/> {% endcomment %}
+    <p><em>Status</em></p>
+    <textarea readonly class="w3-round" id="status-window" style="width:100%" rows="5"></textarea><br/>
+    <button id="refresh-status-button" class="w3-button w3-round w3-border" value="Refresh" onclick=request_status()>Refresh</button>
+    </div>
+{% endblock %}
+
+{% block plots %}
+    {% for app in plot_scripts %}
+    {% comment %} {{ plot_scripts }} {% endcomment %}
+        <div class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
+            {% comment %} {{ plot_script | safe }} {% endcomment %}
+            {{ app | safe }}
+            {% comment %} <div class="iframe-container">
+                <div id=plot_container>    
+                    
+                </div>
+            </div> {% endcomment %}
+        </div>
+    {% endfor %}
+{% endblock %}
+
+{% block extracontent %}
+
+
+{% comment %} {% block status %}
     <div class="card">
         <textarea readonly class="status-box" id="status-window" cols="60" rows="5"></textarea><br/>
-        {% comment %} <textarea id="status-window" width="100%" rows="5"></textarea><br/> {% endcomment %}
-        {% comment %} <div id="status-window" class="status-box"></div> {% endcomment %}
         <button id="refresh-status-button" class="opsbutton" value="Refresh" onclick=reqest_status()>Refresh</button>
     </div>
 {% endblock %}
@@ -18,7 +67,6 @@
         <b><p id="time-stamp"></p></b><br/>
         <div id="meas-table">
 
-            {% comment %} <script>build_data_table()</script> {% endcomment %}
         </div>
     </div>
 {% endblock %}
@@ -44,7 +92,7 @@
 {% endblock %}
 
 
-{% block content %}
+{% block content %} {% endcomment %}
 
 <style>
     #data-table #control-table{
@@ -64,7 +112,11 @@
 </style>                                                                                                                                                                     
 
 <script>
-   
+
+    var daq_host = "{{ daq_host }}"
+    var parent_namespace = "{{ parent_namespace }}"
+    var controller_namespace = "{{ controller_namespace }}"
+
     window.onload=init;
 
     var wait_for_setup = true;
@@ -76,44 +128,84 @@
     function init() {
         
         //setup_accordions()
+        build_path()
         console.log('building table')
         build_data_table()
         console.log('table built')
-        // build_controls_table()
+        build_controls_table()
         //reqest_status()
         wait_for_setup = false
         console.log(wait_for_setup)
         //reqest_status()
     }
 
+    function build_path() {
+        console.log(window.location.host)
+        var home = "http://"+window.location.host+"/"
+        home = "/"
+        var daq = home + "envdaq/"
+        var server = daq + "daqserver/" + daq_host + "/" + parent_namespace +"/"
+
+        var path = '<a href='+home+' style="text-decoration: none">Home</a> / '
+        path += '<a href='+daq+' style="text-decoration: none">DAQ</a> / '
+        path += 'DAQInstrument / ' + daq_host + " / " + parent_namespace + "/" + controller_namespace
+        //path += '<a href='+server+' style="text-decoration: none">'+daq_namespace+'</a>'
+        var navpath = document.getElementById("controller-navpath")
+        navpath.innerHTML = path
+        //navpath.appendChild(text)
+        //console.log(navpath)
+    };
+
     function build_data_table() {
         // var tablediv = document.getElementById('meas-table')[0];
-        var tablediv = document.getElementById('meas-table');
+        // var tablediv = document.getElementById('meas-table');
+        var tablediv = document.getElementById('cont-data-table-div');
+
+        var ts_box = document.createElement("div")
+        ts_box.setAttribute("class", "w3-container") 
+
+        var ts = document.createElement('text')
+        ts.setAttribute("id", "time-stamp")
+        //ts.style.fontWeight = "bold"
+
+        var ts_text = document.createElement("label")
+        ts_text.setAttribute("for", "ts")
+        ts_text.appendChild(document.createTextNode("Timestamp: "))
+        //ts_text.style.fontWeight = "bold"
+
+        ts_box.appendChild(ts_text)
+        ts_box.appendChild(ts)
+        tablediv.appendChild(ts_box)
+
         
         var table = document.createElement('table');
         table.setAttribute('id', 'data-table');
-        table.setAttribute('class', 'daq-table')
+        table.setAttribute('class', 'w3-table-all')
+        // table.setAttribute('class', 'daq-table')
         //table.setAttribute('style', 'border-collapse: collapse; border-radius: 10px; overflow: hidden')
 
-        var caption = table.createCaption()
-        caption.innerHTML = "<em>Data</em>"
+        // var caption = table.createCaption()
+        // caption.innerHTML = "<em>Data</em>"
 
         var header = table.createTHead();
         var row = header.insertRow(0);
-        row.setAttribute('style', 'border: 1px solid black')
+        // row.setAttribute('style', 'border: 1px solid black')
         var cell = row.insertCell(0);
-        cell.setAttribute('id', 'data-table-namecol');
-        cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
+        cell.setAttribute("class", "w3-center")
+        //cell.setAttribute('id', 'data-table-namecol');
+        //cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
         cell.innerHTML = "<b>Name</b>";
         cell = row.insertCell(1);
-        cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
+        cell.setAttribute("class", "w3-center")
+        //cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
         cell.innerHTML = "<b>Value</b>";
-        cell.setAttribute('id', 'data-table-valuecol');
+        //cell.setAttribute('id', 'data-table-valuecol');
         cell.innerHTML = "Value"
         cell = row.insertCell(2);
-        cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
+        cell.setAttribute("class", "w3-center")
+        //cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
         cell.innerHTML = "<b>Units</b>";
-        cell.setAttribute('id', 'data-table-unitcol');
+        //cell.setAttribute('id', 'data-table-unitcol');
 
         // console.log(measurements)
         for (var component_type in measurements) {
@@ -141,15 +233,18 @@
                                 row = table.insertRow(-1);
                                 cell = row.insertCell(0);
                                 cell.setAttribute('id', (cell_name+'-name'));
-                                cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center')
+                                cell.setAttribute("class", "w3-center")
+                                //cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center')
                                 cell.innerHTML = name
                                 cell = row.insertCell(1);
+                                cell.setAttribute("class", "w3-center")
                                 cell.setAttribute('id', (cell_name+'-value'));
-                                cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
+                                //cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
                                 cell.innerHTML = '';         
-                                cell = row.insertCell(2);           
+                                cell = row.insertCell(2);
+                                cell.setAttribute("class", "w3-center")           
                                 cell.setAttribute('id', (cell_name+'-units'));
-                                cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
+                                //cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
                                 cell.innerHTML = meas['units']                    
                             }
                         }
@@ -167,14 +262,39 @@
         tablediv.appendChild(table);
     }
 
+    function build_controls_table() {
+        // var measurements = JSON.parse('{{ instrument_measurements | escapejs }}')
+        // var tablediv = document.getElementById('meas-table')[0];
+        // var tablediv = document.getElementById('controls-table');
+        var tablediv = document.getElementById('cont-controls-table-div');
+        
+        var ops_container = document.createElement("div")
+        ops_container.setAttribute("class", "w3-container w3-border w3-padding")
+        var ops_button = document.createElement("button")
+        ops_button.setAttribute("id", "start-stop-button")
+        ops_button.setAttribute("class", "w3-button w3-round w3-border w3-cell")
+        //ops_button.setAttribute("value", "Start")
+        ops_button.setAttribute("onclick", "opsButtonRequest()")
+        ops_button.value = "Start"
+        ops_button.innerText = "Start"
+        //ops_container.appendChild(ops_button)
+
+        var button_text = document.createElement("label")
+        //button_text.setAttribute("class", "w3-padding")
+        button_text.setAttribute("for", "ops_button")
+        button_text.appendChild(document.createTextNode("Controller Control: "))
+        //button_text.innerText = "Instrument Control: "
+        ops_container.appendChild(button_text)
+        ops_container.appendChild(ops_button)
+
+        tablediv.appendChild(ops_container)
+    }
+    
     // websocket communication
 
     var controller_name = {{ controller_name }}
 
     //var daq_namespace = {{ daq_namespace }}
-    var daq_host = "{{ daq_host }}"
-    var parent_namespace = "{{ parent_namespace }}"
-    var controller_namespace = "{{ controller_namespace }}"
 
   // console.log(controller_name)
     var websocket = new WebSocket(
@@ -262,7 +382,7 @@
         runstate = status.run_status
         opsButtonSet(runstate)
         document.getElementById("status-window").value = JSON.stringify(status)
-        document.getElementById("status-window").innerHTML = JSON.stringify(status)
+        //document.getElementById("status-window").innerHTML = JSON.stringify(status)
     };
 
     function opsButtonRequest(obj) {
@@ -289,15 +409,16 @@
     function opsButtonSet(runstate) {
         button = document.getElementById('start-stop-button')
 
-        var class_val = 'opsbutton started'
+        //var class_val = 'opsbutton started'
         var value = "Stop"
 
         if (runstate == "STOPPED" || runstate == "READY_TO_RUN") {
-            class_val = 'opsbutton stopped'
+            //class_val = 'opsbutton stopped'
             value = "Start"
         }
         button.value = value
-        button.className = class_val
+        button.innerText = value
+        //button.className = class_val
     }
 
 </script>
