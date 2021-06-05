@@ -10,14 +10,14 @@ from daq.interface.interface import Interface
 # import numpy as np
 
 
-class SHTInstrument(Instrument):
+class ISTInstrument(Instrument):
 
     INSTANTIABLE = False
 
     def __init__(self, config, **kwargs):
-        super(SHTInstrument, self).__init__(config, **kwargs)
+        super(ISTInstrument, self).__init__(config, **kwargs)
 
-        self.mfg = 'SHT'
+        self.mfg = 'IST'
 
     def setup(self):
         super().setup()
@@ -25,17 +25,16 @@ class SHTInstrument(Instrument):
         # TODO: add properties get/set to interface for
         #       things like readmethod
 
-
-class SHT31(SHTInstrument):
+class HYT271(ISTInstrument):
 
     INSTANTIABLE = True
 
     def __init__(self, config, **kwargs):
-        super(SHT31, self).__init__(config, **kwargs)
+        super(HYT271, self).__init__(config, **kwargs)
 
-        self.name = 'SHT31'
+        self.name = 'HYT271'
         self.type = 'TandRH'
-        self.model = '31'
+        self.model = '271'
         self.tag_list = [
             'temperature',
             'relative_humidity',
@@ -171,10 +170,10 @@ class SHT31(SHTInstrument):
 
                 # send read command
                 cmd_args = {
-                    'command': 'write_buffer',
-                    'address': '44',
-                    'write_length': '02',
-                    'data': '2C06'
+                    'command': 'write_byte',
+                    'address': '28',
+                    # 'write_length': '02',
+                    'data': '00'
                 }
 
                 msg = Message(
@@ -191,8 +190,8 @@ class SHT31(SHTInstrument):
                 # send read command
                 cmd_args = {
                     'command': 'read_buffer',
-                    'address': '44',
-                    'read_length': '06'
+                    'address': '28',
+                    'read_length': '04'
                 }
 
                 msg = Message(
@@ -274,7 +273,7 @@ class SHT31(SHTInstrument):
         #     await asyncio.sleep(0.01)
 
     async def handle_control_action(self, control, value):
-        await super(SHT31, self).super(control, value)
+        await super(HYT271, self).super(control, value)
 
         # if control and value:
         #     if control == 'start_stop':
@@ -306,9 +305,9 @@ class SHT31(SHTInstrument):
                     data = msg.body['DATA']['data']
 
                     if data:
-                        temp = data[0] * 256 + data[1]
-                        cTemp = -45 + (175 * temp / 65535.0)
-                        rh = 100 * (data[3] * 256 + data[4]) / 65535.0
+                        rh = ((((data[0] & 0x3F) * 256) + data[1]) * 100.0) / 16383.0
+                        temp = ((data[2] * 256) + (data[3] & 0xFC)) / 4
+                        cTemp = (temp / 16384.0) * 165.0 - 40.0
                         # print(f'{round(cTemp, 2)}, {round(rh, 2)}')
                         self.update_data_record(
                             dt,
@@ -336,15 +335,15 @@ class SHT31(SHTInstrument):
         # def_json = json.dumps(DummyInstrument.get_definition())
         # print(f'def_json: {def_json}')
         # return json.loads(def_json)
-        return SHT31.get_definition()
+        return HYT271.get_definition()
 
     def get_definition():
         # TODO: come up with static definition method
         definition = dict()
-        definition['module'] = SHT31.__module__
-        definition['name'] = SHT31.__name__
-        definition['mfg'] = 'SHT'
-        definition['model'] = '31'
+        definition['module'] = HYT271.__module__
+        definition['name'] = HYT271.__name__
+        definition['mfg'] = 'IST'
+        definition['model'] = '271'
         definition['type'] = 'TandRH'
         definition['tags'] = [
             'temperature',

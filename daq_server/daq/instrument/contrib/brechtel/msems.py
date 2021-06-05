@@ -110,15 +110,9 @@ class MSEMS(BrechtelInstrument):
         print("done")
 
     async def shutdown(self):
-        print("MSEMS shutdown")
-        print("msems stop")
         self.stop()
-        print("msems disable")
         self.disable()
-        print("msems dereg")
         await self.deregister_from_UI()
-        print("msems super shutdown")
-        # TODO need to wait for deregister before closing loops and connection
         await super().shutdown()
 
     def enable(self):
