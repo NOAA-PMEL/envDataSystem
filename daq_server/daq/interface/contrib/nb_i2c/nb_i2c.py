@@ -219,6 +219,8 @@ class NB_I2C_IFDevice(IFDevice):
         )
 
     # def disable(self):
+    def get_id(self):
+        return self.__class__.__name__ + '_' + self.label
         
     def add_interface(self):
         print('Add host interface')
