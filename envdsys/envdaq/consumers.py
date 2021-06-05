@@ -1883,6 +1883,27 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
                     self.daqserver_group_name,
                     {"type": "daq_message", "message": message.to_dict()["message"]},
                 )
+        elif message["SUBJECT"] == "DAQServerSync":
+
+            body = message["BODY"]
+            if body["purpose"] == "REQUEST":
+                sync_body = {
+                    "purpose": "SYNCREQUEST",
+                    # "current_config": current_config,
+                    # "config_list": config_list,
+                    # "config": new_config,
+                }
+                message = Message(
+                    msgtype="UI",
+                    sender_id="DAQServerConsumer",
+                    subject="CONFIG",
+                    body=sync_body,
+                )
+                print(f"SYNCREQUEST: {message.to_dict()}")
+                await self.channel_layer.group_send(
+                    self.daqserver_group_name,
+                    {"type": "daq_message", "message": message.to_dict()["message"]},
+                )
 
         elif message["SUBJECT"] == "DAQServerConfig":
 

@@ -213,6 +213,20 @@
         //cell.innerHTML = "apply"
         row.appendChild(cell)
 
+        var cell = document.createElement('td')
+        cell.setAttribute('id', 'daqserver-sync-control')
+        //cell.setAttribute('class', 'w3-container')
+        buttons = document.createElement('div')
+        buttons.setAttribute("class", "w3-container w3-cell w3-right")
+        //buttons.setAttribute("class", "w3-bar")
+        var sync_button = document.createElement("button")
+        sync_button.setAttribute("id", "daqserver-sync-button")
+        sync_button.setAttribute("class", "w3-button w3-round w3-border")
+        sync_button.setAttribute("onclick", "request_sync_server()")
+        sync_button.innerHTML = "sync definitions"
+        buttons.appendChild(sync_button)
+        cell.appendChild(buttons)
+        row.appendChild(cell)
 
         mgr.appendChild(mgr_table)
 
@@ -340,6 +354,19 @@
 
         window.location.replace(daq)
     };
+
+    function request_sync_server() {
+        var message = {}
+        message['SUBJECT'] = 'DAQServerSync'
+        message['BODY'] = {
+            'purpose': 'REQUEST',
+        }
+        console.log(JSON.stringify(message))
+        websocket.send(
+            JSON.stringify({'message': message})
+        )
+
+    }
 
     function toggle_enable_server() {
         // TODO send message to server to enable

@@ -786,9 +786,9 @@ class DAQServer:
                             self.enable()
 
                     elif content["BODY"]["purpose"] == "SYNCREQUEST":
-                        # print("sync DAQ")
-                        # system_def = SysManager.get_definitions_all()
-                        # print(f'system_def: {system_def}')
+                        print("sync DAQ")
+                        system_def = SysManager.get_definitions_all()
+                        print(f'system_def: {system_def}')
                         sys_def = Message(
                             sender_id="daqserver",
                             msgtype="DAQServer",

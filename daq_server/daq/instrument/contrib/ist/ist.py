@@ -34,7 +34,7 @@ class HYT271(ISTInstrument):
 
         self.name = 'HYT271'
         self.type = 'TandRH'
-        self.model = '271'
+        self.model = 'HYT271'
         self.tag_list = [
             'temperature',
             'relative_humidity',
@@ -343,7 +343,7 @@ class HYT271(ISTInstrument):
         definition['module'] = HYT271.__module__
         definition['name'] = HYT271.__name__
         definition['mfg'] = 'IST'
-        definition['model'] = '271'
+        definition['model'] = 'HYT271'
         definition['type'] = 'TandRH'
         definition['tags'] = [
             'temperature',
