@@ -7,12 +7,12 @@ import asyncio
 class SyncManager():
 
     @staticmethod
-    async def sync_data(config):
-        await SyncManager.sync_data_nowait(config)
+    async def sync_data(config, force=True):
+        await SyncManager.sync_data_nowait(config, force)
 
     @staticmethod
     @database_sync_to_async
-    def sync_data_nowait(config):
+    def sync_data_nowait(config, force=True):
 
         if 'SYSTEM_DEFINITIONS' in config:
 
@@ -24,6 +24,8 @@ class SyncManager():
                     for name, cont_def in sys_def['CONTROLLER_SYS_DEFS'].items():
                         try:
                             controller = ControllerDef.objects.get(name=name)
+                            if force:
+                                controller.update(cont_def)
                             # if force update, update current
                         except ControllerDef.DoesNotExist:
                             # print(f'**** new controller: {name}')
@@ -34,6 +36,8 @@ class SyncManager():
                         try:
                             # print(f'3333333333inst_def: {name}')
                             instrument = InstrumentDef.objects.get(name=name)
+                            if force:
+                                instrument.update(inst_def)
                             # if force update, update current
                         except InstrumentDef.DoesNotExist:
                             # print(f'22222222222new inst def')

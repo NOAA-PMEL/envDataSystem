@@ -68,6 +68,13 @@ class MAGIC210(ADInstrument):
         # Parity: none
         # Flow Control: none
 
+        self.iface = None
+        if self.iface_components["default"]:
+            if_id = self.iface_components["default"]
+            self.iface = self.iface_map[if_id]
+        else:
+            self.iface = next(iter(self.iface_map.values()))
+
         self.is_polled = False
         # self.poll_rate = 2  # every second
         self.parse_map = dict()
@@ -115,10 +122,11 @@ class MAGIC210(ADInstrument):
 
     async def start_logging(self):
 
-        if self.iface_components["default"]:
-            if_id = self.iface_components["default"]
-            self.current_read_cnt = 0
-            await asyncio.sleep(0.1)
+        if self.iface:
+        # if self.iface_components["default"]:
+        #     if_id = self.iface_components["default"]
+        #     self.current_read_cnt = 0
+        #     await asyncio.sleep(0.1)
 
             # Start logging
             cmd = "Log,1\n"
@@ -130,7 +138,8 @@ class MAGIC210(ADInstrument):
             )
             # print(f'msg: {msg}')
             # await self.iface.message_from_parent(msg)
-            await self.iface_map[if_id].message_from_parent(msg)
+            # await self.iface_map[if_id].message_from_parent(msg)
+            await self.iface.message_from_parent(msg)
 
 
         # TODO: Send start command:
@@ -138,10 +147,11 @@ class MAGIC210(ADInstrument):
 
     async def stop_logging(self):
 
-        if self.iface_components["default"]:
-            if_id = self.iface_components["default"]
-            self.current_read_cnt = 0
-            await asyncio.sleep(0.1)
+        if self.iface:
+        # if self.iface_components["default"]:
+        #     if_id = self.iface_components["default"]
+        #     self.current_read_cnt = 0
+        #     await asyncio.sleep(0.1)
 
             # Start logging
             cmd = "Log,0\n"
@@ -153,7 +163,8 @@ class MAGIC210(ADInstrument):
             )
             # print(f'msg: {msg}')
             # await self.iface.message_from_parent(msg)
-            await self.iface_map[if_id].message_from_parent(msg)
+            # await self.iface_map[if_id].message_from_parent(msg)
+            await self.iface.message_from_parent(msg)
 
 
 
@@ -201,9 +212,11 @@ class MAGIC210(ADInstrument):
             line = msg.body["DATA"].strip()
 
             params = line.split(",")
+            if len(params) < 23:
+                return None
 
             labels = [
-                # "magic_datetime",
+                "magic_datetime",
                 "concentration",  # 1
                 "dew_pt_inlet",
                 "temperature_inlet",
@@ -238,7 +251,7 @@ class MAGIC210(ADInstrument):
                 magic_dt = dt_to_string(tmp_dt)
             except ValueError:
                 magic_dt = ""
-            self.update_data_record(dt, {"magic_dt": magic_dt})
+            self.update_data_record(dt, {"magic_datetime": magic_dt})
 
             for i in range(1, 16):
                 val = float(params[i])
@@ -652,7 +665,7 @@ class MAGIC210(ADInstrument):
             # 'parse_label': 'scan_max_volts',
             'control': None,
         }
-        
+
         info_meas["serial_number"] = {
             "dimensions": {
                 "axes": ["TIME"],
