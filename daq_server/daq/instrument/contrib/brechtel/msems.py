@@ -622,12 +622,14 @@ class MSEMS(BrechtelInstrument):
             if parts[0] == "scan_state":
                 self.scan_state = parts[1]
                 print(f"scan state: {self.scan_state}")
-                if self.scan_state == "4":
+                if self.scan_state == "1":
+                    self.scan_time = dt
+                elif self.scan_state == "4":
                     # print(f"reading scan data")
                     self.reading_scan = True
                     self.scan_ready = False
                     self.current_bin_counts.clear()
-                    self.scan_time = dt
+                    # self.scan_time = dt
 
                 else:
                     if self.reading_scan:
