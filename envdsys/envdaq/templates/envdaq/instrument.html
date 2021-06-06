@@ -266,9 +266,44 @@
             //cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
             cell.innerHTML = "<b>Units</b>";
             //cell.setAttribute('id', 'data-table-unitcol');
-
+            // do primary first
             for (var meastype in measurements) {
-                if (meastype != "controls") {
+                if (meastype == "primary") {
+                    //console.log(measurements[meastype])
+                    mtype = measurements[meastype]
+                    for (var meas in mtype) {
+                        dims = mtype[meas]['dimensions']['axes']
+                        if (mtype[meas]['dimensions']['axes'].length > 1) {
+                            continue
+                        }
+                        var name = meas
+                        if (meas_prefix) {
+                            name = meas_prefix + "_" + meas
+                        }
+                        meas_id = meas.replace(/_/g, "-")
+                        row = table.insertRow(-1);
+                        cell = row.insertCell(0);
+                        cell.setAttribute('id', (meas_id+'-name'));
+                        cell.setAttribute("class", "w3-center")
+                        //cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center')
+                        cell.innerHTML = name
+                        cell = row.insertCell(1);
+                        cell.setAttribute("class", "w3-center")
+                        cell.setAttribute('id', (meas_id+'-value'));
+                        //cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
+                        cell.innerHTML = '';         
+                        cell = row.insertCell(2);           
+                        cell.setAttribute('id', (meas_id+'-units'));
+                        cell.setAttribute("class", "w3-center")
+                        //cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
+                        cell.innerHTML = mtype[meas]['units']                    
+                    }
+                }
+            }
+
+            // do rest of meas skipping controler, primary and raw
+            for (var meastype in measurements) {
+                if (meastype != "controls" && meastype != "primary") {
                     //console.log(measurements[meastype])
                     mtype = measurements[meastype]
                     for (var meas in mtype) {
