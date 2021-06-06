@@ -1,5 +1,6 @@
 from django.http.response import Http404
 from django.shortcuts import get_object_or_404, render
+from matplotlib.pyplot import plot
 
 from envtags.models import Configuration
 from .models import DAQController, DAQInstrument, InstrumentAlias, Controller
@@ -103,6 +104,7 @@ def daq_controller(request, daq_host, parent_namespace, controller_namespace):
             and parent_sig["namespace"] == parent_namespace
         ):
             daq_controller = controller
+            controller_ns = ns
             break        
     
     if not daq_controller:
@@ -110,18 +112,26 @@ def daq_controller(request, daq_host, parent_namespace, controller_namespace):
 
     measurements = daq_controller.measurement_sets
 
-    host = 'localhost'
-    port = 5001
-    if 'server_id' in settings.PLOT_SERVER:
-        host = settings.PLOT_SERVER['server_id'][0]
-        port = settings.PLOT_SERVER['server_id'][1]
+    # server_sig = controller_ns.get_namespace_comp_sig()
+    plotserver_sig = PlotManager.get_server(server_id=ns).get_sig()
+    plotserver_host = plotserver_sig["host"]
+    plotserver_port = plotserver_sig["port"]
+    print(f"plotserver_sig: {plotserver_sig}")
 
-    if 'hostname' in settings.PLOT_SERVER:
-        host = settings.PLOT_SERVER['hostname']
+    # host = 'localhost'
+    # port = 5001
+    # if 'server_id' in settings.PLOT_SERVER:
+    #     host = settings.PLOT_SERVER['server_id'][0]
+    #     port = settings.PLOT_SERVER['server_id'][1]
+
+    # if 'hostname' in settings.PLOT_SERVER:
+    #     host = settings.PLOT_SERVER['hostname']
 
     plots = dict()
-    plots["host"] = host
-    plots["port"] = port
+    # plots["host"] = host
+    # plots["port"] = port
+    plots["host"] = plotserver_host
+    plots["port"] = plotserver_port
     plots["name"] = "/controller_"+daq_controller.name
 
     # print(f'{PlotManager.get_app_list(ctr.alias_name)}')
@@ -129,7 +139,8 @@ def daq_controller(request, daq_host, parent_namespace, controller_namespace):
     plot_scripts = []
     for app in plots['app_list']:
         plot_scripts.append(
-            server_document(f"http://{host}:{port}"+app)
+            # server_document(f"http://{host}:{port}"+app)
+            server_document(f"http://{plotserver_host}:{plotserver_port}"+app)
         )
     # plot_script = server_document("http://localhost:5001"+plots["name"])
     # print(f'plot_script: {plot_script}')
@@ -241,18 +252,26 @@ def daq_instrument(request, daq_host, parent_namespace, instrument_namespace):
 
     measurements = daq_instrument.measurement_sets
 
-    host = 'localhost'
-    port = 5001
-    if 'server_id' in settings.PLOT_SERVER:
-        host = settings.PLOT_SERVER['server_id'][0]
-        port = settings.PLOT_SERVER['server_id'][1]
+    # server_sig = controller_ns.get_namespace_comp_sig()
+    plotserver_sig = PlotManager.get_server(server_id=ns).get_sig()
+    plotserver_host = plotserver_sig["host"]
+    plotserver_port = plotserver_sig["port"]
+    print(f"plotserver_sig: {plotserver_sig}")
 
-    if 'hostname' in settings.PLOT_SERVER:
-        host = settings.PLOT_SERVER['hostname']
+    # host = 'localhost'
+    # port = 5001
+    # if 'server_id' in settings.PLOT_SERVER:
+    #     host = settings.PLOT_SERVER['server_id'][0]
+    #     port = settings.PLOT_SERVER['server_id'][1]
+
+    # if 'hostname' in settings.PLOT_SERVER:
+    #     host = settings.PLOT_SERVER['hostname']
 
     plots = dict()
-    plots["host"] = host
-    plots["port"] = port
+    # plots["host"] = host
+    # plots["port"] = port
+    plots["host"] = plotserver_host
+    plots["port"] = plotserver_port
     plots["name"] = "/instrument_"+daq_instrument.name
 
     
@@ -264,11 +283,13 @@ def daq_instrument(request, daq_host, parent_namespace, instrument_namespace):
     plot_scripts = []
     for app in plots['app_list']:
         plot_scripts.append(
-            server_document(f"http://{host}:{port}"+app)
+            # server_document(f"http://{host}:{port}"+app)
+            server_document(f"http://{plotserver_host}:{plotserver_port}"+app)
         )
     
     # TODO: get plot name dynamically
-    plot_script = server_document(f"http://{host}:{port}"+plots["name"])
+    # plot_script = server_document(f"http://{host}:{port}"+plots["name"])
+    plot_script = server_document(f"http://{plotserver_host}:{plotserver_port}"+plots["name"])
     print(f'plot_scripts: {plot_scripts}')
     context = {
         # 'daq_namespace': mark_safe(json.dumps(daq_namespace)),

@@ -504,6 +504,7 @@ class DAQServer:
             body={
                 "purpose": "STATUS",
                 "status": "READY",
+                "namespace": self.namespace.to_dict(),
                 # 'note': note,
             },
         )

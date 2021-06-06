@@ -196,7 +196,11 @@ class ControllerConsumer(AsyncWebsocketConsumer):
                 {"type": "daq_message", "message": message},
             )
             src_id = message["SENDER_ID"]
-            await PlotManager.update_data_by_source(src_id, data)
+
+            namespace = Namespace().from_dict(message["BODY"]["namespace"])
+            ns_sig = namespace.get_namespace_sig()
+
+            await PlotManager.update_data_by_source(src_id, data, server_id=namespace)
             if self.ui_save_data:
                 # TODO set path and open file here.
                 await DataManager.send_data(self.ui_save_path, data)
@@ -458,7 +462,7 @@ class ControllerConsumer(AsyncWebsocketConsumer):
                     # TODO: add field to force sync option
                     # send config data to syncmanager
                     await SyncManager.sync_controller_instance(body["data"])
-                    PlotManager.add_apps(body["data"])
+                    # PlotManager.add_apps(body["data"])
 
         elif message["SUBJECT"] == "RUNCONTROLS":
             # print(f'message: {message}')
@@ -708,8 +712,11 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
             )
             # print(f'123123123 data: {message}')
             src_id = message["SENDER_ID"]
+            namespace = Namespace().from_dict(message["BODY"]["namespace"])
+            ns_sig = namespace.get_namespace_sig()
+
             # print(f"*** update plot: {src_id}, {data}")
-            await PlotManager.update_data_by_source(src_id, data)
+            await PlotManager.update_data_by_source(src_id, data, server_id=namespace)
             if self.ui_save_data:
                 # print(f"save data")
                 await DataManager.send_data(self.ui_save_path, data)
@@ -1048,7 +1055,7 @@ class InstrumentConsumer(AsyncWebsocketConsumer):
                     # TODO: add field to force sync option
                     # send config data to syncmanager
                     await SyncManager.sync_instrument_instance(body["data"])
-                    PlotManager.add_apps(body["data"])
+                    # PlotManager.add_apps(body["data"])
         elif message["SUBJECT"] == "RUNCONTROLS":
             # print(f'message: {message}')
             body = message["BODY"]
@@ -1807,7 +1814,7 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
                 print(f"success: {reply}")
                 await self.daq_message({"message": reply})
 
-                PlotManager.remove_server()
+                PlotManager.remove_server(server_id=namespace)
                 # # update registrations on clients
                 # try:
                 #     regs = DAQRegistration.objects.all()
@@ -2047,8 +2054,11 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
                 print(f"    UI Server: {self.hostname}:{self.port}")
                 ws_origin = f"{self.hostname}:{self.port}"
 
+                namespace = Namespace().from_dict(message["BODY"]["namespace"])
+                # ns_sig = namespace.get_namespace_sig()
+
                 # TODO: add docker host to ws_origin
-                PlotManager.get_server().start(add_ws_origin=ws_origin)
+                PlotManager.get_server(server_id=namespace).start(add_ws_origin=ws_origin)
 
         # message = text_data_json['BODY']
 

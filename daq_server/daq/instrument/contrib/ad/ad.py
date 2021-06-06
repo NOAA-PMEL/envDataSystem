@@ -106,6 +106,8 @@ class MAGIC210(ADInstrument):
 
         super().enable()
 
+        asyncio.create_task(self.stop_logging())
+
         # # if self.is_polled:
         # self.polling_task = asyncio.create_task(self.poll_loop())
         # asyncio.create_task(self.toggle_mcpc_power(power=0))
@@ -118,7 +120,7 @@ class MAGIC210(ADInstrument):
 
     def start(self, cmd=None):
         super().start()
-        asyncio.create_task(self.start_logging)
+        asyncio.create_task(self.start_logging())
 
     async def start_logging(self):
 

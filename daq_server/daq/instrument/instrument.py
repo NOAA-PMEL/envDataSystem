@@ -384,6 +384,8 @@ class Instrument(DAQ):
         if len(self.alias) > 0:
             entry["alias"] = self.alias
 
+        entry["namespace"] = self.namespace.to_dict()
+
         return entry
 
     def get_data_record(self, timestamp):

@@ -933,6 +933,8 @@ class SizingSystem(Controller):
             if self.alias:
                 entry["alias"] = self.alias
 
+            entry["namespace"] = self.namespace.to_dict()
+
             return entry
 
         return None

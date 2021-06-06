@@ -1156,6 +1156,7 @@ class DummyController(Controller):
 
                 if len(self.alias) > 0:
                     entry["alias"] = self.alias
+                entry["namespace"] = self.namespace.to_dict()
 
                 return entry
         return None

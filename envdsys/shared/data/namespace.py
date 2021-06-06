@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+# from daq_server import DAQServer
+
 
 class Namespace:
 
@@ -158,6 +160,21 @@ class Namespace:
 
         # print(f"self.name: {ns}")
         return ns
+
+    def get_namespace_comp_sig(self, component="daqserver"):
+
+        # sig = Namespace().get_namespace_sig()
+        sig = None
+
+        if self.ns_type == component:
+            return self.get_namespace_sig()
+        else:
+            if self.parent:
+                sig = self.parent.get_namespace_comp_sig(component)
+                if sig:
+                    return sig
+        
+        return Namespace().get_namespace_sig()
 
     def get_namespace_sig(self, section="ALL"):
 
