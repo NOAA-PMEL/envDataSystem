@@ -16,14 +16,14 @@ def get_timestamp():
     return pytz.utc.localize(datetime.utcnow())
 
 
-def dt_to_string(dt=None):
+def dt_to_string(dt=None, format=isofmt):
     if dt is None:
         dt = get_timestamp()
-    return datetime.strftime(dt, isofmt)
+    return datetime.strftime(dt, format)
 
 
-def string_to_dt(dt_string):
-    dt = datetime.strptime(dt_string, isofmt)
+def string_to_dt(dt_string, format=isofmt):
+    dt = datetime.strptime(dt_string, format)
     return pytz.utc.localize(dt)
 
 
