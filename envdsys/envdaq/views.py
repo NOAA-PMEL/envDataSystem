@@ -1,6 +1,5 @@
 from django.http.response import Http404
 from django.shortcuts import get_object_or_404, render
-from matplotlib.pyplot import plot
 
 from envtags.models import Configuration
 from .models import DAQController, DAQInstrument, InstrumentAlias, Controller
