@@ -208,7 +208,9 @@ DEFAULT_AUTO_FIELD='django.db.models.AutoField'
 PLOT_SERVER = {
     'server_id': ('localhost', 5001, 'default'), # old default
     'host': 'localhost',
-    'ports': "5001:5011",  # allows for 10 servers
+    'ui_host': 'localhost',
+    'ws_origin_list': ['localhost'],
+    'port_range': (5001,5011),  # allows for 10 servers
     'namespace': 'default' # default namespace
     #'server_id': ('10.55.169.61', 5001),
     # 'server_id': ('192.168.86.32', 5001),
@@ -218,6 +220,7 @@ PLOT_SERVER = {
     #     }
     # }
 }
+
 
 # Configure DataManager
 #   ui_save_base_path: where UI Server will save data from daq_server(s). Make
