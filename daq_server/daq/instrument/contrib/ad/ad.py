@@ -997,6 +997,7 @@ class MAGIC210(ADInstrument):
 
         measurement_config["primary"] = primary_meas
         measurement_config["process"] = process_meas
+        measurement_config["info"] = info_meas
         # measurement_config["controls"] = controls
 
         definition["measurement_config"] = measurement_config
