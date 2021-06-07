@@ -232,12 +232,16 @@ class PlotManager:
 
 
         free_port = False
-        for port in PlotManager.PORT_RANGE:
+        port_range = PlotManager.PORT_RANGE
+        for port in range(port_range[0], port_range[1]+1):
+            # print(f"free port: {port} in {PlotManager.PORT_RANGE} -- {PlotManager.__server_map}")
             free_port = True
             for id, server in PlotManager.__server_map.items():
+                # print(f"free port check: {id}, {server.port}")
                 if port == server.port:
                     free_port = False
                     break
+            # print(f"free_port = {free_port}: {port}")
             if free_port:
                 return port
 
@@ -275,8 +279,10 @@ class PlotManager:
             for app_name in PlotManager.__app_source_map[src_id]["app_list"]:
                 # print(f'        app: {app_name}')
                 if server:
+                    # print(f'        server: {server}')
                     app = server.get_app(app_name)
                     if app:
+                        # print(f"            app: {app}")
                         await app.update_data(data)
 
     @staticmethod

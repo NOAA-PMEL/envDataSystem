@@ -226,8 +226,10 @@ DEFAULT_AUTO_FIELD='django.db.models.AutoField'
 PLOT_SERVER = {
     'server_id': ('0.0.0.0', 5001, 'default'), # old default
     'hostname': os.environ["ENVDSYS_PLOT_SERVER_HOSTNAME"],
-    'host': 'localhost',
-    'ports': "5001:5011",  # allows for 10 servers
+    'ui_host': os.environ["ENVDSYS_PLOT_SERVER_HOSTNAME"],
+    'ws_origin_list': os.environ["ENVDSYS_UI_ALLOWED_HOSTS"].split(","),
+    'host': '0.0.0.0',
+    'port_range': (5001,5011),  # allows for 10 servers
     'namespace': 'default' # default namespace
     #'server_id': ('10.55.169.61', 5001),
     # 'server_id': ('192.168.86.32', 5001),

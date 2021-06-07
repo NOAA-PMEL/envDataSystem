@@ -84,7 +84,7 @@ class PlotServer():
 
         # add extra ws_origin
         if add_ws_origin:
-            ws_origin.append(add_ws_origin)
+            ws_origin.append(add_ws_origin + str(self.port))
 
         # print(f'------- {self.apps},{self.address},{self.port}')
         self.server = Server(

@@ -1483,10 +1483,17 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
         # self.server_name = (
         #     self.scope['url_route']['kwargs']['server_name']
         # )
+        # print(f"scope: {self.scope}")
         self.hostname = self.scope["server"][0]
         self.port = self.scope["server"][1]
         # print(f'hostname:port : {self.hostname}:{self.port}')
         # self.daqserver_group_name = 'daq_messages'
+
+        if "ui_host" in settings.PLOT_SERVER:
+            self.plotserver_ui_host = settings.PLOT_SERVER["ui_host"]
+        if "host" in settings.PLOT_SERVER:
+            # self.hostname = settings.PLOT_SERVER["host"]
+            self.plotserver_host = settings.PLOT_SERVER["host"]
 
         # Join room group
         await self.channel_layer.group_add(self.daqserver_group_name, self.channel_name)
@@ -2049,11 +2056,14 @@ class DAQServerConsumer(AsyncWebsocketConsumer):
             # print('$$$$$$$ READY_STATE')
             if message["BODY"]["status"] == "READY":
                 # print(f'___ READY TO GO ___: {message}')
+
                 print("READY TO RUN:")
                 print(f"    daq_server: {self.daqserver_namespace}")
-                print(f"    UI Server: {self.hostname}:{self.port}")
-                ws_origin = f"{self.hostname}:{self.port}"
-
+                # print(f"    UI Server: {self.hostname}:{self.port}")
+                print(f"    UI Server: {self.plotserver_ui_host}:{self.port}")
+                # ws_origin = f"{self.plotserver_ui_host}:{self.port}"
+                ws_origin = f"{self.plotserver_ui_host}"
+                print(f"origin: {ws_origin}")
                 namespace = Namespace().from_dict(message["BODY"]["namespace"])
                 # ns_sig = namespace.get_namespace_sig()
 
