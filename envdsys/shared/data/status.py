@@ -16,8 +16,9 @@ class Status:
     RUNNING = "RUNNING"
     READY_TO_RUN = "READY_TO_RUN"
     STOPPING = "STOPPING"
-    SHUTING_DOWN = "SHUTTING_DOWN"
+    SHUTTING_DOWN = "SHUTTING_DOWN"
     SHUTDOWN = "SHUTDOWN"
+    RESTARTING = "RESTARTING"
     
     READY = "READY"
     NOT_READY = "NOT_READY"
@@ -184,3 +185,4 @@ class Status:
                 if status_type in self.status_types:
                     self.set_status(status_type, status)
 
+        return self

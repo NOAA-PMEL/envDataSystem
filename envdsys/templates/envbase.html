@@ -8,15 +8,17 @@
         <title>{% block title %}envDataSystem{% endblock title %}</title>
 
         {% comment %} <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css"> {% endcomment %}
+        {% comment %} <link rel="stylesheet" href="{% static 'css/w3.css' %}"> {% endcomment %}
         <link rel="stylesheet" href="{% static 'css/envdsys.css' %}">
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
-        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-        <link rel="stylesheet" href="https://www.w3schools.com/lib/w3-theme-blue-grey.css">
+        {% comment %} <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto"> {% endcomment %}
+        {% comment %} <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"> {% endcomment %}
+        {% comment %} <link rel="stylesheet" href="https://www.w3schools.com/lib/w3-theme-blue-grey.css"> {% endcomment %}
         {% comment %} <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"><style> {% endcomment %}
  
         
-        <style>
-            body {font-family: "Roboto", sans-serif}
+        {% comment %} <style>
+            html, body {font-family: "Roboto", sans-serif}
+
 
             .footer {
                 position: sticky;
@@ -31,12 +33,8 @@
                 bottom: 0;
                 height: inherit;
             }
-            {% comment %} .w3-bar-block .w3-bar-item { {% endcomment %}
-                {% comment %} padding: 16px; {% endcomment %}
-                {% comment %} font-weight: bold; {% endcomment %}
-            {% comment %} } {% endcomment %}
 
-        </style>
+        </style> {% endcomment %}
  
     </head>
 
@@ -177,26 +175,26 @@
         <script type="text/javascript">
 
             function w3_open() {
-            document.getElementById("menuBar").style.display = "block";
-            document.getElementById("menuOverlay").style.display = "block";
+                document.getElementById("menuBar").style.display = "block";
+                document.getElementById("menuOverlay").style.display = "block";
             }
 
             function w3_close() {
-            document.getElementById("menuBar").style.display = "none";
-            document.getElementById("menuOverlay").style.display = "none";
+                document.getElementById("menuBar").style.display = "none";
+                document.getElementById("menuOverlay").style.display = "none";
             }
 
             // Change style of top container on scroll
-            window.onscroll = function() {myFunction()};
-            function myFunction() {
-            if (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) {
-                document.getElementById("dataTop").classList.add("w3-card-4", "w3-animate-opacity");
-                document.getElementById("dataIntro").classList.add("w3-show-inline-block");
-            } else {
-                document.getElementById("dataIntro").classList.remove("w3-show-inline-block");
-                document.getElementById("dataTop").classList.remove("w3-card-4", "w3-animate-opacity");
-            }
-            }
+           // window.onscroll = function() {myFunction()};
+            {% comment %} function myFunction() {
+                if (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) {
+                    document.getElementById("dataTop").classList.add("w3-card-4", "w3-animate-opacity");
+                    document.getElementById("dataIntro").classList.add("w3-show-inline-block");
+                } else {
+                    document.getElementById("dataIntro").classList.remove("w3-show-inline-block");
+                    document.getElementById("dataTop").classList.remove("w3-card-4", "w3-animate-opacity");
+                }
+            } {% endcomment %}
 
             {% comment %} // Accordions
             function menuAccordion(id) {

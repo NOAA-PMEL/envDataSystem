@@ -85,7 +85,7 @@ services:
       - "${UI_DATA_SAVE_DIR}:/data/envDataSystem/UIServer"
     ports:
       - "${UI_HOSTPORT}:8001"
-      - "5001:5001"
+      - "5001-5011:5001-5011"
     depends_on: 
       - redis
       - db

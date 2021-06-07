@@ -2,6 +2,8 @@
 # from envdsys.envdaq.models import ControllerDef
 from daq.instrument.instrument import Instrument
 from daq.instrument.contrib.brechtel.brechtel import BrechtelInstrument
+import shared.utilities.util as util
+from datetime import datetime
 from shared.data.message import Message
 from shared.data.status import Status
 from daq.daq import DAQ
@@ -76,7 +78,7 @@ class MSEMS(BrechtelInstrument):
         super().setup()
 
         # only has one interface
-        self.iface = next(iter(self.iface_map.values()))
+        # self.iface = next(iter(self.iface_map.values()))
 
         # default coms: usb
         #   230400 8-N-1
@@ -101,11 +103,17 @@ class MSEMS(BrechtelInstrument):
                     # self.data_record_template[msetsname][name] = None
                     self.data_record_template[name] = {"VALUE": None}
 
-        self.status['ready_to_run'] = True
+        self.status["ready_to_run"] = True
         self.status2.set_run_status(Status.READY_TO_RUN)
         self.enable()
 
         print("done")
+
+    async def shutdown(self):
+        self.stop()
+        self.disable()
+        await self.deregister_from_UI()
+        await super().shutdown()
 
     def enable(self):
 
@@ -113,8 +121,11 @@ class MSEMS(BrechtelInstrument):
 
         # if self.is_polled:
         self.polling_task = asyncio.create_task(self.poll_loop())
+        asyncio.create_task(self.toggle_mcpc_power(power=0))
+
 
     def disable(self):
+        asyncio.create_task(self.toggle_mcpc_power(power=0))
         if self.polling_task:
             self.polling_task.cancel()
         super().disable()
@@ -135,14 +146,23 @@ class MSEMS(BrechtelInstrument):
         elif self.msems_mode == "scanning":
             asyncio.ensure_future(self.start_scanning())
 
+    async def toggle_mcpc_power(self, power=0):
+
+        await self.set_control("mcpc_power_control", power)
+        await asyncio.sleep(0.1)
+
+        await self.set_control("mcpc_pump_power_control", power)
+        await asyncio.sleep(0.1)
+
     async def start_scanning(self):
 
+        await self.toggle_mcpc_power(power=1)
         # make sure mcpc is on and pump is started
-        await self.set_control("mcpc_power_control", 1)
-        await asyncio.sleep(.1)
+        # await self.set_control("mcpc_power_control", 1)
+        # await asyncio.sleep(0.1)
 
-        await self.set_control("mcpc_pump_power_control", 1)
-        await asyncio.sleep(.1)
+        # await self.set_control("mcpc_pump_power_control", 1)
+        # await asyncio.sleep(0.1)
 
         # send scan settings before starting
         scan_settings_list = [
@@ -170,14 +190,11 @@ class MSEMS(BrechtelInstrument):
         if self.iface_components["default"]:
             if_id = self.iface_components["default"]
             self.current_read_cnt = 0
-            await asyncio.sleep(.1)
+            await asyncio.sleep(0.1)
 
             for setting in scan_settings_list:
                 try:
-                    await self.set_control(
-                        setting,
-                        self.current_run_settings[setting]
-                    )
+                    await self.set_control(setting, self.current_run_settings[setting])
                 except KeyError:
                     pass
 
@@ -192,6 +209,25 @@ class MSEMS(BrechtelInstrument):
             # # print(f'msg: {msg}')
             # # await self.iface.message_from_parent(msg)
             # await self.iface_map[if_id].message_from_parent(msg)
+            dt = util.get_timestamp()
+            cmd_list = [
+                f"clk_year={datetime.strftime(dt, '%y')}\n",
+                f"clk_mon={datetime.strftime(dt, '%m')}\n",
+                f"clk_day={datetime.strftime(dt, '%d')}\n",
+                f"clk_hour={datetime.strftime(dt, '%H')}\n",
+                f"clk_min={datetime.strftime(dt, '%M')}\n",
+                f"clk_sec={datetime.strftime(dt, '%S')}\n",
+            ]
+
+            for cmd in cmd_list:
+                msg = Message(
+                    sender_id=self.get_id(),
+                    msgtype=Instrument.class_type,
+                    subject="SEND",
+                    body=cmd,
+                )
+                await self.iface_map[if_id].message_from_parent(msg)
+                await asyncio.sleep(0.1)
 
             # Start scanning
             cmd = "msems_mode=2\n"
@@ -230,7 +266,6 @@ class MSEMS(BrechtelInstrument):
         # if self.polling_task:
         #     self.polling_task.cancel()
 
-
         # TODO: add function that waits for scanning to actually stop
         if self.msems_mode == "mono":
             pass
@@ -254,17 +289,17 @@ class MSEMS(BrechtelInstrument):
         if not self.current_run_settings:
             self.get_current_run_settings()
         while True:
-        # while self.current_run_settings:
+            # while self.current_run_settings:
             if self.status2.get_run_status() in [Status.READY_TO_RUN, Status.STOPPED]:
                 settings = Message(
                     sender_id=self.get_id(),
                     msgtype=self.class_type,
                     subject="SETTINGS",
                     body={
-                        'purpose': 'UPDATE',
-                        'settings': self.current_run_settings,
+                        "purpose": "UPDATE",
+                        "settings": self.current_run_settings,
                         # 'note': note,
-                    }
+                    },
                 )
                 await self.message_to_ui(settings)
             await asyncio.sleep(2)
@@ -349,8 +384,8 @@ class MSEMS(BrechtelInstrument):
 
                 for control, value in self.current_run_settings.items():
                     # try:
-                        # pl = self.controls[control]["parse_label"]
-                        # if pl in self.data_record_template:
+                    # pl = self.controls[control]["parse_label"]
+                    # if pl in self.data_record_template:
                     self.update_data_record(dt, {control: value}, value)
                     # except KeyError:
                     #     pass
@@ -495,7 +530,7 @@ class MSEMS(BrechtelInstrument):
                 # await PlotManager.update_data(self.plot_name, data.to_json())
                 if self.datafile:
                     await self.datafile.write_message(data)
-            
+
             elif self.msems_mode == "off":
                 # monitoring the data
                 # print(f"monitor: {dt}")
@@ -522,15 +557,16 @@ class MSEMS(BrechtelInstrument):
         #     await asyncio.sleep(0.01)
 
     async def handle_control_action(self, control, value):
-        if control and value:
+        if control and value is not None:
             # print(f"msems control action: {control}, {value}")
             if control == "start_stop":
-                if value == "START":
-                    self.start()
-                elif value == "STOP":
-                    self.stop()
+                # if value == "START":
+                #     self.start()
+                # elif value == "STOP":
+                #     self.stop()
 
-                self.set_control_att(control, "action_state", "OK")
+                # self.set_control_att(control, "action_state", "OK")
+                await super(MSEMS, self).handle_control_action(control, value)
 
             else:
                 try:
@@ -554,6 +590,7 @@ class MSEMS(BrechtelInstrument):
                 except KeyError:
                     print(f"can't set {control}")
                     self.set_control_att(control, "action_state", "NOT_OK")
+        # await super(MSEMS, self).handle(msg, type)
 
     def parse(self, msg):
         # print(f'parse: {msg.to_json()}')
@@ -571,7 +608,7 @@ class MSEMS(BrechtelInstrument):
         parts = []
         for entry in line:
             if "=" in entry:
-                parts=entry.split("=")
+                parts = entry.split("=")
             # parts = line.split("=")
             if len(parts) < 2:
                 return dt
@@ -585,12 +622,14 @@ class MSEMS(BrechtelInstrument):
             if parts[0] == "scan_state":
                 self.scan_state = parts[1]
                 print(f"scan state: {self.scan_state}")
-                if self.scan_state == "4":
+                if self.scan_state == "1":
+                    self.scan_time = dt
+                elif self.scan_state == "4":
                     # print(f"reading scan data")
                     self.reading_scan = True
                     self.scan_ready = False
                     self.current_bin_counts.clear()
-                    self.scan_time = dt
+                    # self.scan_time = dt
 
                 else:
                     if self.reading_scan:

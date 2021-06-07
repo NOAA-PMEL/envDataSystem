@@ -115,6 +115,12 @@ def get_conf_vars():
     except KeyError:
         pass
 
+    extra_hosts = []
+    try:
+        extra_hosts = run_config["HOST"]["extra_hosts"]
+    except KeyError:
+        pass
+
     ui_data_save = True
     try:
         ui_data_save = run_config["UI_DATA_SAVE"]
@@ -145,6 +151,7 @@ def get_conf_vars():
         "RUN_GID": str(gid),
         "UI_HOSTNAME": host,
         "UI_HOSTPORT": port,
+        "UI_EXTRA_HOSTS": extra_hosts,
         "UI_DATA_SAVE": ui_data_save,
         "DB_DATA_DIR": db_data,
         "UI_CFG_DIR": ui_conf,
@@ -167,7 +174,15 @@ def create_env_file(conf_vars):
     # add allowed_hosts entry
     vars["UI_ALLOWED_HOSTS"] = "127.0.0.1,localhost"
     if conf_vars["UI_HOSTNAME"] not in vars["UI_ALLOWED_HOSTS"]:
+        # print(f"host: {conf_vars['UI_HOSTNAME']}")
         vars['UI_ALLOWED_HOSTS'] = ",".join(["127.0.0.1,localhost", conf_vars["UI_HOSTNAME"]])
+    # print(f"ALLOWED: {vars['UI_ALLOWED_HOSTS']}")
+
+    for host in conf_vars["UI_EXTRA_HOSTS"]:
+        if host not in vars["UI_ALLOWED_HOSTS"]:
+            # print(f'extra_host: {host}')
+            vars['UI_ALLOWED_HOSTS'] = ",".join([vars['UI_ALLOWED_HOSTS'], host])
+    # print(f"ALLOWED: {vars['UI_ALLOWED_HOSTS']}")
 
     with open(
         # os.path.join(root_path, "docker", "envdsys", "envdsys_variables.env"), "w"

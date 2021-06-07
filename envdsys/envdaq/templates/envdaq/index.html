@@ -7,7 +7,7 @@
 
 {% block content %}
 
-    <div class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
+    <div id="server-table-div" class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
             {% comment %} <button type="button" onclick="myAccordion('networks')" class="w3-btn w3-round w3-margin-bottom w3-margin-top w3-block w3-theme w3-left-align">
                 <div class="w3-left"><b>Networks</b></div>
                 <div class="w3-right"><i id='button-icon-networks' class="material-icons">expand_more</i></div>
@@ -15,24 +15,412 @@
 
             <div id="accordion-networks" class="w3-container w3-hide"> {% endcomment %}
 
-                <h5>DAQ Servers</h5>
-                <table class="w3-table w3-bordered">
+                {% comment %} <h5>DAQ Servers</h5>
+                <table class="w3-table w3-bordered" id="server-table">
                     <tr>
-                        <th>Name</th>
-                        <th>Description</th>
-                        <th>Active</th>
+                        <th>Namespace</th>
+                        <th>Config</th>
+                        <th>Status</th>
                     </tr>
-                    {% for key, values in daq_server_map.items %}
+                    {% for ns, reg in daq_map.items %}
                     <tr>
-                        <td>{{ key }}</td>
-                        {% for k,v in values.items %}
-                            <td>{{v}}</td>
-                        {% endfor %}
+                        <td>{{ ns }}</td>
+                        {% if reg.config2 and "NAME" in reg.config2 %}
+                            <td> {{reg.config2.NAME}} </td>
+                        {% else %}
+                            <td> <em>not configured</em> </td>
+                        {% endif %}
+                        <td>{{ reg.status }}</td>
                     </tr>
                     {% endfor %}
-                </table>
+                </table>  {% endcomment %}
             {% comment %} </div> {% endcomment %}
     </div>
+
+    <div id="controller-table-div" class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
+    </div>
+
+    <div id="instrument-table-div" class="w3-container w3-card w3-round w3-margin-top" style="padding:10px">
+    </div>
+
+<script>
+    //var websocket = null;
+
+    var wait_for_setup = true;
+
+    window.onload=function() {
+        console.log("init")
+        //console.log('ws://' + window.location.host +'/ws/envdaq/')
+        
+        build_server_table();
+        build_controller_table();
+        build_instrument_table();
+
+        // request table data
+        //request_registry_data();
+        //window["websocket"] = new WebSocket(
+        //    'ws://' + window.location.host +'/ws/envdaq/'
+        //);
+        //console.log(websocket)
+    };
+
+    function init() {
+        console.log("init")
+        console.log('ws://' + window.location.host +'/ws/envdaq/')
+        window.websocket = new WebSocket(
+            'ws://' + window.location.host +'/ws/envdaq/'
+        );
+    }
+
+    function build_server_table() {
+        var tablediv = document.getElementById('server-table-div');
+
+        var table = document.createElement('table');
+        table.setAttribute('id', 'server-table')
+        table.setAttribute('class', 'w3-table w3-bordered')
+        table.setAttribute('style', 'table-layout:fixed')
+
+        var caption = table.createCaption()
+        caption.innerHTML = "DAQ Servers"
+
+        var header = table.createTHead();
+        var row = header.insertRow(0);
+        //var cell = row.insertCell(0);
+        var cell = document.createElement('th')
+        cell.innerHTML = "Host"
+        row.appendChild(cell)
+        cell = document.createElement('th')
+        cell.innerHTML = "Name"
+        row.appendChild(cell)
+        cell = document.createElement('th')
+        cell.innerHTML = "Namespace"
+        row.appendChild(cell)
+
+        tablediv.appendChild(table)
+
+    };
+
+    function build_controller_table() {
+        var tablediv = document.getElementById('controller-table-div');
+
+        var table = document.createElement('table');
+        table.setAttribute('id', 'controller-table')
+        table.setAttribute('class', 'w3-table w3-bordered')
+        table.setAttribute('style', 'table-layout:fixed')
+
+        var caption = table.createCaption()
+        caption.innerHTML = "Controllers"
+
+        var header = table.createTHead();
+        var row = header.insertRow(0);
+        //var cell = row.insertCell(0);
+        var cell = document.createElement('th')
+        cell.innerHTML = "Host"
+        row.appendChild(cell)
+        cell = document.createElement('th')
+        //cell.setAttribute("class", "w3-centered")
+        cell.innerHTML = "Name"
+        row.appendChild(cell)
+        cell = document.createElement('th')
+        //cell.setAttribute("class", "w3-right")
+        cell.innerHTML = "Namespace"
+        row.appendChild(cell)
+
+        tablediv.appendChild(table)
+
+    };
+
+    function build_instrument_table() {
+        var tablediv = document.getElementById('instrument-table-div');
+
+        var table = document.createElement('table');
+        table.setAttribute('id', 'instrument-table')
+        table.setAttribute('class', 'w3-table w3-bordered')
+        table.setAttribute('style', 'table-layout:fixed')
+
+        var caption = table.createCaption()
+        caption.innerHTML = "Instruments"
+
+        var header = table.createTHead();
+        var row = header.insertRow(0);
+        //var cell = row.insertCell(0);
+        var cell = document.createElement('th')
+        cell.innerHTML = "Host"
+        row.appendChild(cell)
+        cell = document.createElement('th')
+        cell.innerHTML = "Name"
+        row.appendChild(cell)
+        cell = document.createElement('th')
+        cell.innerHTML = "Namespace"
+        row.appendChild(cell)
+
+        tablediv.appendChild(table)
+
+    };
+
+    function update_server_table(registry) {
+        //console.log(window.location.host)
+        console.log(registry)
+        var table = document.getElementById('server-table');
+        var tableHeaderRowCount = 1;
+        var rowCount = table.rows.length;
+        for (var i = tableHeaderRowCount; i < rowCount; i++) {
+            table.deleteRow(tableHeaderRowCount);
+        }
+        //table.innerHTML=""
+        console.log(table)
+        for (const [regid, reg] of Object.entries(registry)) {
+            console.log("regid: "+regid)
+            ns = reg.reg_id
+            row_id = ns.host+"-"+ns.namespace
+
+            console.log("host: "+ns.host)
+            console.log("name: "+ns.name)
+            console.log("namepace: "+ns.namespace)
+            var row = document.getElementById('server-table-'+row_id+'-row')
+            if (row == null) {
+                console.log("null")
+                row = table.insertRow(-1);
+                row.setAttribute('id', 'server-table-'+row_id+'-row')
+                var cell = row.insertCell(0);
+                cell = row.insertCell(1);
+                cell = row.insertCell(2);
+            } 
+            row.children[0].innerHTML = ns.host
+            row.children[1].innerHTML = ns.name
+            var link = "http://"+window.location.host+"/envdaq/daqserver/"+ns.host+"/"+ns.namespace+"/"
+            row.children[2].innerHTML = "<a href="+link+">"+ns.namespace+"</a>"
+            // var config_name = "<em>not configured</em>"
+            //if ("config2" in reg && "NAME" in reg.config2) {
+            //    config_name = reg.config2.NAME
+            //}
+            //row.children[1].innerHTML = config_name
+            //row.children[2].innerHTML = reg.status
+        }
+    };
+
+    function update_controller_table(registry) {
+        console.log(registry)
+        var table = document.getElementById('controller-table');
+        //console.log(table)
+
+        var tableHeaderRowCount = 1;
+        var rowCount = table.rows.length;
+        for (var i = tableHeaderRowCount; i < rowCount; i++) {
+            table.deleteRow(tableHeaderRowCount);
+        }
+
+        for (const [regid, reg] of Object.entries(registry)) {
+            console.log("regid: "+regid)
+
+            ns = reg.reg_id
+            row_id = ns.host+"-"+ns.namespace
+            console.log("host: "+ns.host)
+            console.log("name: "+ns.name)
+            console.log("namepace: "+ns.namespace)
+
+            var row = document.getElementById('controller-table-'+row_id+'-row')
+            if (row == null) {
+                //console.log("null")
+                row = table.insertRow(-1);
+                row.setAttribute('id', 'controller-table-'+row_id+'-row')
+                var cell = row.insertCell(0);
+                cell = row.insertCell(1);
+                cell = row.insertCell(2);
+            }
+            //console.log(reg.namespace.daq_server)
+            //console.log(reg.namespace.controller)
+            //var link = "http://"+window.location.host+"/envdaq/"+reg.namespace.daq_server+"/controller/"+reg.namespace.controller+"/"
+            //var link = "http://"+window.location.host+"/envdaq/"+ns.host+"/parent_ns/controller/"+ns.namespace+"/"
+            //console.log(link)
+            //row.children[0].innerHTML = "<a href="+link+">"+row_id+"</a>"
+            // var config_name = "<em>not configured</em>"
+            //if ("config" in reg && "LABEL" in reg.config) {
+            //    config_name = reg.config2.LABEL
+            //}
+            row.children[0].innerHTML = ns.host
+            row.children[1].innerHTML = ns.name
+            parent_sig = get_namespace_sig(reg.namespace, "PARENT").namespace
+            //console.log("sig: " + get_namespace_sig(reg.namespace, "ALL").namespace)
+            var link = "http://"+window.location.host+"/envdaq/"+ns.host+"/"+parent_sig+"/controller/"+ns.name+"/"
+            console.log(link)
+            row.children[2].innerHTML = "<a href="+link+">"+ns.namespace+"</a>"
+        }
+    };
+
+    function update_instrument_table(registry) {
+        console.log(registry)
+        var table = document.getElementById('instrument-table');
+
+        var tableHeaderRowCount = 1;
+        var rowCount = table.rows.length;
+        for (var i = tableHeaderRowCount; i < rowCount; i++) {
+            table.deleteRow(tableHeaderRowCount);
+        }
+
+        //console.log(table)
+        for (const [regid, reg] of Object.entries(registry)) {
+            console.log("regid: "+regid)
+
+            ns = reg.reg_id
+            row_id = ns.host+"-"+ns.namespace
+            console.log("host: "+ns.host)
+            console.log("name: "+ns.name)
+            console.log("namepace: "+ns.namespace)
+
+            var row = document.getElementById('instrument-table-'+row_id+'-row')
+            if (row == null) {
+               // console.log("null")
+                row = table.insertRow(-1);
+                row.setAttribute('id', 'instrument-table-'+row_id+'-row')
+                var cell = row.insertCell(0);
+                cell = row.insertCell(1);
+                cell = row.insertCell(2);
+            }
+            //console.log(reg.namespace.daq_server)
+            //console.log(reg.namespace.controller)
+            //console.log(reg.namespace.instrument)
+            //var link = "http://"+window.location.host+"/envdaq/"+reg.namespace.daq_server+"/"+reg.namespace.controller+"/instrument/"+reg.namespace.instrument+"/"
+            //console.log(link)
+            //row.children[0].innerHTML = "<a href="+link+">"+row_id+"</a>"
+            //var config_name = "<em>not configured</em>"
+            //if ("config" in reg && "LABEL" in reg.config) {
+            //    config_name = reg.config2.LABEL
+            //}
+            //row.children[1].innerHTML = config_name
+            //row.children[2].innerHTML = reg.status
+            row.children[0].innerHTML = ns.host
+            row.children[1].innerHTML = ns.name
+            parent_sig = get_namespace_sig(reg.namespace, "PARENT").namespace
+            //console.log("sig: " + get_namespace_sig(reg.namespace, "ALL").namespace)
+            var link = "http://"+window.location.host+"/envdaq/"+ns.host+"/"+parent_sig+"/instrument/"+ns.name+"/"
+            console.log(link)
+            row.children[2].innerHTML = "<a href="+link+">"+ns.namespace+"</a>"
+
+        }
+    };
+
+    var websocket = new WebSocket(
+            'ws://' + window.location.host +'/ws/envdaq/'
+        );
+    
+    //console.log(websocket)
+    websocket.onmessage = function(e) {
+        var data = JSON.parse(e.data)
+        if ("message" in data) {
+            var message = data.message
+            console.log("message: " + message)
+
+            if (message['SUBJECT'] == 'DAQServerRegistry') {
+                console.log("subject")
+                if ("purpose" in message.BODY) {
+                    console.log(message.BODY.purpose)
+                    if (message.BODY.purpose == "REGISTRY") {
+                        if ("daqserver_registry" in message.BODY) {
+                            console.log("daqserver_registry update")
+                            var registry = message.BODY.daqserver_registry;
+                            update_server_table(registry)
+                        }
+                        if ("controller_registry" in message.BODY) {
+                            console.log("controller_registry update")
+                            var registry = message.BODY.controller_registry;
+                            update_controller_table(registry)
+                        }
+
+                        if ("instrument_registry" in message.BODY) {
+                            console.log("instrument_registry update")
+                            var registry = message.BODY.instrument_registry;
+                            update_instrument_table(registry)
+                        }
+
+                        //registry = message.BODY.controller_registry;
+                        // update_controller_table(registry)
+                        //registry = message.BODY.instrument_registry;
+                        // update_instrument_table(registry)
+                        //for (reg in registry) {
+                        //    row = document.getElementById(reg["namespace"]+"-row");
+                        //    console.log("row: "+row);                          
+                        //};
+                    };
+                };
+            };
+        };
+    };
+
+    websocket.onopen = function(event) {
+        console.log('Connected to: ' + event.currentTarget.url)
+//        while (wait_for_setup) {
+//            console.log('waiting for setup: '+wait_for_setup)
+//        }
+        //start_consumer()
+        console.log('request_status')
+        //reqest_status()
+        request_registry_data();
+    }
+
+    function request_registry_data() {
+        var message = {}
+        message['SUBJECT'] = 'DAQServerRegistry'
+        message['BODY'] = {
+            'purpose': 'REQUEST',
+        }
+        console.log(JSON.stringify(message))
+        websocket.send(
+            JSON.stringify({'message': message})
+        )
+    };
+
+    function start_consumer() {
+
+        var message = {}
+        message['SUBJECT'] = 'DAQSTART'
+        message['BODY'] = {
+            'purpose': 'INIT',
+        }
+        console.log(JSON.stringify(message))
+        websocket.send(
+            JSON.stringify({'message': message})
+        )
+
+    };
+
+    // emulates python Namespace functionality
+    function get_namespace_sig(ns, section) {
+        console.log("ns: " + ns.name)
+        //var sig = new Object();
+        if (section == "PARENT") {
+            if ("parent" in ns) {
+                var sig = get_namespace_sig(ns.parent, "ALL")
+                return sig
+            }
+            return null
+        } else if (section == "LOCAL") {
+            var sig = new Object()
+            sig.host = ns.host
+            sig.name = ns.name
+            sig.type = ns.type
+            sig.namespace = ns.namespace
+            return sig
+        } else {
+            var sig = new Object()
+            sig.host = ns.host
+            sig.name = ns.name
+            sig.type = ns.type
+            console.log(sig.host)
+            if ("parent" in ns) {
+                parent = ns.parent
+                console.log("parent: " + parent.name)
+                var parent_sig = get_namespace_sig(ns.parent, "ALL")
+                sig.namespace = parent_sig.namespace + "-" + ns.name
+            } else {
+                sig.namespace = ns.name
+            }
+            return sig
+        }
+
+    };
+
+</script>
 
 {% endblock content %}
 

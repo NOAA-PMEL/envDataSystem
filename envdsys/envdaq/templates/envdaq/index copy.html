@@ -1,0 +1,158 @@
+<!-- envdaq/templates/envdaq/index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>envDAQ</title>
+</head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<body>
+    <style>
+    #data-table {
+        {% comment %} width: 100%; {% endcomment %}
+         -webkit-overflow-scrolling: touch;
+        overflow-x: auto;
+        display: block;
+        {% comment %} table-layout: fixed; {% endcomment %}
+    }
+     {% comment %} #data-table-namecol {
+        width=200px;
+    }
+     #data-table-valuecol {
+        width=200px;
+    } {% endcomment %}
+    </style>                                                                                                                                                                     </style>
+
+    Metadata from server:<br/>
+    <textarea id="metadata-window" cols="100" rows="20"></textarea><br/>
+
+    Data from server:<br/>
+    <textarea id="data-window" cols="100" rows="20"></textarea><br/>
+
+    {% comment %} <input id="inst-name-input" type="text" size="100"/><br/> {% endcomment %}
+    {% comment %} <input id="inst-name-submit" type="button" value="Enter"/> {% endcomment %}
+    <input id="req-meta-button" type="button" value="Get Meta"/>
+
+    <p id="time-stamp"></p><br/>
+    {% comment %} <textarea>{{ cellvalue }}</textarea> {% endcomment %}
+    {% comment %} <table id="data-table">
+
+    </table> {% endcomment %}
+    <script>
+        
+        window.onload=init;
+
+        var cellvalue = '1234.5';
+
+        function init() {
+            {% comment %} alert("loaded"); {% endcomment %}
+
+            {% comment %} build_table() {% endcomment %}
+
+        }
+
+        function build_table() {
+
+            {% comment %} alert("loaded"); {% endcomment %}
+            
+            var body = document.getElementsByTagName('body')[0];
+
+            var table = document.createElement('table');
+            table.setAttribute('id', 'data-table');
+            table.setAttribute('style', 'border-collapse: collapse;')
+            {% comment %} table.id = 'data-table'; {% endcomment %}
+
+            {% comment %} var table = document.querySelector('#data-table'); {% endcomment %}
+            var header = table.createTHead();
+            var row = header.insertRow(0);
+            row.setAttribute('style', 'border: 1px solid black')
+            var cell = row.insertCell(0);
+            cell.setAttribute('id', 'data-table-namecol');
+            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
+            cell.innerHTML = "<b>Name</b>";
+            cell = row.insertCell(1);
+            cell.setAttribute('style', 'border: 1px solid black; text-align: center;')
+            cell.innerHTML = "<b>Value</b>";
+            cell.setAttribute('id', 'data-table-valuecol');
+
+            row = table.insertRow(1);
+            cell = row.insertCell(0);
+            cell.setAttribute('id', 'cell0');
+            cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center')
+            cell.innerHTML = "Concentration";
+            cell = row.insertCell(1);
+            cell.setAttribute('id', 'cell1');
+            cell.setAttribute('style', 'border: 1px solid black; padding: 2px; text-align: center');
+            cell.innerHTML = '';
+
+            var td = table.rows[0].cells[0];
+            td.width = '200px';
+            td = table.rows[0].cells[1];
+            td.width = '200px';
+           
+            body.appendChild(table);
+        };
+
+        var chatSocket = new WebSocket(
+            'ws://' + window.location.host +
+            '/ws/envdaq/data_test/');
+
+        chatSocket.onmessage = function(e) {
+
+            {% comment %} if (document.querySelector('#data-table') == null) { {% endcomment %}
+            if (document.getElementById('data-table') == null) {
+                build_table();
+            };
+
+            var data = JSON.parse(e.data);
+            if (data['message']['SUBJECT'] == 'DATA') {
+
+                if ("METADATA" in data['message']['BODY']) {
+                    var message = data['message']['BODY']['METADATA'];
+                    document.querySelector('#metadata-window').value = (JSON.stringify(data['message']) + '\n');
+                };
+                if ('DATA' in data['message']['BODY']) {
+                    var message = data['message']['BODY']['DATA'];
+                    document.querySelector('#data-window').value = (JSON.stringify(data['message']) + '\n');
+
+                    document.querySelector('#time-stamp').innerHTML =  (message['DATETIME']);
+                    cell2 = 'cell1';
+                    cell_id = '#'+cell2;
+                    document.querySelector(cell_id).innerHTML = message['MEASUREMENTS']['concentration']['VALUE'];
+                };
+
+                {% comment %} document.querySelector('#msg-window').value = (JSON.stringify(data['message']) + '\n'); {% endcomment %}
+                {% comment %} document.querySelector('#msg-window').value = (e.data + '\n'); {% endcomment %}
+            };
+        };
+
+ 
+        {% comment %} document.querySelector('#inst-name-input').focus();
+        document.querySelector('#inst-name-input').onkeyup = function(e) {
+            if (e.keyCode === 13) {  // enter, return
+                document.querySelector('#inst-name-submit').click();
+            }
+        };
+
+        document.querySelector('#inst-name-submit').onclick = function(e) {
+            var instName = document.querySelector('#inst-name-input').value;
+            window.location.pathname = '/envdaq/' + instName + '/';
+        }; {% endcomment %}
+
+        document.querySelector('#req-meta-button').onclick = function(e) {
+            {% comment %} var instName = document.querySelector('#inst-name-input').value; {% endcomment %}
+            var message = {
+                'TYPE': 'DISPLAY',
+                'SUBJECT': 'REQUEST',
+                'BODY': 'SEND_METATDATA'
+                };
+            {% comment %} window.location.pathname = '/envdaq/' + instName + '/'; {% endcomment %}
+            chatSocket.send(JSON.stringify({
+            'message': message
+            }));
+
+        };
+
+    </script>
+</body>
+</html>

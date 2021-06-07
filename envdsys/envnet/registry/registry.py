@@ -8,6 +8,11 @@ from typing import AsyncIterable
 from channels.db import database_sync_to_async
 
 from django.core.exceptions import MultipleObjectsReturned
+from shared.data.status import Status
+from shared.data.namespace import Namespace
+
+# from daq.daq import DAQ
+# from envdaq import data
 from envnet.models import Network, ServiceRegistration, DAQRegistration
 
 
@@ -50,7 +55,7 @@ class ServiceRegistry:
         nets = Network.objects.all()
         for net in nets:
             net.deactivate()
-            
+
         try:
             net = Network.objects.get(name=network)
             # net.activate()
@@ -383,28 +388,77 @@ class DAQRegistry:
     #     # loop.run_until_complete(task)
     #     asyncio.create_task(DAQRegistry.check_status())
 
+    # async def register(
+    #     reg_id="default",
+    #     reg_id2=None,
+    #     namespace={},
+    #     type="DAQServer",
+    #     config={},
+    #     config2={},
+    # ):
     @staticmethod
-    async def register(namespace="default", type="DAQServer", config={}):
-        registration = await DAQRegistry.register_no_wait(namespace, type, config)
+    async def register(
+        reg_id=Namespace().get_namespace_sig(),
+        namespace=Namespace().to_dict(),
+        type=Namespace.DAQSERVER,
+        config=dict(),
+    ):
+        # if not reg_id2:
+        #     reg_id2 = Namespace().get_namespace_sig()
+
+        # registration = await DAQRegistry.register_no_wait(
+        #     reg_id=reg_id,
+        #     reg_id2=reg_id2,
+        #     namespace=namespace,
+        #     type=type,
+        #     config=config,
+        #     config2=config2,
+        # )
+
+        registration = await DAQRegistry.register_no_wait(
+            reg_id=reg_id,
+            namespace=namespace,
+            type=type,
+            config=config,
+        )
+
         # if not registration:
         #     registration = await DAQRegistry.update_registration(namespace, type, config)
         return registration
 
+    # @database_sync_to_async
+    # def register_no_wait(
+    #     reg_id="default",
+    #     reg_id2=None,
+    #     namespace={},
+    #     type="DAQServer",
+    #     config={},
+    #     config2={},
+    # ):
     @staticmethod
     @database_sync_to_async
-    def register_no_wait(namespace="default", type="DAQServer", config={}):
-        print(f"register daq: {config}")
+    def register_no_wait(
+        reg_id=Namespace().get_namespace_sig(),
+        namespace=Namespace().to_dict(),
+        type=Namespace.DAQSERVER,
+        config=dict(),
+    ):
+        # print(f"register daq: {config}")
         # if config:
         # print(config["host"])
+
+        # if not reg_id2:
+        #     reg_id2 = Namespace().get_namespace_sig()
+
         try:
             # print(f'{config["HOST"]}, {config["PORT"]}')
-            registration = DAQRegistration.objects.get(
-                namespace=namespace, daq_type=type
-            )
+            # registration = DAQRegistration.objects.get(reg_id2=reg_id2, daq_type=type)
+            registration = DAQRegistration.objects.get(reg_id=reg_id, daq_type=type)
             if registration:
                 registration.delete()
         except DAQRegistration.MultipleObjectsReturned:
-            result = DAQRegistration.objects.filter(namespace=namespace, daq_type=type)
+            # result = DAQRegistration.objects.filter(reg_id2=reg_id2, daq_type=type)
+            result = DAQRegistration.objects.filter(reg_id=reg_id, daq_type=type)
             for s in result:
                 s.delete()
         except DAQRegistration.DoesNotExist:
@@ -420,8 +474,25 @@ class DAQRegistry:
         #         pass # defaults to "default"
 
         # create new Reg
+        # registration = DAQRegistration(
+        #     reg_id=reg_id,
+        #     reg_id2=reg_id2,
+        #     namespace=namespace,
+        #     daq_type=type,
+        #     config=config,
+        #     config2=config2,
+        #     status="CONNECTED",
+        # )
+        status2 = Status()
+        status2.set_connection_status(Status.CONNECTED)
+        print(f"register: {reg_id}, {namespace}")
         registration = DAQRegistration(
-            namespace=namespace, daq_type=type, config=config, status="CONNECTED"
+            reg_id=reg_id,
+            namespace=namespace,
+            daq_type=type,
+            config=config,
+            status="CONNECTED",
+            status2=status2.to_dict(),
         )
         registration.save()
         # TODO: update service definition to include this reg
@@ -429,19 +500,54 @@ class DAQRegistry:
         registration = registration.get_registration()
         return registration
 
+    # @staticmethod
+    # async def update_registration(
+    #     reg_id="default",
+    #     reg_id2=Namespace().get_namespace_sig(),
+    #     namespace={},
+    #     type="DAQServer",
+    #     registration=None,
+    # ):
     @staticmethod
     async def update_registration(
-        namespace="default", type="DAQServer", registration=None
+        reg_id=Namespace().get_namespace_sig(),
+        namespace=Namespace().to_dict(),
+        type=Namespace.DAQSERVER,
+        config=dict(),
+        registration=None,
     ):
+        # reg = await DAQRegistry.update_registration_no_wait(
+        #     reg_id=reg_id,
+        #     reg_id2=reg_id2,
+        #     namespace=namespace,
+        #     type=type,
+        #     registration=registration,
+        # )
         reg = await DAQRegistry.update_registration_no_wait(
-            namespace, type, registration
+            reg_id=reg_id,
+            namespace=namespace,
+            type=type,
+            registration=registration,
         )
         return reg
 
+    # @staticmethod
+    # @database_sync_to_async
+    # def update_registration_no_wait(
+    #     reg_id="default",
+    #     reg_id2=Namespace().get_namespace_sig(),
+    #     namespace={},
+    #     type="DAQServer",
+    #     registration=None,
+    # ):
     @staticmethod
     @database_sync_to_async
     def update_registration_no_wait(
-        namespace="default", type="DAQServer", registration=None
+        reg_id=Namespace().get_namespace_sig(),
+        namespace=Namespace().to_dict(),
+        type=Namespace.DAQSERVER,
+        config=dict(),
+        registration=None,
     ):
         # if config:
 
@@ -456,7 +562,8 @@ class DAQRegistry:
 
         try:
             # srv = ServiceRegistration.objects.get(regkey=config["regkey"])
-            reg = DAQRegistration.objects.get(namespace=namespace, daq_type=type)
+            # reg = DAQRegistration.objects.get(reg_id2=reg_id2, daq_type=type)
+            reg = DAQRegistration.objects.get(reg_id=reg_id, daq_type=type)
         except DAQRegistration.DoesNotExist:
             reg = None
             # if reg.get_age() > DAQRegistry.auto_clean_limit:
@@ -468,31 +575,49 @@ class DAQRegistry:
         # regkey = None
         if registration:
             config = registration["config"]
+            # config2 = registration["config2"]
             # regkey = registration["regkey"]
         if not reg:
+            # reg = DAQRegistration(
+            #     reg_id2=reg_id2,
+            #     namespace=namespace,
+            #     daq_type=type,
+            #     config=config,
+            #     config2=config2,
+            # )
             reg = DAQRegistration(
-                namespace=namespace, daq_type=type, config=config
+                reg_id=reg_id,
+                namespace=namespace,
+                daq_type=type,
+                config=config,
             )
         if reg:
+            # reg.reg_id2 = reg_id2
+            reg.reg_id = reg_id
             reg.namespace = namespace
             reg.daq_type = type
             reg.config = config
+            # reg.config2 = config2
             reg.status = "CONNECTED"
+            
+            status2 = Status()
+            status2.set_connection_status(Status.CONNECTED)
+            reg.status2 = status2.to_dict()
             # if regkey:
             #     reg.regkey = regkey
 
             # srv.service_list = config.service_list
             reg.save(do_update=True)
-                # TODO: update service
+            # TODO: update service
 
-                # reg.add_services(config["service_list"])
-                # srv.save()
-                # if local:
-                #     ServiceRegistry.local_network.add_registration(srv)
-                # reg.join_network(ServiceRegistry.get_network_name(local, config))
+            # reg.add_services(config["service_list"])
+            # srv.save()
+            # if local:
+            #     ServiceRegistry.local_network.add_registration(srv)
+            # reg.join_network(ServiceRegistry.get_network_name(local, config))
             return reg.get_registration()
-                # print(f"3:{registration}")
-                # return registration
+            # print(f"3:{registration}")
+            # return registration
         else:
             return None
         # # create new Reg here don't want to pass back to add ang get caught in loop?
@@ -505,33 +630,72 @@ class DAQRegistry:
         # # print(f"4:{registration}")
         # return registration
 
+    # @staticmethod
+    # async def unregister(
+    #     reg_id="default", reg_id2=Namespace().get_namespace_sig(), type="DAQServer"
+    # ):
+    #     await DAQRegistry.unregister_no_wait(reg_id=reg_id, reg_id2=reg_id2, type=type)
     @staticmethod
-    async def unregister(namespace="default", type="DAQServer"):
-        await DAQRegistry.unregister_no_wait(namespace, type)
+    async def unregister(
+        reg_id=Namespace().get_namespace_sig(), type=Namespace.DAQSERVER
+    ):
+        await DAQRegistry.unregister_no_wait(reg_id=reg_id, type=type)
 
+    # @staticmethod
+    # @database_sync_to_async
+    # def unregister_no_wait(
+    #     reg_id="default", reg_id2=Namespace().get_namespace_sig(), type="DAQServer"
+    # ):
     @staticmethod
     @database_sync_to_async
-    def unregister_no_wait(namespace="default", type="DAQServer"):
+    def unregister_no_wait(
+        reg_id=Namespace().get_namespace_sig(), type=Namespace.DAQSERVER
+    ):
         try:
-            reg = DAQRegistration.objects.get(namespace=namespace, daq_type=type)
+            # print(f"unregister:{reg_id}")
+            # reg = DAQRegistration.objects.get(reg_id2=reg_id2, daq_type=type)
+            reg = DAQRegistration.objects.get(reg_id=reg_id, daq_type=type)
+            # print(f"Unregistering: {reg}")
             reg.delete()
+            # print(f"success")
         except DAQRegistration.DoesNotExist:
+            # print(f"unregister: reg_id does not exist {reg_id}")
             pass
 
+    # @staticmethod
+    # async def get_registration(reg_id="default", reg_id2=Namespace().get_namespace_sig(), type="DAQServer"):
+    #     registration = await DAQRegistry.get_registration_no_wait(reg_id=reg_id, reg_id2=reg_id2, type=type)
+    #     return registration
     @staticmethod
-    async def get_registration(namespace="default", type="DAQServer"):
-        registration = await DAQRegistry.get_registration_no_wait(namespace, type)
+    async def get_registration(
+        reg_id=Namespace().get_namespace_sig(), type=Namespace.DAQSERVER
+    ):
+        # registration = await DAQRegistry.get_registration_no_wait(
+        #     reg_id=reg_id, reg_id2=reg_id2, type=type
+        # )
+        registration = await DAQRegistry.get_registration_no_wait(
+            reg_id=reg_id, type=type
+        )
         return registration
 
+    # @staticmethod
+    # @database_sync_to_async
+    # def get_registration_no_wait(
+    #     reg_id="default", reg_id2=Namespace().get_namespace_sig(), type="DAQServer"
+    # ):
     @staticmethod
     @database_sync_to_async
-    def get_registration_no_wait(namespace="default", type="DAQServer"):
+    def get_registration_no_wait(
+         reg_id=Namespace().get_namespace_sig(), type=Namespace.DAQSERVER
+   ):
         # theoretically, we should not be pinging local here
         # if not regkey and config and (regkey in config):
         #     regkey = config["regkey"]
         # if regkey:
+        print(f"get_reg: {reg_id}")
         try:
-            reg = DAQRegistration.objects.get(namespace=namespace, daq_type=type)
+            # reg = DAQRegistration.objects.get(reg_id2=reg_id2, daq_type=type)
+            reg = DAQRegistration.objects.get(reg_id=reg_id, daq_type=type)
             # reg.status = "CONNECTED"
             # srv = ServiceRegistration.objects.get(regkey=config["regkey"])
             # reg.save(do_update=True)  # update modified time stamp
@@ -542,25 +706,72 @@ class DAQRegistry:
         return None
 
     # def ping(local=True, regkey=None, config=None):
+    # @staticmethod
+    # async def ping(
+    #     reg_id="default", reg_id2=Namespace().get_namespace_sig(), type="DAQServer"
+    # ):
+    #     await DAQRegistry.ping_no_wait(reg_id, type)
     @staticmethod
-    async def ping(namespace="default", type="DAQServer"):
-        await DAQRegistry.ping_no_wait(namespace, type)
+    async def ping(
+        reg_id=Namespace().get_namespace_sig(), type=Namespace.DAQSERVER
+    ):
+        await DAQRegistry.ping_no_wait(reg_id, type)
 
+    # @staticmethod
+    # @database_sync_to_async
+    # def ping_no_wait(
+    #     reg_id="default", reg_id2=Namespace().get_namespace_sig(), type="DAQServer"
+    # ):
     @staticmethod
     @database_sync_to_async
-    def ping_no_wait(namespace="default", type="DAQServer"):
+    def ping_no_wait(
+        reg_id=Namespace().get_namespace_sig(), type=Namespace.DAQSERVER
+    ):
         # theoretically, we should not be pinging local here
         # if not regkey and config and (regkey in config):
         #     regkey = config["regkey"]
         # if regkey:
         try:
-            reg = DAQRegistration.objects.get(namespace=namespace, daq_type=type)
+            # print(f"ping server reg: {reg_id}")
+            # reg = DAQRegistration.objects.get(reg_id2=reg_id2, daq_type=type)
+            reg = DAQRegistration.objects.get(reg_id=reg_id, daq_type=type)
             reg.status = "CONNECTED"
+            status2 = Status().from_dict(reg.status2)
+            status2.set_connection_status(Status.CONNECTED)
+            reg.status2 = status2.to_dict()
+
             # srv = ServiceRegistration.objects.get(regkey=config["regkey"])
             reg.save(do_update=True)  # update modified time stamp
+            # print(f"ping success")
 
         except DAQRegistration.DoesNotExist:
             pass
+
+    @staticmethod
+    async def get_registry(type=Namespace.DAQSERVER):
+        return await DAQRegistry.get_registry_no_wait(type=type)
+
+    @staticmethod
+    @database_sync_to_async
+    def get_registry_no_wait(type=Namespace.DAQSERVER):
+
+        try:
+            regs = DAQRegistration.objects.filter(daq_type=type)
+            # print(f"regs: {regs}")
+
+        except DAQRegistration.DoesNotexist:
+            # TODO: return 404 ... lookup how
+            pass
+            regs = []
+
+        daq_registration_map = {}
+        if regs:
+            for reg in regs:
+                # id2 = reg.reg_id2
+                print(f"reg: {reg}")
+                daq_registration_map[f"{reg}"] = reg.get_registration()
+
+        return daq_registration_map
 
     @staticmethod
     async def check_status():
@@ -604,5 +815,7 @@ class DAQRegistry:
                 reg.delete()
             elif reg.get_age() > DAQRegistry.disconnected_limit:
                 reg.status = "DISCONNECTED"
+                status2 = Status().from_dict(reg.status2)
+                status2.set_connection_status(Status.NOT_CONNECTED)
                 print(reg.status)
                 reg.save()

@@ -3,3 +3,31 @@
 
 {% comment %} add local menu {% endcomment %}
 
+{% block content %}
+    <div id="display-content-top" class="w3-cell-row">
+        {% comment %} <div id="display-content-left" class="w3-container w3-cell w3-mobile"> {% endcomment %}
+        <div id="display-content-left" class="w3-container w3-cell w3-half">
+            {% block data %}
+            {% endblock %}
+
+            {% block controls %}
+            {% endblock %}
+        </div>   
+        {% comment %} <div id="display-content-right" class="w3-container w3-cell w3-mobile"> {% endcomment %}
+        <div id="display-content-right" class="w3-container w3-cell w3-half">
+            {% block plots %}
+            {% endblock %}
+            
+            {% block status %}
+            {% endblock %}
+        </div>   
+    </div>
+    <div id="display_content-bottom">
+        {% block rawdata %}
+        {% endblock %}
+    </div>
+
+    <div id="extra-content" class="w3-container">
+        {% block extracontent %}{% endblock extracontent%}
+{% endblock content %}
+

@@ -172,6 +172,10 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+    # 'path_to_static_directory/static/',
+]
 
 # STATIC_URL = '/static/'
 STATIC_URL = '/staticfiles/'
@@ -206,6 +210,8 @@ CHANNEL_LAYERS = {
     },
 }
 
+DEFAULT_AUTO_FIELD='django.db.models.AutoField'
+
 # Plot Server settings..use this?
 # PLOT_SERVER = {
 #     'server_id': ('localhost', 5001),
@@ -220,8 +226,10 @@ CHANNEL_LAYERS = {
 PLOT_SERVER = {
     'server_id': ('0.0.0.0', 5001, 'default'), # old default
     'hostname': os.environ["ENVDSYS_PLOT_SERVER_HOSTNAME"],
-    'host': 'localhost',
-    'ports': "5001:5011",  # allows for 10 servers
+    'ui_host': os.environ["ENVDSYS_PLOT_SERVER_HOSTNAME"],
+    'ws_origin_list': os.environ["ENVDSYS_UI_ALLOWED_HOSTS"].split(","),
+    'host': '0.0.0.0',
+    'port_range': (5001,5011),  # allows for 10 servers
     'namespace': 'default' # default namespace
     #'server_id': ('10.55.169.61', 5001),
     # 'server_id': ('192.168.86.32', 5001),

@@ -53,6 +53,20 @@ class UASCloudyPayload(Controller):
         #         math.log10(max_dp/min_dp)/(30-1)
         #     )
 
+    async def shutdown(self):
+        print("UASCLoudyPayload shutdown")
+        print("uas stop")
+        self.stop()
+        print("uas disable")
+        self.disable()
+        print("uas dereg")
+        await self.deregister_from_UI()
+        print("uas super shutdown")
+
+        # TODO need to wait for deregister before closing loops and connection
+        await super().shutdown()
+
+
     def configure_components(self):
 
         self.component_map['INSTRUMENTS'] = {
@@ -1253,12 +1267,14 @@ class UASCloudyPayload(Controller):
 
     async def handle_control_action(self, control, value):
         pass
-        if control and value:
+        if control and value is not None:
             if control == 'start_stop':
                 if value == 'START':
                     self.start()
                 elif value == 'STOP':
                     self.stop()
+                    
+            await super(UASCloudyPayload, self).handle_control_action(control, value)
 
     def get_definition_instance(self):
         return UASCloudyPayload.get_definition()

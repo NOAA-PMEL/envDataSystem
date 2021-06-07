@@ -7,6 +7,9 @@ from django.utils.translation import gettext as _
 from django.utils import timezone
 import uuid
 import json
+from shared.data.namespace import Namespace
+
+from shared.data.status import Status
 
 # Create your models here.
 
@@ -57,6 +60,7 @@ class ServiceRegistration(Registration):
     host = models.CharField(_("Host name"), max_length=100)
     port = models.IntegerField(_("Port number"))
     service_list = models.TextField(_("Services"), default="{}")
+    # services_list = models.JSONField()
     network = models.ForeignKey(
         "envnet.Network", on_delete=models.CASCADE, blank=True, null=True
     )
@@ -127,28 +131,37 @@ class DAQRegistration(Registration):
 
     # daq_list = models.TextField(_("DAQ List"))
     # eventually, namespace may be replaced with the Service object
-    namespace = models.CharField(_("Namespace"), max_length=100, default="default")
-    daq_type = models.CharField(_("Type"), max_length=50, default="DAQServer")
-    config = models.TextField(null=True, blank=True)
-    status = models.CharField(_("Status"), max_length=50, default="CONNECTED")
-
+    # reg_id = models.CharField(_("ID"), max_length=100, default="default")
+    reg_id = models.JSONField(_("Reg ID"), default=dict)
+    namespace = models.JSONField(_("Namespace"), blank=True, default=dict)
+    daq_type = models.CharField(_("Type"), max_length=50, default=Namespace.DAQSERVER)
+    # config = models.TextField(null=True, blank=True)
+    config = models.JSONField("Configuration", blank=True, default=dict)
+    # status = models.CharField(_("Status"), max_length=50, default="CONNECTED")
+    status2 = models.JSONField(_("Status_JSON"), blank=True, default=dict)
     class Meta:
         verbose_name = _("DAQ Registration")
         verbose_name_plural = _("DAQ Registrations")
 
     def __str__(self):
-        return f"{self.daq_type}:{self.namespace}"
-        # return self.name
+        reg_id = self.reg_id
+        # host = reg_id["host"]
+        # ns = reg_id["namespace"]
+        return f"{self.daq_type}:{reg_id['host']}:{reg_id['namespace']}"
+        # return f"{self.reg_id}"
 
     # def get_absolute_url(self):
     #     return reverse("_detail", kwargs={"pk": self.pk})
 
     def get_registration(self):
         reg = {
+            "reg_id": self.reg_id,
+            # "reg_id2": self.reg_id2,
             "namespace": self.namespace,
             "daq_type": self.daq_type,
             "regkey": f"{self.regkey}",
             "config": self.config,
+            # "config2": self.config2,
             "status": self.status,
             "age": self.get_age()
         }

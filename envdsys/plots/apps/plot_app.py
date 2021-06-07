@@ -111,6 +111,10 @@ class PlotApp(abc.ABC):
         )
         # print('here')
 
+    def stop(self, server_id):
+        PlotBufferManager.remove_buffer(server_id, self.name)
+        self.msg_buffer = None
+
     async def update_data(self, msg):
         # print(f'update data: {msg}')
         self.update_main_source(msg)
@@ -814,7 +818,9 @@ class TimeSeries1D(PlotApp):
                 [traces],
                 [fig],
             ],
-            sizing_mode="stretch_width"
+            sizing_mode="scale_width"
+            # width_policy="fit"
+            # sizing_mode="stretch_width"
         )
         doc.add_root(doc_layout)
         # doc.add_root(fig)
@@ -1454,7 +1460,9 @@ class SizeDistribution(PlotApp):
                 [traces],
                 [fig],
             ],
-            sizing_mode="stretch_width"
+            sizing_mode="scale_width"
+            # width_policy="fit"
+            # sizing_mode="stretch_width"
         )
         # time.sleep(0.5)
         doc.add_root(doc_layout)

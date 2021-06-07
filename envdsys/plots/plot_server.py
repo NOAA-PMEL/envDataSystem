@@ -5,12 +5,15 @@ from bokeh.application.handlers.function import FunctionHandler
 
 
 class PlotServer():
-    def __init__(self, server_id, app_list=[]):
+    # def __init__(self, server_id, app_list=[]):
+    def __init__(self, server_id, host="localhost", port=5001, app_list=[]):
 
-        print(f'plotserver.init')
+        # print(f'plotserver.init')
         self.id = server_id
-        self.address = self.id[0]
-        self.port = self.id[1]
+        # self.address = self.id[0]
+        # self.port = self.id[1]
+        self.address = host
+        self.port = port
 
         # self.app_list = []
         # self.app_list = app_list
@@ -26,6 +29,14 @@ class PlotServer():
 
         self.apps = dict()
         # print(f'{self.id}, {self.app_map}')
+
+    def get_sig(self):
+        sig = {
+            "server_id": self.id,
+            "host": self.address,
+            "port": self.port
+        }
+        return sig
 
     def add_app(self, app):
         # print(f'add_app: {app}, {self.app_map}')
@@ -45,6 +56,8 @@ class PlotServer():
 
         # if (self.running):
         #     return
+
+        # self.stop()
 
         # print(f'****start server****')
         app_list = []
@@ -71,7 +84,7 @@ class PlotServer():
 
         # add extra ws_origin
         if add_ws_origin:
-            ws_origin.append(add_ws_origin)
+            ws_origin.append(add_ws_origin + str(self.port))
 
         # print(f'------- {self.apps},{self.address},{self.port}')
         self.server = Server(
@@ -90,4 +103,10 @@ class PlotServer():
 
     def stop(self, wait=True):
         if self.server:
+            for name, app in self.app_map.items():
+                app.stop(self.id)
+
+            self.server.unlisten()
             self.server.stop(wait)
+            self.server = None
+            # self.server.io_loop.close()
