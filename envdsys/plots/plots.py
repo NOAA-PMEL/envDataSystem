@@ -1,6 +1,7 @@
 # import asyncio
 # import json
 # from asyncio.queues import Queue
+import socket
 from bokeh.models.plots import Plot
 
 from shared.data.namespace import Namespace
@@ -243,7 +244,18 @@ class PlotManager:
                     break
             # print(f"free_port = {free_port}: {port}")
             if free_port:
-                return port
+
+                # double check
+                print(f"double check plotserver port")
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                print(f"sock: {sock}")
+                result = sock.connect_ex((PlotManager.PLOTSERVER_HOST,port))
+                print(f"result: {result}")
+                sock.close()
+                if result == 0:
+                    free_port = False
+                else:
+                    return port
 
         print(f"no free ports for plot server: {server_id}")
         return None

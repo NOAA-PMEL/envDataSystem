@@ -92,7 +92,7 @@ def daq_controller(request, daq_host, parent_namespace, controller_namespace):
     daq_controller = None
     controllers = DAQController.objects.filter(name=controller_namespace)
     # controllers = get_object_or_404(DAQController, name=controller_namespace)
-    get_object_or_404(controllers)
+    # get_object_or_404(controllers)
 
     for controller in controllers:
         ns = controller.get_namespace()
@@ -244,7 +244,7 @@ def daq_instrument(request, daq_host, parent_namespace, instrument_namespace):
     daq_instrument = None
     instruments = DAQInstrument.objects.filter(name=instrument_namespace)
     # controllers = get_object_or_404(DAQController, name=controller_namespace)
-    get_object_or_404(instruments)
+    # get_object_or_404(instruments)
 
     for instrument in instruments:
         ns = instrument.get_namespace()

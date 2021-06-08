@@ -1008,7 +1008,7 @@ class DAQServerManager:
         self.server = None
         self.do_run = True
         asyncio.get_event_loop().add_signal_handler(signal.SIGTERM, self.start_shutdown)
-        asyncio.get_event_loop().add_signal_handler(signal.SIGINT, self.start_shutdown)
+        # asyncio.get_event_loop().add_signal_handler(signal.SIGINT, self.start_shutdown)
         asyncio.get_event_loop().create_task(self.run())
 
     async def run(self):

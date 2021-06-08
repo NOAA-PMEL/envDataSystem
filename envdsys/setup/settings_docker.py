@@ -204,8 +204,8 @@ CHANNEL_LAYERS = {
             "hosts": [('redis', 6379)],
             # "hosts": [('127.0.0.1', 6379)],
             # in case you run into over capacity errors
-            # 'capacity': 1500,  # added due to over capacity bug
-            # 'expiry': 10,      # workaround
+            'capacity': 1500,  # added due to over capacity bug
+            'expiry': 10,      # workaround
         },
     },
 }
