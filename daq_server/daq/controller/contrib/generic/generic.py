@@ -126,6 +126,7 @@ class SimpleTSController(Controller):
         prefix = self.alias['prefix']
         self.plot_list = []
 
+
         # Add TimeSeries
         time_series1d['source_map'] = ts1d_source_map
         plot_name = prefix + '_ts1d'
