@@ -1,5 +1,6 @@
 from json.decoder import JSONDecodeError
 import os
+import signal
 import sys
 import asyncio
 from importlib import import_module
@@ -1006,7 +1007,8 @@ class DAQServerManager:
     def __init__(self):
         self.server = None
         self.do_run = True
-
+        asyncio.get_event_loop().add_signal_handler(signal.SIGTERM, self.start_shutdown)
+        asyncio.get_event_loop().add_signal_handler(signal.SIGINT, self.start_shutdown)
         asyncio.get_event_loop().create_task(self.run())
 
     async def run(self):
@@ -1025,6 +1027,11 @@ class DAQServerManager:
                 #     t.cancel()
 
             await asyncio.sleep(1)
+
+    def start_shutdown(self):
+        print(f"signal caught")
+        # asyncio.create_task(self.shutdown())
+        raise KeyboardInterrupt
 
     async def shutdown(self):
         print("shutdown:")
