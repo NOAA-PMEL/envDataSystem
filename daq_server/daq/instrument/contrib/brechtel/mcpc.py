@@ -38,6 +38,7 @@ class aMCPC(BrechtelInstrument):
         self.poll_read_cmd = "read" # options are "read" or "all"
         self.poll_start_param = "concent"
         self.poll_stop_param = "err_num"    # if using "read"
+        self.current_time = None
         # self.poll_stop_param = "firmwar"  # if using "all"
         self.poll_data_started = False
         self.poll_data_ready = False
@@ -59,16 +60,16 @@ class aMCPC(BrechtelInstrument):
         self.include_metadata_interval = 300
 
         # this instrument appears to work with readline
-        # self.iface_options = {
-        #     'read_method': 'readuntil',
-        #     'read_terminator': '\r',
-        # }
+        self.iface_options = {
+            'read_method': 'readuntil',
+            'read_terminator': '\r',
+        }
         self.setup()
 
-    def get_datafile_config(self):
-        config = super().get_datafile_config()
-        config["save_interval"] = 0
-        return config
+    # def get_datafile_config(self):
+    #     config = super().get_datafile_config()
+    #     config["save_interval"] = 0
+    #     return config
 
     def setup(self):
         super().setup()
@@ -116,20 +117,23 @@ class aMCPC(BrechtelInstrument):
 
         super().enable()
 
-        # if self.is_polled:
-        self.polling_task = asyncio.create_task(self.poll_loop())
+        self.do_polling = False
+        if self.is_polled:
+            self.polling_task = asyncio.create_task(self.poll_loop())
         asyncio.create_task(self.toggle_mcpc_power(power=1))
 
 
     def disable(self):
+        self.do_polling = False
         asyncio.create_task(self.toggle_mcpc_power(power=0))
         if self.polling_task:
             self.polling_task.cancel()
         super().disable()
 
     def start(self, cmd=None):
+        # self.polling_task = asyncio.create_task(self.poll_loop())
         super().start()
-
+        self.do_polling = True
         # self.polling_task = asyncio.create_task(self.poll_loop())
 
     async def toggle_mcpc_power(self, power=0):
@@ -249,7 +253,10 @@ class aMCPC(BrechtelInstrument):
     #         # self.scan_run_state = 'STOPPED'
 
     def stop(self, cmd=None):
-        # if self.polling_task:
+        print(f"stop")
+        self.do_polling = False
+        # # if self.polling_task:
+        # #     print(f"stopping polling task")
         #     self.polling_task.cancel()
 
         super().stop()
@@ -306,26 +313,27 @@ class aMCPC(BrechtelInstrument):
 
         
         while True:
-            # TODO: implement current_poll_cmds
-            # cmds = self.current_poll_cmds
-            # print(f'cmds: {cmds}')
-            # cmds = ['read\n']
+            if  self.do_polling:
+                # TODO: implement current_poll_cmds
+                # cmds = self.current_poll_cmds
+                # print(f'cmds: {cmds}')
+                # cmds = ['read\n']
+                # print("poll")
+                # if self.iface:
+                if self.iface_components["default"]:
+                    if_id = self.iface_components["default"]
 
-            # if self.iface:
-            if self.iface_components["default"]:
-                if_id = self.iface_components["default"]
+                    cmds = [self.poll_read_cmd+"\n"]
+                    for cmd in cmds:
+                        msg = Message(
+                            sender_id=self.get_id(),
+                            msgtype=Instrument.class_type,
+                            subject="SEND",
+                            body=cmd,
+                        )
+                        # print(f'msg: {msg.to_json()}')
 
-                cmds = [self.poll_read_cmd+"\n"]
-                for cmd in cmds:
-                    msg = Message(
-                        sender_id=self.get_id(),
-                        msgtype=Instrument.class_type,
-                        subject="SEND",
-                        body=cmd,
-                    )
-                    # print(f'msg: {msg.to_json()}')
-
-                    await self.iface_map[if_id].message_from_parent(msg)
+                        await self.iface_map[if_id].message_from_parent(msg)
 
             await asyncio.sleep(time_to_next(self.poll_rate))
 
@@ -337,7 +345,7 @@ class aMCPC(BrechtelInstrument):
             # id = msg.sender_id
             dt = self.parse(msg)
 
-            if self.poll_data_ready:
+            if dt and self.poll_data_ready:
 
                 for control, value in self.current_run_settings.items():
                     # try:
@@ -454,7 +462,7 @@ class aMCPC(BrechtelInstrument):
                 parts = entry.split("=")
             # parts = line.split("=")
             if len(parts) < 2:
-                return dt
+                return None
 
             # self.scan_state = 999
             # if self.scan_run_state == 'STOPPING':
@@ -468,6 +476,7 @@ class aMCPC(BrechtelInstrument):
             if parts[0] == self.poll_start_param:
                 self.poll_data_started = True
                 self.poll_data_ready = False
+                self.current_time = dt
 
                 # self.scan_state = parts[1]
                 # print(f"scan state: {self.scan_state}")
@@ -487,15 +496,17 @@ class aMCPC(BrechtelInstrument):
                 if parts[0] in self.parse_map:
                     self.update_data_record(
                         # dt,
-                        self.scan_time,
+                        self.current_time,
+                        # self.scan_time,
                         {self.parse_map[parts[0]]: parts[1]},
                     )
 
                     if parts[0] == self.poll_stop_param:
                         self.poll_data_ready = True
                         self.poll_data_started = False
+                        return self.current_time
 
-        return dt
+        return None
 
     def get_definition_instance(self):
         # make sure it's good for json
