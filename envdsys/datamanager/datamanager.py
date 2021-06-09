@@ -20,7 +20,7 @@ class DataManager:
             if message and datafile:
                 await datafile.write_message(message)
             else:
-                print(f'DataManager.send_data: no DataFile at {path}')
+                print(f'DataManager.send_data: no DataFile at {path} for:\n {data}')
         except:
             print('DataManager.send_data: data does not contain a message')
 

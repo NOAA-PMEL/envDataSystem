@@ -52,10 +52,13 @@ class PlotApp(abc.ABC):
         self.prefix = ''
         self.prefix_map = dict()
 
-        # init to 60 minutes of data
-        self.rollover = 3600
+        # TODO make plotdata rollover runtime settable
+        # init to 2*60 minutes of data
+        self.rollover = 3600*2 
 
-        self.buf_size = 100
+        # TODO Do I need this much buffer? Is a minute enough? 30sec? 
+        # self.buf_size = 100
+        self.buf_size = 60
 
         # PlotBufferManager.add_buffer(PlotBuffer('/', self.msg_buffer))
         # print(f'init: {self.name}')
@@ -475,39 +478,44 @@ class TimeSeries1D(PlotApp):
                 # )
                 # print(data['datetime'])
                 # source_data = source_map['TimeSeries1D'][src_id]['source']
-                source_data = source_map['TimeSeries1D'][src_id]['source']
-                # print(f'******  app update: {source_data.data}')
-                for name, meas in body['DATA']['MEASUREMENTS'].items():
-                    # print(f' {name}: {meas}')
-                    if len(prefix_map[src_id]) > 0:
-                        name = prefix_map[src_id] + '_' + name
-                    # print(f'{name} in {source_data.data}')
+                try:
+                    source_data = source_map['TimeSeries1D'][src_id]['source']
+                    # print(f'******  app update: {source_data.data}')
+                    for name, meas in body['DATA']['MEASUREMENTS'].items():
+                        # print(f' {name}: {meas}')
+                        if len(prefix_map[src_id]) > 0:
+                            name = prefix_map[src_id] + '_' + name
+                        # print(f'{name} in {source_data.data}')
 
-                    for y_id, ysrc in source_data.items():
-                        if name in ysrc.data:
+                        for y_id, ysrc in source_data.items():
+                            if name in ysrc.data:
 
-                            # create src data for y_id
-                            if y_id not in data:
-                                data[y_id] = dict()
+                                # create src data for y_id
+                                if y_id not in data:
+                                    data[y_id] = dict()
 
-                            # add datetime to y_id just once
-                            if 'datetime' not in data[y_id]:
-                                data[y_id]['datetime'] = []
-                                data[y_id]['datetime'].append(
-                                    string_to_dt(dt_string),
-                                )
+                                # add datetime to y_id just once
+                                if 'datetime' not in data[y_id]:
+                                    data[y_id]['datetime'] = []
+                                    data[y_id]['datetime'].append(
+                                        string_to_dt(dt_string),
+                                    )
 
-                            # print(f'        {name}: {meas["VALUE"]}')
-                            data[y_id][name] = []
-                            data[y_id][name].append(meas['VALUE'])
-                            # data[name] = meas['VALUE']
+                                # print(f'        {name}: {meas["VALUE"]}')
+                                data[y_id][name] = []
+                                data[y_id][name].append(meas['VALUE'])
+                                # data[name] = meas['VALUE']
 
-                    # if name in source_data.data:
-                    #     data[name] = []
-                    #     data[name].append(meas['VALUE'])
-                if len(data) == 0:
-                    data = None
-                    src_id = None
+                        # if name in source_data.data:
+                        #     data[name] = []
+                        #     data[name].append(meas['VALUE'])
+
+                    if len(data) == 0:
+                        data = None
+                        src_id = None
+
+                except KeyError:
+                    pass
 
             return src_id, data
         # def update():
@@ -1188,40 +1196,43 @@ class SizeDistribution(PlotApp):
 
                 # )
                 # print(data['datetime'])
-                source_data = source_map['SizeDistribution'][src_id]['source']
-                for name, meas in body['DATA']['MEASUREMENTS'].items():
-                    # print('here')
-                    if len(prefix_map[src_id]) > 0:
-                        name = prefix_map[src_id] + '_' + name
-                    # if name in source.data:
-                    # print(f' {name} in {source_data.data}')
-                    for y_id, ysrc in source_data.items():
-                        if name in ysrc.data:
-                            # create src data for y_id
-                            if y_id not in data:
-                                data[y_id] = dict()
+                try:
+                    source_data = source_map['SizeDistribution'][src_id]['source']
+                    for name, meas in body['DATA']['MEASUREMENTS'].items():
+                        # print('here')
+                        if len(prefix_map[src_id]) > 0:
+                            name = prefix_map[src_id] + '_' + name
+                        # if name in source.data:
+                        # print(f' {name} in {source_data.data}')
+                        for y_id, ysrc in source_data.items():
+                            if name in ysrc.data:
+                                # create src data for y_id
+                                if y_id not in data:
+                                    data[y_id] = dict()
 
-                            # # add datetime to y_id just once
-                            # if 'datetime' not in data[y_id]:
-                            #     data[y_id]['datetime'] = []
-                            #     data[y_id]['datetime'].append(
-                            #         envdaq.util.util.string_to_dt(dt_string),
-                            #     )
+                                # # add datetime to y_id just once
+                                # if 'datetime' not in data[y_id]:
+                                #     data[y_id]['datetime'] = []
+                                #     data[y_id]['datetime'].append(
+                                #         envdaq.util.util.string_to_dt(dt_string),
+                                #     )
 
-                            # data[y_id][name] = []
-                            # data[y_id][name].append(meas['VALUE'])
-                            data[y_id][name] = meas['VALUE']
+                                # data[y_id][name] = []
+                                # data[y_id][name].append(meas['VALUE'])
+                                data[y_id][name] = meas['VALUE']
 
-                    # if name in source_data.data:
-                    #     # print(f'22222222 data: {name}, {source.data}, {data}')
-                    #     # data[name] = []
-                    #     # data[name].append(meas['VALUE'])
-                    #     data[name] = meas['VALUE']
-                    #     # print(f'33333333 data: {name}, {source.data}, {data}')
+                        # if name in source_data.data:
+                        #     # print(f'22222222 data: {name}, {source.data}, {data}')
+                        #     # data[name] = []
+                        #     # data[name].append(meas['VALUE'])
+                        #     data[name] = meas['VALUE']
+                        #     # print(f'33333333 data: {name}, {source.data}, {data}')
 
-                if len(data) == 0:
-                    data = None
-                    src_id = None
+                    if len(data) == 0:
+                        data = None
+                        src_id = None
+                except KeyError:
+                    pass
 
             return src_id, data
         # def update():
@@ -2031,101 +2042,104 @@ class GeoMapPlot(PlotApp):
                 if not msg_map:
                     return None, None
 
-                source_data = source_map['GeoMapPlot'][src_id]['source']
+                try:
+                    source_data = source_map['GeoMapPlot'][src_id]['source']
 
-                gps_body = msg_map[dt_string]['GPS']['body']
-                lon = None
-                lat = None
-                alt = None
+                    gps_body = msg_map[dt_string]['GPS']['body']
+                    lon = None
+                    lat = None
+                    alt = None
 
-                for name, meas in (
-                    gps_body[dt_string]['DATA']['MEASUREMENTS'].items()
-                ):
+                    for name, meas in (
+                        gps_body[dt_string]['DATA']['MEASUREMENTS'].items()
+                    ):
 
-                    if name == 'longitude':
-                        lon = meas['VALUE']
-                    elif name == 'latitude':
-                        lat = meas['VALUE']
-                    elif name == 'altitude':
-                        alt = meas['VALUE']
+                        if name == 'longitude':
+                            lon = meas['VALUE']
+                        elif name == 'latitude':
+                            lat = meas['VALUE']
+                        elif name == 'altitude':
+                            alt = meas['VALUE']
 
-                data_src_id = msg_map[dt_string]['DATA']['src_id']
-                data_body = msg_map[dt_string]['DATA']['body']
-                for name, meas in (
-                    data_body[dt_string]['DATA']['MEASUREMENTS'].items()
-                ):
+                    data_src_id = msg_map[dt_string]['DATA']['src_id']
+                    data_body = msg_map[dt_string]['DATA']['body']
+                    for name, meas in (
+                        data_body[dt_string]['DATA']['MEASUREMENTS'].items()
+                    ):
 
-                    # print(f' {name}: {meas}')
-                    if len(prefix_map[data_src_id]) > 0:
-                        name = prefix_map[data_src_id] + '_' + name
+                        # print(f' {name}: {meas}')
+                        if len(prefix_map[data_src_id]) > 0:
+                            name = prefix_map[data_src_id] + '_' + name
 
-                    for y_id, ysrc in source_data.items():
+                        for y_id, ysrc in source_data.items():
 
-                        if name in ysrc.data:
-                            # if name in source_data.data:
-                            # create src data for y_id
-                            if y_id not in data:
-                                data[y_id] = dict()
+                            if name in ysrc.data:
+                                # if name in source_data.data:
+                                # create src data for y_id
+                                if y_id not in data:
+                                    data[y_id] = dict()
 
-                            # add datetime to y_id just once
-                            if 'datetime' not in data[y_id]:
-                                data[y_id]['datetime'] = []
-                                data[y_id]['datetime'].append(
-                                    string_to_dt(dt_string),
-                                )
+                                # add datetime to y_id just once
+                                if 'datetime' not in data[y_id]:
+                                    data[y_id]['datetime'] = []
+                                    data[y_id]['datetime'].append(
+                                        string_to_dt(dt_string),
+                                    )
 
-                            data[y_id][name] = []
-                            data[y_id][name].append(meas['VALUE'])
+                                data[y_id][name] = []
+                                data[y_id][name].append(meas['VALUE'])
 
-                            if lat and lon:
+                                if lat and lon:
 
-                                lon_x, lat_y = merc(lat, lon)
-                                # print(f'lat: {lat}, {lat_y}, lon: {lon}, {lon_x}')
-                                if 'latitude' not in data[y_id]:
-                                    data[y_id]['latitude'] = []
-                                    data[y_id]['latitude'].append(lat)
-                                if 'latitude_y' not in data[y_id]:
-                                    data[y_id]['latitude_y'] = []
-                                    data[y_id]['latitude_y'].append(lat_y)
-                                if 'longitude' not in data[y_id]:
-                                    data[y_id]['longitude'] = []
-                                    data[y_id]['longitude'].append(lon)
-                                if 'longitude_x' not in data[y_id]:
-                                    data[y_id]['longitude_x'] = []
-                                    data[y_id]['longitude_x'].append(lon_x)
-                                if 'altitude' not in data[y_id]:
-                                    data[y_id]['altitude'] = []
-                                    data[y_id]['altitude'].append(alt)
+                                    lon_x, lat_y = merc(lat, lon)
+                                    # print(f'lat: {lat}, {lat_y}, lon: {lon}, {lon_x}')
+                                    if 'latitude' not in data[y_id]:
+                                        data[y_id]['latitude'] = []
+                                        data[y_id]['latitude'].append(lat)
+                                    if 'latitude_y' not in data[y_id]:
+                                        data[y_id]['latitude_y'] = []
+                                        data[y_id]['latitude_y'].append(lat_y)
+                                    if 'longitude' not in data[y_id]:
+                                        data[y_id]['longitude'] = []
+                                        data[y_id]['longitude'].append(lon)
+                                    if 'longitude_x' not in data[y_id]:
+                                        data[y_id]['longitude_x'] = []
+                                        data[y_id]['longitude_x'].append(lon_x)
+                                    if 'altitude' not in data[y_id]:
+                                        data[y_id]['altitude'] = []
+                                        data[y_id]['altitude'].append(alt)
 
 
-                    #     # print(f'{name} in {source_data.data}')
-                    #     if name in source_data.data:
-                    #         data[name] = []
-                    #         data[name].append(meas['VALUE'])
-                    # if len(data) == 0:
-                    #     data = None
-                    #     src_id = None
+                        #     # print(f'{name} in {source_data.data}')
+                        #     if name in source_data.data:
+                        #         data[name] = []
+                        #         data[name].append(meas['VALUE'])
+                        # if len(data) == 0:
+                        #     data = None
+                        #     src_id = None
 
-                    # data['datetime'] = []
-                    # data['datetime'].append(
-                    #     # utilities.util.string_to_dt(dt_string).replace(tzinfo=None)
-                    #     string_to_dt(dt_string)
+                        # data['datetime'] = []
+                        # data['datetime'].append(
+                        #     # utilities.util.string_to_dt(dt_string).replace(tzinfo=None)
+                        #     string_to_dt(dt_string)
 
-                    # )
-                    # # print(data['datetime'])
-                    # source_data = source_map['GeoMapPlot'][src_id]['source']
-                    # # print(f'******  app update: {source_data.data}')
-                    # for name, meas in body['DATA']['MEASUREMENTS'].items():
-                    #     # print(f' {name}: {meas}')
-                    #     if len(prefix_map[src_id]) > 0:
-                    #         name = prefix_map[src_id] + '_' + name
-                    #     # print(f'{name} in {source_data.data}')
-                    #     if name in source_data.data:
-                    #         data[name] = []
-                    #         data[name].append(meas['VALUE'])
-                if len(data) == 0:
-                    data = None
-                    src_id = None
+                        # )
+                        # # print(data['datetime'])
+                        # source_data = source_map['GeoMapPlot'][src_id]['source']
+                        # # print(f'******  app update: {source_data.data}')
+                        # for name, meas in body['DATA']['MEASUREMENTS'].items():
+                        #     # print(f' {name}: {meas}')
+                        #     if len(prefix_map[src_id]) > 0:
+                        #         name = prefix_map[src_id] + '_' + name
+                        #     # print(f'{name} in {source_data.data}')
+                        #     if name in source_data.data:
+                        #         data[name] = []
+                        #         data[name].append(meas['VALUE'])
+                    if len(data) == 0:
+                        data = None
+                        src_id = None
+                except KeyError:
+                    pass
 
             return src_id, data
         # def update():
