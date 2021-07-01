@@ -11,7 +11,10 @@ from envtags.models import Tag
 
 
 class DataSystem(models.Model):
-
+    '''
+    Top level container for all things data for a logical group (e.g., a research group)
+    '''
+    
     name = models.CharField(_("Name"), max_length=50, default="default")
 
     project = models.ForeignKey(
