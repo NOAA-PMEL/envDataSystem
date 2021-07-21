@@ -399,6 +399,7 @@ class SamplingSystem(models.Model):
         dsets = SamplingSystemDataset.objects.select_related("platform_event").filter(sampling_system=self)
         for ds in dsets:
             if ds.platform_event.active():
+                print(timezone.is_aware(ds.platform_event.start_datetime))
                 if active and ds.platform_event.start_datetime > active.platform_event.start_datetime:
                     active = ds
                 else:
@@ -1065,7 +1066,7 @@ class Event(models.Model):
     def active(self):
         dt = timezone.now()
         if dt >= self.start_datetime:
-            if self.stop_datetime and dt.now() >= self.stop_datetime:
+            if self.stop_datetime and dt >= self.stop_datetime:
                 return False
             
             return True
