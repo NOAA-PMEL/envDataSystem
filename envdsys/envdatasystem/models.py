@@ -405,6 +405,15 @@ class SamplingSystem(models.Model):
                     active= ds
         return active
 
+        # try:
+        #     return SamplingSystemDataset.objects.get(sampling_system=self, current=True)
+        # except SamplingSystem.DoesNotExist:
+        #     return None
+        # except SamplingSystem.MultipleObjectsReturned:
+        #     ss = SamplingSystemDataset.objects.filter(sampling_system=self, current=True)[0]
+        #     ss.sync_current()
+        #     return self.get_current_dataset()
+
     def __str__(self):
         if self.version_stoptime:
             # start = self.version_starttime.strftime("%Y-%m-%dT%H:%M:%S")
