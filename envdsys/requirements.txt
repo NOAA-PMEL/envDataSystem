@@ -1,4 +1,4 @@
-cryptography==3.3.2
+cryptography==39.0.1
 Django
 channels
 channels_redis
